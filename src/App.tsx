@@ -10,6 +10,7 @@ import {
 import { PlayerCard } from "./components/PlayerCard";
 import { TopBar } from "./components/TopBar";
 import { usePlayers } from "./hooks/usePlayers";
+import { useProfiles } from "./hooks/useProfiles";
 import { useScorePulse } from "./hooks/useScorePulse";
 
 export default function App() {
@@ -23,11 +24,13 @@ export default function App() {
     removePlayer,
     resetScores,
   } = usePlayers();
+  const { profiles, upsertProfile, deleteProfile } = useProfiles();
   const { pulseById, triggerPulse } = useScorePulse();
   const addDialogRef = useRef<AddPlayerDialogHandle | null>(null);
   const confirmRef = useRef<ConfirmDialogHandle | null>(null);
   const hasPlayers = players.length > 0;
   const hasNonZeroScore = players.some((p) => p.score !== 0);
+  const takenProfileIds = new Set(players.map((p) => p.profileId).filter(Boolean) as string[]);
 
   return (
     <div className="app">
@@ -96,7 +99,40 @@ export default function App() {
         )}
       </main>
 
-      <AddPlayerDialog ref={addDialogRef} onAdd={(name, avatarColor) => addPlayer(name, avatarColor)} />
+      <AddPlayerDialog
+        ref={addDialogRef}
+        profiles={profiles}
+        takenProfileIds={takenProfileIds}
+        onAddFromProfile={(profileId) => {
+          const profile = profiles.find((p) => p.id === profileId);
+          if (!profile) return;
+          if (takenProfileIds.has(profileId)) return;
+          addPlayer(profile.name, profile.avatarColor, profileId);
+        }}
+        onDeleteProfile={async (profileId) => {
+          const profile = profiles.find((p) => p.id === profileId);
+          const label = profile ? profile.name : "this player";
+          const ok = await confirmRef.current?.confirm({
+            title: "Delete saved player",
+            message: `Delete "${label}" from your saved players?`,
+            confirmText: "Delete",
+            tone: "danger",
+          });
+          if (!ok) return;
+          deleteProfile(profileId);
+        }}
+        onCreateAndAdd={(name, avatarColor, saveForLater) => {
+          if (!saveForLater) {
+            addPlayer(name, avatarColor);
+            return true;
+          }
+
+          const profile = upsertProfile(name, avatarColor);
+          if (!profile) return false;
+          if (!takenProfileIds.has(profile.id)) addPlayer(profile.name, profile.avatarColor, profile.id);
+          return true;
+        }}
+      />
       <ConfirmDialog ref={confirmRef} />
     </div>
   );

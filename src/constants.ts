@@ -1,5 +1,6 @@
 export const STORAGE_KEY = "point-tracker:v1";
-export const QUICK_DELTAS = [-10, -5, -1, 1, 5, 10] as const;
+export const PROFILES_STORAGE_KEY = "point-tracker:profiles:v1";
+export const QUICK_DELTAS = [-5, -3, -1, 1, 3, 5] as const;
 
 export const AVATAR_COLORS = [
   { id: "slate", label: "Slate", value: "#64748b" },

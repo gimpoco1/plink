@@ -21,6 +21,7 @@ export function loadPlayers(): Player[] {
         }
         const reachedAt = typeof obj.reachedAt === "number" ? obj.reachedAt : (obj.createdAt as number);
         const avatarColor = typeof obj.avatarColor === "string" ? obj.avatarColor : "#64748b";
+        const profileId = typeof obj.profileId === "string" ? obj.profileId : undefined;
         return {
           id: obj.id,
           name: obj.name,
@@ -28,6 +29,7 @@ export function loadPlayers(): Player[] {
           createdAt: obj.createdAt,
           reachedAt,
           avatarColor,
+          profileId,
         } satisfies Player;
       })
       .filter(Boolean) as Player[];

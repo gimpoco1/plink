@@ -5,4 +5,12 @@ export type Player = {
   createdAt: number;
   reachedAt: number;
   avatarColor: string;
+  profileId?: string;
+};
+
+export type PlayerProfile = {
+  id: string;
+  name: string;
+  avatarColor: string;
+  createdAt: number;
 };
