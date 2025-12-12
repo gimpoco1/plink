@@ -123,14 +123,14 @@ export function PlayerCard({ player, rank, showRank, pulse, onDelta, onDelete }:
       >
         <div className="cardHeader">
           <div className="cardHeader__left">
-            {showRank ? (
-              <div className="rank" aria-label={`Rank ${rank}`}>
-                #{rank}
-              </div>
-            ) : null}
-            <div className="avatar" style={avatarStyleFor(player.id)} aria-hidden="true">
-              {initial}
+          {showRank ? (
+            <div className="rank" aria-label={`Rank ${rank}`}>
+              #{rank}
             </div>
+          ) : null}
+          <div className="avatar" style={avatarStyleFor(player.avatarColor)} aria-hidden="true">
+            {initial}
+          </div>
             <div className="who">
               <div className="who__name">{player.name}</div>
             </div>

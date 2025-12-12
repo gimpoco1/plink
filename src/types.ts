@@ -4,5 +4,5 @@ export type Player = {
   score: number;
   createdAt: number;
   reachedAt: number;
+  avatarColor: string;
 };
-

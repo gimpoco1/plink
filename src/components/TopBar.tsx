@@ -1,11 +1,12 @@
 type Props = {
   hasPlayers: boolean;
   playerCount: number;
+  showReset?: boolean;
   onAddPlayer: () => void;
   onResetGame: () => void;
 };
 
-export function TopBar({ hasPlayers, playerCount, onAddPlayer, onResetGame }: Props) {
+export function TopBar({ hasPlayers, playerCount, showReset = true, onAddPlayer, onResetGame }: Props) {
   return (
     <header className="topbar">
       <div className="topbar__left">
@@ -43,15 +44,13 @@ export function TopBar({ hasPlayers, playerCount, onAddPlayer, onResetGame }: Pr
             </div>
             <div className="brand__title">Point Tracker</div>
           </div>
-          <div className="brand__meta" aria-label="Game stats">
-            {hasPlayers ? (
+          {hasPlayers ? (
+            <div className="brand__meta" aria-label="Game stats">
               <span className="meta">
                 {playerCount} {playerCount === 1 ? "player" : "players"}
               </span>
-            ) : (
-              <></>
-            )}
-          </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -63,30 +62,20 @@ export function TopBar({ hasPlayers, playerCount, onAddPlayer, onResetGame }: Pr
             </svg>
           </button>
         ) : null}
-        <button
-          className="iconbtn iconbtn--danger"
-          type="button"
-          onClick={onResetGame}
-          disabled={!hasPlayers}
-          aria-label="Reset game"
-          title="Reset game"
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M20 12a8 8 0 1 1-2.34-5.66"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            <path
-              d="M20 4v6h-6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        {hasPlayers && showReset ? (
+          <button className="iconbtn iconbtn--danger" type="button" onClick={onResetGame} aria-label="Reset game" title="Reset game">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M20 4v6h-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        ) : null}
       </div>
     </header>
   );

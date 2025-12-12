@@ -1,23 +1,40 @@
 import { useRef } from "react";
-import { AddPlayerDialog, type AddPlayerDialogHandle } from "./components/AddPlayerDialog";
-import { ConfirmDialog, type ConfirmDialogHandle } from "./components/ConfirmDialog";
+import {
+  AddPlayerDialog,
+  type AddPlayerDialogHandle,
+} from "./components/AddPlayerDialog";
+import {
+  ConfirmDialog,
+  type ConfirmDialogHandle,
+} from "./components/ConfirmDialog";
 import { PlayerCard } from "./components/PlayerCard";
 import { TopBar } from "./components/TopBar";
 import { usePlayers } from "./hooks/usePlayers";
 import { useScorePulse } from "./hooks/useScorePulse";
 
 export default function App() {
-  const { players, sortedPlayers, ranks, allZero, addPlayer, updateScore, removePlayer, resetScores } = usePlayers();
+  const {
+    players,
+    sortedPlayers,
+    ranks,
+    allZero,
+    addPlayer,
+    updateScore,
+    removePlayer,
+    resetScores,
+  } = usePlayers();
   const { pulseById, triggerPulse } = useScorePulse();
   const addDialogRef = useRef<AddPlayerDialogHandle | null>(null);
   const confirmRef = useRef<ConfirmDialogHandle | null>(null);
   const hasPlayers = players.length > 0;
+  const hasNonZeroScore = players.some((p) => p.score !== 0);
 
   return (
     <div className="app">
       <TopBar
         hasPlayers={hasPlayers}
         playerCount={players.length}
+        showReset={hasNonZeroScore}
         onAddPlayer={() => addDialogRef.current?.open()}
         onResetGame={async () => {
           if (!players.length) return;
@@ -35,9 +52,13 @@ export default function App() {
       <main className="content">
         {!hasPlayers ? (
           <section className="empty">
-            <h1 className="empty__title">Track points fast.</h1>
-            <button className="btn btn--primary btn--xl" type="button" onClick={() => addDialogRef.current?.open()}>
-              Add your first player
+            <h1 className="empty_title">Track points fast.</h1>
+            <button
+              className="btn btn--primary btn--xl"
+              type="button"
+              onClick={() => addDialogRef.current?.open()}
+            >
+              Add a player
             </button>
           </section>
         ) : (
@@ -75,7 +96,7 @@ export default function App() {
         )}
       </main>
 
-      <AddPlayerDialog ref={addDialogRef} onAdd={(name) => addPlayer(name)} />
+      <AddPlayerDialog ref={addDialogRef} onAdd={(name, avatarColor) => addPlayer(name, avatarColor)} />
       <ConfirmDialog ref={confirmRef} />
     </div>
   );

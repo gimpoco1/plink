@@ -20,12 +20,14 @@ export function loadPlayers(): Player[] {
           return null;
         }
         const reachedAt = typeof obj.reachedAt === "number" ? obj.reachedAt : (obj.createdAt as number);
+        const avatarColor = typeof obj.avatarColor === "string" ? obj.avatarColor : "#64748b";
         return {
           id: obj.id,
           name: obj.name,
           score: obj.score,
           createdAt: obj.createdAt,
           reachedAt,
+          avatarColor,
         } satisfies Player;
       })
       .filter(Boolean) as Player[];
@@ -37,4 +39,3 @@ export function loadPlayers(): Player[] {
 export function savePlayers(players: Player[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
 }
-

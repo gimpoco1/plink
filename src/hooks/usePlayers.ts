@@ -16,11 +16,14 @@ export function usePlayers() {
   const ranks = useMemo(() => computeRanks(sortedPlayers), [sortedPlayers]);
   const allZero = useMemo(() => players.length > 0 && players.every((p) => p.score === 0), [players]);
 
-  function addPlayer(rawName: string) {
+  function addPlayer(rawName: string, avatarColor: string) {
     const name = clampName(rawName);
     if (!name) return false;
     const now = Date.now();
-    setPlayers((prev) => [{ id: uid(), name, score: 0, createdAt: now, reachedAt: now }, ...prev]);
+    setPlayers((prev) => [
+      { id: uid(), name, score: 0, createdAt: now, reachedAt: now, avatarColor },
+      ...prev,
+    ]);
     return true;
   }
 
@@ -43,4 +46,3 @@ export function usePlayers() {
 
   return { players, sortedPlayers, ranks, allZero, addPlayer, updateScore, removePlayer, resetScores };
 }
-
