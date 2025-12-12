@@ -600,8 +600,6 @@ input {
   gap: 10px;
 }
 
-
-
 .swatch {
   width: 100%;
   max-width: 40px;
@@ -612,7 +610,8 @@ input {
 }
 
 .swatch--selected {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 5px rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 0 5px rgba(255, 255, 255, 0.12);
 }
 
 .profiles {
@@ -692,13 +691,10 @@ input {
 
 .checkRow {
   margin-top: 24px;
+  margin-bottom: 36px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
 }
 
 .checkRow__box {
@@ -713,7 +709,7 @@ input {
 }
 
 .orLabel {
-  margin-top: 24px;
+  margin-top: 12px;
   margin-bottom: 10px;
   color: var(--muted);
   font-size: 12px;
