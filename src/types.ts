@@ -14,3 +14,14 @@ export type PlayerProfile = {
   avatarColor: string;
   createdAt: number;
 };
+
+export type Game = {
+  id: string;
+  name: string;
+  targetPoints: number;
+  accentColor: string;
+  players: Player[];
+  createdAt: number;
+  updatedAt: number;
+  endedAt?: number;
+};

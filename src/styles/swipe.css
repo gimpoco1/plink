@@ -1,0 +1,64 @@
+.swipeRow {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--glow);
+}
+
+.swipeRow .card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  background: rgba(12, 16, 28, 0.92);
+}
+
+.swipeAction {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--swipeW, 92px);
+  display: flex;
+  align-items: stretch;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  z-index: 0;
+}
+
+.swipeRow[data-open="true"] .swipeAction {
+  opacity: 1;
+}
+
+.swipeDelete {
+  width: 100%;
+  border: 0;
+  background: rgba(251, 113, 133, 0.18);
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.swipeDelete svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.swipeCard {
+  will-change: transform;
+  touch-action: pan-y;
+  transition: transform 160ms ease;
+  position: relative;
+  z-index: 1;
+}
+
+.swipeCard--dragging {
+  transition: none;
+}
+

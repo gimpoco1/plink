@@ -1,0 +1,101 @@
+.homeCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow: var(--glow);
+  padding: 14px;
+}
+
+.homeCard__title {
+  font-weight: 950;
+  letter-spacing: -0.2px;
+  margin-bottom: 24px;
+
+}
+
+.homeForm {
+  display: grid;
+  gap: 12px;
+}
+
+.homeList {
+  margin-top: 44px;
+}
+
+.homeList__title {
+  font-weight: 950;
+  letter-spacing: -0.2px;
+  margin: 10px 2px;
+}
+
+.homeEmpty {
+  color: var(--muted);
+  font-weight: 700;
+  padding: 12px 2px;
+}
+
+.gameRows {
+  display: grid;
+  gap: 10px;
+}
+
+.gameRow__main {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  align-self: stretch;
+  width: 100%;
+}
+
+.gameRowCard {
+  overflow: hidden;
+  position: relative;
+}
+
+.gameRowCard::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--accent, rgba(255, 255, 255, 0.16));
+  pointer-events: none;
+}
+
+.gameRowCard .gameRow__main {
+  cursor: pointer;
+  padding-left: 18px;
+}
+
+.gameRow__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gameRow__name {
+  font-weight: 950;
+  font-size: 16px;
+  letter-spacing: -0.2px;
+}
+
+.gameRow__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gameRow__date {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+

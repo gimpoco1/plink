@@ -1,0 +1,71 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(7, 10, 18, 0.55);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  min-height: 72px;
+}
+
+.logo__img {
+  width: 42px;
+  height: 42px;
+}
+
+.brand {
+  display: grid;
+  gap: 6px;
+}
+
+.brand__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.92);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+
+
+
+.brand__title {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+}
+
+.brand__meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.topbar__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+

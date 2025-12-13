@@ -7,7 +7,8 @@ import {
 } from "react";
 import { AVATAR_COLORS } from "../constants";
 import type { PlayerProfile } from "../types";
-import { clampName } from "../utils/text";
+import { capitalizeFirst, clampName } from "../utils/text";
+import "./AddPlayerDialog.css";
 
 export type AddPlayerDialogHandle = {
   open: () => void;
@@ -162,6 +163,7 @@ export const AddPlayerDialog = forwardRef<AddPlayerDialogHandle, Props>(
               <div className="profiles">
                 {filteredProfiles.map((p) => {
                   const disabled = takenProfileIds.has(p.id);
+                  const displayName = capitalizeFirst(p.name);
                   return (
                     <div className="profileRow" key={p.id}>
                       <div className="profileLeft">
@@ -170,7 +172,7 @@ export const AddPlayerDialog = forwardRef<AddPlayerDialogHandle, Props>(
                           style={{ backgroundColor: p.avatarColor }}
                           aria-hidden="true"
                         />
-                        <span className="profileName">{p.name}</span>
+                        <span className="profileName">{displayName}</span>
                       </div>
                       <div className="profileActions">
                         <button
@@ -183,8 +185,8 @@ export const AddPlayerDialog = forwardRef<AddPlayerDialogHandle, Props>(
                           disabled={disabled}
                           aria-label={
                             disabled
-                              ? `${p.name} already added`
-                              : `Add ${p.name}`
+                              ? `${displayName} already added`
+                              : `Add ${displayName}`
                           }
                         >
                           {disabled ? "Added" : "Add"}
@@ -193,7 +195,7 @@ export const AddPlayerDialog = forwardRef<AddPlayerDialogHandle, Props>(
                           className="iconbtn iconbtn--danger iconbtn--sm"
                           type="button"
                           onClick={() => onDeleteProfile(p.id)}
-                          aria-label={`Delete saved player ${p.name}`}
+                          aria-label={`Delete saved player ${displayName}`}
                           title="Delete saved player"
                         >
                           <svg

@@ -1,46 +1,56 @@
-import { useRef } from "react";
-import {
-  AddPlayerDialog,
-  type AddPlayerDialogHandle,
-} from "./components/AddPlayerDialog";
-import {
-  ConfirmDialog,
-  type ConfirmDialogHandle,
-} from "./components/ConfirmDialog";
-import { PlayerCard } from "./components/PlayerCard";
+import { useMemo, useRef, useState } from "react";
+import { type AddPlayerDialogHandle } from "./components/AddPlayerDialog";
+import { ConfirmDialog, type ConfirmDialogHandle } from "./components/ConfirmDialog";
 import { TopBar } from "./components/TopBar";
-import { usePlayers } from "./hooks/usePlayers";
 import { useProfiles } from "./hooks/useProfiles";
+import { useGames } from "./hooks/useGames";
 import { useScorePulse } from "./hooks/useScorePulse";
+import { HomeScreen } from "./screens/HomeScreen";
+import { GameScreen } from "./screens/GameScreen";
 
 export default function App() {
+  const { profiles, upsertProfile, deleteProfile } = useProfiles();
   const {
-    players,
+    games,
+    currentGame,
+    createGame,
+    selectGame,
+    deleteGame,
+    addPlayer,
+    removePlayer,
+    resetScores,
+    updateScore,
     sortedPlayers,
     ranks,
     allZero,
-    addPlayer,
-    updateScore,
-    removePlayer,
-    resetScores,
-  } = usePlayers();
-  const { profiles, upsertProfile, deleteProfile } = useProfiles();
+  } = useGames();
   const { pulseById, triggerPulse } = useScorePulse();
-  const addDialogRef = useRef<AddPlayerDialogHandle | null>(null);
-  const confirmRef = useRef<ConfirmDialogHandle | null>(null);
-  const hasPlayers = players.length > 0;
-  const hasNonZeroScore = players.some((p) => p.score !== 0);
-  const takenProfileIds = new Set(players.map((p) => p.profileId).filter(Boolean) as string[]);
+  const confirmRef = useRef<ConfirmDialogHandle>(null!);
+  const addDialogRef = useRef<AddPlayerDialogHandle>(null!);
+  const [view, setView] = useState<"home" | "game">(() => (currentGame ? "game" : "home"));
+
+  const gameMeta = useMemo(() => {
+    if (!currentGame) return undefined;
+    return `${currentGame.players.length} ${currentGame.players.length === 1 ? "player" : "players"} · Points to win:  ${currentGame.targetPoints}`;
+  }, [currentGame]);
+
+  const hasNonZeroScore = useMemo(() => {
+    if (!currentGame) return false;
+    return currentGame.players.some((p) => p.score !== 0);
+  }, [currentGame]);
 
   return (
     <div className="app">
       <TopBar
-        hasPlayers={hasPlayers}
-        playerCount={players.length}
-        showReset={hasNonZeroScore}
+        title={view === "game" && currentGame ? currentGame.name : "Point Tracker"}
+        meta={view === "game" && currentGame ? gameMeta : undefined}
+        hasPlayers={view === "game" && !!currentGame && currentGame.players.length > 0}
+        playerCount={view === "game" && currentGame ? currentGame.players.length : 0}
+        showReset={view === "game" && hasNonZeroScore}
+        onLogoClick={() => setView("home")}
         onAddPlayer={() => addDialogRef.current?.open()}
         onResetGame={async () => {
-          if (!players.length) return;
+          if (!currentGame) return;
           const ok = await confirmRef.current?.confirm({
             title: "Reset game",
             message: "Reset all scores to 0?",
@@ -48,91 +58,100 @@ export default function App() {
             tone: "danger",
           });
           if (!ok) return;
-          resetScores();
+          resetScores(currentGame.id);
         }}
       />
 
-      <main className="content">
-        {!hasPlayers ? (
-          <section className="empty">
-            <h1 className="empty_title">Track points fast.</h1>
-            <button
-              className="btn btn--primary btn--xl"
-              type="button"
-              onClick={() => addDialogRef.current?.open()}
-            >
-              Add a player
-            </button>
-          </section>
-        ) : (
-          <section className="grid" aria-label="Players">
-            {sortedPlayers.map((player) => {
-              const rank = ranks.get(player.id) ?? 1;
-              const pulse = pulseById[player.id];
-              return (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  rank={rank}
-                  showRank={!allZero}
-                  pulse={pulse}
-                  onDelta={(playerId, delta) => {
-                    updateScore(playerId, delta);
-                    triggerPulse(playerId, delta);
-                  }}
-                  onDelete={async (playerId) => {
-                    const p = players.find((x) => x.id === playerId);
-                    const label = p ? p.name : "this player";
-                    const ok = await confirmRef.current?.confirm({
-                      title: "Delete player",
-                      message: `Remove "${label}" from the game?`,
-                      confirmText: "Delete",
-                      tone: "danger",
-                    });
-                    if (!ok) return;
-                    removePlayer(playerId);
-                  }}
-                />
-              );
-            })}
-          </section>
-        )}
-      </main>
-
-      <AddPlayerDialog
-        ref={addDialogRef}
-        profiles={profiles}
-        takenProfileIds={takenProfileIds}
-        onAddFromProfile={(profileId) => {
-          const profile = profiles.find((p) => p.id === profileId);
-          if (!profile) return;
-          if (takenProfileIds.has(profileId)) return;
-          addPlayer(profile.name, profile.avatarColor, profileId);
-        }}
-        onDeleteProfile={async (profileId) => {
-          const profile = profiles.find((p) => p.id === profileId);
-          const label = profile ? profile.name : "this player";
-          const ok = await confirmRef.current?.confirm({
-            title: "Delete saved player",
-            message: `Delete "${label}" from your saved players?`,
-            confirmText: "Delete",
-            tone: "danger",
-          });
-          if (!ok) return;
-          deleteProfile(profileId);
-        }}
-        onCreateAndAdd={(name, avatarColor, saveForLater) => {
-          if (!saveForLater) {
-            addPlayer(name, avatarColor);
+      {view === "home" ? (
+        <HomeScreen
+          games={games}
+          onCreate={(input) => {
+            const created = createGame(input);
+            if (created) setView("game");
+          }}
+          onEnter={(gameId) => {
+            selectGame(gameId);
+            setView("game");
+          }}
+          onDelete={async (gameId) => {
+            const g = games.find((x) => x.id === gameId);
+            const label = g ? g.name : "this game";
+            const ok = await confirmRef.current?.confirm({
+              title: "Delete game",
+              message: `Delete "${label}"? This removes the game and its scores.`,
+              confirmText: "Delete",
+              tone: "danger",
+            });
+            if (!ok) return;
+            deleteGame(gameId);
+          }}
+        />
+      ) : currentGame ? (
+        <GameScreen
+          game={currentGame}
+          profiles={profiles}
+          confirmRef={confirmRef}
+          pulseById={pulseById}
+          onTriggerPulse={triggerPulse}
+          addDialogRef={addDialogRef}
+          ranks={ranks}
+          sortedPlayers={sortedPlayers}
+          allZero={allZero}
+          onAddFromProfile={(profileId) => {
+            const profile = profiles.find((p) => p.id === profileId);
+            if (!profile) return;
+            addPlayer(currentGame.id, { name: profile.name, avatarColor: profile.avatarColor, profileId: profile.id });
+          }}
+          onDeleteProfile={async (profileId) => {
+            const profile = profiles.find((p) => p.id === profileId);
+            const label = profile ? profile.name : "this player";
+            const ok = await confirmRef.current?.confirm({
+              title: "Delete saved player",
+              message: `Delete "${label}" from your saved players?`,
+              confirmText: "Delete",
+              tone: "danger",
+            });
+            if (!ok) return;
+            deleteProfile(profileId);
+          }}
+          onCreateAndAdd={(name, avatarColor, saveForLater) => {
+            if (!currentGame) return false;
+            if (!saveForLater) {
+              addPlayer(currentGame.id, { name, avatarColor });
+              return true;
+            }
+            const profile = upsertProfile(name, avatarColor);
+            if (!profile) return false;
+            addPlayer(currentGame.id, { name: profile.name, avatarColor: profile.avatarColor, profileId: profile.id });
             return true;
-          }
+          }}
+          onUpdateScore={(playerId, delta) => updateScore(currentGame.id, playerId, delta)}
+          onDeletePlayer={(playerId) => removePlayer(currentGame.id, playerId)}
+        />
+      ) : (
+        <HomeScreen
+          games={games}
+          onCreate={(input) => {
+            const created = createGame(input);
+            if (created) setView("game");
+          }}
+          onEnter={(gameId) => {
+            selectGame(gameId);
+            setView("game");
+          }}
+          onDelete={async (gameId) => {
+            const ok = await confirmRef.current?.confirm({
+              title: "Delete game",
+              message: "Delete this game?",
+              confirmText: "Delete",
+              tone: "danger",
+            });
+            if (!ok) return;
+            deleteGame(gameId);
+          }}
+        />
+      )}
 
-          const profile = upsertProfile(name, avatarColor);
-          if (!profile) return false;
-          if (!takenProfileIds.has(profile.id)) addPlayer(profile.name, profile.avatarColor, profile.id);
-          return true;
-        }}
-      />
       <ConfirmDialog ref={confirmRef} />
     </div>
   );

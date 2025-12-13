@@ -1,0 +1,185 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pill--winner {
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pill--winner { 
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 251, 15, 0.592);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  margin-right: auto;
+
+
+}
+
+.btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-weight: 800;
+  min-height: 44px;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.btn--xl {
+  padding: 14px 18px;
+  font-size: 16px;
+}
+
+.btn--primary {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--primary);
+  color: var(--primaryInk);
+}
+
+.btn--ghost {
+  background: transparent;
+}
+
+.btn--wide {
+  width: 100%;
+}
+
+.btn--square {
+  width: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.btn--sm {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.btn--dangerSolid {
+  border-color: rgba(251, 113, 133, 0.22);
+  background: rgba(251, 113, 133, 0.92);
+  color: rgba(10, 14, 24, 0.95);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+}
+
+.btn:not(:disabled),
+.iconbtn {
+  cursor: pointer;
+}
+
+.glyph {
+  display: block;
+  line-height: 1;
+  transform: translateY(-0.5px);
+}
+
+.btn:not(:disabled):active,
+.iconbtn:active {
+  transform: translateY(1px);
+}
+
+.btn:not(:disabled):hover,
+.iconbtn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.btn:focus-visible,
+.iconbtn:focus-visible,
+.input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.iconbtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.iconbtn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.iconbtn--sm {
+  width: 36px;
+  height: 36px;
+}
+
+.iconbtn--sm svg {
+  width: 18px;
+  height: 18px;
+}
+
+.iconbtn--primary {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--primary);
+  color: var(--primaryInk);
+}
+
+.iconbtn--danger {
+  border-color: rgba(251, 113, 133, 0.18);
+  background: rgba(251, 113, 133, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.field__label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.input {
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.input--compact {
+  padding: 12px 12px;
+  min-height: 44px;
+}

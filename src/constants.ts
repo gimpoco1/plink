@@ -1,6 +1,20 @@
 export const STORAGE_KEY = "point-tracker:v1";
 export const PROFILES_STORAGE_KEY = "point-tracker:profiles:v1";
+export const GAMES_STORAGE_KEY = "point-tracker:games:v1";
+export const CURRENT_GAME_ID_KEY = "point-tracker:currentGameId:v1";
 export const QUICK_DELTAS = [-5, -3, -1, 1, 3, 5] as const;
+
+export const GAME_ACCENT_COLORS = [
+  "#6ea8fe",
+  "#7cdbd5",
+  "#f7b267",
+  "#ff7aa2",
+  "#86efac",
+  "#a78bfa",
+  "#fca5a5",
+  "#fcd34d",
+  "#a6c656",
+] as const;
 
 export const AVATAR_COLORS = [
   { id: "slate", label: "Slate", value: "#64748b" },

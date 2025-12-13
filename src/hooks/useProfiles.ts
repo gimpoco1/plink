@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { PlayerProfile } from "../types";
 import { loadProfiles, saveProfiles } from "../storage/profilesStorage";
 import { uid } from "../utils/id";
-import { clampName } from "../utils/text";
+import { formatPlayerName } from "../utils/text";
 
 export function useProfiles() {
   const [profiles, setProfiles] = useState<PlayerProfile[]>(() => loadProfiles());
@@ -19,7 +19,7 @@ export function useProfiles() {
   }, [profiles]);
 
   function upsertProfile(rawName: string, avatarColor: string): PlayerProfile | null {
-    const name = clampName(rawName);
+    const name = formatPlayerName(rawName);
     if (!name) return null;
 
     const existing = profiles.find((p) => p.name.toLowerCase() === name.toLowerCase());
@@ -41,4 +41,3 @@ export function useProfiles() {
 
   return { profiles: sortedProfiles, upsertProfile, deleteProfile };
 }
-
