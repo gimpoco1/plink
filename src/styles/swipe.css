@@ -30,23 +30,52 @@
   opacity: 1;
 }
 
+.swipeRename,
+.swipeDuplicate,
 .swipeDelete {
-  width: 100%;
+  flex: 1;
   border: 0;
-  background: rgba(251, 113, 133, 0.18);
   color: rgba(255, 255, 255, 0.95);
   font-weight: 900;
+  font-size: 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
   pointer-events: auto;
+  transition: background 0.2s ease;
 }
 
+.swipeRename {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.swipeRename:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.swipeDuplicate {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+.swipeDuplicate:active {
+  background: rgba(139, 92, 246, 0.4);
+}
+
+.swipeDelete {
+  background: rgba(251, 113, 133, 0.18);
+}
+
+.swipeDelete:active {
+  background: rgba(251, 113, 133, 0.35);
+}
+
+.swipeRename svg,
+.swipeDuplicate svg,
 .swipeDelete svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: block;
 }
 
@@ -61,4 +90,3 @@
 .swipeCard--dragging {
   transition: none;
 }
-

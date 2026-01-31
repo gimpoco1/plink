@@ -19,15 +19,18 @@ type Props = {
   addDialogRef: React.RefObject<AddPlayerDialogHandle>;
   pulseById: Record<string, "pos" | "neg" | undefined>;
   onTriggerPulse: (playerId: string, delta: number) => void;
-  onAddFromProfile: (profileId: string) => void;
   onDeleteProfile: (profileId: string) => void;
-  onCreateAndAdd: (
-    name: string,
-    avatarColor: string,
-    saveForLater: boolean
-  ) => boolean;
+  onStartGame: (
+    profileIds: string[],
+    newPlayers: Array<{
+      name: string;
+      avatarColor: string;
+      saveForLater: boolean;
+    }>,
+  ) => void;
   onUpdateScore: (playerId: string, delta: number) => void;
   onDeletePlayer: (playerId: string) => void;
+  onRenameGame: () => void;
 };
 
 export function GameScreen({
@@ -37,16 +40,16 @@ export function GameScreen({
   addDialogRef,
   pulseById,
   onTriggerPulse,
-  onAddFromProfile,
   onDeleteProfile,
-  onCreateAndAdd,
+  onStartGame,
   onUpdateScore,
   onDeletePlayer,
+  onRenameGame,
 }: Props) {
   const takenProfileIds = useMemo(
     () =>
       new Set(game.players.map((p) => p.profileId).filter(Boolean) as string[]),
-    [game.players]
+    [game.players],
   );
 
   const hasPlayers = game.players.length > 0;
@@ -54,11 +57,11 @@ export function GameScreen({
   const prevWinnerIdRef = useRef<string | null>(null);
   const { orderedPlayers, ranks, scheduleResort } = useDelayedRanking(
     game.players,
-    1200
+    1200,
   );
   const allZero = useMemo(
     () => game.players.length > 0 && game.players.every((p) => p.score === 0),
-    [game.players]
+    [game.players],
   );
 
   const winner = useMemo(() => {
@@ -108,6 +111,7 @@ export function GameScreen({
                   showRank={!allZero}
                   pulse={pulse}
                   isWinner={winner?.id === player.id}
+                  targetPoints={game.targetPoints}
                   onDelta={(playerId, delta) => {
                     onUpdateScore(playerId, delta);
                     onTriggerPulse(playerId, delta);
@@ -117,9 +121,9 @@ export function GameScreen({
                     const p = game.players.find((x) => x.id === playerId);
                     const label = p ? capitalizeFirst(p.name) : "this player";
                     const ok = await confirmRef.current?.confirm({
-                      title: "Delete player",
-                      message: `Remove "${label}" from this game?`,
-                      confirmText: "Delete",
+                      title: "Remove player",
+                      message: `Do you want to remove ${label} from this game?`,
+                      confirmText: "Remove",
                       tone: "danger",
                     });
                     if (!ok) return;
@@ -136,11 +140,8 @@ export function GameScreen({
         ref={addDialogRef}
         profiles={profiles}
         takenProfileIds={takenProfileIds}
-        onAddFromProfile={(profileId) => {
-          onAddFromProfile(profileId);
-        }}
         onDeleteProfile={(profileId) => onDeleteProfile(profileId)}
-        onCreateAndAdd={onCreateAndAdd}
+        onStartGame={onStartGame}
       />
     </>
   );

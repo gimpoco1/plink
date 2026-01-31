@@ -1,0 +1,174 @@
+.profilesDialog {
+  max-height: 80vh;
+}
+
+.profilesDialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.profilesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 24px;
+}
+
+.profileItem {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.profileItem:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.profileItem__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profileAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 18px;
+  color: #fff;
+}
+
+.profileInfo {
+  flex: 1;
+}
+
+.profileName {
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: -8px;
+  border-radius: 6px;
+}
+
+.profileName:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.profileDetails {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.colorWheel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.colorDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.colorDot:hover {
+  transform: scale(1.15);
+}
+
+.colorDot.active {
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.editGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.editInput {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--pos);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  outline: none;
+}
+
+.miniBtn {
+  background: var(--pos);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.deleteBtn {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--neg);
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.deleteBtn:hover {
+  background: var(--neg);
+  color: #000;
+}
+
+.emptyMsg {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.closeBtn:hover {
+  color: #fff;
+}

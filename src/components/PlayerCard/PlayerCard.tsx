@@ -2,8 +2,19 @@ import { useMemo, useRef, useState } from "react";
 import type { Player } from "../../types";
 import { QUICK_DELTAS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
-import { capitalizeFirst } from "../../utils/text";
+import { capitalizeFirst, getInitials } from "../../utils/text";
 import "./PlayerCard.css";
+
+function formatRelativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return "long ago";
+}
 
 type Props = {
   player: Player;
@@ -11,18 +22,41 @@ type Props = {
   showRank: boolean;
   pulse?: "pos" | "neg";
   isWinner?: boolean;
+  targetPoints: number;
   onDelta: (playerId: string, delta: number) => void;
   onDelete: (playerId: string) => void;
 };
 
-export function PlayerCard({ player, rank, showRank, pulse, isWinner, onDelta, onDelete }: Props) {
+export function PlayerCard({
+  player,
+  rank,
+  showRank,
+  pulse,
+  isWinner,
+  targetPoints,
+  onDelta,
+  onDelete,
+}: Props) {
   const displayName = capitalizeFirst(player.name);
-  const initial = displayName.trim().slice(0, 1).toUpperCase() || "?";
-  const scoreClass = player.score > 0 ? "score score--pos" : player.score < 0 ? "score score--neg" : "score";
+  const initials = getInitials(player.name);
+  const scoreClass =
+    player.score > 0
+      ? "score score--pos"
+      : player.score < 0
+        ? "score score--neg"
+        : "score";
   const [customRaw, setCustomRaw] = useState("");
-  const customValue = useMemo(() => Number.parseInt(customRaw, 10), [customRaw]);
-  const canApplyCustom = Number.isFinite(customValue) && Math.abs(customValue) > 0;
+  const customValue = useMemo(
+    () => Number.parseInt(customRaw, 10),
+    [customRaw],
+  );
+  const canApplyCustom =
+    Number.isFinite(customValue) && Math.abs(customValue) > 0;
   const ACTION_WIDTH = 92;
+  const progress = Math.min(
+    100,
+    Math.max(0, (player.score / targetPoints) * 100),
+  );
 
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -85,6 +119,9 @@ export function PlayerCard({ player, rank, showRank, pulse, isWinner, onDelta, o
     else closeSwipe();
   }
 
+  const negDeltas = QUICK_DELTAS.filter((d) => d < 0).reverse(); // [-1, -3, -5]
+  const posDeltas = QUICK_DELTAS.filter((d) => d > 0).reverse(); // [5, 3, 1]
+
   return (
     <div
       className="swipeRow"
@@ -115,7 +152,13 @@ export function PlayerCard({ player, rank, showRank, pulse, isWinner, onDelta, o
       </div>
 
       <article
-        className={`card swipeCard${isSwiping ? " swipeCard--dragging" : ""}${isWinner ? " card--winner" : ""}`}
+        className={`card swipeCard${isSwiping ? " swipeCard--dragging" : ""}${
+          isWinner
+            ? " card--winner"
+            : rank === 1 && showRank
+              ? " card--leader"
+              : ""
+        }`}
         style={{ transform: `translateX(${swipeX}px)` }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -127,82 +170,117 @@ export function PlayerCard({ player, rank, showRank, pulse, isWinner, onDelta, o
       >
         <div className="cardHeader">
           <div className="cardHeader__left">
-          {showRank ? (
-            <div className="rank" aria-label={`Rank ${rank}`}>
-              #{rank}
-            </div>
-          ) : null}
-            <div className="avatar" style={avatarStyleFor(player.avatarColor)} aria-hidden="true">
-              {initial}
+            {showRank ? (
+              <div className="rank" aria-label={`Rank ${rank}`}>
+                #{rank}
+              </div>
+            ) : null}
+            <div
+              className="avatar"
+              style={avatarStyleFor(player.avatarColor)}
+              aria-hidden="true"
+            >
+              {initials}
             </div>
             <div className="who">
               <div className="who__name">{displayName}</div>
+              {player.reachedAt > player.createdAt && (
+                <div className="who__lastUpdate">
+                  Last: {formatRelativeTime(player.reachedAt)}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="cardHeader__right">
-            <div className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`} aria-label={`Score ${player.score}`}>
+            <div
+              className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`}
+              aria-label={`Score ${player.score}`}
+            >
               {player.score}
             </div>
-            {isWinner ? <div className="winnerMark" aria-label="Winner">🏆</div> : null}
+            {isWinner ? (
+              <div className="winnerMark" aria-label="Winner">
+                🏆
+              </div>
+            ) : null}
           </div>
         </div>
 
-        <div className="cardBody">
-        <div className="actions" aria-label={`Quick points for ${player.name}`}>
-          {QUICK_DELTAS.map((delta) => (
-            <button
-              key={delta}
-              type="button"
-              className={delta > 0 ? "chip chip--pos" : "chip chip--neg"}
-              onClick={() => onDelta(player.id, delta)}
-              aria-label={`${delta > 0 ? "Add" : "Subtract"} ${Math.abs(delta)} points`}
-            >
-              {delta > 0 ? `+${delta}` : `${delta}`}
-            </button>
-          ))}
+        <div className="progressContainer">
+          <div className="progressBar" style={{ width: `${progress}%` }} />
         </div>
 
-        <div className="customRow" aria-label={`Custom points for ${displayName}`}>
-          <input
-            className="input input--compact"
-            type="text"
-            inputMode="numeric"
-            placeholder="Custom"
-            value={customRaw}
-            onChange={(e) => setCustomRaw(e.target.value.replace(/[^\d]/g, ""))}
-            aria-label="Custom points amount"
-          />
-            <button
-              className="btn btn--ghost btn--square"
-              type="button"
-              disabled={!canApplyCustom}
-              onClick={() => {
-                onDelta(player.id, -Math.abs(customValue));
-                setCustomRaw("");
-              }}
-              aria-label="Subtract custom points"
-              title="Subtract"
-            >
-              <span className="glyph" aria-hidden="true">
-                −
-              </span>
-            </button>
-            <button
-              className="btn btn--primary btn--square"
-              type="button"
-              disabled={!canApplyCustom}
-              onClick={() => {
-                onDelta(player.id, Math.abs(customValue));
-                setCustomRaw("");
-              }}
-              aria-label="Add custom points"
-              title="Add"
-            >
-              <span className="glyph" aria-hidden="true">
-                +
-              </span>
-            </button>
+        <div className="cardBody">
+          <div className="compactControls">
+            <div className="deltaGroup deltaGroup--neg">
+              {negDeltas.map((delta) => (
+                <button
+                  key={delta}
+                  type="button"
+                  className="dot dot--neg"
+                  onClick={() => onDelta(player.id, delta)}
+                >
+                  {delta}
+                </button>
+              ))}
+            </div>
+
+            <div className="customPod">
+              <input
+                className="input input--mini"
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={customRaw}
+                onChange={(e) =>
+                  setCustomRaw(e.target.value.replace(/[^\d]/g, ""))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && canApplyCustom) {
+                    onDelta(player.id, Math.abs(customValue));
+                    setCustomRaw("");
+                  }
+                }}
+              />
+              <div className="podButtons">
+                <button
+                  className="podBtn podBtn--neg"
+                  type="button"
+                  disabled={!canApplyCustom}
+                  onClick={() => {
+                    onDelta(player.id, -Math.abs(customValue));
+                    setCustomRaw("");
+                  }}
+                >
+                  −
+                </button>
+                <button
+                  className="podBtn podBtn--pos"
+                  type="button"
+                  disabled={!canApplyCustom}
+                  onClick={() => {
+                    onDelta(player.id, Math.abs(customValue));
+                    setCustomRaw("");
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="deltaGroup deltaGroup--pos">
+              {posDeltas.map((delta) => (
+                <button
+                  key={delta}
+                  type="button"
+                  className="dot dot--pos"
+                  onClick={() => onDelta(player.id, delta)}
+                >
+                  +{delta}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </article>

@@ -1,5 +1,8 @@
 import { useMemo, useRef, useState } from "react";
-import { ConfirmDialog, type ConfirmDialogHandle } from "./components/ConfirmDialog";
+import {
+  ConfirmDialog,
+  type ConfirmDialogHandle,
+} from "./components/ConfirmDialog";
 import { TopBar } from "./components/TopBar/TopBar";
 import { useProfiles } from "./hooks/useProfiles";
 import { useGames } from "./hooks/useGames";
@@ -7,19 +10,27 @@ import { useScorePulse } from "./hooks/useScorePulse";
 import { HomeScreen } from "./screens/HomeScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { AddPlayerDialogHandle } from "./components/AddPlayerDialog/AddPlayerDialog";
+import {
+  ProfilesDialog,
+  type ProfilesDialogHandle,
+} from "./components/ProfilesDialog/ProfilesDialog";
 
 export default function App() {
-  const { profiles, upsertProfile, deleteProfile } = useProfiles();
+  const { profiles, upsertProfile, deleteProfile, updateProfile } =
+    useProfiles();
   const {
     games,
     currentGame,
     createGame,
+    duplicateGame,
     selectGame,
     deleteGame,
+    renameGame,
     addPlayer,
     removePlayer,
     resetScores,
     updateScore,
+    syncProfile,
   } = useGames();
   const { pulseById, triggerPulse } = useScorePulse();
   const confirmRef = useRef<ConfirmDialogHandle>(null!);
@@ -39,10 +50,15 @@ export default function App() {
   return (
     <div className="app">
       <TopBar
-        title={view === "game" && currentGame ? currentGame.name : "Plink"}
+        title={view === "game" && currentGame ? currentGame.name : ""}
+        showAppTitle={!(view === "game" && currentGame)}
         meta={view === "game" && currentGame ? gameMeta : undefined}
-        hasPlayers={view === "game" && !!currentGame && currentGame.players.length > 0}
-        playerCount={view === "game" && currentGame ? currentGame.players.length : 0}
+        hasPlayers={
+          view === "game" && !!currentGame && currentGame.players.length > 0
+        }
+        playerCount={
+          view === "game" && currentGame ? currentGame.players.length : 0
+        }
         showReset={view === "game" && hasNonZeroScore}
         onLogoClick={() => setView("home")}
         onAddPlayer={() => addDialogRef.current?.open()}
@@ -57,33 +73,17 @@ export default function App() {
           if (!ok) return;
           resetScores(currentGame.id);
         }}
+        onRename={() => {
+          if (view === "game" && currentGame) {
+            const nextName = window.prompt("Rename game", currentGame.name);
+            if (nextName !== null) {
+              renameGame(currentGame.id, nextName);
+            }
+          }
+        }}
       />
 
-      {view === "home" ? (
-        <HomeScreen
-          games={games}
-          onCreate={(input) => {
-            const created = createGame(input);
-            if (created) setView("game");
-          }}
-          onEnter={(gameId) => {
-            selectGame(gameId);
-            setView("game");
-          }}
-          onDelete={async (gameId) => {
-            const g = games.find((x) => x.id === gameId);
-            const label = g ? g.name : "this game";
-            const ok = await confirmRef.current?.confirm({
-              title: "Delete game",
-              message: `Delete "${label}"? This removes the game and its scores.`,
-              confirmText: "Delete",
-              tone: "danger",
-            });
-            if (!ok) return;
-            deleteGame(gameId);
-          }}
-        />
-      ) : currentGame ? (
+      {view === "game" && currentGame ? (
         <GameScreen
           game={currentGame}
           profiles={profiles}
@@ -91,11 +91,6 @@ export default function App() {
           pulseById={pulseById}
           onTriggerPulse={triggerPulse}
           addDialogRef={addDialogRef}
-          onAddFromProfile={(profileId) => {
-            const profile = profiles.find((p) => p.id === profileId);
-            if (!profile) return;
-            addPlayer(currentGame.id, { name: profile.name, avatarColor: profile.avatarColor, profileId: profile.id });
-          }}
           onDeleteProfile={async (profileId) => {
             const profile = profiles.find((p) => p.id === profileId);
             const label = profile ? profile.name : "this player";
@@ -108,35 +103,96 @@ export default function App() {
             if (!ok) return;
             deleteProfile(profileId);
           }}
-          onCreateAndAdd={(name, avatarColor, saveForLater) => {
-            if (!currentGame) return false;
-            if (!saveForLater) {
-              addPlayer(currentGame.id, { name, avatarColor });
-              return true;
-            }
-            const profile = upsertProfile(name, avatarColor);
-            if (!profile) return false;
-            addPlayer(currentGame.id, { name: profile.name, avatarColor: profile.avatarColor, profileId: profile.id });
-            return true;
+          onStartGame={(profileIds, newPlayers) => {
+            if (!currentGame) return;
+
+            // 1. Add players from existing profiles
+            profileIds.forEach((pid) => {
+              const profile = profiles.find((p) => p.id === pid);
+              if (profile) {
+                addPlayer(currentGame.id, {
+                  name: profile.name,
+                  avatarColor: profile.avatarColor,
+                  profileId: profile.id,
+                });
+              }
+            });
+
+            // 2. Add newly created players
+            newPlayers.forEach((np) => {
+              if (np.saveForLater) {
+                const profile = upsertProfile(np.name, np.avatarColor);
+                if (profile) {
+                  addPlayer(currentGame.id, {
+                    name: profile.name,
+                    avatarColor: profile.avatarColor,
+                    profileId: profile.id,
+                  });
+                }
+              } else {
+                addPlayer(currentGame.id, {
+                  name: np.name,
+                  avatarColor: np.avatarColor,
+                });
+              }
+            });
           }}
-          onUpdateScore={(playerId, delta) => updateScore(currentGame.id, playerId, delta)}
+          onUpdateScore={(playerId, delta) =>
+            updateScore(currentGame.id, playerId, delta)
+          }
           onDeletePlayer={(playerId) => removePlayer(currentGame.id, playerId)}
+          onRenameGame={() => {
+            const nextName = window.prompt("Rename game", currentGame.name);
+            if (nextName !== null) {
+              renameGame(currentGame.id, nextName);
+            }
+          }}
         />
       ) : (
         <HomeScreen
           games={games}
+          profiles={profiles}
           onCreate={(input) => {
             const created = createGame(input);
             if (created) setView("game");
+          }}
+          onUpsertProfile={upsertProfile}
+          onUpdateProfile={(id, updates) => {
+            updateProfile(id, updates);
+            syncProfile(id, updates);
+          }}
+          onDeleteProfile={async (profileId) => {
+            const profile = profiles.find((p) => p.id === profileId);
+            const ok = await confirmRef.current?.confirm({
+              title: "Delete saved player",
+              message: `Delete "${profile?.name || "this player"}"? They will be removed from your list.`,
+              confirmText: "Delete",
+              tone: "danger",
+            });
+            if (ok) deleteProfile(profileId);
+          }}
+          onDuplicate={(gameId) => {
+            const duplicated = duplicateGame(gameId);
+            if (duplicated) setView("game");
+          }}
+          onRename={(gameId) => {
+            const g = games.find((x) => x.id === gameId);
+            if (!g) return;
+            const nextName = window.prompt("Rename game", g.name);
+            if (nextName !== null) {
+              renameGame(gameId, nextName);
+            }
           }}
           onEnter={(gameId) => {
             selectGame(gameId);
             setView("game");
           }}
           onDelete={async (gameId) => {
+            const g = games.find((x) => x.id === gameId);
+            const label = g ? g.name : "this game";
             const ok = await confirmRef.current?.confirm({
               title: "Delete game",
-              message: "Delete this game?",
+              message: `Delete "${label}"? This removes the game and its scores.`,
               confirmText: "Delete",
               tone: "danger",
             });

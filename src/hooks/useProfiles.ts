@@ -5,7 +5,9 @@ import { uid } from "../utils/id";
 import { formatPlayerName } from "../utils/text";
 
 export function useProfiles() {
-  const [profiles, setProfiles] = useState<PlayerProfile[]>(() => loadProfiles());
+  const [profiles, setProfiles] = useState<PlayerProfile[]>(() =>
+    loadProfiles(),
+  );
 
   useEffect(() => {
     saveProfiles(profiles);
@@ -18,14 +20,21 @@ export function useProfiles() {
     });
   }, [profiles]);
 
-  function upsertProfile(rawName: string, avatarColor: string): PlayerProfile | null {
+  function upsertProfile(
+    rawName: string,
+    avatarColor: string,
+  ): PlayerProfile | null {
     const name = formatPlayerName(rawName);
     if (!name) return null;
 
-    const existing = profiles.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    const existing = profiles.find(
+      (p) => p.name.toLowerCase() === name.toLowerCase(),
+    );
     if (existing) {
       const updated: PlayerProfile = { ...existing, name, avatarColor };
-      setProfiles((prev) => prev.map((p) => (p.id === existing.id ? updated : p)));
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === existing.id ? updated : p)),
+      );
       return updated;
     }
 
@@ -39,5 +48,27 @@ export function useProfiles() {
     setProfiles((prev) => prev.filter((p) => p.id !== profileId));
   }
 
-  return { profiles: sortedProfiles, upsertProfile, deleteProfile };
+  function updateProfile(
+    id: string,
+    updates: Partial<Pick<PlayerProfile, "name" | "avatarColor">>,
+  ) {
+    setProfiles((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        let name = p.name;
+        if (updates.name !== undefined) {
+          const formatted = formatPlayerName(updates.name);
+          if (formatted) name = formatted;
+        }
+        return { ...p, ...updates, name };
+      }),
+    );
+  }
+
+  return {
+    profiles: sortedProfiles,
+    upsertProfile,
+    deleteProfile,
+    updateProfile,
+  };
 }

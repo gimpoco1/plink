@@ -6,24 +6,28 @@
 
 .swatch {
   width: 100%;
-  max-width: 40px;
-  height: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .swatch--selected {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 5px rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 15px rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+  z-index: 1;
 }
 
 .profiles {
-  margin-top: 10px;
+  margin-top: 14px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.04);
-  max-height: 140px;
+  background: rgba(255, 255, 255, 0.02);
+  max-height: 240px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -32,35 +36,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 12px 16px;
   border-top: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+
+.profileRow:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .profileRow:first-child {
   border-top: 0;
 }
 
-.profileLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
 .profileDot {
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .profileName {
   font-weight: 800;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 15px;
+  color: #ffffff;
 }
 
 .profileActions {
@@ -103,3 +103,9 @@
   font-weight: 800;
 }
 
+.btn--add-new {
+  margin-top: 12px;
+  border-style: dashed !important;
+  font-size: 13px;
+  opacity: 0.8;
+}

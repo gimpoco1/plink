@@ -1,39 +1,52 @@
 :root {
-  color-scheme: light;
-  --bg: #0b0f19;
+  color-scheme: dark;
+  --bg: #1a1c2c;
   --surface: rgba(255, 255, 255, 0.08);
   --surface2: rgba(255, 255, 255, 0.12);
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.68);
-  --border: rgba(255, 255, 255, 0.14);
-  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-  --radius: 16px;
-  --radius-sm: 14px;
-  --focus: 0 0 0 3px rgba(255, 255, 255, 0.14);
-  --pos: rgba(34, 211, 238, 0.95);
-  --neg: rgba(251, 113, 133, 0.95);
-  --primary: rgba(255, 255, 255, 0.94);
-  --primaryInk: rgba(10, 14, 24, 0.95);
-  --glow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 10px 40px rgba(0, 0, 0, 0.35);
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.6);
+  --border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --radius: 28px;
+  --radius-sm: 16px;
+  --focus: 0 0 0 4px rgba(162, 155, 254, 0.3);
+  --pos: #00d2d3;
+  --neg: #ff7675;
+  --primary: #ffffff;
+  --primaryInk: #1a1c2c;
+  --accent: #a29bfe;
+  --glow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 15px 45px rgba(0, 0, 0, 0.4);
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
-body {
+body,
+#root {
   height: 100%;
+  margin: 0;
+  overflow: hidden;
 }
 
 body {
-  margin: 0;
-  font-family: "Nunito", ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  background: radial-gradient(1000px 700px at 10% 10%, rgba(255, 255, 255, 0.08), transparent 60%),
-    radial-gradient(900px 650px at 90% 20%, rgba(255, 255, 255, 0.06), transparent 60%),
-    radial-gradient(700px 600px at 40% 95%, rgba(255, 255, 255, 0.05), transparent 60%), var(--bg);
+  font-family:
+    "Nunito",
+    ui-rounded,
+    "SF Pro Rounded",
+    -apple-system,
+    system-ui;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(162, 155, 254, 0.3) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(255, 118, 117, 0.25) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(0, 210, 211, 0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(253, 121, 168, 0.2) 0px, transparent 50%);
   color: var(--text);
+  overflow: hidden;
+  height: 100dvh;
 }
 
 button,
@@ -42,9 +55,11 @@ input {
 }
 
 .app {
-  min-height: 100%;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .content {
@@ -52,6 +67,8 @@ input {
   max-width: 820px;
   width: 100%;
   margin: 0 auto;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .grid {
@@ -68,25 +85,30 @@ input {
 }
 
 .empty {
-  margin-top: 20vh;
-  margin-left: 16px;
-  margin-right: 16px;
-  display: grid;
-  place-items: center;
+  margin-top: 15vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 24px;
-  border: thick double var(--border);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: var(--glow);
+  padding: 48px 24px;
+  border-radius: 32px;
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
-.empty_title,
 .empty__title {
-  margin: 4px 0 20px;
-  font-size: 28px;
-  line-height: 1.15;
-  letter-spacing: -0.4px;
+  margin: 0 0 12px;
+  font-size: 32px;
+  font-weight: 950;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  color: #ffffff;
 }
 
 .empty__hint {

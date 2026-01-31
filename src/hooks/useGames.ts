@@ -15,11 +15,14 @@ import { GAME_ACCENT_COLORS } from "../constants";
 type CreateGameInput = {
   name: string;
   targetPoints: number;
+  initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
 };
 
 export function useGames() {
   const migrated = useMemo(() => migrateSingleGameToGamesIfNeeded(), []);
-  const [games, setGames] = useState<Game[]>(() => migrated?.games ?? loadGames());
+  const [games, setGames] = useState<Game[]>(
+    () => migrated?.games ?? loadGames(),
+  );
   const [currentGameId, setCurrentGameId] = useState<string | null>(
     () => migrated?.currentGameId ?? loadCurrentGameId(),
   );
@@ -27,7 +30,9 @@ export function useGames() {
   function pickUniqueAccent(used: Set<string>): string {
     const available = GAME_ACCENT_COLORS.filter((c) => !used.has(c));
     if (available.length) {
-      return available[Math.floor(Math.random() * available.length)] ?? "#94a3b8";
+      return (
+        available[Math.floor(Math.random() * available.length)] ?? "#94a3b8"
+      );
     }
 
     // Fallback: generate a mostly-unique color (still stored) if palette is exhausted.
@@ -75,7 +80,10 @@ export function useGames() {
   }, [currentGameId]);
 
   const currentGame = useMemo(
-    () => (currentGameId ? games.find((g) => g.id === currentGameId) ?? null : null),
+    () =>
+      currentGameId
+        ? (games.find((g) => g.id === currentGameId) ?? null)
+        : null,
     [games, currentGameId],
   );
 
@@ -84,20 +92,33 @@ export function useGames() {
   }, [games]);
 
   function createGame(input: CreateGameInput): Game | null {
-    const name = clampName(input.name);
-    const targetPoints = Number.isFinite(input.targetPoints) ? Math.trunc(input.targetPoints) : 0;
+    const name = clampName(input.name).toUpperCase();
+    const targetPoints = Number.isFinite(input.targetPoints)
+      ? Math.trunc(input.targetPoints)
+      : 0;
     if (!name) return null;
     if (targetPoints <= 0) return null;
 
     const now = Date.now();
     const used = new Set(games.map((g) => g.accentColor).filter(Boolean));
     const accentColor = pickUniqueAccent(used);
+
+    const players: Player[] = (input.initialPlayers ?? []).map((p) => ({
+      id: uid(),
+      name: formatPlayerName(p.name),
+      score: 0,
+      createdAt: now,
+      reachedAt: now,
+      avatarColor: p.avatarColor,
+      profileId: p.profileId,
+    }));
+
     const game: Game = {
       id: uid(),
       name,
       targetPoints,
       accentColor,
-      players: [],
+      players,
       createdAt: now,
       updatedAt: now,
     };
@@ -115,6 +136,60 @@ export function useGames() {
     setCurrentGameId((prev) => (prev === gameId ? null : prev));
   }
 
+  function duplicateGame(gameId: string): Game | null {
+    const original = games.find((g) => g.id === gameId);
+    if (!original) return null;
+
+    const now = Date.now();
+    const used = new Set(games.map((g) => g.accentColor).filter(Boolean));
+    const accentColor = pickUniqueAccent(used);
+
+    const duplicatedPlayers: Player[] = original.players.map((p) => ({
+      ...p,
+      id: uid(),
+      score: 0,
+      createdAt: now,
+      reachedAt: now,
+    }));
+
+    // Find the next available number if duplicating multiple times
+    // Matches "NAME (N)" and extracts N
+    const baseName = original.name.replace(/\s\(\d+\)$/, "");
+    const siblings = games.filter((g) => g.name.startsWith(baseName));
+    let maxNum = 0;
+    for (const s of siblings) {
+      const match = s.name.match(/\((\d+)\)$/);
+      if (match) {
+        maxNum = Math.max(maxNum, parseInt(match[1], 10));
+      } else if (s.name === baseName) {
+        // Technically the base name is "0", but we start with (1)
+      }
+    }
+
+    const nextName = `${baseName} (${maxNum + 1})`.toUpperCase();
+
+    const next: Game = {
+      ...original,
+      id: uid(),
+      name: nextName,
+      accentColor,
+      players: duplicatedPlayers,
+      createdAt: now,
+      updatedAt: now,
+      endedAt: undefined,
+    };
+
+    setGames((prev) => [next, ...prev]);
+    setCurrentGameId(next.id);
+    return next;
+  }
+
+  function renameGame(gameId: string, name: string) {
+    const trimmed = clampName(name).toUpperCase();
+    if (!trimmed) return;
+    updateGame(gameId, (g) => ({ ...g, name: trimmed }));
+  }
+
   function updateGame(gameId: string, updater: (game: Game) => Game) {
     setGames((prev) =>
       prev.map((g) => {
@@ -125,7 +200,10 @@ export function useGames() {
     );
   }
 
-  function addPlayer(gameId: string, input: { name: string; avatarColor: string; profileId?: string }) {
+  function addPlayer(
+    gameId: string,
+    input: { name: string; avatarColor: string; profileId?: string },
+  ) {
     const name = formatPlayerName(input.name);
     if (!name) return;
     const now = Date.now();
@@ -142,7 +220,10 @@ export function useGames() {
   }
 
   function removePlayer(gameId: string, playerId: string) {
-    updateGame(gameId, (g) => ({ ...g, players: g.players.filter((p) => p.id !== playerId) }));
+    updateGame(gameId, (g) => ({
+      ...g,
+      players: g.players.filter((p) => p.id !== playerId),
+    }));
   }
 
   function resetScores(gameId: string) {
@@ -158,10 +239,35 @@ export function useGames() {
     if (!delta) return;
     const now = Date.now();
     updateGame(gameId, (g) => {
-      const players = g.players.map((p) => (p.id === playerId ? { ...p, score: p.score + delta, reachedAt: now } : p));
+      const players = g.players.map((p) =>
+        p.id === playerId
+          ? { ...p, score: p.score + delta, reachedAt: now }
+          : p,
+      );
       const hasWinner = players.some((p) => p.score >= g.targetPoints);
-      return { ...g, players, endedAt: hasWinner ? g.endedAt ?? now : undefined };
+      return {
+        ...g,
+        players,
+        endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
+      };
     });
+  }
+
+  function syncProfile(
+    profileId: string,
+    updates: Partial<Pick<Player, "name" | "avatarColor">>,
+  ) {
+    setGames((prev) =>
+      prev.map((g) => ({
+        ...g,
+        players: g.players.map((p) => {
+          if (p.profileId === profileId) {
+            return { ...p, ...updates };
+          }
+          return p;
+        }),
+      })),
+    );
   }
 
   const sortedPlayers = useMemo(() => {
@@ -170,19 +276,28 @@ export function useGames() {
   }, [currentGame]);
 
   const ranks = useMemo(() => computeRanks(sortedPlayers), [sortedPlayers]);
-  const allZero = useMemo(() => !!currentGame && currentGame.players.length > 0 && currentGame.players.every((p) => p.score === 0), [currentGame]);
+  const allZero = useMemo(
+    () =>
+      !!currentGame &&
+      currentGame.players.length > 0 &&
+      currentGame.players.every((p) => p.score === 0),
+    [currentGame],
+  );
 
   return {
     games: gamesByUpdated,
     currentGameId,
     currentGame,
     createGame,
+    duplicateGame,
     selectGame,
     deleteGame,
+    renameGame,
     addPlayer,
     removePlayer,
     resetScores,
     updateScore,
+    syncProfile,
     sortedPlayers,
     ranks,
     allZero,

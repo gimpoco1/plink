@@ -1,55 +1,68 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
+  letter-spacing: 0.1px;
 }
 
 .pill--winner {
-  border-color: rgba(34, 211, 238, 0.28);
-  background: rgba(34, 211, 238, 0.12);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.pill--winner { 
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(15, 251, 15, 0.592);
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 800;
-  margin-right: auto;
-
-
+  border-color: rgba(250, 204, 21, 0.25);
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
 }
 
 .btn {
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.06);
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   font-weight: 800;
-  min-height: 44px;
-  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  min-height: 48px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn--xl {
-  padding: 14px 18px;
+  padding: 14px 24px;
   font-size: 16px;
+  min-height: 56px;
 }
 
 .btn--primary {
   border-color: rgba(255, 255, 255, 0.16);
   background: var(--primary);
   color: var(--primaryInk);
+}
+
+.btn--pos {
+  border-color: rgba(74, 222, 128, 0.25);
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--pos);
+}
+
+.btn--pos:hover {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: var(--pos);
+}
+
+.btn--neg {
+  border-color: rgba(251, 113, 133, 0.25);
+  background: rgba(251, 113, 133, 0.1);
+  color: var(--neg);
+}
+
+.btn--neg:not(:disabled):hover {
+  background: rgba(251, 113, 133, 0.2);
+  border-color: var(--neg);
 }
 
 .btn--ghost {
@@ -100,13 +113,15 @@
 
 .btn:not(:disabled):active,
 .iconbtn:active {
-  transform: translateY(1px);
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .btn:not(:disabled):hover,
 .iconbtn:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .btn:focus-visible,
@@ -128,7 +143,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease;
 }
 
 .iconbtn svg {
