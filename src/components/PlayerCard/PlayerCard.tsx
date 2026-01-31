@@ -98,7 +98,7 @@ export function PlayerCard({
 
     if (drag.isHorizontal === undefined) {
       if (absDx < 12 && absDy < 12) return;
-      
+
       drag.isHorizontal = absDx > absDy * 1.5 + 5;
       if (drag.isHorizontal) {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -117,7 +117,7 @@ export function PlayerCard({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
     dragRef.current = null;
-    
+
     if (swipeX <= -ACTION_WIDTH * 0.5) {
       openSwipe();
     } else {

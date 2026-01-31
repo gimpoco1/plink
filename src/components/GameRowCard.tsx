@@ -63,7 +63,7 @@ export function GameRowCard({
     if (drag.isHorizontal === undefined) {
       // Need more movement to start a swipe on desktop to avoid accidental drags
       if (absDx < 12 && absDy < 12) return;
-      
+
       drag.isHorizontal = absDx > absDy * 1.5 + 5;
       if (drag.isHorizontal) {
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -81,7 +81,7 @@ export function GameRowCard({
   function onPointerUpOrCancel(e: React.PointerEvent) {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
-    
+
     dragRef.current = null;
 
     if (swipeX <= -ACTION_WIDTH * 0.5) {
