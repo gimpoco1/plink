@@ -85,7 +85,6 @@ export function PlayerCard({
       startSwipeX: swipeX,
     };
     setIsSwiping(false);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
 
   function onPointerMove(e: React.PointerEvent) {
@@ -98,13 +97,17 @@ export function PlayerCard({
     const absDy = Math.abs(dy);
 
     if (drag.isHorizontal === undefined) {
-      if (absDx < 6 && absDy < 6) return;
-      drag.isHorizontal = absDx > absDy + 4;
+      if (absDx < 12 && absDy < 12) return;
+      
+      drag.isHorizontal = absDx > absDy * 1.5 + 5;
+      if (drag.isHorizontal) {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        setIsSwiping(true);
+      }
     }
 
     if (!drag.isHorizontal) return;
     e.preventDefault();
-    if (!isSwiping) setIsSwiping(true);
 
     const next = Math.max(-ACTION_WIDTH, Math.min(0, drag.startSwipeX + dx));
     setSwipeX(next);
@@ -114,9 +117,18 @@ export function PlayerCard({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
     dragRef.current = null;
-    setIsSwiping(false);
-    if (swipeX <= -ACTION_WIDTH * 0.5) openSwipe();
-    else closeSwipe();
+    
+    if (swipeX <= -ACTION_WIDTH * 0.5) {
+      openSwipe();
+    } else {
+      closeSwipe();
+    }
+
+    if (isSwiping) {
+      setTimeout(() => setIsSwiping(false), 100);
+    } else {
+      setIsSwiping(false);
+    }
   }
 
   const negDeltas = QUICK_DELTAS.filter((d) => d < 0).reverse(); // [-1, -3, -5]
@@ -219,7 +231,15 @@ export function PlayerCard({
                   key={delta}
                   type="button"
                   className="dot dot--neg"
-                  onClick={() => onDelta(player.id, delta)}
+                  onClick={(e) => {
+                    if (isSwiping) return;
+                    if (swipeX !== 0) {
+                      closeSwipe();
+                      e.stopPropagation();
+                    } else {
+                      onDelta(player.id, delta);
+                    }
+                  }}
                 >
                   {delta}
                 </button>
@@ -248,9 +268,15 @@ export function PlayerCard({
                   className="podBtn podBtn--neg"
                   type="button"
                   disabled={!canApplyCustom}
-                  onClick={() => {
-                    onDelta(player.id, -Math.abs(customValue));
-                    setCustomRaw("");
+                  onClick={(e) => {
+                    if (isSwiping) return;
+                    if (swipeX !== 0) {
+                      closeSwipe();
+                      e.stopPropagation();
+                    } else {
+                      onDelta(player.id, -Math.abs(customValue));
+                      setCustomRaw("");
+                    }
                   }}
                 >
                   −
@@ -259,9 +285,15 @@ export function PlayerCard({
                   className="podBtn podBtn--pos"
                   type="button"
                   disabled={!canApplyCustom}
-                  onClick={() => {
-                    onDelta(player.id, Math.abs(customValue));
-                    setCustomRaw("");
+                  onClick={(e) => {
+                    if (isSwiping) return;
+                    if (swipeX !== 0) {
+                      closeSwipe();
+                      e.stopPropagation();
+                    } else {
+                      onDelta(player.id, Math.abs(customValue));
+                      setCustomRaw("");
+                    }
                   }}
                 >
                   +
@@ -275,7 +307,15 @@ export function PlayerCard({
                   key={delta}
                   type="button"
                   className="dot dot--pos"
-                  onClick={() => onDelta(player.id, delta)}
+                  onClick={(e) => {
+                    if (isSwiping) return;
+                    if (swipeX !== 0) {
+                      closeSwipe();
+                      e.stopPropagation();
+                    } else {
+                      onDelta(player.id, delta);
+                    }
+                  }}
                 >
                   +{delta}
                 </button>

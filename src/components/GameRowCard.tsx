@@ -49,7 +49,6 @@ export function GameRowCard({
       startSwipeX: swipeX,
     };
     setIsSwiping(false);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
 
   function onPointerMove(e: React.PointerEvent) {
@@ -62,13 +61,18 @@ export function GameRowCard({
     const absDy = Math.abs(dy);
 
     if (drag.isHorizontal === undefined) {
-      if (absDx < 6 && absDy < 6) return;
-      drag.isHorizontal = absDx > absDy + 4;
+      // Need more movement to start a swipe on desktop to avoid accidental drags
+      if (absDx < 12 && absDy < 12) return;
+      
+      drag.isHorizontal = absDx > absDy * 1.5 + 5;
+      if (drag.isHorizontal) {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        setIsSwiping(true);
+      }
     }
 
     if (!drag.isHorizontal) return;
     e.preventDefault();
-    if (!isSwiping) setIsSwiping(true);
 
     const next = Math.max(-ACTION_WIDTH, Math.min(0, drag.startSwipeX + dx));
     setSwipeX(next);
@@ -77,10 +81,22 @@ export function GameRowCard({
   function onPointerUpOrCancel(e: React.PointerEvent) {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
+    
     dragRef.current = null;
-    setIsSwiping(false);
-    if (swipeX <= -ACTION_WIDTH * 0.5) openSwipe();
-    else closeSwipe();
+
+    if (swipeX <= -ACTION_WIDTH * 0.5) {
+      openSwipe();
+    } else {
+      closeSwipe();
+    }
+
+    if (isSwiping) {
+      // If we were actually swiping, keep isSwiping true for a bit to block the click
+      setTimeout(() => setIsSwiping(false), 100);
+    } else {
+      // If we never moved enough to trigger a swipe, reset immediately so the click works
+      setIsSwiping(false);
+    }
   }
 
   const winner = useMemo(() => {
@@ -184,16 +200,24 @@ export function GameRowCard({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUpOrCancel}
         onPointerCancel={onPointerUpOrCancel}
-        onClick={() => {
-          if (swipeX !== 0 && !isSwiping) closeSwipe();
+        onClick={(e) => {
+          if (isSwiping) return;
+          if (swipeX !== 0) {
+            closeSwipe();
+          } else {
+            onEnter();
+          }
         }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            onEnter();
+          }
+        }}
+        aria-label={`Enter ${game.name}`}
       >
-        <button
-          className="gameRow__main"
-          type="button"
-          onClick={onEnter}
-          aria-label={`Enter ${game.name}`}
-        >
+        <div className="gameRow__main">
           <div className="gameRow__head">
             <div className="gameRow__name">{displayName}</div>
             {winnerName ? (
@@ -211,7 +235,7 @@ export function GameRowCard({
             <span className="pill">{game.players.length} players</span>
             <span className="pill">Win: {game.targetPoints} points</span>
           </div>
-        </button>
+        </div>
       </article>
     </div>
   );

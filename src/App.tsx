@@ -10,10 +10,6 @@ import { useScorePulse } from "./hooks/useScorePulse";
 import { HomeScreen } from "./screens/HomeScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { AddPlayerDialogHandle } from "./components/AddPlayerDialog/AddPlayerDialog";
-import {
-  ProfilesDialog,
-  type ProfilesDialogHandle,
-} from "./components/ProfilesDialog/ProfilesDialog";
 
 export default function App() {
   const { profiles, upsertProfile, deleteProfile, updateProfile } =
