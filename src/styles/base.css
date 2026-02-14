@@ -7,8 +7,8 @@
   --muted: rgba(255, 255, 255, 0.6);
   --border: rgba(255, 255, 255, 0.1);
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  --radius: 28px;
-  --radius-sm: 16px;
+  --radius: 18px;
+  --radius-sm: 8px;
   --focus: 0 0 0 4px rgba(162, 155, 254, 0.3);
   --pos: #00d2d3;
   --neg: #ff7675;
@@ -38,12 +38,7 @@ body {
     "SF Pro Rounded",
     -apple-system,
     system-ui;
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(at 0% 0%, rgba(162, 155, 254, 0.3) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(255, 118, 117, 0.25) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(0, 210, 211, 0.2) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(253, 121, 168, 0.2) 0px, transparent 50%);
+  background-color: #0b1e3a;
   color: var(--text);
   overflow: hidden;
   height: 100dvh;

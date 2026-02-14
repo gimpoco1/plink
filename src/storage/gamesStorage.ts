@@ -1,5 +1,9 @@
 import type { Game } from "../types";
-import { CURRENT_GAME_ID_KEY, GAMES_STORAGE_KEY, STORAGE_KEY } from "../constants";
+import {
+  CURRENT_GAME_ID_KEY,
+  GAMES_STORAGE_KEY,
+  STORAGE_KEY,
+} from "../constants";
 import { uid } from "../utils/id";
 import { loadPlayers } from "./playersStorage";
 
@@ -23,12 +27,15 @@ export function loadGames(): Game[] {
         ) {
           return null;
         }
-        const accentColor = typeof obj.accentColor === "string" ? obj.accentColor : "#94a3b8";
+        const accentColor =
+          typeof obj.accentColor === "string" ? obj.accentColor : "#94a3b8";
+        const isLowScoreWins = obj.isLowScoreWins === true;
         // trust player validation from existing player loader (migration-safe)
         return {
           id: obj.id,
           name: obj.name,
           targetPoints: obj.targetPoints,
+          isLowScoreWins,
           accentColor,
           createdAt: obj.createdAt,
           updatedAt: obj.updatedAt,
@@ -55,7 +62,10 @@ export function saveCurrentGameId(gameId: string | null) {
   else localStorage.setItem(CURRENT_GAME_ID_KEY, gameId);
 }
 
-export function migrateSingleGameToGamesIfNeeded(): { games: Game[]; currentGameId: string | null } | null {
+export function migrateSingleGameToGamesIfNeeded(): {
+  games: Game[];
+  currentGameId: string | null;
+} | null {
   const existingGamesRaw = localStorage.getItem(GAMES_STORAGE_KEY);
   if (existingGamesRaw) return null;
 
@@ -71,6 +81,7 @@ export function migrateSingleGameToGamesIfNeeded(): { games: Game[]; currentGame
     id: gameId,
     name: "Game",
     targetPoints: 100,
+    isLowScoreWins: false,
     accentColor: "#94a3b8",
     players: legacyPlayers,
     createdAt: now,

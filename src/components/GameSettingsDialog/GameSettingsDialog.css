@@ -1,0 +1,20 @@
+.settingsDialogBody {
+  display: grid;
+  gap: 8px;
+}
+
+.settingsToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settingsToggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}

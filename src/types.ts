@@ -19,6 +19,7 @@ export type Game = {
   id: string;
   name: string;
   targetPoints: number;
+  isLowScoreWins: boolean;
   accentColor: string;
   players: Player[];
   createdAt: number;

@@ -6,23 +6,35 @@ function idsKey(players: Player[]): string {
   return players.map((p) => p.id).join("|");
 }
 
-function sortedIds(players: Player[]): string[] {
-  return [...players].sort(sortPlayers).map((p) => p.id);
+function sortedIds(players: Player[], isLowScoreWins: boolean): string[] {
+  return [...players]
+    .sort((a, b) => sortPlayers(a, b, isLowScoreWins))
+    .map((p) => p.id);
 }
 
-export function useDelayedRanking(players: Player[], delayMs = 1200) {
+export function useDelayedRanking(
+  players: Player[],
+  delayMs = 1200,
+  isLowScoreWins = false,
+) {
   const playersRef = useRef<Player[]>(players);
   useEffect(() => {
     playersRef.current = players;
   }, [players]);
+  const isLowScoreWinsRef = useRef(isLowScoreWins);
+  useEffect(() => {
+    isLowScoreWinsRef.current = isLowScoreWins;
+  }, [isLowScoreWins]);
 
-  const [orderIds, setOrderIds] = useState<string[]>(() => sortedIds(players));
+  const [orderIds, setOrderIds] = useState<string[]>(() =>
+    sortedIds(players, isLowScoreWins),
+  );
   const timerRef = useRef<number | null>(null);
 
   const key = useMemo(() => idsKey(players), [players]);
 
   const forceResort = useCallback(() => {
-    setOrderIds(sortedIds(playersRef.current));
+    setOrderIds(sortedIds(playersRef.current, isLowScoreWinsRef.current));
   }, []);
 
   const scheduleResort = useCallback(() => {
@@ -39,9 +51,9 @@ export function useDelayedRanking(players: Player[], delayMs = 1200) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-    setOrderIds(sortedIds(players));
+    setOrderIds(sortedIds(players, isLowScoreWins));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, isLowScoreWins]);
 
   useEffect(() => {
     return () => {
@@ -58,14 +70,15 @@ export function useDelayedRanking(players: Player[], delayMs = 1200) {
     }
     // In case orderIds is stale, append missing players deterministically.
     if (out.length !== players.length) {
-      const missing = players.filter((p) => !orderIds.includes(p.id)).sort(sortPlayers);
+      const missing = players
+        .filter((p) => !orderIds.includes(p.id))
+        .sort((a, b) => sortPlayers(a, b, isLowScoreWins));
       out.push(...missing);
     }
     return out;
-  }, [orderIds, players]);
+  }, [orderIds, players, isLowScoreWins]);
 
   const ranks = useMemo(() => computeRanks(orderedPlayers), [orderedPlayers]);
 
   return { orderedPlayers, ranks, scheduleResort, forceResort };
 }
-

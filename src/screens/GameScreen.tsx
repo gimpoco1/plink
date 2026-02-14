@@ -3,7 +3,7 @@ import type { Game } from "../types";
 import type { ConfirmDialogHandle } from "../components/ConfirmDialog";
 import type { PlayerProfile } from "../types";
 import { capitalizeFirst } from "../utils/text";
-import { sortPlayers } from "../utils/ranking";
+import { findWinner } from "../utils/ranking";
 import { WinCelebration } from "../components/WinCelebration/WinCelebration";
 import { useDelayedRanking } from "../hooks/useDelayedRanking";
 import {
@@ -30,7 +30,6 @@ type Props = {
   ) => void;
   onUpdateScore: (playerId: string, delta: number) => void;
   onDeletePlayer: (playerId: string) => void;
-  onRenameGame: () => void;
 };
 
 export function GameScreen({
@@ -44,7 +43,6 @@ export function GameScreen({
   onStartGame,
   onUpdateScore,
   onDeletePlayer,
-  onRenameGame,
 }: Props) {
   const takenProfileIds = useMemo(
     () =>
@@ -58,6 +56,7 @@ export function GameScreen({
   const { orderedPlayers, ranks, scheduleResort } = useDelayedRanking(
     game.players,
     1200,
+    game.isLowScoreWins,
   );
   const allZero = useMemo(
     () => game.players.length > 0 && game.players.every((p) => p.score === 0),
@@ -65,10 +64,8 @@ export function GameScreen({
   );
 
   const winner = useMemo(() => {
-    if (!game.players.length) return null;
-    const top = [...game.players].sort(sortPlayers)[0];
-    return top && top.score >= game.targetPoints ? top : null;
-  }, [game.players, game.targetPoints]);
+    return findWinner(game.players, game.targetPoints, game.isLowScoreWins);
+  }, [game.players, game.targetPoints, game.isLowScoreWins]);
 
   useEffect(() => {
     const winnerId = winner?.id ?? null;

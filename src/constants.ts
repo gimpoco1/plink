@@ -2,7 +2,7 @@ export const STORAGE_KEY = "point-tracker:v1";
 export const PROFILES_STORAGE_KEY = "point-tracker:profiles:v1";
 export const GAMES_STORAGE_KEY = "point-tracker:games:v1";
 export const CURRENT_GAME_ID_KEY = "point-tracker:currentGameId:v1";
-export const QUICK_DELTAS = [-5, -2, -1, 1, 2, 5] as const;
+export const QUICK_DELTAS = [-2, -1, 1, 2] as const;
 
 export const GAME_ACCENT_COLORS = [
   "#6ea8fe",

@@ -10,6 +10,11 @@ import { useScorePulse } from "./hooks/useScorePulse";
 import { HomeScreen } from "./screens/HomeScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { AddPlayerDialogHandle } from "./components/AddPlayerDialog/AddPlayerDialog";
+import {
+  GameSettingsDialog,
+  GameSettingsDialogHandle,
+} from "./components/GameSettingsDialog/GameSettingsDialog";
+import DotGrid from "./styles/components/DotGrid";
 
 export default function App() {
   const { profiles, upsertProfile, deleteProfile, updateProfile } =
@@ -26,16 +31,21 @@ export default function App() {
     removePlayer,
     resetScores,
     updateScore,
+    updateGameSettings,
     syncProfile,
   } = useGames();
   const { pulseById, triggerPulse } = useScorePulse();
   const confirmRef = useRef<ConfirmDialogHandle>(null!);
   const addDialogRef = useRef<AddPlayerDialogHandle>(null!);
+  const settingsDialogRef = useRef<GameSettingsDialogHandle>(null!);
   const [view, setView] = useState<"home" | "game">("home");
 
   const gameMeta = useMemo(() => {
     if (!currentGame) return undefined;
-    return `${currentGame.players.length} ${currentGame.players.length === 1 ? "player" : "players"} · Points to win:  ${currentGame.targetPoints}`;
+    const targetLabel = currentGame.isLowScoreWins
+      ? "Points to lose"
+      : "Points to win";
+    return `${currentGame.players.length} ${currentGame.players.length === 1 ? "player" : "players"} · ${targetLabel}: ${currentGame.targetPoints}`;
   }, [currentGame]);
 
   const hasNonZeroScore = useMemo(() => {
@@ -45,9 +55,24 @@ export default function App() {
 
   return (
     <div className="app">
+      <div style={{ width: "100%", height: "100%", overflow: "hidden", position: "absolute", top: 0, left: 0 }}>
+        <DotGrid
+          dotSize={5}
+          gap={15}
+          baseColor="#30371e"
+          activeColor="#ffed27"
+          proximity={120}
+          shockRadius={250}
+          shockStrength={5}
+          resistance={750}
+          returnDuration={1.5}
+        />
+      </div>
       <TopBar
         title={view === "game" && currentGame ? currentGame.name : ""}
         showAppTitle={!(view === "game" && currentGame)}
+        showBackButton={view === "game" && !!currentGame}
+        showActionMenu={view === "game" && !!currentGame}
         meta={view === "game" && currentGame ? gameMeta : undefined}
         hasPlayers={
           view === "game" && !!currentGame && currentGame.players.length > 0
@@ -56,8 +81,14 @@ export default function App() {
           view === "game" && currentGame ? currentGame.players.length : 0
         }
         showReset={view === "game" && hasNonZeroScore}
+        onBack={() => setView("home")}
         onLogoClick={() => setView("home")}
         onAddPlayer={() => addDialogRef.current?.open()}
+        onOpenSettings={
+          view === "game" && currentGame
+            ? () => settingsDialogRef.current?.open()
+            : undefined
+        }
         onResetGame={async () => {
           if (!currentGame) return;
           const ok = await confirmRef.current?.confirm({
@@ -68,14 +99,6 @@ export default function App() {
           });
           if (!ok) return;
           resetScores(currentGame.id);
-        }}
-        onRename={() => {
-          if (view === "game" && currentGame) {
-            const nextName = window.prompt("Rename game", currentGame.name);
-            if (nextName !== null) {
-              renameGame(currentGame.id, nextName);
-            }
-          }
         }}
       />
 
@@ -137,12 +160,6 @@ export default function App() {
             updateScore(currentGame.id, playerId, delta)
           }
           onDeletePlayer={(playerId) => removePlayer(currentGame.id, playerId)}
-          onRenameGame={() => {
-            const nextName = window.prompt("Rename game", currentGame.name);
-            if (nextName !== null) {
-              renameGame(currentGame.id, nextName);
-            }
-          }}
         />
       ) : (
         <HomeScreen
@@ -197,6 +214,16 @@ export default function App() {
           }}
         />
       )}
+
+      {view === "game" && currentGame ? (
+        <GameSettingsDialog
+          ref={settingsDialogRef}
+          game={currentGame}
+          onSave={(input) => {
+            updateGameSettings(currentGame.id, input);
+          }}
+        />
+      ) : null}
 
       <ConfirmDialog ref={confirmRef} />
     </div>

@@ -1,10 +1,32 @@
 import type { Player } from "../types";
 
-export function sortPlayers(a: Player, b: Player): number {
-  if (b.score !== a.score) return b.score - a.score;
+export function sortPlayers(
+  a: Player,
+  b: Player,
+  isLowScoreWins = false,
+): number {
+  if (a.score !== b.score) {
+    return isLowScoreWins ? a.score - b.score : b.score - a.score;
+  }
   if (a.reachedAt !== b.reachedAt) return a.reachedAt - b.reachedAt;
   if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
   return a.name.localeCompare(b.name);
+}
+
+export function hasReachedTarget(players: Player[], targetPoints: number): boolean {
+  return players.some((p) => p.score >= targetPoints);
+}
+
+export function findWinner(
+  players: Player[],
+  targetPoints: number,
+  isLowScoreWins = false,
+): Player | null {
+  if (!players.length || !hasReachedTarget(players, targetPoints)) return null;
+  const sorted = [...players].sort((a, b) =>
+    sortPlayers(a, b, isLowScoreWins),
+  );
+  return sorted[0] ?? null;
 }
 
 export function computeRanks(sortedPlayers: Player[]): Map<string, number> {
@@ -20,4 +42,3 @@ export function computeRanks(sortedPlayers: Player[]): Map<string, number> {
   }
   return ranks;
 }
-

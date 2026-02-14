@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { Game } from "../types";
-import { sortPlayers } from "../utils/ranking";
+import { findWinner } from "../utils/ranking";
 import { capitalizeFirst } from "../utils/text";
 
 type Props = {
@@ -100,10 +100,8 @@ export function GameRowCard({
   }
 
   const winner = useMemo(() => {
-    if (!game.players.length) return null;
-    const top = [...game.players].sort(sortPlayers)[0];
-    return top && top.score >= game.targetPoints ? top : null;
-  }, [game.players, game.targetPoints]);
+    return findWinner(game.players, game.targetPoints, game.isLowScoreWins);
+  }, [game.players, game.targetPoints, game.isLowScoreWins]);
 
   const status = winner ? "Finished" : "In progress";
   const displayName = game.name.trim()
@@ -233,7 +231,13 @@ export function GameRowCard({
           <div className="gameRow__meta">
             <span className="pill">{status}</span>
             <span className="pill">{game.players.length} players</span>
-            <span className="pill">Win: {game.targetPoints} points</span>
+            <span className="pill">
+              {game.isLowScoreWins ? "Lose at" : "Win at"}: {game.targetPoints}{" "}
+              points
+            </span>
+            <span className="pill">
+              {game.isLowScoreWins ? "High score loses" : "High score wins"}
+            </span>
           </div>
         </div>
       </article>

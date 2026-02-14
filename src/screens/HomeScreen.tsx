@@ -3,7 +3,7 @@ import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard";
 import { avatarStyleFor } from "../utils/color";
 import { AVATAR_COLORS } from "../constants";
-import { sortPlayers } from "../utils/ranking";
+import { findWinner } from "../utils/ranking";
 import { formatPlayerName, getInitials } from "../utils/text";
 import "./HomeScreen.css";
 
@@ -18,6 +18,7 @@ type Props = {
   onCreate: (input: {
     name: string;
     targetPoints: number;
+    isLowScoreWins: boolean;
     initialPlayers: { name: string; avatarColor: string; profileId?: string }[];
   }) => void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
@@ -47,6 +48,7 @@ export function HomeScreen({
   const [activeTab, setActiveTab] = useState<"home" | "players">("home");
   const [name, setName] = useState("");
   const [target, setTarget] = useState("8");
+  const [isLowScoreWins, setIsLowScoreWins] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [editProfileName, setEditProfileName] = useState("");
@@ -127,10 +129,12 @@ export function HomeScreen({
   const profileWins = useMemo(() => {
     const wins = new Map<string, number>();
     games.forEach((game) => {
-      if (game.players.length === 0) return;
-      const sorted = [...game.players].sort(sortPlayers);
-      const winner = sorted[0];
-      if (winner && winner.score >= game.targetPoints && winner.profileId) {
+      const winner = findWinner(
+        game.players,
+        game.targetPoints,
+        game.isLowScoreWins,
+      );
+      if (winner?.profileId) {
         wins.set(winner.profileId, (wins.get(winner.profileId) || 0) + 1);
       }
     });
@@ -172,7 +176,7 @@ export function HomeScreen({
                         />
                       </label>
                       <label className="field">
-                        <span className="field__label">Winning score</span>
+                        <span className="field__label">Target score</span>
                         <input
                           className="input"
                           value={target}
@@ -185,6 +189,16 @@ export function HomeScreen({
                     </div>
 
                     <div className="profilePicker">
+                      <label className="saveProfileOption gameModeOption">
+                        <input
+                          type="checkbox"
+                          checked={isLowScoreWins}
+                          onChange={(e) =>
+                            setIsLowScoreWins(e.target.checked)
+                          }
+                        />
+                        <span>Reverse scoring (higher score loses)</span>
+                      </label>
                       <span className="field__label">Add players</span>
                       <div className="profilePicker__list">
                         {profiles.map((p) => {
@@ -324,6 +338,7 @@ export function HomeScreen({
                         onCreate({
                           name,
                           targetPoints: parsedTarget,
+                          isLowScoreWins,
                           initialPlayers: [...pList, ...sList],
                         });
                       }}

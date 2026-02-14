@@ -131,8 +131,8 @@ export function PlayerCard({
     }
   }
 
-  const negDeltas = QUICK_DELTAS.filter((d) => d < 0).reverse(); // [-1, -3, -5]
-  const posDeltas = QUICK_DELTAS.filter((d) => d > 0).reverse(); // [5, 3, 1]
+  const negDeltas = QUICK_DELTAS.filter((d) => d < 0).reverse();
+  const posDeltas = QUICK_DELTAS.filter((d) => d > 0).reverse();
 
   return (
     <div
@@ -164,7 +164,7 @@ export function PlayerCard({
       </div>
 
       <article
-        className={`card swipeCard${isSwiping ? " swipeCard--dragging" : ""}${
+        className={`card swipeCard playerCard${isSwiping ? " swipeCard--dragging" : ""}${
           isWinner
             ? " card--winner"
             : rank === 1 && showRank
@@ -195,7 +195,14 @@ export function PlayerCard({
               {initials}
             </div>
             <div className="who">
-              <div className="who__name">{displayName}</div>
+              <div className="who__nameRow">
+                <div className="who__name">{displayName}</div>
+                {isWinner ? (
+                  <div className="winnerMark" aria-label="Winner">
+                    🏆
+                  </div>
+                ) : null}
+              </div>
               {player.reachedAt > player.createdAt && (
                 <div className="who__lastUpdate">
                   Last: {formatRelativeTime(player.reachedAt)}
@@ -211,11 +218,6 @@ export function PlayerCard({
             >
               {player.score}
             </div>
-            {isWinner ? (
-              <div className="winnerMark" aria-label="Winner">
-                🏆
-              </div>
-            ) : null}
           </div>
         </div>
 

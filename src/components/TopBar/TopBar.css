@@ -32,6 +32,7 @@
   gap: 10px;
   align-items: center;
   flex-shrink: 0;
+  position: relative;
 }
 
 .logo {
@@ -63,6 +64,27 @@
   transform: scale(1.05);
 }
 
+.backBtn {
+  height: 40px;
+  padding: 0 12px 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.backBtn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 .brand {
   display: flex;
   flex-direction: column;
@@ -88,4 +110,50 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+
+.topbarMenu {
+  position: relative;
+}
+
+.topbarMenu__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(13, 18, 32, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  z-index: 120;
+  display: grid;
+  gap: 4px;
+}
+
+.topbarMenu__item {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.topbarMenu__item:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.topbarMenu__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.topbarMenu__item--danger {
+  color: #fecaca;
 }

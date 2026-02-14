@@ -3,19 +3,26 @@ import type { Game, Player } from "../types";
 import { clampName, formatPlayerName } from "../utils/text";
 import { uid } from "../utils/id";
 import {
-  loadCurrentGameId,
   loadGames,
+  loadCurrentGameId,
   migrateSingleGameToGamesIfNeeded,
-  saveCurrentGameId,
   saveGames,
+  saveCurrentGameId,
 } from "../storage/gamesStorage";
-import { computeRanks, sortPlayers } from "../utils/ranking";
+import { computeRanks, hasReachedTarget, sortPlayers } from "../utils/ranking";
 import { GAME_ACCENT_COLORS } from "../constants";
 
 type CreateGameInput = {
   name: string;
   targetPoints: number;
+  isLowScoreWins?: boolean;
   initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
+};
+
+type UpdateGameSettingsInput = {
+  name: string;
+  targetPoints: number;
+  isLowScoreWins: boolean;
 };
 
 export function useGames() {
@@ -102,6 +109,7 @@ export function useGames() {
     const now = Date.now();
     const used = new Set(games.map((g) => g.accentColor).filter(Boolean));
     const accentColor = pickUniqueAccent(used);
+    const isLowScoreWins = input.isLowScoreWins === true;
 
     const players: Player[] = (input.initialPlayers ?? []).map((p) => ({
       id: uid(),
@@ -117,6 +125,7 @@ export function useGames() {
       id: uid(),
       name,
       targetPoints,
+      isLowScoreWins,
       accentColor,
       players,
       createdAt: now,
@@ -244,13 +253,34 @@ export function useGames() {
           ? { ...p, score: p.score + delta, reachedAt: now }
           : p,
       );
-      const hasWinner = players.some((p) => p.score >= g.targetPoints);
+      const hasWinner = hasReachedTarget(players, g.targetPoints);
       return {
         ...g,
         players,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });
+  }
+
+  function updateGameSettings(gameId: string, input: UpdateGameSettingsInput) {
+    const name = clampName(input.name).toUpperCase();
+    const targetPoints = Number.isFinite(input.targetPoints)
+      ? Math.trunc(input.targetPoints)
+      : 0;
+    if (!name || targetPoints <= 0) return false;
+
+    const now = Date.now();
+    updateGame(gameId, (g) => {
+      const hasWinner = hasReachedTarget(g.players, targetPoints);
+      return {
+        ...g,
+        name,
+        targetPoints,
+        isLowScoreWins: input.isLowScoreWins,
+        endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
+      };
+    });
+    return true;
   }
 
   function syncProfile(
@@ -272,7 +302,9 @@ export function useGames() {
 
   const sortedPlayers = useMemo(() => {
     if (!currentGame) return [];
-    return [...currentGame.players].sort(sortPlayers);
+    return [...currentGame.players].sort((a, b) =>
+      sortPlayers(a, b, currentGame.isLowScoreWins),
+    );
   }, [currentGame]);
 
   const ranks = useMemo(() => computeRanks(sortedPlayers), [sortedPlayers]);
@@ -297,6 +329,7 @@ export function useGames() {
     removePlayer,
     resetScores,
     updateScore,
+    updateGameSettings,
     syncProfile,
     sortedPlayers,
     ranks,
