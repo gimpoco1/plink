@@ -235,9 +235,6 @@ export function GameRowCard({
               {game.isLowScoreWins ? "Lose at" : "Win at"}: {game.targetPoints}{" "}
               points
             </span>
-            <span className="pill">
-              {game.isLowScoreWins ? "High score loses" : "High score wins"}
-            </span>
           </div>
         </div>
       </article>

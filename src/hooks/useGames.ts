@@ -16,6 +16,9 @@ type CreateGameInput = {
   name: string;
   targetPoints: number;
   isLowScoreWins?: boolean;
+  timerEnabled?: boolean;
+  timerMode?: "countdown" | "stopwatch";
+  timerSeconds?: number;
   initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
 };
 
@@ -23,6 +26,9 @@ type UpdateGameSettingsInput = {
   name: string;
   targetPoints: number;
   isLowScoreWins: boolean;
+  timerEnabled: boolean;
+  timerMode: "countdown" | "stopwatch";
+  timerSeconds: number;
 };
 
 export function useGames() {
@@ -110,6 +116,12 @@ export function useGames() {
     const used = new Set(games.map((g) => g.accentColor).filter(Boolean));
     const accentColor = pickUniqueAccent(used);
     const isLowScoreWins = input.isLowScoreWins === true;
+    const timerEnabled = input.timerEnabled === true;
+    const timerMode = input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
+    const timerSeconds =
+      typeof input.timerSeconds === "number" && input.timerSeconds > 0
+        ? Math.trunc(input.timerSeconds)
+        : 300;
 
     const players: Player[] = (input.initialPlayers ?? []).map((p) => ({
       id: uid(),
@@ -126,6 +138,9 @@ export function useGames() {
       name,
       targetPoints,
       isLowScoreWins,
+      timerEnabled,
+      timerMode,
+      timerSeconds,
       accentColor,
       players,
       createdAt: now,
@@ -267,7 +282,11 @@ export function useGames() {
     const targetPoints = Number.isFinite(input.targetPoints)
       ? Math.trunc(input.targetPoints)
       : 0;
+    const timerSeconds = Number.isFinite(input.timerSeconds)
+      ? Math.trunc(input.timerSeconds)
+      : 0;
     if (!name || targetPoints <= 0) return false;
+    if (input.timerEnabled && timerSeconds <= 0) return false;
 
     const now = Date.now();
     updateGame(gameId, (g) => {
@@ -277,6 +296,9 @@ export function useGames() {
         name,
         targetPoints,
         isLowScoreWins: input.isLowScoreWins,
+        timerEnabled: input.timerEnabled,
+        timerMode: input.timerMode,
+        timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });

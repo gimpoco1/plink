@@ -30,12 +30,22 @@ export function loadGames(): Game[] {
         const accentColor =
           typeof obj.accentColor === "string" ? obj.accentColor : "#94a3b8";
         const isLowScoreWins = obj.isLowScoreWins === true;
+        const timerEnabled = obj.timerEnabled === true;
+        const timerMode =
+          obj.timerMode === "stopwatch" ? "stopwatch" : "countdown";
+        const timerSeconds =
+          typeof obj.timerSeconds === "number" && obj.timerSeconds > 0
+            ? Math.trunc(obj.timerSeconds)
+            : 300;
         // trust player validation from existing player loader (migration-safe)
         return {
           id: obj.id,
           name: obj.name,
           targetPoints: obj.targetPoints,
           isLowScoreWins,
+          timerEnabled,
+          timerMode,
+          timerSeconds,
           accentColor,
           createdAt: obj.createdAt,
           updatedAt: obj.updatedAt,
@@ -82,6 +92,9 @@ export function migrateSingleGameToGamesIfNeeded(): {
     name: "Game",
     targetPoints: 100,
     isLowScoreWins: false,
+    timerEnabled: false,
+    timerMode: "countdown",
+    timerSeconds: 300,
     accentColor: "#94a3b8",
     players: legacyPlayers,
     createdAt: now,

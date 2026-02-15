@@ -11,6 +11,7 @@ import {
   AddPlayerDialogHandle,
 } from "../components/AddPlayerDialog/AddPlayerDialog";
 import { PlayerCard } from "../components/PlayerCard/PlayerCard";
+import { GameTimer } from "../components/GameTimer/GameTimer";
 
 type Props = {
   game: Game;
@@ -83,7 +84,7 @@ export function GameScreen({
           onDone={() => setWinFxName(null)}
         />
       ) : null}
-      <main className="content">
+      <main className={`content${game.timerEnabled ? " content--hasTimer" : ""}`}>
         {!hasPlayers ? (
           <section className="empty">
             <h1 className="empty__title">Add players to start.</h1>
@@ -132,6 +133,14 @@ export function GameScreen({
           </section>
         )}
       </main>
+
+      {game.timerEnabled ? (
+        <GameTimer
+          gameId={game.id}
+          mode={game.timerMode}
+          durationSeconds={game.timerSeconds}
+        />
+      ) : null}
 
       <AddPlayerDialog
         ref={addDialogRef}

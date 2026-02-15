@@ -20,6 +20,9 @@ export type Game = {
   name: string;
   targetPoints: number;
   isLowScoreWins: boolean;
+  timerEnabled: boolean;
+  timerMode: "countdown" | "stopwatch";
+  timerSeconds: number;
   accentColor: string;
   players: Player[];
   createdAt: number;

@@ -1,22 +1,67 @@
 .winFx {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 70;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .winFx__veil {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(
-      900px 600px at 50% 20%,
-      rgba(250, 204, 21, 0.15),
-      transparent 60%
-    ),
-    rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  animation: winVeil 2200ms ease-out forwards;
+    radial-gradient(1200px 700px at 50% 12%, rgba(255, 229, 122, 0.3), transparent 62%),
+    radial-gradient(900px 560px at 50% 85%, rgba(0, 245, 255, 0.15), transparent 70%),
+    rgba(2, 8, 24, 0.62);
+  backdrop-filter: blur(6px) saturate(1.05);
+  animation: winVeil 3200ms ease-out forwards;
+}
+
+.winFx__burst {
+  position: absolute;
+  left: 50%;
+  top: 24%;
+  width: min(560px, calc(100vw - 32px));
+  height: min(560px, calc(100vw - 32px));
+  transform: translate(-50%, -50%);
+}
+
+.burstRay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 46%;
+  border-radius: 999px;
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(calc(var(--i) * 30deg));
+  background: linear-gradient(to top, rgba(255, 220, 110, 0), rgba(255, 220, 110, 0.9));
+  filter: drop-shadow(0 0 10px rgba(255, 220, 110, 0.6));
+  opacity: 0;
+  animation: rayPulse 1200ms ease-out forwards;
+  animation-delay: calc(var(--i) * 22ms + 120ms);
+}
+
+.winFx__sparkles {
+  position: absolute;
+  inset: 0;
+}
+
+.sparkle {
+  --x: calc((var(--i) * 6.25%) + 5%);
+  --y: calc(((var(--i) * 37) % 70) + 10%);
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transform: scale(0.2);
+  animation: sparkle 1000ms ease-out forwards;
+  animation-delay: calc(var(--i) * 80ms + 220ms);
 }
 
 .winFx__content {
@@ -24,44 +69,85 @@
   left: 50%;
   top: 18%;
   transform: translateX(-50%);
-  width: min(420px, calc(100% - 32px));
-  border: 1px solid rgba(255, 205, 75, 0.35);
-  border-radius: 18px;
-  background: rgba(12, 16, 28, 0.82);
+  width: min(460px, calc(100% - 30px));
+  border: 1px solid rgba(255, 216, 124, 0.45);
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, rgba(20, 30, 56, 0.96), rgba(7, 14, 35, 0.93)),
+    radial-gradient(800px 260px at 50% 0%, rgba(255, 216, 124, 0.15), transparent 70%);
   box-shadow:
-    0 0 0 1px rgba(255, 205, 75, 0.2),
-    0 30px 90px rgba(0, 0, 0, 0.5);
-  padding: 14px 14px 16px;
+    0 0 0 1px rgba(255, 214, 116, 0.25),
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    0 0 70px rgba(255, 214, 116, 0.22);
+  padding: 16px 16px 18px;
   text-align: center;
-  animation: winPop 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation:
+    winPop 700ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    cardGlow 1400ms ease-out 520ms both;
+}
+
+.winFx__medal {
+  margin: 2px auto 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #ffd466;
+  background: radial-gradient(circle at 35% 30%, #fff1bf, #ffd466 60%, #d08a1f 100%);
+  box-shadow:
+    0 12px 26px rgba(255, 201, 86, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  animation: medalBounce 850ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
+}
+
+.winFx__medal svg {
+  width: 27px;
+  height: 27px;
+  color: rgba(88, 56, 0, 0.95);
 }
 
 .winFx__badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 205, 75, 0.35);
-  background: rgba(255, 205, 75, 0.12);
-  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 215, 113, 0.36);
+  background: rgba(255, 215, 113, 0.14);
+  color: rgba(255, 255, 255, 0.94);
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
 }
 
 .winFx__name {
   margin-top: 10px;
-  font-size: 22px;
+  font-size: clamp(30px, 7vw, 42px);
   font-weight: 950;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.8px;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 0 24px rgba(255, 214, 120, 0.35);
+}
+
+.winFx__title {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+  color: #23e7ff;
+  text-shadow: 0 0 20px rgba(35, 231, 255, 0.4);
 }
 
 .winFx__hint {
   margin-top: 6px;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
   font-weight: 800;
+  letter-spacing: 0.2px;
 }
 
 .winFx__confetti {
@@ -72,24 +158,28 @@
 
 .confetti {
   position: absolute;
-  top: -14px;
-  left: calc((var(--i) * 5.2%) + 5%);
-  width: 10px;
-  height: 14px;
+  top: -16px;
+  left: calc((var(--i) * 3.2%) + 2%);
+  width: 9px;
+  height: 16px;
   border-radius: 3px;
-  background: hsl(calc((var(--i) * 27) + 30) 85% 65%);
-  opacity: 0.9;
-  transform: rotate(calc(var(--i) * 11deg));
-  animation: confettiFall 1800ms ease-out forwards;
-  animation-delay: calc(var(--i) * 22ms);
+  background: hsl(calc((var(--i) * 21) + 28) 92% 62%);
+  opacity: 0;
+  transform: translate3d(0, 0, 0) rotate(calc(var(--i) * 13deg));
+  animation: confettiFall 2400ms cubic-bezier(0.15, 0.65, 0.2, 1) forwards;
+  animation-delay: calc(var(--i) * 34ms + 160ms);
 }
 
 @keyframes winPop {
-  from {
-    transform: translateX(-50%) translateY(-12px) scale(0.98);
+  0% {
+    transform: translateX(-50%) translateY(-22px) scale(0.92);
     opacity: 0;
   }
-  to {
+  60% {
+    transform: translateX(-50%) translateY(4px) scale(1.02);
+    opacity: 1;
+  }
+  100% {
     transform: translateX(-50%) translateY(0) scale(1);
     opacity: 1;
   }
@@ -99,34 +189,127 @@
   0% {
     opacity: 0;
   }
-  12% {
+  10% {
     opacity: 1;
   }
-  75% {
+  78% {
     opacity: 1;
   }
   100% {
     opacity: 0;
+  }
+}
+
+@keyframes cardGlow {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255, 214, 116, 0.18),
+      0 20px 70px rgba(0, 0, 0, 0.48),
+      0 0 10px rgba(255, 214, 116, 0.08);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 214, 116, 0.3),
+      0 28px 90px rgba(0, 0, 0, 0.5),
+      0 0 90px rgba(255, 214, 116, 0.26);
+  }
+}
+
+@keyframes medalBounce {
+  0% {
+    transform: translateY(-16px) scale(0.7);
+    opacity: 0;
+  }
+  55% {
+    transform: translateY(4px) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rayPulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -90%) rotate(calc(var(--i) * 30deg)) scaleY(0.35);
+  }
+  35% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -105%) rotate(calc(var(--i) * 30deg)) scaleY(1.08);
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.15);
   }
 }
 
 @keyframes confettiFall {
   0% {
-    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+    transform: translate3d(0, -12px, 0) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
   }
   100% {
-    transform: translateY(120vh) rotate(360deg);
     opacity: 0;
+    transform: translate3d(calc((var(--i) - 15) * 0.9px), 118vh, 0) rotate(calc(420deg + (var(--i) * 12deg)));
+  }
+}
+
+@media (max-width: 560px) {
+  .winFx__content {
+    top: 16%;
+    border-radius: 18px;
+    padding: 14px 12px 16px;
+  }
+
+  .winFx__medal {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 8px;
+  }
+
+  .winFx__badge {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .winFx__title {
+    font-size: 16px;
+    letter-spacing: 1.4px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .confetti,
-  .winFx__veil,
-  .winFx__content {
+  .winFx,
+  .winFx * {
     animation: none !important;
   }
-  .winFx {
+
+  .winFx__veil {
+    opacity: 1;
+  }
+
+  .winFx__burst,
+  .winFx__sparkles,
+  .winFx__confetti {
     display: none;
   }
 }

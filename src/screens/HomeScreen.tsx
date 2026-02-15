@@ -19,6 +19,9 @@ type Props = {
     name: string;
     targetPoints: number;
     isLowScoreWins: boolean;
+    timerEnabled: boolean;
+    timerMode: "countdown" | "stopwatch";
+    timerSeconds: number;
     initialPlayers: { name: string; avatarColor: string; profileId?: string }[];
   }) => void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
@@ -49,6 +52,12 @@ export function HomeScreen({
   const [name, setName] = useState("");
   const [target, setTarget] = useState("8");
   const [isLowScoreWins, setIsLowScoreWins] = useState(false);
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
+    "countdown",
+  );
+  const [timerMinutes, setTimerMinutes] = useState("5");
+  const [timerSecondsRaw, setTimerSecondsRaw] = useState("0");
   const [isCreating, setIsCreating] = useState(false);
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [editProfileName, setEditProfileName] = useState("");
@@ -110,10 +119,30 @@ export function HomeScreen({
   const showForm = isCreating || games.length === 0;
 
   const parsedTarget = useMemo(() => Number.parseInt(target, 10), [target]);
+  const parsedTimerMinutes = useMemo(
+    () => Number.parseInt(timerMinutes, 10),
+    [timerMinutes],
+  );
+  const parsedTimerSeconds = useMemo(
+    () => Number.parseInt(timerSecondsRaw, 10),
+    [timerSecondsRaw],
+  );
+  const parsedTimerTotalSeconds = useMemo(() => {
+    const mins = Number.isFinite(parsedTimerMinutes)
+      ? Math.max(0, parsedTimerMinutes)
+      : 0;
+    const secs = Number.isFinite(parsedTimerSeconds)
+      ? Math.max(0, Math.min(59, parsedTimerSeconds))
+      : 0;
+    return mins * 60 + secs;
+  }, [parsedTimerMinutes, parsedTimerSeconds]);
   const canCreate =
     name.trim().length > 0 &&
     Number.isFinite(parsedTarget) &&
     parsedTarget > 0 &&
+    (!timerEnabled ||
+      timerMode === "stopwatch" ||
+      parsedTimerTotalSeconds > 0) &&
     (selectedProfileIds.size > 0 || stagedPlayers.length > 0);
 
   const dateFmt = useMemo(
@@ -199,6 +228,69 @@ export function HomeScreen({
                         />
                         <span>Reverse scoring (higher score loses)</span>
                       </label>
+                      <label className="saveProfileOption gameModeOption">
+                        <input
+                          type="checkbox"
+                          checked={timerEnabled}
+                          onChange={(e) => setTimerEnabled(e.target.checked)}
+                        />
+                        <span>Timer</span>
+                      </label>
+                      {timerEnabled ? (
+                        <div
+                          className={`timerConfigRow${timerMode === "countdown" ? " timerConfigRow--countdown" : ""}`}
+                        >
+                          <label className="field">
+                            <span className="field__label">Timer mode</span>
+                            <div className="timerModeToggle">
+                              <button
+                                type="button"
+                                className={`timerModeToggle__btn${timerMode === "countdown" ? " timerModeToggle__btn--active" : ""}`}
+                                onClick={() => setTimerMode("countdown")}
+                              >
+                                Countdown
+                              </button>
+                              <button
+                                type="button"
+                                className={`timerModeToggle__btn${timerMode === "stopwatch" ? " timerModeToggle__btn--active" : ""}`}
+                                onClick={() => setTimerMode("stopwatch")}
+                              >
+                                Stopwatch
+                              </button>
+                            </div>
+                          </label>
+                          {timerMode === "countdown" ? (
+                            <>
+                              <label className="field timerNumberField">
+                                <span className="field__label">Minutes</span>
+                                <input
+                                  className="input"
+                                  value={timerMinutes}
+                                  onChange={(e) =>
+                                    setTimerMinutes(
+                                      e.target.value.replace(/[^\d]/g, ""),
+                                    )
+                                  }
+                                  inputMode="numeric"
+                                />
+                              </label>
+                              <label className="field timerNumberField">
+                                <span className="field__label">Seconds</span>
+                                <input
+                                  className="input"
+                                  value={timerSecondsRaw}
+                                  onChange={(e) =>
+                                    setTimerSecondsRaw(
+                                      e.target.value.replace(/[^\d]/g, ""),
+                                    )
+                                  }
+                                  inputMode="numeric"
+                                />
+                              </label>
+                            </>
+                          ) : null}
+                        </div>
+                      ) : null}
                       <span className="field__label">Add players</span>
                       <div className="profilePicker__list">
                         {profiles.map((p) => {
@@ -339,6 +431,12 @@ export function HomeScreen({
                           name,
                           targetPoints: parsedTarget,
                           isLowScoreWins,
+                          timerEnabled,
+                          timerMode,
+                          timerSeconds:
+                            timerMode === "countdown"
+                              ? Math.max(1, parsedTimerTotalSeconds)
+                              : 300,
                           initialPlayers: [...pList, ...sList],
                         });
                       }}

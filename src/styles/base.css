@@ -66,6 +66,10 @@ input {
   overflow-y: auto;
 }
 
+.content--hasTimer {
+  padding-bottom: 96px;
+}
+
 .grid {
   display: grid;
   gap: 12px;
