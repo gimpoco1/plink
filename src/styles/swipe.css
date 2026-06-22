@@ -9,7 +9,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: none;
-  background: rgba(12, 16, 28, 0.92);
+  background: var(--surface);
 }
 
 .swipeAction {
@@ -56,11 +56,12 @@
 }
 
 .swipeDuplicate {
-  background: rgba(139, 92, 246, 0.25);
+  background: rgba(216, 255, 79, 0.18);
+  color: var(--accent);
 }
 
 .swipeDuplicate:active {
-  background: rgba(139, 92, 246, 0.4);
+  background: rgba(216, 255, 79, 0.3);
 }
 
 .swipeDelete {

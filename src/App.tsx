@@ -15,6 +15,12 @@ import {
   GameSettingsDialogHandle,
 } from "./components/GameSettingsDialog/GameSettingsDialog";
 import DotGrid from "./styles/components/DotGrid";
+import { getGameDisplayName } from "./utils/text";
+import { findWinner } from "./utils/ranking";
+import {
+  computeProfileStats,
+  createEmptyProfileStats,
+} from "./utils/profileStats";
 
 export default function App() {
   const { profiles, upsertProfile, deleteProfile, updateProfile } =
@@ -39,13 +45,39 @@ export default function App() {
   const addDialogRef = useRef<AddPlayerDialogHandle>(null!);
   const settingsDialogRef = useRef<GameSettingsDialogHandle>(null!);
   const [view, setView] = useState<"home" | "game">("home");
+  const profileStats = useMemo(() => computeProfileStats(games), [games]);
 
-  const gameMeta = useMemo(() => {
-    if (!currentGame) return undefined;
-    const targetLabel = currentGame.isLowScoreWins
-      ? "Points to lose"
-      : "Points to win";
-    return `${currentGame.players.length} ${currentGame.players.length === 1 ? "player" : "players"} · ${targetLabel}: ${currentGame.targetPoints}`;
+  const gameMetaItems = useMemo(() => {
+    if (!currentGame) return [];
+
+    const items: Array<{ label: string; tone?: "accent" | "muted" }> = [];
+    const winner = findWinner(
+      currentGame.players,
+      currentGame.targetPoints,
+      currentGame.isLowScoreWins,
+    );
+
+    if (winner) {
+      items.push({ label: `Winner ${winner.name}`, tone: "accent" });
+    }
+
+    items.push({
+      label: currentGame.isLowScoreWins
+        ? `Lowest wins · ${currentGame.targetPoints}`
+        : `Target ${currentGame.targetPoints} pts`,
+      tone: "accent",
+    });
+
+    if (currentGame.timerEnabled) {
+      items.push({ label: "Timer on", tone: "muted" });
+    }
+
+    return items;
+  }, [currentGame]);
+
+  const gameDisplayName = useMemo(() => {
+    if (!currentGame) return { title: "", replayNumber: null };
+    return getGameDisplayName(currentGame.name);
   }, [currentGame]);
 
   const hasNonZeroScore = useMemo(() => {
@@ -53,33 +85,44 @@ export default function App() {
     return currentGame.players.some((p) => p.score !== 0);
   }, [currentGame]);
 
+  const currentWinnerStats = useMemo(() => {
+    if (!currentGame) return null;
+    const winner = findWinner(
+      currentGame.players,
+      currentGame.targetPoints,
+      currentGame.isLowScoreWins,
+    );
+    if (!winner?.profileId) return null;
+    return profileStats.get(winner.profileId) ?? createEmptyProfileStats();
+  }, [currentGame, profileStats]);
+
   return (
     <div className="app">
-      <div style={{ width: "100%", height: "100%", overflow: "hidden", position: "absolute", top: 0, left: 0 }}>
+      <div className="appBackdrop" aria-hidden="true">
         <DotGrid
-          dotSize={5}
-          gap={15}
-          baseColor="#30371e"
-          activeColor="#ffed27"
-          proximity={120}
+          dotSize={3}
+          gap={23}
+          baseColor="#202b34"
+          activeColor="#d8ff4f"
+          proximity={140}
           shockRadius={250}
           shockStrength={5}
           resistance={750}
           returnDuration={1.5}
+          idleSpeed={1.75}
+          idleStrength={4.5}
         />
       </div>
       <TopBar
-        title={view === "game" && currentGame ? currentGame.name : ""}
-        showAppTitle={!(view === "game" && currentGame)}
+        title={view === "game" && currentGame ? gameDisplayName.title : ""}
+        titleSuffix={
+          view === "game" && currentGame && gameDisplayName.replayNumber
+            ? `#${gameDisplayName.replayNumber}`
+            : undefined
+        }
         showBackButton={view === "game" && !!currentGame}
         showActionMenu={view === "game" && !!currentGame}
-        meta={view === "game" && currentGame ? gameMeta : undefined}
-        hasPlayers={
-          view === "game" && !!currentGame && currentGame.players.length > 0
-        }
-        playerCount={
-          view === "game" && currentGame ? currentGame.players.length : 0
-        }
+        metaItems={view === "game" && currentGame ? gameMetaItems : undefined}
         showReset={view === "game" && hasNonZeroScore}
         onBack={() => setView("home")}
         onLogoClick={() => setView("home")}
@@ -160,6 +203,12 @@ export default function App() {
             updateScore(currentGame.id, playerId, delta)
           }
           onDeletePlayer={(playerId) => removePlayer(currentGame.id, playerId)}
+          winnerStats={currentWinnerStats}
+          onReplayGame={() => {
+            const duplicated = duplicateGame(currentGame.id);
+            if (duplicated) setView("game");
+          }}
+          onBackToHome={() => setView("home")}
         />
       ) : (
         <HomeScreen

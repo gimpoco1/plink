@@ -1,21 +1,27 @@
 :root {
   color-scheme: dark;
-  --bg: #1a1c2c;
-  --surface: rgba(255, 255, 255, 0.08);
-  --surface2: rgba(255, 255, 255, 0.12);
-  --text: #ffffff;
-  --muted: rgba(255, 255, 255, 0.6);
-  --border: rgba(255, 255, 255, 0.1);
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  --radius: 18px;
-  --radius-sm: 8px;
-  --focus: 0 0 0 4px rgba(162, 155, 254, 0.3);
-  --pos: #00d2d3;
-  --neg: #ff7675;
-  --primary: #ffffff;
-  --primaryInk: #1a1c2c;
-  --accent: #a29bfe;
-  --glow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 15px 45px rgba(0, 0, 0, 0.4);
+  --bg: #0b1015;
+  --surface: rgba(22, 29, 36, 0.9);
+  --surface2: rgba(30, 39, 47, 0.96);
+  --text: #f4f6ef;
+  --muted: #98a29b;
+  --text-dim: #79837d;
+  --border: rgba(232, 240, 225, 0.11);
+  --shadow: 0 24px 64px rgba(0, 0, 0, 0.34);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --focus: 0 0 0 4px rgba(216, 255, 79, 0.2);
+  --pos: #d8ff4f;
+  --neg: #ff8c82;
+  --primary: #d8ff4f;
+  --primaryInk: #12170d;
+  --accent: #d8ff4f;
+  --accent-ink: #12170d;
+  --brand: #d8ff4f;
+  --accent-soft: rgba(216, 255, 79, 0.12);
+  --accent-border: rgba(216, 255, 79, 0.28);
+  --accent-glow: rgba(216, 255, 79, 0.22);
+  --glow: 0 16px 44px rgba(0, 0, 0, 0.26);
 }
 
 * {
@@ -38,7 +44,9 @@ body {
     "SF Pro Rounded",
     -apple-system,
     system-ui;
-  background-color: #0b1e3a;
+  background:
+    radial-gradient(circle at 8% -10%, rgba(216, 255, 79, 0.08), transparent 38%),
+    var(--bg);
   color: var(--text);
   overflow: hidden;
   height: 100dvh;
@@ -55,10 +63,20 @@ input {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  isolation: isolate;
+}
+
+.appBackdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.62;
+  z-index: -1;
+  mask-image: linear-gradient(to bottom, black, rgba(0, 0, 0, 0.25) 72%, transparent);
 }
 
 .content {
-  padding: 14px 12px 40px;
+  padding: 24px 16px 48px;
   max-width: 820px;
   width: 100%;
   margin: 0 auto;
@@ -72,7 +90,7 @@ input {
 
 .grid {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .card {
@@ -91,12 +109,8 @@ input {
   justify-content: center;
   text-align: center;
   padding: 48px 24px;
-  border-radius: 32px;
-  background: radial-gradient(
-    circle at top left,
-    rgba(255, 255, 255, 0.05),
-    transparent
-  );
+  border-radius: 28px;
+  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
@@ -104,10 +118,23 @@ input {
 .empty__title {
   margin: 0 0 12px;
   font-size: 32px;
-  font-weight: 950;
+  font-weight: 850;
   letter-spacing: -1.5px;
   line-height: 1.1;
   color: #ffffff;
+}
+
+@media (max-width: 560px) {
+  .content { padding: 14px 12px 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .empty__hint {

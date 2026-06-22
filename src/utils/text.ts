@@ -20,3 +20,22 @@ export function getInitials(name: string): string {
   const last = parts[parts.length - 1].slice(0, 1);
   return (first + last).toUpperCase();
 }
+
+export function getGameDisplayName(name: string): {
+  title: string;
+  replayNumber: number | null;
+} {
+  const normalized = name.trim();
+  const replayMatch = normalized.match(/\s+\((\d+)\)$/);
+  if (!replayMatch) return { title: normalized, replayNumber: null };
+
+  const replayNumber = Number.parseInt(replayMatch[1], 10);
+  if (!Number.isFinite(replayNumber) || replayNumber < 1) {
+    return { title: normalized, replayNumber: null };
+  }
+
+  return {
+    title: normalized.slice(0, replayMatch.index).trim(),
+    replayNumber,
+  };
+}

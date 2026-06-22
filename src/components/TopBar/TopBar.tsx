@@ -2,14 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import "./TopBar.css";
 
 type Props = {
-  hasPlayers: boolean;
-  playerCount: number;
   showReset?: boolean;
   title?: string;
-  showAppTitle?: boolean;
+  titleSuffix?: string;
   showBackButton?: boolean;
   showActionMenu?: boolean;
-  meta?: string;
+  metaItems?: Array<{ label: string; tone?: "accent" | "muted" }>;
   onBack?: () => void;
   onLogoClick?: () => void;
   onAddPlayer: () => void;
@@ -19,14 +17,12 @@ type Props = {
 };
 
 export function TopBar({
-  hasPlayers,
-  playerCount,
   showReset = true,
   title = "Plink",
-  showAppTitle = true,
+  titleSuffix,
   showBackButton = false,
   showActionMenu = false,
-  meta,
+  metaItems,
   onBack,
   onLogoClick,
   onAddPlayer,
@@ -99,8 +95,10 @@ export function TopBar({
             onClick={onLogoClick}
             aria-label="Go to games"
           >
-            <img src="/icon1.png" alt="" className="logo__img" />
-            {showAppTitle && <span className="logo__text">PLINK</span>}
+            <span className="logo__mark" aria-hidden="true">
+              <img src="/icon-transparent.png" alt="" className="logo__img" />
+            </span>
+            <span className="logo__text">Plink</span>
           </button>
         )}
       </div>
@@ -111,15 +109,26 @@ export function TopBar({
           onClick={onRename}
           style={{ cursor: onRename ? "pointer" : "default" }}
         >
-          {displayTitle && <div className="brand__title">{displayTitle}</div>}
-          <div className="brand__meta">
-            <span className="meta">
-              {meta ??
-                (hasPlayers
-                  ? `${playerCount} ${playerCount === 1 ? "player" : "players"}`
-                  : "")}
-            </span>
-          </div>
+          {displayTitle && (
+            <div className="brand__title">
+              <span>{displayTitle}</span>
+              {titleSuffix ? (
+                <span className="brand__titleSuffix">{titleSuffix}</span>
+              ) : null}
+            </div>
+          )}
+          {metaItems && metaItems.length > 0 ? (
+            <div className="brand__meta">
+              {metaItems.map((item) => (
+                <span
+                  key={item.label}
+                  className={`metaChip metaChip--${item.tone ?? "muted"}`}
+                >
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 

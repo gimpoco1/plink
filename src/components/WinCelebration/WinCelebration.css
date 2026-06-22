@@ -1,28 +1,31 @@
 .winFx {
   position: fixed;
   inset: 0;
-  z-index: 70;
-  pointer-events: none;
-  overflow: hidden;
+  z-index: 180;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: grid;
+  place-items: start center;
+  padding: 14px;
 }
 
 .winFx__veil {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(1200px 700px at 50% 12%, rgba(255, 229, 122, 0.3), transparent 62%),
-    radial-gradient(900px 560px at 50% 85%, rgba(0, 245, 255, 0.15), transparent 70%),
-    rgba(2, 8, 24, 0.62);
-  backdrop-filter: blur(6px) saturate(1.05);
-  animation: winVeil 3200ms ease-out forwards;
+    radial-gradient(1200px 700px at 50% 12%, rgba(216, 255, 79, 0.28), transparent 60%),
+    radial-gradient(900px 560px at 50% 82%, rgba(216, 255, 79, 0.08), transparent 72%),
+    rgba(3, 8, 15, 0.8);
+  backdrop-filter: blur(12px) saturate(1.05);
+  animation: winVeil 420ms ease-out both;
 }
 
 .winFx__burst {
   position: absolute;
   left: 50%;
-  top: 24%;
-  width: min(560px, calc(100vw - 32px));
-  height: min(560px, calc(100vw - 32px));
+  top: 18%;
+  width: min(640px, calc(100vw - 24px));
+  height: min(640px, calc(100vw - 24px));
   transform: translate(-50%, -50%);
 }
 
@@ -35,16 +38,38 @@
   border-radius: 999px;
   transform-origin: 50% 100%;
   transform: translate(-50%, -100%) rotate(calc(var(--i) * 30deg));
-  background: linear-gradient(to top, rgba(255, 220, 110, 0), rgba(255, 220, 110, 0.9));
-  filter: drop-shadow(0 0 10px rgba(255, 220, 110, 0.6));
+  background: linear-gradient(to top, rgba(216, 255, 79, 0), rgba(216, 255, 79, 0.95));
+  filter: drop-shadow(0 0 12px rgba(216, 255, 79, 0.5));
   opacity: 0;
   animation: rayPulse 1200ms ease-out forwards;
-  animation-delay: calc(var(--i) * 22ms + 120ms);
+  animation-delay: calc(var(--i) * 22ms + 90ms);
 }
 
-.winFx__sparkles {
+.winFx__sparkles,
+.winFx__confetti {
   position: absolute;
   inset: 0;
+}
+
+.winFx__orbs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.winFx__orb {
+  position: absolute;
+  width: calc(120px + (var(--i) * 18px));
+  height: calc(120px + (var(--i) * 18px));
+  left: calc(8% + (var(--i) * 14%));
+  top: calc(12% + ((var(--i) * 11%) % 56%));
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(216, 255, 79, 0.14), rgba(216, 255, 79, 0));
+  filter: blur(10px);
+  opacity: 0;
+  animation:
+    orbAppear 900ms ease-out forwards,
+    orbFloat calc(5200ms + (var(--i) * 280ms)) ease-in-out calc(var(--i) * 100ms) infinite alternate;
 }
 
 .sparkle {
@@ -65,95 +90,340 @@
 }
 
 .winFx__content {
-  position: absolute;
-  left: 50%;
-  top: 18%;
-  transform: translateX(-50%);
-  width: min(460px, calc(100% - 30px));
-  border: 1px solid rgba(255, 216, 124, 0.45);
-  border-radius: 22px;
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  border: 1px solid rgba(216, 255, 79, 0.32);
+  border-radius: 28px;
   background:
-    linear-gradient(145deg, rgba(20, 30, 56, 0.96), rgba(7, 14, 35, 0.93)),
-    radial-gradient(800px 260px at 50% 0%, rgba(255, 216, 124, 0.15), transparent 70%);
+    linear-gradient(180deg, rgba(25, 34, 42, 0.98), rgba(13, 19, 24, 0.98)),
+    radial-gradient(900px 280px at 50% 0%, rgba(216, 255, 79, 0.12), transparent 68%);
   box-shadow:
-    0 0 0 1px rgba(255, 214, 116, 0.25),
-    0 24px 80px rgba(0, 0, 0, 0.5),
-    0 0 70px rgba(255, 214, 116, 0.22);
-  padding: 16px 16px 18px;
-  text-align: center;
+    0 0 0 1px rgba(216, 255, 79, 0.16),
+    0 30px 90px rgba(0, 0, 0, 0.52),
+    0 0 90px rgba(216, 255, 79, 0.12);
+  padding: 14px;
+  margin: auto 0;
   animation:
     winPop 700ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    cardGlow 1400ms ease-out 520ms both;
+    cardGlow 1500ms ease-out 500ms both;
+}
+
+.winFx__hero {
+  padding: 4px 4px 12px;
+  text-align: center;
+  position: relative;
+}
+
+.winFx__halo {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(circle, rgba(216, 255, 79, 0.22), rgba(216, 255, 79, 0.02) 55%, rgba(216, 255, 79, 0) 72%);
+  filter: blur(2px);
+  opacity: 0;
+  animation:
+    haloIn 700ms ease-out 120ms forwards,
+    haloPulse 2200ms ease-in-out 900ms infinite;
 }
 
 .winFx__medal {
-  margin: 2px auto 10px;
-  width: 48px;
-  height: 48px;
+  margin: 0 auto 8px;
+  width: 50px;
+  height: 50px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  color: #ffd466;
-  background: radial-gradient(circle at 35% 30%, #fff1bf, #ffd466 60%, #d08a1f 100%);
+  color: var(--accent);
+  background: var(--accent);
   box-shadow:
-    0 12px 26px rgba(255, 201, 86, 0.32),
+    0 14px 30px rgba(216, 255, 79, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  animation: medalBounce 850ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
+  animation:
+    medalBounce 850ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both,
+    medalHover 2400ms ease-in-out 1200ms infinite;
 }
 
 .winFx__medal svg {
-  width: 27px;
-  height: 27px;
-  color: rgba(88, 56, 0, 0.95);
+  width: 26px;
+  height: 26px;
+  color: var(--accent-ink);
 }
 
-.winFx__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 215, 113, 0.36);
-  background: rgba(255, 215, 113, 0.14);
-  color: rgba(255, 255, 255, 0.94);
-  font-size: 12px;
+.winFx__eyebrow {
+  color: var(--accent);
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: 0.45px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .winFx__name {
-  margin-top: 10px;
-  font-size: clamp(30px, 7vw, 42px);
+  margin-top: 8px;
+  font-size: clamp(28px, 7vw, 40px);
   font-weight: 950;
-  letter-spacing: -0.8px;
-  line-height: 1;
-  color: #ffffff;
-  text-shadow: 0 0 24px rgba(255, 214, 120, 0.35);
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  color: #fff;
+  text-shadow: 0 0 24px var(--accent-glow);
 }
 
 .winFx__title {
-  margin-top: 4px;
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 1.7px;
+  margin-top: 6px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  opacity: 0.9;
+}
+
+.winFx__streakHero {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(216, 255, 79, 0.1);
+  border: 1px solid rgba(216, 255, 79, 0.24);
+  box-shadow: 0 0 24px rgba(216, 255, 79, 0.08);
+  animation:
+    streakHeroIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both,
+    streakHeroPulse 1800ms ease-in-out 900ms infinite;
+}
+
+.winFx__streakHeroCount {
+  color: var(--accent);
+  font-size: 24px;
+  font-weight: 950;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  animation: streakCountPop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 320ms both;
+}
+
+.winFx__streakHeroLabel {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #23e7ff;
-  text-shadow: 0 0 20px rgba(35, 231, 255, 0.4);
 }
 
 .winFx__hint {
   margin-top: 6px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.winFx__confetti {
-  position: absolute;
-  inset: 0;
+.winFx__summary {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
+  padding: 12px;
+}
+
+.winFx__playerStats {
+  margin-bottom: 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(216, 255, 79, 0.12);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.08), rgba(216, 255, 79, 0.02)),
+    rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  animation: sectionLift 560ms ease-out 220ms both;
+}
+
+.winFx__playerStatsTitle {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.winFx__playerStatsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.winFx__playerStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.winFx__playerStat {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(12, 18, 24, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: grid;
+  gap: 4px;
+}
+
+.winFx__playerStat span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.winFx__playerStat strong {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winFx__summaryTitle {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.winFx__standings {
+  display: grid;
+  gap: 6px;
+}
+
+.winFx__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  opacity: 1;
+  transform: translateY(0);
+  animation: rowIn 480ms ease-out forwards;
+}
+
+.winFx__row:nth-child(1) { animation-delay: 220ms; }
+.winFx__row:nth-child(2) { animation-delay: 290ms; }
+.winFx__row:nth-child(3) { animation-delay: 360ms; }
+.winFx__row:nth-child(4) { animation-delay: 430ms; }
+.winFx__row:nth-child(5) { animation-delay: 500ms; }
+
+.winFx__row--winner {
+  background: rgba(216, 255, 79, 0.1);
+  border-color: rgba(216, 255, 79, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  animation:
+    rowIn 480ms ease-out forwards,
+    winnerRowPulse 2200ms ease-in-out 1100ms infinite;
+}
+
+.winFx__rowLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.winFx__rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.winFx__row--winner .winFx__rank {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.winFx__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.winFx__player {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.winFx__player strong {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.winFx__player span {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.winFx__score {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.winFx__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 8px;
+  margin-top: 10px;
+  animation: sectionLift 600ms ease-out 320ms both;
+}
+
+.winFx__btn {
+  min-height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.winFx__btn--ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.winFx__btn--primary {
+  border-color: rgba(216, 255, 79, 0.3);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 10px 30px rgba(216, 255, 79, 0.16);
 }
 
 .confetti {
@@ -163,7 +433,7 @@
   width: 9px;
   height: 16px;
   border-radius: 3px;
-  background: hsl(calc((var(--i) * 21) + 28) 92% 62%);
+  background: var(--accent);
   opacity: 0;
   transform: translate3d(0, 0, 0) rotate(calc(var(--i) * 13deg));
   animation: confettiFall 2400ms cubic-bezier(0.15, 0.65, 0.2, 1) forwards;
@@ -172,46 +442,36 @@
 
 @keyframes winPop {
   0% {
-    transform: translateX(-50%) translateY(-22px) scale(0.92);
+    transform: translateY(18px) scale(0.96);
     opacity: 0;
   }
   60% {
-    transform: translateX(-50%) translateY(4px) scale(1.02);
+    transform: translateY(-2px) scale(1.01);
     opacity: 1;
   }
   100% {
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes winVeil {
-  0% {
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  78% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes cardGlow {
   0% {
     box-shadow:
-      0 0 0 1px rgba(255, 214, 116, 0.18),
-      0 20px 70px rgba(0, 0, 0, 0.48),
-      0 0 10px rgba(255, 214, 116, 0.08);
+      0 0 0 1px rgba(216, 255, 79, 0.16),
+      0 30px 90px rgba(0, 0, 0, 0.5),
+      0 0 10px rgba(216, 255, 79, 0.06);
   }
   100% {
     box-shadow:
-      0 0 0 1px rgba(255, 214, 116, 0.3),
-      0 28px 90px rgba(0, 0, 0, 0.5),
-      0 0 90px rgba(255, 214, 116, 0.26);
+      0 0 0 1px rgba(216, 255, 79, 0.24),
+      0 34px 100px rgba(0, 0, 0, 0.54),
+      0 0 90px rgba(216, 255, 79, 0.18);
   }
 }
 
@@ -244,6 +504,74 @@
   }
 }
 
+@keyframes haloIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes haloPulse {
+  0%, 100% {
+    opacity: 0.72;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+  }
+}
+
+@keyframes medalHover {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes streakHeroIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes streakHeroPulse {
+  0%, 100% {
+    box-shadow: 0 0 18px rgba(216, 255, 79, 0.06);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(216, 255, 79, 0.14);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes streakCountPop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes sparkle {
   0% {
     opacity: 0;
@@ -256,6 +584,59 @@
   100% {
     opacity: 0;
     transform: scale(0.15);
+  }
+}
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sectionLift {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes winnerRowPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 0 rgba(216, 255, 79, 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 24px rgba(216, 255, 79, 0.08);
+  }
+}
+
+@keyframes orbAppear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes orbFloat {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(18px, -20px, 0) scale(1.08);
   }
 }
 
@@ -273,27 +654,27 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
+  .winFx {
+    padding: 14px;
+  }
+
   .winFx__content {
-    top: 16%;
-    border-radius: 18px;
-    padding: 14px 12px 16px;
+    max-height: calc(100dvh - 28px);
+    padding: 12px;
+    border-radius: 22px;
   }
 
-  .winFx__medal {
-    width: 44px;
-    height: 44px;
-    margin-bottom: 8px;
+  .winFx__hero {
+    padding: 2px 2px 10px;
   }
 
-  .winFx__badge {
-    font-size: 11px;
-    padding: 6px 10px;
+  .winFx__actions {
+    grid-template-columns: 1fr;
   }
 
-  .winFx__title {
-    font-size: 16px;
-    letter-spacing: 1.4px;
+  .winFx__playerStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -301,10 +682,6 @@
   .winFx,
   .winFx * {
     animation: none !important;
-  }
-
-  .winFx__veil {
-    opacity: 1;
   }
 
   .winFx__burst,

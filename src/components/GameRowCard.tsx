@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { Game } from "../types";
 import { findWinner } from "../utils/ranking";
-import { capitalizeFirst } from "../utils/text";
+import { capitalizeFirst, getGameDisplayName } from "../utils/text";
 
 type Props = {
   game: Game;
@@ -103,14 +103,10 @@ export function GameRowCard({
     return findWinner(game.players, game.targetPoints, game.isLowScoreWins);
   }, [game.players, game.targetPoints, game.isLowScoreWins]);
 
-  const status = winner ? "Finished" : "In progress";
-  const displayName = game.name.trim()
-    ? game.name.trim().toUpperCase()
+  const parsedName = getGameDisplayName(game.name);
+  const displayName = parsedName.title
+    ? parsedName.title.toUpperCase()
     : "GAME";
-  const accent = useMemo(
-    () => game.accentColor ?? "#94a3b8",
-    [game.accentColor],
-  );
   const winnerName = winner ? capitalizeFirst(winner.name) : null;
 
   return (
@@ -119,7 +115,6 @@ export function GameRowCard({
       data-open={swipeX !== 0 ? "true" : "false"}
       style={{
         ["--swipeW" as never]: `${ACTION_WIDTH}px`,
-        ["--accent" as never]: accent,
       }}
     >
       <div className="swipeAction" aria-hidden={swipeX === 0}>
@@ -198,29 +193,30 @@ export function GameRowCard({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUpOrCancel}
         onPointerCancel={onPointerUpOrCancel}
-        onClick={(e) => {
-          if (isSwiping) return;
-          if (swipeX !== 0) {
-            closeSwipe();
-          } else {
-            onEnter();
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            onEnter();
-          }
-        }}
-        aria-label={`Enter ${game.name}`}
       >
-        <div className="gameRow__main">
+        <button
+          className="gameRow__main"
+          type="button"
+          onClick={(e) => {
+            if (isSwiping) return;
+            if (swipeX !== 0) {
+              closeSwipe();
+              e.stopPropagation();
+            } else {
+              onEnter();
+            }
+          }}
+          aria-label={`Open ${game.name}`}
+        >
           <div className="gameRow__head">
-            <div className="gameRow__name">{displayName}</div>
-            {winnerName ? (
-              <span className="pill pill--winner">Winner: {winnerName}</span>
-            ) : null}
+            <div className="gameRow__titleGroup">
+              <div className="gameRow__name">{displayName}</div>
+              {parsedName.replayNumber ? (
+                <span className="gameRow__replay">
+                  #{parsedName.replayNumber}
+                </span>
+              ) : null}
+            </div>
             <div
               className="gameRow__date"
               aria-label={`Created ${createdLabel}`}
@@ -229,14 +225,67 @@ export function GameRowCard({
             </div>
           </div>
           <div className="gameRow__meta">
-            <span className="pill">{status}</span>
-            <span className="pill">{game.players.length} players</span>
-            <span className="pill">
-              {game.isLowScoreWins ? "Lose at" : "Win at"}: {game.targetPoints}{" "}
-              points
+            {winnerName ? (
+              <span className="gameRow__detail gameRow__winnerDetail">
+                <span className="gameRow__winnerIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M8 4h8v4.5a4 4 0 0 1-8 0V4Zm0 2H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 12.5V17m-3 3h6m-5-3h4"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className="gameRow__winnerLabel">Winner</span>
+                <strong>{winnerName}</strong>
+              </span>
+            ) : null}
+            {!winner ? (
+              <span className="gameRow__detail">
+                <span className="gameRow__statusDot" aria-hidden="true" />
+                In progress
+              </span>
+            ) : null}
+            <span
+              className="gameRow__detail gameRow__target"
+              aria-label={`Target score ${game.targetPoints} points`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20m17.5 0v-1.2a3.4 3.4 0 0 0-2.5-3.3M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-6.8a3.5 3.5 0 0 1 0 6.6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {game.players.length}{" "}
+              {game.players.length === 1 ? "player" : "players"}
+            </span>
+            <span className="gameRow__detail">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="8"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+              </svg>
+              <span>Target</span>
+              <strong>{game.targetPoints}</strong>
+              <span>{game.targetPoints === 1 ? "pt" : "pts"}</span>
             </span>
           </div>
-        </div>
+        </button>
       </article>
     </div>
   );

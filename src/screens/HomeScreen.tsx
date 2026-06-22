@@ -3,8 +3,11 @@ import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard";
 import { avatarStyleFor } from "../utils/color";
 import { AVATAR_COLORS } from "../constants";
-import { findWinner } from "../utils/ranking";
 import { formatPlayerName, getInitials } from "../utils/text";
+import {
+  computeProfileStats,
+  createEmptyProfileStats,
+} from "../utils/profileStats";
 import "./HomeScreen.css";
 
 type StagedPlayer = {
@@ -155,20 +158,21 @@ export function HomeScreen({
     [],
   );
 
-  const profileWins = useMemo(() => {
-    const wins = new Map<string, number>();
-    games.forEach((game) => {
-      const winner = findWinner(
-        game.players,
-        game.targetPoints,
-        game.isLowScoreWins,
-      );
-      if (winner?.profileId) {
-        wins.set(winner.profileId, (wins.get(winner.profileId) || 0) + 1);
-      }
+  const profileStats = useMemo(() => computeProfileStats(games), [games]);
+
+  const playersOverview = useMemo(() => {
+    let trackedSessions = 0;
+    let activeSessions = 0;
+    let totalWins = 0;
+
+    profileStats.forEach((stats) => {
+      trackedSessions += stats.gamesPlayed;
+      activeSessions += stats.inProgressGames;
+      totalWins += stats.wins;
     });
-    return wins;
-  }, [games]);
+
+    return { trackedSessions, activeSessions, totalWins };
+  }, [profileStats]);
 
   return (
     <div className="homeContainer">
@@ -176,10 +180,37 @@ export function HomeScreen({
         <div className="tabSlider" data-active={activeTab}>
           <div className="tabWindow">
             <div className="tabContent tabContent--home">
+              {!showForm ? (
+                <section className="homeHero">
+                  <div>
+                    <div className="homeHero__eyebrow">Your scoreboard</div>
+                    <h1 className="homeHero__title">
+                      Keep the score.<br />Enjoy the game.
+                    </h1>
+                    <p className="homeHero__copy">
+                      Pick up a recent session or start a fresh round in seconds.
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn--primary btn--xl homeHero__action"
+                    type="button"
+                    onClick={() => {
+                      setIsCreating(true);
+                      setSelectedProfileIds(new Set());
+                      setStagedPlayers([]);
+                    }}
+                  >
+                    <span aria-hidden="true">＋</span> New game
+                  </button>
+                </section>
+              ) : null}
               {showForm && (
                 <section className="homeCard createCard">
                   <div className="homeCard__header">
-                    <div className="homeCard__title">Create new game</div>
+                    <div>
+                      <div className="homeCard__eyebrow">New session</div>
+                      <div className="homeCard__title">Set up your game</div>
+                    </div>
                     {games.length > 0 && (
                       <button
                         className="btn btn--ghost btn--sm"
@@ -292,6 +323,11 @@ export function HomeScreen({
                         </div>
                       ) : null}
                       <span className="field__label">Add players</span>
+                      <div className="profilePicker__summary" aria-live="polite">
+                        {selectedProfileIds.size + stagedPlayers.length === 0
+                          ? "Choose at least one player"
+                          : `${selectedProfileIds.size + stagedPlayers.length} ${selectedProfileIds.size + stagedPlayers.length === 1 ? "player" : "players"} ready`}
+                      </div>
                       <div className="profilePicker__list">
                         {profiles.map((p) => {
                           const isSelected = selectedProfileIds.has(p.id);
@@ -374,6 +410,8 @@ export function HomeScreen({
                                   style={{ background: c.value }}
                                   data-active={newPlayerColor === c.value}
                                   onClick={() => setNewPlayerColor(c.value)}
+                                  aria-label={`Use ${c.id} color`}
+                                  aria-pressed={newPlayerColor === c.value}
                                 />
                               ))}
                             </div>
@@ -474,13 +512,37 @@ export function HomeScreen({
           <div className="tabWindow">
             <div className="tabContent tabContent--players">
               <div className="tabHeader">
-                <h2 className="tabTitle">Saved Players</h2>
+                <div>
+                  <h2 className="tabTitle">Saved Players</h2>
+                  <p className="tabSubtitle">
+                    Reuse profiles and track cumulative results across sessions.
+                  </p>
+                </div>
                 <button
                   className="btn btn--primary btn--sm"
                   onClick={() => setIsAddingInTab(true)}
                 >
                   + New Player
                 </button>
+              </div>
+
+              <div className="profilesOverview">
+                <div className="profilesOverview__item">
+                  <span className="profilesOverview__label">Saved</span>
+                  <strong>{profiles.length}</strong>
+                </div>
+                <div className="profilesOverview__item">
+                  <span className="profilesOverview__label">Sessions</span>
+                  <strong>{playersOverview.trackedSessions}</strong>
+                </div>
+                <div className="profilesOverview__item">
+                  <span className="profilesOverview__label">Wins</span>
+                  <strong>{playersOverview.totalWins}</strong>
+                </div>
+                <div className="profilesOverview__item">
+                  <span className="profilesOverview__label">Active</span>
+                  <strong>{playersOverview.activeSessions}</strong>
+                </div>
               </div>
 
               <div className="profilesGrid">
@@ -519,6 +581,8 @@ export function HomeScreen({
                             className={`colorDot ${newTabColor === c.value ? "active" : ""}`}
                             style={{ backgroundColor: c.value }}
                             onClick={() => setNewTabColor(c.value)}
+                            aria-label={`Use ${c.id} color`}
+                            aria-pressed={newTabColor === c.value}
                           />
                         ))}
                       </div>
@@ -549,7 +613,8 @@ export function HomeScreen({
                   <div className="emptyMsg">No saved players yet.</div>
                 ) : (
                   profiles.map((p) => {
-                    const wins = profileWins.get(p.id) || 0;
+                    const stats =
+                      profileStats.get(p.id) ?? createEmptyProfileStats();
                     return (
                       <div key={p.id} className="profileCard">
                         <div className="profileCard__main">
@@ -594,20 +659,98 @@ export function HomeScreen({
                           ) : (
                             <div className="profileCard__info">
                               <div
-                                className="profileCard__name"
-                                onClick={() => {
-                                  setEditingProfileId(p.id);
-                                  setEditProfileName(p.name);
-                                }}
+                                className="profileCard__header"
                               >
-                                {p.name}
-                              </div>
-                              <div className="profileCard__stats">
-                                {wins} {wins === 1 ? "win" : "wins"}
+                                <div
+                                  className="profileCard__name"
+                                  onClick={() => {
+                                    setEditingProfileId(p.id);
+                                    setEditProfileName(p.name);
+                                  }}
+                                >
+                                  {p.name}
+                                </div>
+                                {stats.topWonGame ? (
+                                  <div className="profileCard__gameWin">
+                                    <span className="profileCard__gameWinLabel">
+                                      Top game
+                                    </span>
+                                    <strong>{stats.topWonGame.name}</strong>
+                                    <span>
+                                      {stats.topWonGame.wins}{" "}
+                                      {stats.topWonGame.wins === 1
+                                        ? "win"
+                                        : "wins"}
+                                    </span>
+                                  </div>
+                                ) : null}
                               </div>
                             </div>
                           )}
                         </div>
+
+                        <div
+                          className="profileStatsRow"
+                          aria-label={`${p.name} cumulative stats`}
+                        >
+                          <div className="profileStatPill">
+                            <span className="profileStatPill__label">Wins</span>
+                            <strong className="profileStatPill__value">
+                              {stats.wins}
+                            </strong>
+                          </div>
+                          <div className="profileStatPill">
+                            <span className="profileStatPill__label">Rate</span>
+                            <strong className="profileStatPill__value">
+                              {stats.completedGames > 0
+                                ? `${stats.winRate}%`
+                                : "—"}
+                            </strong>
+                          </div>
+                          <div className="profileStatPill">
+                            <span className="profileStatPill__label">
+                              Done
+                            </span>
+                            <strong className="profileStatPill__value">
+                              {stats.completedGames}
+                            </strong>
+                          </div>
+                          <div className="profileStatPill">
+                            <span className="profileStatPill__label">
+                              Streak
+                            </span>
+                            <strong className="profileStatPill__value">
+                              {stats.currentWinStreak > 0
+                                ? `${stats.currentWinStreak}x`
+                                : "—"}
+                            </strong>
+                          </div>
+                        </div>
+
+                        {stats.gameResults.length > 0 ? (
+                          <details className="profileGamesDropdown">
+                            <summary className="profileGamesDropdown__summary">
+                              <span>Games</span>
+                              <span className="profileGamesDropdown__count">
+                                {stats.gameResults.length}
+                              </span>
+                            </summary>
+                            <div className="profileCard__gameResults">
+                              {stats.gameResults.map((result) => (
+                                <div
+                                  key={result.name}
+                                  className="profileCard__gameResult"
+                                >
+                                  <span>{result.name}</span>
+                                  <strong>
+                                    {result.wins}{" "}
+                                    {result.wins === 1 ? "win" : "wins"}
+                                  </strong>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        ) : null}
 
                         <div className="profileCard__footer">
                           <div className="profileCard__colors">
@@ -621,6 +764,8 @@ export function HomeScreen({
                                     avatarColor: c.value,
                                   })
                                 }
+                                aria-label={`Use ${c.id} color for ${p.name}`}
+                                aria-pressed={p.avatarColor === c.value}
                               />
                             ))}
                           </div>
@@ -628,6 +773,7 @@ export function HomeScreen({
                             className="deleteBtn"
                             type="button"
                             onClick={() => onDeleteProfile(p.id)}
+                            aria-label={`Delete ${p.name}`}
                           >
                             <svg
                               viewBox="0 0 24 24"
@@ -661,6 +807,7 @@ export function HomeScreen({
             setActiveTab("home");
             if (isCreating) setIsCreating(false);
           }}
+          aria-label="Games"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path
@@ -709,6 +856,7 @@ export function HomeScreen({
           className="tabItem"
           data-active={activeTab === "players"}
           onClick={() => setActiveTab("players")}
+          aria-label="Saved players"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path

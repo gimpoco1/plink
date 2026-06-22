@@ -17,12 +17,12 @@ export const GAME_ACCENT_COLORS = [
 ] as const;
 
 export const AVATAR_COLORS = [
-  { id: "slate", label: "Slate", value: "#64748b" },
-  { id: "sky", label: "Sky", value: "#38bdf8" },
-  { id: "teal", label: "Teal", value: "#2dd4bf" },
-  { id: "green", label: "Green", value: "#4ade80" },
-  { id: "amber", label: "Amber", value: "#fbbf24" },
-  { id: "rose", label: "Rose", value: "#fb7185" },
-  { id: "violet", label: "Violet", value: "#a78bfa" },
-  { id: "stone", label: "Stone", value: "#a8a29e" }
+  { id: "graphite", label: "Graphite", value: "#6b7890" },
+  { id: "sky", label: "Sky", value: "#36aeea" },
+  { id: "aqua", label: "Aqua", value: "#31cfc3" },
+  { id: "mint", label: "Mint", value: "#47d97d" },
+  { id: "lime", label: "Lime", value: "#9fbe38" },
+  { id: "coral", label: "Coral", value: "#f36f85" },
+  { id: "violet", label: "Violet", value: "#9276e8" },
+  { id: "stone", label: "Stone", value: "#aba39b" }
 ] as const;

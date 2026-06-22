@@ -2,8 +2,8 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-color: var(--border);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--glow);
 }
 
@@ -24,17 +24,17 @@
 }
 
 .progressContainer {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
   width: 100%;
   position: relative;
 }
 
 .progressBar {
   height: 100%;
-  background: linear-gradient(90deg, var(--pos), #10b981);
+  background: var(--accent);
   transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+  box-shadow: none;
 }
 
 .cardBody {
@@ -53,41 +53,41 @@
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  font-weight: 950;
+  font-weight: 850;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .card--leader .rank {
-  border-color: var(--pos);
-  color: #fff;
-  background: var(--pos);
-  box-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: none;
 }
 
 .card--leader {
-  border-color: var(--pos);
-  border-width: 2px;
-  background: rgba(74, 222, 128, 0.03);
+  border-color: rgba(216, 255, 79, 0.5);
+  border-width: 1px;
+  background: rgba(216, 255, 79, 0.025);
 }
 
 .avatar {
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-sm);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
+  font-weight: 850;
   font-size: 24px;
   box-shadow:
     0 8px 16px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  transform: rotate(-3deg);
+  transform: none;
   transition: transform 0.3s ease;
 }
 
 .card:hover .avatar {
-  transform: rotate(0deg) scale(1.05);
+  transform: scale(1.03);
 }
 
 .who__nameRow {
@@ -97,7 +97,7 @@
 }
 
 .who__name {
-  font-weight: 950;
+  font-weight: 850;
   font-size: 22px;
   letter-spacing: -0.5px;
   line-height: 1.1;
@@ -116,7 +116,7 @@
 .score {
   font-variant-numeric: tabular-nums;
   font-size: 48px;
-  font-weight: 950;
+  font-weight: 850;
   letter-spacing: -3px;
   text-align: right;
   line-height: 1;
@@ -187,10 +187,10 @@
   width: clamp(34px, 10vw, 42px);
   height: clamp(34px, 10vw, 42px);
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
   color: #fff;
-  font-weight: 800;
+  font-weight: 850;
   font-size: clamp(11px, 3vw, 13px);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -204,19 +204,19 @@
 }
 
 .dot--neg {
-  border-color: rgba(248, 113, 113, 0.2);
+  border-color: rgba(255, 140, 130, 0.22);
   color: var(--neg);
 }
 
 .dot--pos {
-  border-color: rgba(74, 222, 128, 0.2);
+  border-color: var(--accent-border);
   color: var(--pos);
 }
 
 .customPod {
   display: flex;
   align-items: center;
-  background: rgba(10, 14, 28, 0.58);
+  background: rgba(5, 9, 12, 0.42);
   border: 1.5px solid var(--border);
   border-radius: 12px;
   padding: 2px 3px;
@@ -282,16 +282,33 @@
 }
 
 .winnerMark {
-  font-size: 22px;
-  line-height: 1;
-  filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.5));
+  width: 24px;
+  height: 24px;
+  color: var(--accent);
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+
+.winnerMark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .card--winner {
-  border-color: #facc15;
+  border-color: var(--accent);
   border-width: 2px;
-  background: rgba(250, 204, 21, 0.05);
+  background: rgba(216, 255, 79, 0.05);
   animation: winnerEntry 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (max-width: 420px) {
+  .cardHeader { padding: 14px; }
+  .cardHeader__left { gap: 10px; }
+  .rank { min-width: 30px; height: 30px; border-radius: 10px; }
+  .avatar { width: 48px; height: 48px; font-size: 20px; }
+  .who__name { font-size: 18px; }
+  .score { font-size: 42px; }
+  .cardBody { padding: 11px 10px; }
 }
 
 @keyframes winnerEntry {

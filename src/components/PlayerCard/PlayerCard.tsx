@@ -199,7 +199,15 @@ export function PlayerCard({
                 <div className="who__name">{displayName}</div>
                 {isWinner ? (
                   <div className="winnerMark" aria-label="Winner">
-                    🏆
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M8 4h8v4.5a4 4 0 0 1-8 0V4Zm0 2H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 12.5V17m-3 3h6m-5-3h4"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </div>
                 ) : null}
               </div>
@@ -221,7 +229,14 @@ export function PlayerCard({
           </div>
         </div>
 
-        <div className="progressContainer">
+        <div
+          className="progressContainer"
+          role="progressbar"
+          aria-label={`${displayName} progress to target`}
+          aria-valuemin={0}
+          aria-valuemax={targetPoints}
+          aria-valuenow={Math.max(0, player.score)}
+        >
           <div className="progressBar" style={{ width: `${progress}%` }} />
         </div>
 
@@ -233,6 +248,7 @@ export function PlayerCard({
                   key={delta}
                   type="button"
                   className="dot dot--neg"
+                  aria-label={`Subtract ${Math.abs(delta)} points from ${displayName}`}
                   onClick={(e) => {
                     if (isSwiping) return;
                     if (swipeX !== 0) {
@@ -255,6 +271,7 @@ export function PlayerCard({
                 inputMode="numeric"
                 placeholder="0"
                 value={customRaw}
+                aria-label={`Custom point amount for ${displayName}`}
                 onChange={(e) =>
                   setCustomRaw(e.target.value.replace(/[^\d]/g, ""))
                 }
@@ -268,6 +285,7 @@ export function PlayerCard({
               <div className="podButtons">
                 <button
                   className="podBtn podBtn--neg"
+                  aria-label={`Subtract custom points from ${displayName}`}
                   type="button"
                   disabled={!canApplyCustom}
                   onClick={(e) => {
@@ -285,6 +303,7 @@ export function PlayerCard({
                 </button>
                 <button
                   className="podBtn podBtn--pos"
+                  aria-label={`Add custom points to ${displayName}`}
                   type="button"
                   disabled={!canApplyCustom}
                   onClick={(e) => {
@@ -309,6 +328,7 @@ export function PlayerCard({
                   key={delta}
                   type="button"
                   className="dot dot--pos"
+                  aria-label={`Add ${delta} points to ${displayName}`}
                   onClick={(e) => {
                     if (isSwiping) return;
                     if (swipeX !== 0) {

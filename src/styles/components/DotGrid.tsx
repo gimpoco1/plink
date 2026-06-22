@@ -38,6 +38,9 @@ export interface DotGridProps {
   maxSpeed?: number;
   resistance?: number;
   returnDuration?: number;
+  idleMotion?: boolean;
+  idleSpeed?: number;
+  idleStrength?: number;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -64,6 +67,9 @@ const DotGrid: React.FC<DotGridProps> = ({
   maxSpeed = 5000,
   resistance = 750,
   returnDuration = 1.5,
+  idleMotion = true,
+  idleSpeed = 1,
+  idleStrength = 1.8,
   className = '',
   style
 }) => {
@@ -78,7 +84,10 @@ const DotGrid: React.FC<DotGridProps> = ({
     speed: 0,
     lastTime: 0,
     lastX: 0,
-    lastY: 0
+    lastY: 0,
+    lastInteraction: Number.NEGATIVE_INFINITY,
+    renderX: null as number | null,
+    renderY: null as number | null
   });
 
   const baseRgb = useMemo(() => hexToRgb(baseColor), [baseColor]);
@@ -135,37 +144,89 @@ const DotGrid: React.FC<DotGridProps> = ({
     if (!circlePath) return;
 
     let rafId: number;
-    const proxSq = proximity * proximity;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
 
-    const draw = () => {
+    const draw = (timestamp: number) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const { x: px, y: py } = pointerRef.current;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const pointer = pointerRef.current;
+      const idleEnabled = idleMotion;
+      const motionScale = prefersReducedMotion ? 0.32 : 1;
+      const userIsActive = timestamp - pointer.lastInteraction < 1800;
+      const idleTime = timestamp * 0.00032 * idleSpeed * motionScale;
+      const idleX = width * (0.5 + Math.sin(idleTime) * 0.38);
+      const idleY =
+        height * (0.5 + Math.sin(idleTime * 0.73 + 1.4) * 0.36);
+      const targetX = userIsActive || !idleEnabled ? pointer.x : idleX;
+      const targetY = userIsActive || !idleEnabled ? pointer.y : idleY;
+      const ease = userIsActive ? 0.18 : 0.028;
+
+      pointer.renderX ??= idleEnabled ? idleX : pointer.x;
+      pointer.renderY ??= idleEnabled ? idleY : pointer.y;
+      pointer.renderX += (targetX - pointer.renderX) * ease;
+      pointer.renderY += (targetY - pointer.renderY) * ease;
+
+      const px = pointer.renderX;
+      const py = pointer.renderY;
+      const idleAmount = idleEnabled && !userIsActive ? 1 : 0;
+      const activeProximity =
+        proximity *
+        (1 + Math.sin(idleTime * 1.35) * 0.18 * idleAmount * motionScale);
+      const activeProxSq = activeProximity * activeProximity;
 
       for (const dot of dotsRef.current) {
-        const ox = dot.cx + dot.xOffset;
-        const oy = dot.cy + dot.yOffset;
+        const phase =
+          dot.cx * 0.018 +
+          dot.cy * 0.012 -
+          timestamp * 0.00145 * idleSpeed * motionScale;
+        const driftX =
+          Math.sin(phase) * idleStrength * idleAmount * motionScale;
+        const driftY =
+          Math.cos(phase * 0.82) *
+          idleStrength *
+          0.72 *
+          idleAmount *
+          motionScale;
+        const ox = dot.cx + dot.xOffset + driftX;
+        const oy = dot.cy + dot.yOffset + driftY;
         const dx = dot.cx - px;
         const dy = dot.cy - py;
         const dsq = dx * dx + dy * dy;
 
         let style = baseColor;
-        if (dsq <= proxSq) {
+        let influence = 0;
+        if (dsq <= activeProxSq) {
           const dist = Math.sqrt(dsq);
-          const t = 1 - dist / proximity;
-          const r = Math.round(baseRgb.r + (activeRgb.r - baseRgb.r) * t);
-          const g = Math.round(baseRgb.g + (activeRgb.g - baseRgb.g) * t);
-          const b = Math.round(baseRgb.b + (activeRgb.b - baseRgb.b) * t);
+          influence = 1 - dist / activeProximity;
+          const r = Math.round(
+            baseRgb.r + (activeRgb.r - baseRgb.r) * influence
+          );
+          const g = Math.round(
+            baseRgb.g + (activeRgb.g - baseRgb.g) * influence
+          );
+          const b = Math.round(
+            baseRgb.b + (activeRgb.b - baseRgb.b) * influence
+          );
           style = `rgb(${r},${g},${b})`;
         }
 
         ctx.save();
         ctx.translate(ox, oy);
+        const pulse =
+          1 +
+          Math.sin(phase * 1.18) * 0.28 * idleAmount * motionScale +
+          influence * 0.16;
+        ctx.scale(pulse, pulse);
         ctx.fillStyle = style;
+        ctx.globalAlpha = 0.62 + influence * 0.38;
         ctx.fill(circlePath);
         ctx.restore();
       }
@@ -173,9 +234,18 @@ const DotGrid: React.FC<DotGridProps> = ({
       rafId = requestAnimationFrame(draw);
     };
 
-    draw();
+    rafId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(rafId);
-  }, [proximity, baseColor, activeRgb, baseRgb, circlePath]);
+  }, [
+    proximity,
+    baseColor,
+    activeRgb,
+    baseRgb,
+    circlePath,
+    idleMotion,
+    idleSpeed,
+    idleStrength
+  ]);
 
   useEffect(() => {
     buildGrid();
@@ -214,6 +284,7 @@ const DotGrid: React.FC<DotGridProps> = ({
       pr.vx = vx;
       pr.vy = vy;
       pr.speed = speed;
+      pr.lastInteraction = now;
 
       const rect = canvasRef.current!.getBoundingClientRect();
       pr.x = e.clientX - rect.left;
@@ -243,6 +314,7 @@ const DotGrid: React.FC<DotGridProps> = ({
     };
 
     const onClick = (e: MouseEvent) => {
+      pointerRef.current.lastInteraction = performance.now();
       const rect = canvasRef.current!.getBoundingClientRect();
       const cx = e.clientX - rect.left;
       const cy = e.clientY - rect.top;

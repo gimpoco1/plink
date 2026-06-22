@@ -64,12 +64,12 @@
 }
 
 .gameTimer__start {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.12);
+  color: var(--accent-ink);
+  border-color: var(--accent-border);
+  background: var(--accent);
 }
 
 .gameTimer__start:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.36);
+  background: #e2ff78;
+  border-color: #e2ff78;
 }

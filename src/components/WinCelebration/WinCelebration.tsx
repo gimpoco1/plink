@@ -1,19 +1,57 @@
 import { useEffect } from "react";
+import { avatarStyleFor } from "../../utils/color";
+import type { ProfileStats } from "../../utils/profileStats";
 import "./WinCelebration.css";
+
+type Standing = {
+  id: string;
+  name: string;
+  initials: string;
+  avatarColor: string;
+  score: number;
+  rank: number;
+  isWinner: boolean;
+};
 
 type Props = {
   winnerName: string;
-  onDone: () => void;
+  gameName: string;
+  targetPoints: number;
+  isLowScoreWins: boolean;
+  winnerStats: ProfileStats | null;
+  standings: Standing[];
+  onDismiss: () => void;
+  onReplay: () => void;
+  onBackToHome: () => void;
 };
 
-export function WinCelebration({ winnerName, onDone }: Props) {
+export function WinCelebration({
+  winnerName,
+  gameName,
+  targetPoints,
+  isLowScoreWins,
+  winnerStats,
+  standings,
+  onDismiss,
+  onReplay,
+  onBackToHome,
+}: Props) {
   useEffect(() => {
-    const t = window.setTimeout(onDone, 3200);
-    return () => window.clearTimeout(t);
-  }, [onDone]);
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onDismiss();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onDismiss]);
 
   return (
-    <div className="winFx" role="status" aria-live="polite" aria-label={`${winnerName} wins`}>
+    <div
+      className="winFx"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${winnerName} wins ${gameName}`}
+    >
       <div className="winFx__veil" />
       <div className="winFx__burst" aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
@@ -25,30 +63,118 @@ export function WinCelebration({ winnerName, onDone }: Props) {
           <span className="sparkle" key={i} style={{ ["--i" as never]: i }} />
         ))}
       </div>
-      <div className="winFx__content">
-        <div className="winFx__medal" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="m7 3 3 5m7-5-3 5m-2 0-2 4.5 2 1.5 2-1.5L12 8Z"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="16.2" r="4.2" stroke="currentColor" strokeWidth="1.8" />
-            <path
-              d="m10.7 16.3.9 1 1.8-2"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-        <div className="winFx__name">{winnerName}</div>
-        <div className="winFx__title">Victory</div>
-        <div className="winFx__hint">Champion of this round</div>
+      <div className="winFx__orbs" aria-hidden="true">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <span className="winFx__orb" key={i} style={{ ["--i" as never]: i }} />
+        ))}
       </div>
+
+      <div className="winFx__content">
+        <div className="winFx__hero">
+          <div className="winFx__halo" aria-hidden="true" />
+          <div className="winFx__medal" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="m7 3 3 5m7-5-3 5m-2 0-2 4.5 2 1.5 2-1.5L12 8Z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="16.2" r="4.2" stroke="currentColor" strokeWidth="1.8" />
+              <path
+                d="m10.7 16.3.9 1 1.8-2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div className="winFx__eyebrow">Winner</div>
+          <div className="winFx__name">{winnerName}</div>
+          {winnerStats?.currentWinStreak ? (
+            <div className="winFx__streakHero" aria-label={`${winnerStats.currentWinStreak} win streak`}>
+              <span className="winFx__streakHeroCount">
+                {winnerStats.currentWinStreak}
+              </span>
+              <span className="winFx__streakHeroLabel">Win streak</span>
+            </div>
+          ) : (
+            <div className="winFx__title">{gameName}</div>
+          )}
+          <div className="winFx__hint">
+            {isLowScoreWins ? "Lowest score wins" : `Target ${targetPoints} points`}
+          </div>
+        </div>
+
+        {winnerStats ? (
+          <section className="winFx__playerStats" aria-label="Updated winner stats">
+            <div className="winFx__playerStatsHeader">
+              <div className="winFx__playerStatsTitle">Updated player stats</div>
+            </div>
+            <div className="winFx__playerStatsGrid">
+              <div className="winFx__playerStat">
+                <span>Total wins</span>
+                <strong>{winnerStats.wins}</strong>
+              </div>
+              <div className="winFx__playerStat">
+                <span>Win rate</span>
+                <strong>{winnerStats.completedGames > 0 ? `${winnerStats.winRate}%` : "—"}</strong>
+              </div>
+              <div className="winFx__playerStat">
+                <span>Sessions</span>
+                <strong>{winnerStats.gamesPlayed}</strong>
+              </div>
+              <div className="winFx__playerStat">
+                <span>Top game</span>
+                <strong>{winnerStats.topWonGame?.name ?? "—"}</strong>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="winFx__summary" aria-label="Final standings">
+          <div className="winFx__summaryTitle">Final standings</div>
+          <div className="winFx__standings">
+            {standings.map((entry) => (
+              <div
+                key={entry.id}
+                className={`winFx__row${entry.isWinner ? " winFx__row--winner" : ""}`}
+              >
+                <div className="winFx__rowLeft">
+                  <div className="winFx__rank">#{entry.rank}</div>
+                  <div
+                    className="winFx__avatar"
+                    style={avatarStyleFor(entry.avatarColor)}
+                    aria-hidden="true"
+                  >
+                    {entry.initials}
+                  </div>
+                  <div className="winFx__player">
+                    <strong>{entry.name}</strong>
+                    {entry.isWinner ? <span>Champion</span> : null}
+                  </div>
+                </div>
+                <div className="winFx__score">{entry.score}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="winFx__actions">
+          <button type="button" className="winFx__btn winFx__btn--ghost" onClick={onDismiss}>
+            Continue
+          </button>
+          <button type="button" className="winFx__btn winFx__btn--ghost" onClick={onBackToHome}>
+            Back to sessions
+          </button>
+          <button type="button" className="winFx__btn winFx__btn--primary" onClick={onReplay}>
+            Play again
+          </button>
+        </div>
+      </div>
+
       <div className="winFx__confetti" aria-hidden="true">
         {Array.from({ length: 30 }).map((_, i) => (
           <span className="confetti" key={i} style={{ ["--i" as never]: i }} />
