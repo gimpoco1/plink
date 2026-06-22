@@ -106,6 +106,12 @@ export function HomeScreen({
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [sessionsFilter, setSessionsFilter] = useState<
+    "all" | "active" | "completed"
+  >("all");
+  const [sessionsSort, setSessionsSort] = useState<
+    "recent" | "oldest" | "name"
+  >("recent");
 
   function setActiveTab(nextTab: HomeTab) {
     onActiveTabChange(nextTab);
@@ -296,6 +302,34 @@ export function HomeScreen({
       topPlayers,
     };
   }, [games, profiles, profileStats]);
+
+  const visibleSessions = useMemo(() => {
+    const filtered = games.filter((game) => {
+      const isCompleted = !!findWinner(
+        game.players,
+        game.targetPoints,
+        game.isLowScoreWins,
+      );
+
+      if (sessionsFilter === "active") return !isCompleted;
+      if (sessionsFilter === "completed") return isCompleted;
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sessionsSort === "name") {
+        const aName = getGameDisplayName(a.name).title.toUpperCase();
+        const bName = getGameDisplayName(b.name).title.toUpperCase();
+        return aName.localeCompare(bName) || b.updatedAt - a.updatedAt;
+      }
+
+      if (sessionsSort === "oldest") {
+        return a.createdAt - b.createdAt;
+      }
+
+      return b.updatedAt - a.updatedAt;
+    });
+  }, [games, sessionsFilter, sessionsSort]);
 
   const quickSetups = useMemo(() => {
     const setups = new Map<string, QuickSetup>();
@@ -848,22 +882,91 @@ export function HomeScreen({
               {games.length > 0 ? (
                 <section className="homeList" aria-label="Game history">
                   <div className="homeList__title">Recent Sessions</div>
-                  <div className="gameRows">
-                    {games.map((g) => {
-                      const created = dateFmt.format(new Date(g.createdAt));
-                      return (
-                        <GameRowCard
-                          key={g.id}
-                          game={g}
-                          createdLabel={created}
-                          onEnter={() => onEnter(g.id)}
-                          onDuplicate={() => onDuplicate(g.id)}
-                          onRename={() => onRename(g.id)}
-                          onDelete={() => onDelete(g.id)}
-                        />
-                      );
-                    })}
+                  <div className="sessionsToolbar">
+                    <div className="sessionsToolbar__group" role="group" aria-label="Filter sessions">
+                      <button
+                        type="button"
+                        className={`sessionsFilterChip${sessionsFilter === "all" ? " sessionsFilterChip--active" : ""}`}
+                        onClick={() => setSessionsFilter("all")}
+                        aria-label="Show all sessions"
+                        title="All sessions"
+                      >
+                        <span>All</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`sessionsFilterChip${sessionsFilter === "active" ? " sessionsFilterChip--active" : ""}`}
+                        onClick={() => setSessionsFilter("active")}
+                        aria-label="Show active sessions"
+                        title="Active sessions"
+                      >
+                        <span>Active</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`sessionsFilterChip${sessionsFilter === "completed" ? " sessionsFilterChip--active" : ""}`}
+                        onClick={() => setSessionsFilter("completed")}
+                        aria-label="Show completed sessions"
+                        title="Completed sessions"
+                      >
+                        <span>Done</span>
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className={`sessionsSortControl${sessionsSort !== "recent" ? " sessionsSortControl--active" : ""}`}
+                      onClick={() =>
+                        setSessionsSort((current) => {
+                          if (current === "recent") return "oldest";
+                          if (current === "oldest") return "name";
+                          return "recent";
+                        })
+                      }
+                      aria-label={`Sort sessions: ${sessionsSort}`}
+                      title={`Sort: ${sessionsSort}`}
+                    >
+                      <span className="sessionsSortControl__label">
+                        {sessionsSort === "recent"
+                          ? "Newest"
+                          : sessionsSort === "oldest"
+                            ? "Oldest"
+                            : "Name"}
+                      </span>
+                      {sessionsSort === "recent" ? (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 4v12m0 0 4-4m-4 4-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : sessionsSort === "oldest" ? (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 20V8m0 0 4 4m-4-4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M7 4v16M7 20l-3-3m3 3 3-3M17 4v16m0 0 3-3m-3 3-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
+                  {visibleSessions.length > 0 ? (
+                    <div className="gameRows">
+                      {visibleSessions.map((g) => {
+                        const created = dateFmt.format(new Date(g.createdAt));
+                        return (
+                          <GameRowCard
+                            key={g.id}
+                            game={g}
+                            createdLabel={created}
+                            onEnter={() => onEnter(g.id)}
+                            onDuplicate={() => onDuplicate(g.id)}
+                            onRename={() => onRename(g.id)}
+                            onDelete={() => onDelete(g.id)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="emptyMsg">No sessions match this view.</div>
+                  )}
                 </section>
               ) : (
                 <div className="emptyMsg">No sessions yet.</div>
