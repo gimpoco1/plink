@@ -1,4 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type TouchEvent } from "react";
+
+export type HomeTab = "home" | "sessions" | "players" | "stats";
 import {
   ConfirmDialog,
   type ConfirmDialogHandle,
@@ -45,6 +47,9 @@ export default function App() {
   const addDialogRef = useRef<AddPlayerDialogHandle>(null!);
   const settingsDialogRef = useRef<GameSettingsDialogHandle>(null!);
   const [view, setView] = useState<"home" | "game">("home");
+  const [homeTab, setHomeTab] = useState<HomeTab>("home");
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const profileStats = useMemo(() => computeProfileStats(games), [games]);
 
   const gameMetaItems = useMemo(() => {
@@ -96,8 +101,26 @@ export default function App() {
     return profileStats.get(winner.profileId) ?? createEmptyProfileStats();
   }, [currentGame, profileStats]);
 
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    setTouchStartX(event.touches[0]?.clientX ?? null);
+    setTouchStartY(event.touches[0]?.clientY ?? null);
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    if (touchStartX === null || touchStartY === null) return;
+
+    const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStartX;
+    const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStartY;
+    if (view === "game" && deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      setView("home");
+    }
+
+    setTouchStartX(null);
+    setTouchStartY(null);
+  }
+
   return (
-    <div className="app">
+    <div className="app" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="appBackdrop" aria-hidden="true">
         <DotGrid
           dotSize={3}
@@ -122,10 +145,25 @@ export default function App() {
         }
         showBackButton={view === "game" && !!currentGame}
         showActionMenu={view === "game" && !!currentGame}
+        primaryActionLabel={
+          view === "home" && homeTab !== "home"
+            ? homeTab === "players"
+              ? "New Player"
+              : "New game"
+            : undefined
+        }
         metaItems={view === "game" && currentGame ? gameMetaItems : undefined}
         showReset={view === "game" && hasNonZeroScore}
         onBack={() => setView("home")}
         onLogoClick={() => setView("home")}
+        onPrimaryAction={() => {
+          setView("home");
+          if (homeTab === "players") {
+            window.dispatchEvent(new CustomEvent("plink:add-player"));
+          } else {
+            window.dispatchEvent(new CustomEvent("plink:new-game"));
+          }
+        }}
         onAddPlayer={() => addDialogRef.current?.open()}
         onOpenSettings={
           view === "game" && currentGame
@@ -214,6 +252,8 @@ export default function App() {
         <HomeScreen
           games={games}
           profiles={profiles}
+          activeTab={homeTab}
+          onActiveTabChange={setHomeTab}
           onCreate={(input) => {
             const created = createGame(input);
             if (created) setView("game");

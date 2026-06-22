@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type TouchEvent } from "react";
 import type { Game, PlayerProfile } from "../types";
+import type { HomeTab } from "../App";
 import { GameRowCard } from "../components/GameRowCard";
 import { avatarStyleFor } from "../utils/color";
 import { AVATAR_COLORS } from "../constants";
-import { formatPlayerName, getInitials } from "../utils/text";
+import { formatPlayerName, getGameDisplayName, getInitials } from "../utils/text";
 import {
   computeProfileStats,
   createEmptyProfileStats,
 } from "../utils/profileStats";
+import { findWinner } from "../utils/ranking";
 import "./HomeScreen.css";
 
 type StagedPlayer = {
@@ -15,9 +17,23 @@ type StagedPlayer = {
   avatarColor: string;
 };
 
+type QuickSetup = {
+  key: string;
+  label: string;
+  targetPoints: number;
+  isLowScoreWins: boolean;
+  timerEnabled: boolean;
+  timerMode: "countdown" | "stopwatch";
+  timerSeconds: number;
+  suggestedPlayers: { name: string; avatarColor: string; profileId?: string }[];
+  uses: number;
+};
+
 type Props = {
   games: Game[];
   profiles: PlayerProfile[];
+  activeTab: HomeTab;
+  onActiveTabChange: (tab: HomeTab) => void;
   onCreate: (input: {
     name: string;
     targetPoints: number;
@@ -50,8 +66,10 @@ export function HomeScreen({
   onRename,
   onEnter,
   onDelete,
+  activeTab,
+  onActiveTabChange,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"home" | "players">("home");
+  const tabs: HomeTab[] = ["home", "sessions", "stats", "players"];
   const [name, setName] = useState("");
   const [target, setTarget] = useState("8");
   const [isLowScoreWins, setIsLowScoreWins] = useState(false);
@@ -80,6 +98,14 @@ export function HomeScreen({
   const [newPlayerColor, setNewPlayerColor] = useState<
     (typeof AVATAR_COLORS)[number]["value"]
   >(AVATAR_COLORS[0].value);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+
+  function setActiveTab(nextTab: HomeTab) {
+    onActiveTabChange(nextTab);
+  }
 
   function toggleProfile(profileId: string) {
     setSelectedProfileIds((prev) => {
@@ -117,6 +143,33 @@ export function HomeScreen({
   function removeStagedPlayer(index: number) {
     setStagedPlayers((prev) => prev.filter((_, i) => i !== index));
   }
+
+  useEffect(() => {
+    function handleNewGame() {
+      setActiveTab("home");
+      setIsCreating(true);
+      setSelectedProfileIds(new Set());
+      setStagedPlayers([]);
+    }
+
+    function handleAddPlayer() {
+      setActiveTab("players");
+      setIsAddingInTab(true);
+    }
+
+    window.addEventListener("plink:new-game", handleNewGame as EventListener);
+    window.addEventListener("plink:add-player", handleAddPlayer as EventListener);
+    return () => {
+      window.removeEventListener(
+        "plink:new-game",
+        handleNewGame as EventListener,
+      );
+      window.removeEventListener(
+        "plink:add-player",
+        handleAddPlayer as EventListener,
+      );
+    };
+  }, []);
 
   // Auto-show form if no games exist
   const showForm = isCreating || games.length === 0;
@@ -174,10 +227,192 @@ export function HomeScreen({
     return { trackedSessions, activeSessions, totalWins };
   }, [profileStats]);
 
+  const statsOverview = useMemo(() => {
+    const completedGames = games.filter((game) =>
+      !!findWinner(game.players, game.targetPoints, game.isLowScoreWins),
+    ).length;
+
+    const topPlayer = profiles
+      .map((profile) => ({
+        profile,
+        stats: profileStats.get(profile.id) ?? createEmptyProfileStats(),
+      }))
+      .sort((a, b) => {
+        if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+        return b.stats.winRate - a.stats.winRate;
+      })[0] ?? null;
+
+    const hottestStreak = profiles
+      .map((profile) => ({
+        profile,
+        stats: profileStats.get(profile.id) ?? createEmptyProfileStats(),
+      }))
+      .sort((a, b) => b.stats.currentWinStreak - a.stats.currentWinStreak)[0] ?? null;
+
+    const popularGames = Array.from(
+      games.reduce((map, game) => {
+        const name = getGameDisplayName(game.name).title;
+        map.set(name, (map.get(name) ?? 0) + 1);
+        return map;
+      }, new Map<string, number>()),
+    )
+      .map(([name, sessions]) => ({ name, sessions }))
+      .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name))
+      .slice(0, 4);
+
+    const topPlayers = profiles
+      .map((profile) => ({
+        profile,
+        stats: profileStats.get(profile.id) ?? createEmptyProfileStats(),
+      }))
+      .filter(({ stats }) => stats.gamesPlayed > 0)
+      .sort((a, b) => {
+        if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+        if (b.stats.currentWinStreak !== a.stats.currentWinStreak) {
+          return b.stats.currentWinStreak - a.stats.currentWinStreak;
+        }
+        return b.stats.winRate - a.stats.winRate;
+      })
+      .slice(0, 5);
+
+    return {
+      completedGames,
+      activeGames: games.length - completedGames,
+      topPlayer,
+      hottestStreak,
+      popularGames,
+      topPlayers,
+    };
+  }, [games, profiles, profileStats]);
+
+  const quickSetups = useMemo(() => {
+    const setups = new Map<string, QuickSetup>();
+
+    for (const game of games) {
+      const label = getGameDisplayName(game.name).title;
+      const key = [
+        label,
+        game.targetPoints,
+        game.isLowScoreWins ? "low" : "high",
+        game.timerEnabled ? game.timerMode : "off",
+        game.timerEnabled ? game.timerSeconds : 0,
+      ].join("|");
+
+      const existing = setups.get(key);
+      if (existing) {
+        existing.uses += 1;
+        continue;
+      }
+
+      const suggestedPlayers = game.players
+        .slice(0, 4)
+        .map((player) => ({
+          name: player.name,
+          avatarColor: player.avatarColor,
+          profileId: player.profileId,
+        }));
+
+      setups.set(key, {
+        key,
+        label,
+        targetPoints: game.targetPoints,
+        isLowScoreWins: game.isLowScoreWins,
+        timerEnabled: game.timerEnabled,
+        timerMode: game.timerMode,
+        timerSeconds: game.timerSeconds,
+        suggestedPlayers,
+        uses: 1,
+      });
+    }
+
+    return Array.from(setups.values())
+      .sort((a, b) => b.uses - a.uses || a.label.localeCompare(b.label))
+      .slice(0, 3);
+  }, [games]);
+
+  function startQuickSuggestion(setup: QuickSetup) {
+    setActiveTab("home");
+    setSelectedProfileIds(new Set());
+    setStagedPlayers([]);
+    onCreate({
+      name: setup.label,
+      targetPoints: setup.targetPoints,
+      isLowScoreWins: setup.isLowScoreWins,
+      timerEnabled: setup.timerEnabled,
+      timerMode: setup.timerMode,
+      timerSeconds: setup.timerSeconds,
+      initialPlayers: setup.suggestedPlayers.map((player) => ({
+        name: player.name,
+        avatarColor: player.avatarColor,
+        profileId: player.profileId,
+      })),
+    });
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    setTouchStartX(event.touches[0]?.clientX ?? null);
+    setTouchStartY(event.touches[0]?.clientY ?? null);
+    setDragX(0);
+    setDragging(true);
+  }
+
+  function handleTouchMove(event: TouchEvent<HTMLElement>) {
+    if (!dragging || touchStartX === null || touchStartY === null) return;
+
+    const currentX = event.touches[0]?.clientX ?? touchStartX;
+    const currentY = event.touches[0]?.clientY ?? touchStartY;
+    const deltaX = currentX - touchStartX;
+    const deltaY = currentY - touchStartY;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      event.preventDefault();
+    }
+
+    setDragX(deltaX);
+  }
+
+  function finishTouch(event: TouchEvent<HTMLElement>) {
+    if (touchStartX === null || touchStartY === null) return;
+
+    const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStartX;
+    const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStartY;
+    if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY)) {
+      setTouchStartX(null);
+      setTouchStartY(null);
+      setDragX(0);
+      setDragging(false);
+      return;
+    }
+
+    const currentIndex = tabs.indexOf(activeTab);
+    const nextIndex = deltaX < 0
+      ? Math.min(tabs.length - 1, currentIndex + 1)
+      : Math.max(0, currentIndex - 1);
+
+    setActiveTab(tabs[nextIndex]);
+    setTouchStartX(null);
+    setTouchStartY(null);
+    setDragX(0);
+    setDragging(false);
+  }
+
   return (
     <div className="homeContainer">
       <main className="homeScreen">
-        <div className="tabSlider" data-active={activeTab}>
+        <div
+          className="tabSlider"
+          data-active={activeTab}
+          data-dragging={dragging ? "true" : "false"}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={finishTouch}
+          onTouchCancel={finishTouch}
+          style={{
+            transform: dragging
+              ? `translateX(${-(tabs.indexOf(activeTab) * 25) + (dragX / (typeof window !== "undefined" ? window.innerWidth : 1)) * 25}%)`
+              : undefined,
+          }}
+        >
           <div className="tabWindow">
             <div className="tabContent tabContent--home">
               {!showForm ? (
@@ -188,7 +423,7 @@ export function HomeScreen({
                       Keep the score.<br />Enjoy the game.
                     </h1>
                     <p className="homeHero__copy">
-                      Pick up a recent session or start a fresh round in seconds.
+                      Jump into a new match or keep your next round moving fast.
                     </p>
                   </div>
                   <button
@@ -202,6 +437,60 @@ export function HomeScreen({
                   >
                     <span aria-hidden="true">＋</span> New game
                   </button>
+                </section>
+              ) : null}
+              {!showForm && quickSetups.length > 0 ? (
+                <section className="quickSetups" aria-label="Quick suggestions">
+                  <div className="quickSetups__head">
+                    <div className="homeList__title">Quick suggestions</div>
+                    <span className="quickSetups__hint">Tap to start</span>
+                  </div>
+                  <div className="quickSetups__grid">
+                    {quickSetups.map((setup) => (
+                      <button
+                        key={setup.key}
+                        type="button"
+                        className="quickSetupCard"
+                        onClick={() => startQuickSuggestion(setup)}
+                      >
+                        <div className="quickSetupCard__title">{setup.label}</div>
+                        <div className="quickSetupCard__meta">
+                          <span className="quickSetupChip quickSetupChip--accent">
+                            Target {setup.targetPoints}
+                          </span>
+                          {setup.isLowScoreWins ? (
+                            <span className="quickSetupChip">Lowest wins</span>
+                          ) : null}
+                          {setup.timerEnabled ? (
+                            <span className="quickSetupChip">
+                              {setup.timerMode === "stopwatch"
+                                ? "Stopwatch"
+                                : `${Math.floor(setup.timerSeconds / 60)}:${String(
+                                    setup.timerSeconds % 60,
+                                  ).padStart(2, "0")}`}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="quickSetupCard__players" aria-hidden="true">
+                          {setup.suggestedPlayers.slice(0, 3).map((player) => (
+                            <span
+                              key={`${setup.key}-${player.profileId ?? player.name}`}
+                              className="quickSetupPlayer"
+                              style={avatarStyleFor(player.avatarColor)}
+                              title={player.name}
+                            >
+                              {getInitials(player.name)}
+                            </span>
+                          ))}
+                          {setup.suggestedPlayers.length > 3 ? (
+                            <span className="quickSetupPlayer quickSetupPlayer--more">
+                              +{setup.suggestedPlayers.length - 3}
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </section>
               ) : null}
               {showForm && (
@@ -485,7 +774,21 @@ export function HomeScreen({
                 </section>
               )}
 
-              {games.length > 0 && (
+            </div>
+          </div>
+
+          <div className="tabWindow">
+            <div className="tabContent tabContent--sessions">
+              <div className="tabHeader">
+                <div>
+                  <h2 className="tabTitle">Sessions</h2>
+                  <p className="tabSubtitle">
+                    Reopen recent rounds and keep your history organized.
+                  </p>
+                </div>
+              </div>
+
+              {games.length > 0 ? (
                 <section className="homeList" aria-label="Game history">
                   <div className="homeList__title">Recent Sessions</div>
                   <div className="gameRows">
@@ -505,7 +808,123 @@ export function HomeScreen({
                     })}
                   </div>
                 </section>
+              ) : (
+                <div className="emptyMsg">No sessions yet.</div>
               )}
+            </div>
+          </div>
+
+          <div className="tabWindow">
+            <div className="tabContent tabContent--stats">
+              <div className="tabHeader">
+                <div>
+                  <h2 className="tabTitle">Stats</h2>
+                  <p className="tabSubtitle">
+                    A quick snapshot of your sessions, players, and momentum.
+                  </p>
+                </div>
+              </div>
+
+              <div className="statsHeroGrid">
+                <div className="statsHeroCard statsHeroCard--accent">
+                  <span className="statsHeroCard__label">Completed</span>
+                  <strong>{statsOverview.completedGames}</strong>
+                  <p>Finished sessions tracked locally.</p>
+                </div>
+                <div className="statsHeroCard">
+                  <span className="statsHeroCard__label">In progress</span>
+                  <strong>{statsOverview.activeGames}</strong>
+                  <p>Games still live right now.</p>
+                </div>
+                <div className="statsHeroCard">
+                  <span className="statsHeroCard__label">Top player</span>
+                  <strong>
+                    {statsOverview.topPlayer?.profile.name ?? "—"}
+                  </strong>
+                  <p>
+                    {statsOverview.topPlayer
+                      ? `${statsOverview.topPlayer.stats.wins} wins`
+                      : "No winners yet"}
+                  </p>
+                </div>
+                <div className="statsHeroCard">
+                  <span className="statsHeroCard__label">Hottest streak</span>
+                  <strong>
+                    {statsOverview.hottestStreak?.stats.currentWinStreak
+                      ? `${statsOverview.hottestStreak.stats.currentWinStreak}x`
+                      : "—"}
+                  </strong>
+                  <p>
+                    {statsOverview.hottestStreak?.stats.currentWinStreak
+                      ? statsOverview.hottestStreak.profile.name
+                      : "No active streaks"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="statsPanels">
+                <section className="statsPanel">
+                  <div className="statsPanel__head">
+                    <h3>Top players</h3>
+                    <span>{statsOverview.topPlayers.length}</span>
+                  </div>
+                  {statsOverview.topPlayers.length > 0 ? (
+                    <div className="statsList">
+                      {statsOverview.topPlayers.map(({ profile, stats }, index) => (
+                        <div key={profile.id} className="statsRow">
+                          <div className="statsRow__left">
+                            <span className="statsRow__rank">#{index + 1}</span>
+                            <div
+                              className="statsRow__avatar"
+                              style={avatarStyleFor(profile.avatarColor)}
+                            >
+                              {getInitials(profile.name)}
+                            </div>
+                            <div className="statsRow__meta">
+                              <strong>{profile.name}</strong>
+                              <span>
+                                {stats.currentWinStreak > 0
+                                  ? `${stats.currentWinStreak}x streak`
+                                  : `${stats.winRate}% rate`}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="statsRow__value">{stats.wins}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="emptyMsg">No player stats yet.</div>
+                  )}
+                </section>
+
+                <section className="statsPanel">
+                  <div className="statsPanel__head">
+                    <h3>Popular games</h3>
+                    <span>{statsOverview.popularGames.length}</span>
+                  </div>
+                  {statsOverview.popularGames.length > 0 ? (
+                    <div className="statsList">
+                      {statsOverview.popularGames.map((game, index) => (
+                        <div key={game.name} className="statsRow">
+                          <div className="statsRow__left">
+                            <span className="statsRow__rank">#{index + 1}</span>
+                            <div className="statsRow__meta">
+                              <strong>{game.name}</strong>
+                              <span>Most played setup</span>
+                            </div>
+                          </div>
+                          <div className="statsRow__value">
+                            {game.sessions}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="emptyMsg">No games logged yet.</div>
+                  )}
+                </section>
+              </div>
             </div>
           </div>
 
@@ -518,12 +937,6 @@ export function HomeScreen({
                     Reuse profiles and track cumulative results across sessions.
                   </p>
                 </div>
-                <button
-                  className="btn btn--primary btn--sm"
-                  onClick={() => setIsAddingInTab(true)}
-                >
-                  + New Player
-                </button>
               </div>
 
               <div className="profilesOverview">
@@ -796,6 +1209,7 @@ export function HomeScreen({
               </div>
             </div>
           </div>
+
         </div>
       </main>
 
@@ -827,29 +1241,43 @@ export function HomeScreen({
         </button>
 
         <button
-          className="tabItem tabItem--action"
+          className="tabItem"
+          data-active={activeTab === "sessions"}
           onClick={() => {
-            setActiveTab("home");
-            setIsCreating(true);
-            setSelectedProfileIds(new Set());
-            setStagedPlayers([]);
+            setActiveTab("sessions");
+            if (isCreating) setIsCreating(false);
           }}
-          aria-label="New Game"
+          aria-label="Sessions"
         >
-          <div className="actionCircle">
-            <svg
-              viewBox="0 0 24 24"
-              width="24"
-              height="24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3.5"
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path
+              d="M7 3h10m-9 4h8m-9 5h10m-9 5h8"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </div>
+            />
+          </svg>
+          <span>Sessions</span>
+        </button>
+
+        <button
+          className="tabItem"
+          data-active={activeTab === "stats"}
+          onClick={() => {
+            setActiveTab("stats");
+            if (isCreating) setIsCreating(false);
+          }}
+          aria-label="Statistics"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path
+              d="M4 19h16M7 15V9m5 6V5m5 10v-4"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>Stats</span>
         </button>
 
         <button
