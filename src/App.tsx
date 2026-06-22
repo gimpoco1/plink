@@ -120,7 +120,11 @@ export default function App() {
   }
 
   return (
-    <div className="app" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div
+      className="app"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="appBackdrop" aria-hidden="true">
         <DotGrid
           dotSize={3}

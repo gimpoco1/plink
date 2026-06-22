@@ -143,7 +143,11 @@
   border-radius: 22px;
   border: 1px solid var(--border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06),
+      rgba(255, 255, 255, 0.03)
+    ),
     var(--surface);
   box-shadow: var(--shadow);
   display: grid;
@@ -775,7 +779,10 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: transform 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    background-color 0.22s ease;
 }
 
 .quickSetupCard::before {
@@ -783,7 +790,11 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(216, 255, 79, 0.04), transparent 62%);
+  background: linear-gradient(
+    135deg,
+    rgba(216, 255, 79, 0.04),
+    transparent 62%
+  );
   pointer-events: none;
 }
 
@@ -1240,17 +1251,27 @@
 }
 
 @media (max-width: 560px) {
-  .tabWindow { padding: 12px; }
+  .tabWindow {
+    padding: 12px;
+  }
   .homeHero {
     padding: 24px 4px 28px;
     align-items: stretch;
     flex-direction: column;
     gap: 22px;
   }
-  .homeHero__action { width: 100%; }
-  .homeCard { padding: 20px 16px; }
-  .tabBar { width: calc(100% - 24px); }
-  .statsHeroGrid { grid-template-columns: 1fr; }
+  .homeHero__action {
+    width: 100%;
+  }
+  .homeCard {
+    padding: 20px 16px;
+  }
+  .tabBar {
+    width: calc(100% - 24px);
+  }
+  .statsHeroGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .gameRow__meta {

@@ -181,11 +181,24 @@
 }
 
 @media (max-width: 480px) {
-  .topbar { padding: 10px 12px; }
-  .logo__mark { width: 29px; height: 36px; }
-  .logo__text { font-size: 22px; }
-  .brand__title { max-width: min(50vw, 260px); }
-  .metaChip { font-size: 9px; padding: 0 8px; min-height: 22px; }
+  .topbar {
+    padding: 10px 12px;
+  }
+  .logo__mark {
+    width: 29px;
+    height: 36px;
+  }
+  .logo__text {
+    font-size: 22px;
+  }
+  .brand__title {
+    max-width: min(50vw, 260px);
+  }
+  .metaChip {
+    font-size: 9px;
+    padding: 0 8px;
+    min-height: 22px;
+  }
 }
 
 .topbarMenu__item {

@@ -4,7 +4,11 @@ import type { HomeTab } from "../App";
 import { GameRowCard } from "../components/GameRowCard";
 import { avatarStyleFor } from "../utils/color";
 import { AVATAR_COLORS } from "../constants";
-import { formatPlayerName, getGameDisplayName, getInitials } from "../utils/text";
+import {
+  formatPlayerName,
+  getGameDisplayName,
+  getInitials,
+} from "../utils/text";
 import {
   computeProfileStats,
   createEmptyProfileStats,
@@ -158,7 +162,10 @@ export function HomeScreen({
     }
 
     window.addEventListener("plink:new-game", handleNewGame as EventListener);
-    window.addEventListener("plink:add-player", handleAddPlayer as EventListener);
+    window.addEventListener(
+      "plink:add-player",
+      handleAddPlayer as EventListener,
+    );
     return () => {
       window.removeEventListener(
         "plink:new-game",
@@ -228,26 +235,31 @@ export function HomeScreen({
   }, [profileStats]);
 
   const statsOverview = useMemo(() => {
-    const completedGames = games.filter((game) =>
-      !!findWinner(game.players, game.targetPoints, game.isLowScoreWins),
+    const completedGames = games.filter(
+      (game) =>
+        !!findWinner(game.players, game.targetPoints, game.isLowScoreWins),
     ).length;
 
-    const topPlayer = profiles
-      .map((profile) => ({
-        profile,
-        stats: profileStats.get(profile.id) ?? createEmptyProfileStats(),
-      }))
-      .sort((a, b) => {
-        if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
-        return b.stats.winRate - a.stats.winRate;
-      })[0] ?? null;
+    const topPlayer =
+      profiles
+        .map((profile) => ({
+          profile,
+          stats: profileStats.get(profile.id) ?? createEmptyProfileStats(),
+        }))
+        .sort((a, b) => {
+          if (b.stats.wins !== a.stats.wins) return b.stats.wins - a.stats.wins;
+          return b.stats.winRate - a.stats.winRate;
+        })[0] ?? null;
 
-    const hottestStreak = profiles
-      .map((profile) => ({
-        profile,
-        stats: profileStats.get(profile.id) ?? createEmptyProfileStats(),
-      }))
-      .sort((a, b) => b.stats.currentWinStreak - a.stats.currentWinStreak)[0] ?? null;
+    const hottestStreak =
+      profiles
+        .map((profile) => ({
+          profile,
+          stats: profileStats.get(profile.id) ?? createEmptyProfileStats(),
+        }))
+        .sort(
+          (a, b) => b.stats.currentWinStreak - a.stats.currentWinStreak,
+        )[0] ?? null;
 
     const popularGames = Array.from(
       games.reduce((map, game) => {
@@ -304,13 +316,11 @@ export function HomeScreen({
         continue;
       }
 
-      const suggestedPlayers = game.players
-        .slice(0, 4)
-        .map((player) => ({
-          name: player.name,
-          avatarColor: player.avatarColor,
-          profileId: player.profileId,
-        }));
+      const suggestedPlayers = game.players.slice(0, 4).map((player) => ({
+        name: player.name,
+        avatarColor: player.avatarColor,
+        profileId: player.profileId,
+      }));
 
       setups.set(key, {
         key,
@@ -385,9 +395,10 @@ export function HomeScreen({
     }
 
     const currentIndex = tabs.indexOf(activeTab);
-    const nextIndex = deltaX < 0
-      ? Math.min(tabs.length - 1, currentIndex + 1)
-      : Math.max(0, currentIndex - 1);
+    const nextIndex =
+      deltaX < 0
+        ? Math.min(tabs.length - 1, currentIndex + 1)
+        : Math.max(0, currentIndex - 1);
 
     setActiveTab(tabs[nextIndex]);
     setTouchStartX(null);
@@ -420,7 +431,9 @@ export function HomeScreen({
                   <div>
                     <div className="homeHero__eyebrow">Your scoreboard</div>
                     <h1 className="homeHero__title">
-                      Keep the score.<br />Enjoy the game.
+                      Keep the score.
+                      <br />
+                      Enjoy the game.
                     </h1>
                     <p className="homeHero__copy">
                       Jump into a new match or keep your next round moving fast.
@@ -453,7 +466,9 @@ export function HomeScreen({
                         className="quickSetupCard"
                         onClick={() => startQuickSuggestion(setup)}
                       >
-                        <div className="quickSetupCard__title">{setup.label}</div>
+                        <div className="quickSetupCard__title">
+                          {setup.label}
+                        </div>
                         <div className="quickSetupCard__meta">
                           <span className="quickSetupChip quickSetupChip--accent">
                             Target {setup.targetPoints}
@@ -471,7 +486,10 @@ export function HomeScreen({
                             </span>
                           ) : null}
                         </div>
-                        <div className="quickSetupCard__players" aria-hidden="true">
+                        <div
+                          className="quickSetupCard__players"
+                          aria-hidden="true"
+                        >
                           {setup.suggestedPlayers.slice(0, 3).map((player) => (
                             <span
                               key={`${setup.key}-${player.profileId ?? player.name}`}
@@ -542,9 +560,7 @@ export function HomeScreen({
                         <input
                           type="checkbox"
                           checked={isLowScoreWins}
-                          onChange={(e) =>
-                            setIsLowScoreWins(e.target.checked)
-                          }
+                          onChange={(e) => setIsLowScoreWins(e.target.checked)}
                         />
                         <span>Reverse scoring (higher score loses)</span>
                       </label>
@@ -612,7 +628,10 @@ export function HomeScreen({
                         </div>
                       ) : null}
                       <span className="field__label">Add players</span>
-                      <div className="profilePicker__summary" aria-live="polite">
+                      <div
+                        className="profilePicker__summary"
+                        aria-live="polite"
+                      >
                         {selectedProfileIds.size + stagedPlayers.length === 0
                           ? "Choose at least one player"
                           : `${selectedProfileIds.size + stagedPlayers.length} ${selectedProfileIds.size + stagedPlayers.length === 1 ? "player" : "players"} ready`}
@@ -773,7 +792,6 @@ export function HomeScreen({
                   </div>
                 </section>
               )}
-
             </div>
           </div>
 
@@ -870,28 +888,32 @@ export function HomeScreen({
                   </div>
                   {statsOverview.topPlayers.length > 0 ? (
                     <div className="statsList">
-                      {statsOverview.topPlayers.map(({ profile, stats }, index) => (
-                        <div key={profile.id} className="statsRow">
-                          <div className="statsRow__left">
-                            <span className="statsRow__rank">#{index + 1}</span>
-                            <div
-                              className="statsRow__avatar"
-                              style={avatarStyleFor(profile.avatarColor)}
-                            >
-                              {getInitials(profile.name)}
-                            </div>
-                            <div className="statsRow__meta">
-                              <strong>{profile.name}</strong>
-                              <span>
-                                {stats.currentWinStreak > 0
-                                  ? `${stats.currentWinStreak}x streak`
-                                  : `${stats.winRate}% rate`}
+                      {statsOverview.topPlayers.map(
+                        ({ profile, stats }, index) => (
+                          <div key={profile.id} className="statsRow">
+                            <div className="statsRow__left">
+                              <span className="statsRow__rank">
+                                #{index + 1}
                               </span>
+                              <div
+                                className="statsRow__avatar"
+                                style={avatarStyleFor(profile.avatarColor)}
+                              >
+                                {getInitials(profile.name)}
+                              </div>
+                              <div className="statsRow__meta">
+                                <strong>{profile.name}</strong>
+                                <span>
+                                  {stats.currentWinStreak > 0
+                                    ? `${stats.currentWinStreak}x streak`
+                                    : `${stats.winRate}% rate`}
+                                </span>
+                              </div>
                             </div>
+                            <div className="statsRow__value">{stats.wins}</div>
                           </div>
-                          <div className="statsRow__value">{stats.wins}</div>
-                        </div>
-                      ))}
+                        ),
+                      )}
                     </div>
                   ) : (
                     <div className="emptyMsg">No player stats yet.</div>
@@ -914,9 +936,7 @@ export function HomeScreen({
                               <span>Most played setup</span>
                             </div>
                           </div>
-                          <div className="statsRow__value">
-                            {game.sessions}
-                          </div>
+                          <div className="statsRow__value">{game.sessions}</div>
                         </div>
                       ))}
                     </div>
@@ -1071,9 +1091,7 @@ export function HomeScreen({
                             </div>
                           ) : (
                             <div className="profileCard__info">
-                              <div
-                                className="profileCard__header"
-                              >
+                              <div className="profileCard__header">
                                 <div
                                   className="profileCard__name"
                                   onClick={() => {
@@ -1121,9 +1139,7 @@ export function HomeScreen({
                             </strong>
                           </div>
                           <div className="profileStatPill">
-                            <span className="profileStatPill__label">
-                              Done
-                            </span>
+                            <span className="profileStatPill__label">Done</span>
                             <strong className="profileStatPill__value">
                               {stats.completedGames}
                             </strong>
@@ -1209,7 +1225,6 @@ export function HomeScreen({
               </div>
             </div>
           </div>
-
         </div>
       </main>
 
