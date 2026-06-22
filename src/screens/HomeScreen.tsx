@@ -331,6 +331,19 @@ export function HomeScreen({
     });
   }, [games, sessionsFilter, sessionsSort]);
 
+  const resumableGame = useMemo(() => {
+    if (!games.length) return null;
+
+    return (
+      [...games]
+        .filter(
+          (game) =>
+            !findWinner(game.players, game.targetPoints, game.isLowScoreWins),
+        )
+        .sort((a, b) => b.updatedAt - a.updatedAt)[0] ?? null
+    );
+  }, [games]);
+
   const quickSetups = useMemo(() => {
     const setups = new Map<string, QuickSetup>();
 
@@ -512,17 +525,28 @@ export function HomeScreen({
                       Jump into a new match or keep your next round moving fast.
                     </p>
                   </div>
-                  <button
-                    className="btn btn--primary btn--xl homeHero__action"
-                    type="button"
-                    onClick={() => {
-                      setIsCreating(true);
-                      setSelectedProfileIds(new Set());
-                      setStagedPlayers([]);
-                    }}
-                  >
-                    <span aria-hidden="true">＋</span> New game
-                  </button>
+                  <div className="homeHero__actions">
+                    {resumableGame ? (
+                      <button
+                        className="btn btn--ghost btn--xl homeHero__secondary"
+                        type="button"
+                        onClick={() => onEnter(resumableGame.id)}
+                      >
+                        <span aria-hidden="true">↺</span> Resume last game
+                      </button>
+                    ) : null}
+                    <button
+                      className="btn btn--primary btn--xl homeHero__action"
+                      type="button"
+                      onClick={() => {
+                        setIsCreating(true);
+                        setSelectedProfileIds(new Set());
+                        setStagedPlayers([]);
+                      }}
+                    >
+                      <span aria-hidden="true">＋</span> New game
+                    </button>
+                  </div>
                 </section>
               ) : null}
               {!showForm && quickSetups.length > 0 ? (
@@ -883,7 +907,11 @@ export function HomeScreen({
                 <section className="homeList" aria-label="Game history">
                   <div className="homeList__title">Recent Sessions</div>
                   <div className="sessionsToolbar">
-                    <div className="sessionsToolbar__group" role="group" aria-label="Filter sessions">
+                    <div
+                      className="sessionsToolbar__group"
+                      role="group"
+                      aria-label="Filter sessions"
+                    >
                       <button
                         type="button"
                         className={`sessionsFilterChip${sessionsFilter === "all" ? " sessionsFilterChip--active" : ""}`}
@@ -934,15 +962,33 @@ export function HomeScreen({
                       </span>
                       {sessionsSort === "recent" ? (
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M12 4v12m0 0 4-4m-4 4-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M12 4v12m0 0 4-4m-4 4-4-4"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       ) : sessionsSort === "oldest" ? (
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M12 20V8m0 0 4 4m-4-4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M12 20V8m0 0 4 4m-4-4-4 4"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       ) : (
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M7 4v16M7 20l-3-3m3 3 3-3M17 4v16m0 0 3-3m-3 3-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M7 4v16M7 20l-3-3m3 3 3-3M17 4v16m0 0 3-3m-3 3-3-3"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       )}
                     </button>

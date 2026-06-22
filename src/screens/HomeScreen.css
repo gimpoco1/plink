@@ -732,9 +732,23 @@
   line-height: 1.6;
 }
 
-.homeHero__action {
+.homeHero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.homeHero__action,
+.homeHero__secondary {
   flex: 0 0 auto;
   gap: 8px;
+}
+
+.homeHero__secondary {
+  min-width: 176px;
+  justify-content: center;
 }
 
 .quickSetups {
@@ -1327,7 +1341,13 @@
     flex-direction: column;
     gap: 22px;
   }
-  .homeHero__action {
+  .homeHero__actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .homeHero__action,
+  .homeHero__secondary {
     width: 100%;
   }
   .homeCard {
