@@ -1011,14 +1011,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding-right: 13px;
+  padding-right: 11px;
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .gameRow__detail + .gameRow__detail {
-  padding-left: 13px;
+  padding-left: 11px;
   border-left: 1px solid var(--border);
 }
 
@@ -1065,10 +1065,10 @@
   }
 
   .gameRow__detail {
-    padding-right: 10px;
+    padding-right: 8px;
   }
 
   .gameRow__detail + .gameRow__detail {
-    padding-left: 10px;
+    padding-left: 8px;
   }
 }

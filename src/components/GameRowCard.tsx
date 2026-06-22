@@ -248,21 +248,6 @@ export function GameRowCard({
                 In progress
               </span>
             ) : null}
-            <span
-              className="gameRow__detail gameRow__target"
-              aria-label={`Target score ${game.targetPoints} points`}
-            >
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20m17.5 0v-1.2a3.4 3.4 0 0 0-2.5-3.3M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-6.8a3.5 3.5 0 0 1 0 6.6"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {game.players.length}{" "}
-              {game.players.length === 1 ? "player" : "players"}
-            </span>
             <span className="gameRow__detail">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle
@@ -283,6 +268,21 @@ export function GameRowCard({
               <span>Target</span>
               <strong>{game.targetPoints}</strong>
               <span>{game.targetPoints === 1 ? "pt" : "pts"}</span>
+            </span>
+            <span
+              className="gameRow__detail gameRow__players"
+              aria-label={`Player count ${game.players.length}`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20m17.5 0v-1.2a3.4 3.4 0 0 0-2.5-3.3M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-6.8a3.5 3.5 0 0 1 0 6.6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {game.players.length}{" "}
+              {game.players.length === 1 ? "player" : "players"}
             </span>
           </div>
         </button>
