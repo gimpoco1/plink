@@ -357,7 +357,9 @@ export function HomeScreen({
       }
     }
 
-    return maxNumber > 0 ? `${normalizedBase} (${maxNumber + 1})` : normalizedBase;
+    return maxNumber > 0
+      ? `${normalizedBase} (${maxNumber + 1})`
+      : normalizedBase;
   }
 
   function startQuickSuggestion(setup: QuickSetup) {
@@ -391,8 +393,7 @@ export function HomeScreen({
 
     const startX = event.touches[0]?.clientX ?? null;
     const startY = event.touches[0]?.clientY ?? null;
-    const viewportWidth =
-      typeof window !== "undefined" ? window.innerWidth : 0;
+    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 0;
     const edgeThreshold = Math.min(92, Math.max(56, viewportWidth * 0.2));
     const isEdgeStart =
       startX !== null &&
