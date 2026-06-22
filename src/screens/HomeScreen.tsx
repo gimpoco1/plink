@@ -340,12 +340,32 @@ export function HomeScreen({
       .slice(0, 3);
   }, [games]);
 
+  function getNextQuickSuggestionName(baseName: string) {
+    const normalizedBase = baseName
+      .trim()
+      .replace(/\s+\(\d+\)$/g, "")
+      .toUpperCase();
+
+    let maxNumber = 0;
+    for (const game of games) {
+      const parsed = getGameDisplayName(game.name);
+      if (parsed.title.toUpperCase() !== normalizedBase) continue;
+      if (parsed.replayNumber) {
+        maxNumber = Math.max(maxNumber, parsed.replayNumber);
+      } else if (game.name.toUpperCase() === normalizedBase) {
+        maxNumber = Math.max(maxNumber, 1);
+      }
+    }
+
+    return maxNumber > 0 ? `${normalizedBase} (${maxNumber + 1})` : normalizedBase;
+  }
+
   function startQuickSuggestion(setup: QuickSetup) {
     setActiveTab("home");
     setSelectedProfileIds(new Set());
     setStagedPlayers([]);
     onCreate({
-      name: setup.label,
+      name: getNextQuickSuggestionName(setup.label),
       targetPoints: setup.targetPoints,
       isLowScoreWins: setup.isLowScoreWins,
       timerEnabled: setup.timerEnabled,
@@ -360,10 +380,28 @@ export function HomeScreen({
   }
 
   function handleTouchStart(event: TouchEvent<HTMLElement>) {
-    setTouchStartX(event.touches[0]?.clientX ?? null);
-    setTouchStartY(event.touches[0]?.clientY ?? null);
+    const interactionTarget = event.target as HTMLElement | null;
+    if (interactionTarget?.closest(".swipeRow")) {
+      setTouchStartX(null);
+      setTouchStartY(null);
+      setDragX(0);
+      setDragging(false);
+      return;
+    }
+
+    const startX = event.touches[0]?.clientX ?? null;
+    const startY = event.touches[0]?.clientY ?? null;
+    const viewportWidth =
+      typeof window !== "undefined" ? window.innerWidth : 0;
+    const edgeThreshold = Math.min(92, Math.max(56, viewportWidth * 0.2));
+    const isEdgeStart =
+      startX !== null &&
+      (startX <= edgeThreshold || startX >= viewportWidth - edgeThreshold);
+
+    setTouchStartX(startX);
+    setTouchStartY(startY);
     setDragX(0);
-    setDragging(true);
+    setDragging(isEdgeStart);
   }
 
   function handleTouchMove(event: TouchEvent<HTMLElement>) {
@@ -386,7 +424,7 @@ export function HomeScreen({
 
     const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStartX;
     const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStartY;
-    if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY)) {
+    if (Math.abs(deltaX) < 90 || Math.abs(deltaX) < Math.abs(deltaY)) {
       setTouchStartX(null);
       setTouchStartY(null);
       setDragX(0);
