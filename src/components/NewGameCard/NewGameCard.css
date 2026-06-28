@@ -1,0 +1,875 @@
+.homeForm--newSession {
+  gap: 10px;
+}
+
+.newSessionPrimary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(128px, 0.75fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.newSessionPlayers {
+  display: grid;
+  gap: 10px;
+}
+
+.newSessionPlayers__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.newSessionPlayers__count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 10, 0.1);
+  color: rgba(17, 24, 10, 0.9);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.input--featured {
+  min-height: 50px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.newSessionStart {
+  min-height: 50px;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 640px) {
+  .newSessionPrimary {
+    grid-template-columns: minmax(0, 1.55fr) minmax(128px, 0.8fr);
+  }
+  .newSessionStart {
+    min-height: 50px;
+    font-size: 16px;
+  }
+}
+
+.newGamePanel {
+  width: min(760px, 100%);
+  position: relative;
+  border-radius: 30px;
+  background: var(--accent);
+  overflow: visible;
+  isolation: isolate;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  transform-origin: top center;
+  transition:
+    box-shadow 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 320ms ease,
+    border-radius 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.newGamePanel--open {
+  border-color: rgba(17, 24, 10, 0.16);
+  border-radius: calc(var(--floating-curve) - var(--card-tab-inset));
+  background: var(--accent);
+  box-shadow:
+    0 28px 68px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.newGamePanel__trigger {
+  width: 100%;
+  min-height: 56px;
+  max-height: 56px;
+  justify-content: flex-start;
+  border-radius: 30px;
+  background: #d8ff4f;
+  color: #11180f;
+  box-shadow:
+    0 12px 28px rgba(216, 255, 79, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition:
+    max-height 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    min-height 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-width 260ms ease,
+    opacity 220ms ease,
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 280ms ease,
+    background-color 260ms ease;
+  overflow: hidden;
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+.newGamePanel .newGamePanel__trigger--open {
+  position: relative;
+  z-index: 0;
+  min-height: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: transparent;
+  box-shadow: none;
+  transform: translateY(-6px) scale(0.985);
+}
+
+.newGamePanel__triggerIcon {
+  width: 22px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  font-size: 27px;
+  font-weight: 900;
+  line-height: 1;
+  flex: 0 0 auto;
+  transform: translateY(-2px);
+  transition:
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 180ms ease;
+}
+
+.newGamePanel .newGamePanel__trigger--open .newGamePanel__triggerIcon {
+  opacity: 0;
+}
+
+.newGamePanel__triggerCopy {
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+
+.newGamePanel__triggerCopy strong {
+  display: block;
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.newGamePanel__body {
+  overflow: hidden;
+  padding: 0 12px;
+  position: relative;
+  z-index: 1;
+  transform-origin: top center;
+  will-change: height, transform, opacity;
+}
+
+.newGamePanel__body > .homeForm {
+  min-height: 0;
+}
+
+.newSessionHeader {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+  padding: 0 4px 4px 0;
+}
+
+.newSessionHeader__copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  margin-top: 0;
+  margin-left: 7px;
+}
+
+.newSessionHeader__eyebrow {
+  margin: 0;
+  color: rgba(17, 24, 10, 0.74);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.newSessionHeader__title {
+  color: #11180f;
+  font-size: clamp(23px, 3.8vw, 29px);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+}
+
+.newSessionHeader__dismiss {
+  border: none;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  aspect-ratio: 1;
+  position: relative;
+  z-index: 2;
+  justify-self: end;
+  margin-right: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(17, 24, 10, 0.11);
+  color: #11180f;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.newSessionHeader__dismiss svg {
+  width: 18px;
+  height: 18px;
+}
+
+.homeForm--newSession .field__label,
+.homeForm--newSession .newSessionPlayers .field__label {
+  color: rgba(17, 24, 10, 0.9);
+}
+
+.homeForm--newSession {
+  gap: 10px;
+}
+
+.homeForm--newSession .input {
+  background: rgba(13, 20, 15, 0.88);
+  border-color: rgba(17, 24, 10, 0.16);
+  color: #f6f8eb;
+}
+
+.newSessionPrimary > .field,
+.targetControl,
+.timerPanel,
+.newSessionPlayers,
+.modeCard {
+  border: 1px solid rgba(17, 24, 10, 0.12);
+  background: rgba(17, 24, 10, 0.075);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.newSessionPrimary > .field,
+.newSessionPlayers,
+.targetControl {
+  padding: 10px;
+  border-radius: 20px;
+}
+
+.homeForm--newSession .newSessionNameField {
+  gap: 8px;
+  margin-bottom: 0;
+  height: 100%;
+  min-width: 0;
+}
+
+.newSessionNameField .input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.homeForm--newSession .input::placeholder {
+  color: rgba(246, 248, 235, 0.66);
+}
+
+.targetControl {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 20px;
+  min-width: 0;
+}
+
+.targetControl__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.targetControl__label {
+  color: rgba(17, 24, 10, 0.88);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.targetControl__value {
+  width: 64px;
+  height: 40px;
+  flex: 0 0 64px;
+  min-width: 64px;
+  padding: 2px 6px 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  text-align: center;
+  color: #11180f;
+  font: inherit;
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  appearance: textfield;
+}
+
+.targetControl__value:focus-visible {
+  border-bottom-color: rgba(17, 24, 10, 0.46);
+  box-shadow: none;
+}
+
+.targetControl__stepper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  grid-column: 1 / -1;
+}
+
+.targetControl__stepBtn,
+.targetControl__preset,
+.modeCard,
+.timerPanel__modeBtn,
+.timerPanel__preset {
+  border: none;
+  cursor: pointer;
+}
+
+.targetControl__stepBtn {
+  min-height: 34px;
+  border-radius: 12px;
+  background: rgba(17, 24, 10, 0.9);
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.newSessionOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.newSessionRuleHint {
+  margin: -2px 2px 0;
+  color: rgba(17, 24, 10, 0.8);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.modeCard {
+  min-height: 58px;
+  padding: 9px 11px;
+  border-radius: 17px;
+  text-align: left;
+  color: #11180f;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.modeCard--active {
+  background: rgba(17, 24, 10, 0.92);
+  color: #f6f8eb;
+}
+
+.modeCard--active .modeCard__icon {
+  background: transparent;
+  color: #f6f8eb;
+}
+
+.modeCard__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: #11180f;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.modeCard__copy {
+  display: grid;
+  gap: 3px;
+}
+
+.modeCard__copy strong {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.modeCard__copy span {
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: 0.78;
+}
+
+.timerPanel {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 20px;
+}
+
+.timerPanel__modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(17, 24, 10, 0.1);
+  gap: 4px;
+}
+
+.timerPanel__countdownRow {
+  display: grid;
+  gap: 10px;
+}
+
+.timerPanel__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.timerPanel__modeBtn {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(17, 24, 10, 0.72);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.timerPanel__preset {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #11180f;
+  font-size: 11px;
+  font-weight: 850;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.timerPanel__modeBtn--active {
+  background: rgba(17, 24, 10, 0.92);
+  color: #f6f8eb;
+}
+
+.timerPanel__preset--active {
+  background: rgba(17, 24, 10, 0.92);
+  color: #f6f8eb;
+  box-shadow: none;
+}
+
+.timerPanel__inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+}
+
+.timerNumberField {
+  width: 100%;
+  gap: 5px;
+  margin-bottom: 0;
+}
+
+.timerNumberField__label {
+  color: rgba(17, 24, 10, 0.76);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.timerNumberField__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.timerPanel__note {
+  color: rgba(17, 24, 10, 0.72);
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 2px;
+}
+
+.newGamePanel--open .selectedPlayerChip {
+  border-color: rgba(17, 24, 10, 0.1);
+  background: rgba(255, 255, 255, 0.2);
+  color: #11180f;
+}
+
+.newGamePanel--open .selectedPlayerChip__action {
+  color: rgba(17, 24, 10, 0.62);
+}
+
+.newGamePanel--open .profileOption {
+  border-color: rgba(17, 24, 10, 0.08);
+  background: rgba(17, 24, 10, 0.06);
+}
+
+.newGamePanel--open .profileOption__name,
+.newGamePanel--open .profileOption__hint {
+  color: #11180f;
+}
+
+.newGamePanel--open .newPlayerTrigger {
+  background: rgba(17, 24, 10, 0.08);
+  border-color: rgba(17, 24, 10, 0.12);
+  box-shadow: none;
+}
+
+.newGamePanel--open .newPlayerTrigger__copy strong,
+.newGamePanel--open .newPlayerComposer__label,
+.newGamePanel--open .newPlayerComposer__save,
+.newGamePanel--open .newPlayerComposer__save span {
+  color: #11180f;
+}
+
+.newGamePanel--open .newPlayerTrigger__icon {
+  border-color: transparent;
+  background: transparent;
+  color: #11180f;
+}
+
+.newGamePanel--open .newPlayerComposer__preview {
+  border-color: rgba(246, 248, 235, 0.5);
+}
+
+.newGamePanel--open .newPlayerComposer__guestNote {
+  border-color: transparent;
+  background: transparent;
+  color: rgba(17, 24, 10, 0.76);
+}
+
+.newGamePanel--open .newPlayerComposer__guestNote span {
+  color: rgba(17, 24, 10, 0.62);
+}
+
+.newGamePanel--open .newPlayerComposer__guestNote strong {
+  color: #11180f;
+}
+
+.newGamePanel--open .newSessionStart {
+  border-color: rgba(17, 24, 10, 0.92);
+  background: rgba(17, 24, 10, 0.94);
+  color: var(--accent);
+  box-shadow: 0 10px 24px rgba(17, 24, 10, 0.18);
+}
+
+.newGamePanel--open .newSessionStart:disabled {
+  opacity: 0.72;
+  border-color: rgba(17, 24, 10, 0.42);
+  background: rgba(17, 24, 10, 0.58);
+  color: rgba(216, 255, 79, 0.86);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.newGamePanel--open .newSessionStart:not(:disabled):hover {
+  border-color: #11180f;
+  background: #11180f;
+  color: var(--accent);
+}
+
+.newGamePanel--open .newPlayerComposer__close {
+  color: rgba(17, 24, 10, 0.66);
+}
+
+.homeForm {
+  display: grid;
+  gap: 20px;
+}
+
+.selectedPlayers {
+  display: grid;
+  gap: 7px;
+  padding-bottom: 4px;
+}
+
+.selectedPlayers__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.selectedPlayerChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px 5px 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.selectedPlayerChip__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.selectedPlayerChip__name {
+  font-size: 12px;
+  font-weight: 800;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedPlayerChip__action {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.profilePicker__list {
+  display: grid;
+  gap: 10px;
+  overflow: visible;
+  padding: 0;
+}
+
+.profilePicker__list > .newPlayerComposer {
+  position: relative;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 0;
+}
+
+.profilePicker__list > .newPlayerComposer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -10px;
+  right: -10px;
+  height: 1px;
+  background: rgba(17, 24, 10, 0.1);
+}
+
+.savedPlayerPicker {
+  display: grid;
+  gap: 8px;
+}
+
+.savedPlayerPicker__toggle {
+  min-height: 48px;
+  width: 100%;
+  padding: 8px 9px 8px 12px;
+  border: 1px solid rgba(17, 24, 10, 0.1);
+  border-radius: 15px;
+  background: rgba(17, 24, 10, 0.06);
+  color: #11180f;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.savedPlayerPicker__copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.savedPlayerPicker__copy strong {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.savedPlayerPicker__copy span {
+  color: rgba(17, 24, 10, 0.62);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.savedPlayerPicker__count {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.12);
+  color: #11180f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.savedPlayerPicker__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.profileOption {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 12px;
+  background: rgba(17, 24, 10, 0.06);
+  border: 1px dashed rgba(17, 24, 10, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 0;
+  max-width: 100%;
+  position: relative;
+}
+
+.profileOption:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(17, 24, 10, 0.2);
+}
+
+.profileOption__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.profileOption__name {
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.profileOption__copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.profileOption__hint {
+  color: rgba(17, 24, 10, 0.56);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 560px) {
+  .newGamePanel {
+    width: 100%;
+  }
+  .newGamePanel__trigger {
+    min-height: 68px;
+    padding: 0 18px;
+  }
+  .newGamePanel__trigger--open {
+    min-height: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .newSessionHeader {
+    align-items: start;
+  }
+  .newSessionOptions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .targetControl__value {
+    font-size: 21px;
+  }
+  .timerNumberField__input {
+    font-size: 18px;
+  }
+  .newSessionStart {
+    min-height: 50px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .newSessionPrimary {
+    grid-template-columns: minmax(0, 1.45fr) minmax(112px, 0.8fr);
+    gap: 8px;
+  }
+  .newSessionHeader {
+    align-items: start;
+  }
+  .timerPanel__modes {
+    width: 100%;
+  }
+  .newSessionPrimary > .field,
+  .newSessionPlayers,
+  .targetControl {
+    border-radius: 18px;
+  }
+  .newSessionNameField .input {
+    padding-inline: 12px;
+  }
+  .modeCard {
+    min-height: 48px;
+    gap: 8px;
+    padding: 8px 9px;
+  }
+  .modeCard__copy span {
+    display: none;
+  }
+  .targetControl__head {
+    gap: 4px;
+  }
+  .targetControl__label {
+    font-size: 12px;
+  }
+  .targetControl__value {
+    width: 46px;
+    height: 34px;
+    min-width: 46px;
+    flex-basis: 46px;
+    font-size: 21px;
+  }
+}

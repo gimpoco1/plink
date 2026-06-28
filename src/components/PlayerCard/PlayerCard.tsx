@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Player } from "../../types";
-import { QUICK_DELTAS } from "../../constants";
+import { MAX_ABS_SCORE, QUICK_DELTAS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { capitalizeFirst, getInitials } from "../../utils/text";
+import { SwipeableCard } from "../SwipeableCard/SwipeableCard";
 import "./PlayerCard.css";
 
 function formatRelativeTime(timestamp: number): string {
@@ -52,95 +53,25 @@ export function PlayerCard({
   );
   const canApplyCustom =
     Number.isFinite(customValue) && Math.abs(customValue) > 0;
-  const ACTION_WIDTH = 92;
   const progress = Math.min(
     100,
     Math.max(0, (player.score / targetPoints) * 100),
   );
 
-  const [swipeX, setSwipeX] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
-  const dragRef = useRef<{
-    pointerId: number;
-    startX: number;
-    startY: number;
-    startSwipeX: number;
-    isHorizontal?: boolean;
-  } | null>(null);
-
-  function closeSwipe() {
-    setSwipeX(0);
-  }
-
-  function openSwipe() {
-    setSwipeX(-ACTION_WIDTH);
-  }
-
-  function onPointerDown(e: React.PointerEvent) {
-    if (e.button !== 0) return;
-    dragRef.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      startSwipeX: swipeX,
-    };
-    setIsSwiping(false);
-  }
-
-  function onPointerMove(e: React.PointerEvent) {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== e.pointerId) return;
-
-    const dx = e.clientX - drag.startX;
-    const dy = e.clientY - drag.startY;
-    const absDx = Math.abs(dx);
-    const absDy = Math.abs(dy);
-
-    if (drag.isHorizontal === undefined) {
-      if (absDx < 12 && absDy < 12) return;
-
-      drag.isHorizontal = absDx > absDy * 1.5 + 5;
-      if (drag.isHorizontal) {
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-        setIsSwiping(true);
-      }
-    }
-
-    if (!drag.isHorizontal) return;
-    e.preventDefault();
-
-    const next = Math.max(-ACTION_WIDTH, Math.min(0, drag.startSwipeX + dx));
-    setSwipeX(next);
-  }
-
-  function onPointerUpOrCancel(e: React.PointerEvent) {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== e.pointerId) return;
-    dragRef.current = null;
-
-    if (swipeX <= -ACTION_WIDTH * 0.5) {
-      openSwipe();
-    } else {
-      closeSwipe();
-    }
-
-    if (isSwiping) {
-      setTimeout(() => setIsSwiping(false), 100);
-    } else {
-      setIsSwiping(false);
-    }
-  }
-
   const negDeltas = QUICK_DELTAS.filter((d) => d < 0).reverse();
   const posDeltas = QUICK_DELTAS.filter((d) => d > 0).reverse();
 
   return (
-    <div
-      className="swipeRow"
-      data-open={swipeX !== 0 ? "true" : "false"}
-      style={{ ["--swipeW" as never]: `${ACTION_WIDTH}px` }}
-    >
-      <div className="swipeAction" aria-hidden={swipeX === 0}>
+    <SwipeableCard
+      actionWidth={92}
+      cardClassName={`playerCard${
+        isWinner
+          ? " card--winner"
+          : rank === 1 && showRank
+            ? " card--leader"
+            : ""
+      }`}
+      renderActions={({ closeSwipe }) => (
         <button
           className="swipeDelete"
           type="button"
@@ -161,191 +92,187 @@ export function PlayerCard({
           </svg>
           Remove
         </button>
-      </div>
-
-      <article
-        className={`card swipeCard playerCard${isSwiping ? " swipeCard--dragging" : ""}${
-          isWinner
-            ? " card--winner"
-            : rank === 1 && showRank
-              ? " card--leader"
-              : ""
-        }`}
-        style={{ transform: `translateX(${swipeX}px)` }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUpOrCancel}
-        onPointerCancel={onPointerUpOrCancel}
-        onClick={() => {
-          if (swipeX !== 0 && !isSwiping) closeSwipe();
-        }}
-      >
-        <div className="cardHeader">
-          <div className="cardHeader__left">
-            {showRank ? (
-              <div className="rank" aria-label={`Rank ${rank}`}>
-                #{rank}
-              </div>
-            ) : null}
-            <div
-              className="avatar"
-              style={avatarStyleFor(player.avatarColor)}
-              aria-hidden="true"
-            >
-              {initials}
-            </div>
-            <div className="who">
-              <div className="who__nameRow">
-                <div className="who__name">{displayName}</div>
-                {isWinner ? (
-                  <div className="winnerMark" aria-label="Winner">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path
-                        d="M8 4h8v4.5a4 4 0 0 1-8 0V4Zm0 2H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 12.5V17m-3 3h6m-5-3h4"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                ) : null}
-              </div>
-              {player.reachedAt > player.createdAt && (
-                <div className="who__lastUpdate">
-                  Last: {formatRelativeTime(player.reachedAt)}
+      )}
+    >
+      {({ isSwiping, isOpen, closeSwipe }) => (
+        <>
+          <div className="cardHeader">
+            <div className="cardHeader__left">
+              {showRank ? (
+                <div className="rank" aria-label={`Rank ${rank}`}>
+                  #{rank}
                 </div>
-              )}
+              ) : null}
+              <div
+                className="avatar"
+                style={avatarStyleFor(player.avatarColor)}
+                aria-hidden="true"
+              >
+                {initials}
+              </div>
+              <div className="who">
+                <div className="who__nameRow">
+                  <div className="who__name">{displayName}</div>
+                  {isWinner ? (
+                    <div className="winnerMark" aria-label="Winner">
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M8 4h8v4.5a4 4 0 0 1-8 0V4Zm0 2H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 12.5V17m-3 3h6m-5-3h4"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                  ) : null}
+                </div>
+                {player.reachedAt > player.createdAt && (
+                  <div className="who__lastUpdate">
+                    Last: {formatRelativeTime(player.reachedAt)}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="cardHeader__right">
+              <div
+                className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`}
+                aria-label={`Score ${player.score}`}
+              >
+                {player.score}
+              </div>
             </div>
           </div>
 
-          <div className="cardHeader__right">
-            <div
-              className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`}
-              aria-label={`Score ${player.score}`}
-            >
-              {player.score}
-            </div>
+          <div
+            className="progressContainer"
+            role="progressbar"
+            aria-label={`${displayName} progress to target`}
+            aria-valuemin={0}
+            aria-valuemax={targetPoints}
+            aria-valuenow={Math.max(0, player.score)}
+          >
+            <div className="progressBar" style={{ width: `${progress}%` }} />
           </div>
-        </div>
 
-        <div
-          className="progressContainer"
-          role="progressbar"
-          aria-label={`${displayName} progress to target`}
-          aria-valuemin={0}
-          aria-valuemax={targetPoints}
-          aria-valuenow={Math.max(0, player.score)}
-        >
-          <div className="progressBar" style={{ width: `${progress}%` }} />
-        </div>
+          <div className="cardBody">
+            <div className="compactControls">
+              <div className="deltaGroup deltaGroup--neg">
+                {negDeltas.map((delta) => (
+                  <button
+                    key={delta}
+                    type="button"
+                    className="dot dot--neg"
+                    aria-label={`Subtract ${Math.abs(delta)} points from ${displayName}`}
+                    onClick={(e) => {
+                      if (isSwiping) return;
+                      if (isOpen) {
+                        closeSwipe();
+                        e.stopPropagation();
+                      } else {
+                        onDelta(player.id, delta);
+                      }
+                    }}
+                  >
+                    {delta}
+                  </button>
+                ))}
+              </div>
 
-        <div className="cardBody">
-          <div className="compactControls">
-            <div className="deltaGroup deltaGroup--neg">
-              {negDeltas.map((delta) => (
-                <button
-                  key={delta}
-                  type="button"
-                  className="dot dot--neg"
-                  aria-label={`Subtract ${Math.abs(delta)} points from ${displayName}`}
-                  onClick={(e) => {
-                    if (isSwiping) return;
-                    if (swipeX !== 0) {
-                      closeSwipe();
-                      e.stopPropagation();
-                    } else {
-                      onDelta(player.id, delta);
-                    }
-                  }}
-                >
-                  {delta}
-                </button>
-              ))}
-            </div>
-
-            <div className="customPod">
-              <input
-                className="input input--mini"
-                type="text"
-                inputMode="numeric"
-                placeholder="0"
-                value={customRaw}
-                aria-label={`Custom point amount for ${displayName}`}
-                onChange={(e) =>
-                  setCustomRaw(e.target.value.replace(/[^\d]/g, ""))
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && canApplyCustom) {
-                    onDelta(player.id, Math.abs(customValue));
-                    setCustomRaw("");
-                  }
-                }}
-              />
-              <div className="podButtons">
-                <button
-                  className="podBtn podBtn--neg"
-                  aria-label={`Subtract custom points from ${displayName}`}
-                  type="button"
-                  disabled={!canApplyCustom}
-                  onClick={(e) => {
-                    if (isSwiping) return;
-                    if (swipeX !== 0) {
-                      closeSwipe();
-                      e.stopPropagation();
-                    } else {
-                      onDelta(player.id, -Math.abs(customValue));
+              <div className="customPod">
+                <input
+                  className="input input--mini"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={customRaw}
+                  aria-label={`Custom point amount for ${displayName}`}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[^\d]/g, "");
+                    if (!digits) {
                       setCustomRaw("");
+                      return;
                     }
+
+                    setCustomRaw(
+                      String(
+                        Math.min(MAX_ABS_SCORE, Number.parseInt(digits, 10)),
+                      ),
+                    );
                   }}
-                >
-                  −
-                </button>
-                <button
-                  className="podBtn podBtn--pos"
-                  aria-label={`Add custom points to ${displayName}`}
-                  type="button"
-                  disabled={!canApplyCustom}
-                  onClick={(e) => {
-                    if (isSwiping) return;
-                    if (swipeX !== 0) {
-                      closeSwipe();
-                      e.stopPropagation();
-                    } else {
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && canApplyCustom) {
                       onDelta(player.id, Math.abs(customValue));
                       setCustomRaw("");
                     }
                   }}
-                >
-                  +
-                </button>
+                />
+                <div className="podButtons">
+                  <button
+                    className="podBtn podBtn--neg"
+                    aria-label={`Subtract custom points from ${displayName}`}
+                    type="button"
+                    disabled={!canApplyCustom}
+                    onClick={(e) => {
+                      if (isSwiping) return;
+                      if (isOpen) {
+                        closeSwipe();
+                        e.stopPropagation();
+                      } else {
+                        onDelta(player.id, -Math.abs(customValue));
+                        setCustomRaw("");
+                      }
+                    }}
+                  >
+                    −
+                  </button>
+                  <button
+                    className="podBtn podBtn--pos"
+                    aria-label={`Add custom points to ${displayName}`}
+                    type="button"
+                    disabled={!canApplyCustom}
+                    onClick={(e) => {
+                      if (isSwiping) return;
+                      if (isOpen) {
+                        closeSwipe();
+                        e.stopPropagation();
+                      } else {
+                        onDelta(player.id, Math.abs(customValue));
+                        setCustomRaw("");
+                      }
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="deltaGroup deltaGroup--pos">
+                {posDeltas.map((delta) => (
+                  <button
+                    key={delta}
+                    type="button"
+                    className="dot dot--pos"
+                    aria-label={`Add ${delta} points to ${displayName}`}
+                    onClick={(e) => {
+                      if (isSwiping) return;
+                      if (isOpen) {
+                        closeSwipe();
+                        e.stopPropagation();
+                      } else {
+                        onDelta(player.id, delta);
+                      }
+                    }}
+                  >
+                    +{delta}
+                  </button>
+                ))}
               </div>
             </div>
-
-            <div className="deltaGroup deltaGroup--pos">
-              {posDeltas.map((delta) => (
-                <button
-                  key={delta}
-                  type="button"
-                  className="dot dot--pos"
-                  aria-label={`Add ${delta} points to ${displayName}`}
-                  onClick={(e) => {
-                    if (isSwiping) return;
-                    if (swipeX !== 0) {
-                      closeSwipe();
-                      e.stopPropagation();
-                    } else {
-                      onDelta(player.id, delta);
-                    }
-                  }}
-                >
-                  +{delta}
-                </button>
-              ))}
-            </div>
           </div>
-        </div>
-      </article>
-    </div>
+        </>
+      )}
+    </SwipeableCard>
   );
 }

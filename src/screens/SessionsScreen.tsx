@@ -1,0 +1,98 @@
+import { useMemo, useState } from "react";
+import type { Game } from "../types";
+import { GameRowCard } from "../components/GameRowCard/GameRowCard";
+import { findWinner } from "../utils/ranking";
+import { getGameDisplayName } from "../utils/text";
+import "../components/GameRowCard/GameRowCard.css";
+import "./SessionsScreen.css";
+
+type SessionsScreenProps = {
+  games: Game[];
+  onEnter: (gameId: string) => void;
+  onDuplicate: (gameId: string) => void;
+  onRename: (gameId: string) => void;
+  onDelete: (gameId: string) => void;
+};
+
+export function SessionsScreen({
+  games,
+  onEnter,
+  onDuplicate,
+  onRename,
+  onDelete,
+}: SessionsScreenProps) {
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
+  const dateFormat = useMemo(
+    () => new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "short", year: "numeric" }),
+    [],
+  );
+
+  const sessions = useMemo(() => {
+    const filtered = games.filter((game) => {
+      const completed = !!findWinner(game.players, game.targetPoints, game.isLowScoreWins);
+      if (filter === "active") return !completed;
+      if (filter === "completed") return completed;
+      return true;
+    });
+    return [...filtered].sort((a, b) => {
+      if (sort === "name") return getGameDisplayName(a.name).title.localeCompare(getGameDisplayName(b.name).title) || b.updatedAt - a.updatedAt;
+      if (sort === "oldest") return a.createdAt - b.createdAt;
+      return b.updatedAt - a.updatedAt;
+    });
+  }, [filter, games, sort]);
+
+  function cycleSort() {
+    setSort((current) => current === "recent" ? "oldest" : current === "oldest" ? "name" : "recent");
+  }
+
+  return (
+    <div className="tabContent tabContent--sessions">
+      <ScreenHeader title="Sessions" subtitle="Reopen recent rounds and keep your history organized." />
+      {games.length > 0 ? (
+        <section className="homeList" aria-label="Game history">
+          <div className="homeList__title">Recent Sessions</div>
+          <div className="sessionsToolbar">
+            <div className="sessionsToolbar__group" role="group" aria-label="Filter sessions">
+              {(["all", "active", "completed"] as const).map((value) => (
+                <button key={value} type="button" className={`sessionsFilterChip${filter === value ? " sessionsFilterChip--active" : ""}`} onClick={() => setFilter(value)}>
+                  {value === "completed" ? "Done" : value[0].toUpperCase() + value.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button type="button" className={`sessionsSortControl${sort !== "recent" ? " sessionsSortControl--active" : ""}`} onClick={cycleSort} aria-label={`Sort sessions: ${sort}`}>
+              <span className="sessionsSortControl__label">{sort === "recent" ? "Newest" : sort === "oldest" ? "Oldest" : "Name"}</span>
+              <SortIcon mode={sort} />
+            </button>
+          </div>
+          {sessions.length > 0 ? (
+            <div className="gameRows">
+              {sessions.map((game) => (
+                <GameRowCard
+                  key={game.id}
+                  game={game}
+                  createdLabel={dateFormat.format(new Date(game.createdAt))}
+                  onEnter={() => onEnter(game.id)}
+                  onDuplicate={() => onDuplicate(game.id)}
+                  onRename={() => onRename(game.id)}
+                  onDelete={() => onDelete(game.id)}
+                />
+              ))}
+            </div>
+          ) : <div className="emptyMsg">No sessions match this view.</div>}
+        </section>
+      ) : <div className="emptyMsg">No sessions yet.</div>}
+    </div>
+  );
+}
+
+function ScreenHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return <div className="tabHeader"><div><h2 className="tabTitle">{title}</h2><p className="tabSubtitle">{subtitle}</p></div></div>;
+}
+
+function SortIcon({ mode }: { mode: "recent" | "oldest" | "name" }) {
+  if (mode === "name") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 20l-3-3m3 3 3-3M17 4v16m0 0 3-3m-3 3-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  }
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d={mode === "recent" ? "M12 4v12m0 0 4-4m-4 4-4-4" : "M12 20V8m0 0 4 4m-4-4-4 4"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}

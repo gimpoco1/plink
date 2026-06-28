@@ -1,0 +1,98 @@
+.guestBanner {
+  --warning: #ffb15f;
+  --warning-ink: #2a1708;
+  --warning-border: rgba(255, 177, 95, 0.34);
+  position: relative;
+  margin: 0 0 12px;
+  padding: 16px 16px 16px 20px;
+  border: 1px solid var(--warning-border);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 177, 95, 0.1), rgba(255, 177, 95, 0.02)),
+    rgba(16, 22, 28, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 18px 38px rgba(0, 0, 0, 0.22);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.guestBanner::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--warning);
+}
+
+.guestBanner__content {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.guestBanner__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--warning);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.guestBanner__icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 177, 95, 0.14);
+  border: 1px solid rgba(255, 177, 95, 0.26);
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.guestBanner__copy {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 560px;
+}
+
+.guestBanner__actions {
+  flex: 0 0 auto;
+}
+
+.guestBanner__action {
+  min-width: 116px;
+  border-color: rgba(255, 177, 95, 0.28);
+  background: rgba(255, 177, 95, 0.14);
+  color: var(--warning);
+  box-shadow: 0 10px 24px rgba(255, 177, 95, 0.14);
+}
+
+.guestBanner__action:not(:disabled):hover {
+  background: rgba(255, 177, 95, 0.22);
+  border-color: rgba(255, 177, 95, 0.44);
+  color: #ffc98c;
+}
+
+@media (max-width: 560px) {
+  .guestBanner {
+    grid-template-columns: 1fr;
+    padding: 12px 12px 12px 18px;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .guestBanner__action {
+    width: 100%;
+  }
+}

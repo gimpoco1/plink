@@ -13,8 +13,17 @@
   backdrop-filter: blur(4px);
 }
 
+.dialog--confirm::backdrop {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .dialog__form {
   padding: 24px;
+}
+
+.dialog--confirm .dialog__form {
+  padding-top: 18px;
 }
 
 .dialog__head {
@@ -22,9 +31,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin: 0 -24px 20px;
+  padding: 0 24px 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
+}
+
+.dialog--confirm .dialog__head {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
 }
 
 .dialog__title {
@@ -33,9 +48,188 @@
   letter-spacing: -0.5px;
 }
 
+.dialog__titleWrap {
+  display: grid;
+  gap: 6px;
+}
+
+.dialog__eyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dialog__body {
+  display: grid;
+  gap: 14px;
+}
+
+.dialog__bodyTitle {
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.dialog__detailList {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog__detailRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dialog__detailLabel {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.dialog__detailValue {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.dialog__highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dialog__highlightChip {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(216, 255, 79, 0.1);
+  border: 1px solid rgba(216, 255, 79, 0.18);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dialog__message {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.dialog__playerList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.dialog__playerItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dialog__playerAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  flex: 0 0 auto;
+}
+
+.dialog__playerName {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .dialog__actions {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.dialog--confirmFeature {
+  width: min(560px, calc(100% - 32px));
+}
+
+.dialog--confirmFeature .dialog__form {
+  padding-top: 22px;
+}
+
+.dialog--confirmFeature .dialog__head {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+}
+
+.dialog--confirmFeature .dialog__title {
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.dialog--confirmFeature .dialog__message {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.dialog--confirmFeature .dialog__playerList {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.dialog--confirmFeature .dialog__playerItem {
+  padding: 7px 9px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dialog--confirmFeature .dialog__playerAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.dialog--confirmFeature .dialog__playerName {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.dialog--confirmFeature .dialog__actions {
+  margin-top: 22px;
+}
+
+@media (max-width: 560px) {
+  .dialog__playerList,
+  .dialog--confirmFeature .dialog__playerList {
+    grid-template-columns: 1fr 1fr;
+  }
 }

@@ -35,6 +35,29 @@
   position: relative;
 }
 
+.topbarAuth {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbarAuth:hover {
+  border-color: rgba(216, 255, 79, 0.24);
+  background: rgba(216, 255, 79, 0.08);
+  color: var(--accent);
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -184,6 +207,9 @@
   .topbar {
     padding: 10px 12px;
   }
+  .topbar__actions {
+    gap: 8px;
+  }
   .logo__mark {
     width: 29px;
     height: 36px;
@@ -253,5 +279,11 @@
   .topbarPrimaryAction {
     padding: 0 12px;
     justify-content: center;
+  }
+
+  .topbarAuth {
+    max-width: 92px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 }

@@ -13,6 +13,7 @@ export type PlayerProfile = {
   name: string;
   avatarColor: string;
   createdAt: number;
+  updatedAt: number;
 };
 
 export type Game = {
@@ -23,9 +24,9 @@ export type Game = {
   timerEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
-  accentColor: string;
   players: Player[];
   createdAt: number;
   updatedAt: number;
   endedAt?: number;
 };
+export type HomeTab = "home" | "sessions" | "players" | "stats";

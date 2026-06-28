@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  loadTimerSnapshot,
+  saveTimerSnapshot,
+} from "../../storage/timerStorage";
 import "./GameTimer.css";
 
 type Props = {
@@ -6,6 +10,26 @@ type Props = {
   mode: "countdown" | "stopwatch";
   durationSeconds: number;
 };
+
+function restoreElapsedMs(
+  gameId: string,
+  mode: "countdown" | "stopwatch",
+  durationSeconds: number,
+) {
+  const snapshot = loadTimerSnapshot(gameId);
+  if (
+    !snapshot ||
+    snapshot.mode !== mode ||
+    snapshot.durationSeconds !== durationSeconds
+  ) {
+    return 0;
+  }
+
+  const totalMs = Math.max(1, durationSeconds) * 1000;
+  return mode === "countdown"
+    ? Math.max(0, Math.min(totalMs, snapshot.elapsedMs))
+    : Math.max(0, snapshot.elapsedMs);
+}
 
 function formatClock(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -21,17 +45,12 @@ function formatClock(ms: number): string {
 export function GameTimer({ gameId, mode, durationSeconds }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [elapsedMs, setElapsedMs] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(() =>
+    restoreElapsedMs(gameId, mode, durationSeconds),
+  );
   const [tick, setTick] = useState(0);
   const startedAtRef = useRef<number | null>(null);
   const timerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setIsOpen(false);
-    setIsRunning(false);
-    setElapsedMs(0);
-    startedAtRef.current = null;
-  }, [gameId, mode, durationSeconds]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -58,12 +77,19 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
     };
   }, [isOpen]);
 
-  const activeElapsed = useMemo(() => {
-    if (!isRunning || startedAtRef.current === null) return elapsedMs;
-    return elapsedMs + (Date.now() - startedAtRef.current);
-  }, [elapsedMs, isRunning, tick]);
-
   const totalMs = Math.max(1, durationSeconds) * 1000;
+  const normalizeElapsedMs = (value: number) =>
+    mode === "countdown"
+      ? Math.max(0, Math.min(totalMs, value))
+      : Math.max(0, value);
+
+  const activeElapsed = useMemo(() => {
+    if (!isRunning || startedAtRef.current === null) {
+      return normalizeElapsedMs(elapsedMs);
+    }
+    return normalizeElapsedMs(elapsedMs + (Date.now() - startedAtRef.current));
+  }, [elapsedMs, isRunning, tick, totalMs]);
+
   const displayMs =
     mode === "countdown"
       ? Math.max(0, totalMs - activeElapsed)
@@ -78,6 +104,30 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
     setElapsedMs(totalMs);
     startedAtRef.current = null;
   }, [isDone, isRunning, totalMs]);
+
+  useEffect(() => {
+    saveTimerSnapshot(gameId, {
+      mode,
+      durationSeconds,
+      elapsedMs: activeElapsed,
+    });
+  }, [activeElapsed, durationSeconds, gameId, mode]);
+
+  useEffect(() => {
+    return () => {
+      const startedAt = startedAtRef.current;
+      const nextElapsed =
+        startedAt === null
+          ? elapsedMs
+          : normalizeElapsedMs(elapsedMs + (Date.now() - startedAt));
+
+      saveTimerSnapshot(gameId, {
+        mode,
+        durationSeconds,
+        elapsedMs: nextElapsed,
+      });
+    };
+  }, [durationSeconds, elapsedMs, gameId, mode, totalMs]);
 
   function start() {
     if (isRunning) return;
@@ -96,7 +146,7 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
       return;
     }
     const now = Date.now();
-    setElapsedMs((prev) => prev + (now - startedAt));
+    setElapsedMs((prev) => normalizeElapsedMs(prev + (now - startedAt)));
     startedAtRef.current = null;
     setIsRunning(false);
   }

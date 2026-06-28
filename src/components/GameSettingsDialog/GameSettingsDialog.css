@@ -3,6 +3,36 @@
   gap: 8px;
 }
 
+.settingsAuthCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent 120%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.settingsAuthCard__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.settingsAuthCard__copy strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.settingsAuthCard__copy span {
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .settingsToggle {
   display: flex;
   align-items: center;
@@ -76,6 +106,11 @@
 }
 
 @media (max-width: 420px) {
+  .settingsAuthCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .settingsTimerToggle__btn {
     font-size: 13px;
     padding: 0 6px;

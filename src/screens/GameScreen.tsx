@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Game } from "../types";
-import type { ConfirmDialogHandle } from "../components/ConfirmDialog";
+import type { Game, Player } from "../types";
 import type { PlayerProfile } from "../types";
 import { capitalizeFirst, getGameDisplayName, getInitials } from "../utils/text";
 import { computeRanks, findWinner, sortPlayers } from "../utils/ranking";
 import { WinCelebration } from "../components/WinCelebration/WinCelebration";
 import { useDelayedRanking } from "../hooks/useDelayedRanking";
 import {
-  AddPlayerDialog,
-  AddPlayerDialogHandle,
-} from "../components/AddPlayerDialog/AddPlayerDialog";
+  ManagePlayersDialog,
+  ManagePlayersDialogHandle,
+} from "../components/ManagePlayersDialog/ManagePlayersDialog";
 import { PlayerCard } from "../components/PlayerCard/PlayerCard";
 import { GameTimer } from "../components/GameTimer/GameTimer";
 import type { ProfileStats } from "../utils/profileStats";
@@ -18,8 +17,8 @@ import "./GameScreen.css";
 type Props = {
   game: Game;
   profiles: PlayerProfile[];
-  confirmRef: React.RefObject<ConfirmDialogHandle>;
-  addDialogRef: React.RefObject<AddPlayerDialogHandle>;
+  isAuthenticated: boolean;
+  managePlayersDialogRef: React.RefObject<ManagePlayersDialogHandle>;
   pulseById: Record<string, "pos" | "neg" | undefined>;
   onTriggerPulse: (playerId: string, delta: number) => void;
   onDeleteProfile: (profileId: string) => void;
@@ -32,7 +31,11 @@ type Props = {
     }>,
   ) => void;
   onUpdateScore: (playerId: string, delta: number) => void;
-  onDeletePlayer: (playerId: string) => void;
+  onDeletePlayer: (playerId: string) => Promise<void> | void;
+  onUpdatePlayer: (
+    playerId: string,
+    updates: Partial<Pick<Player, "name" | "avatarColor" | "profileId">>,
+  ) => void;
   winnerStats: ProfileStats | null;
   onReplayGame: () => void;
   onBackToHome: () => void;
@@ -41,14 +44,15 @@ type Props = {
 export function GameScreen({
   game,
   profiles,
-  confirmRef,
-  addDialogRef,
+  isAuthenticated,
+  managePlayersDialogRef,
   pulseById,
   onTriggerPulse,
   onDeleteProfile,
   onStartGame,
   onUpdateScore,
   onDeletePlayer,
+  onUpdatePlayer,
   winnerStats,
   onReplayGame,
   onBackToHome,
@@ -153,13 +157,13 @@ export function GameScreen({
       <main className={`content${game.timerEnabled ? " content--hasTimer" : ""}`}>
         {!hasPlayers ? (
           <section className="empty">
-            <h1 className="empty__title">Add players to start.</h1>
+            <h1 className="empty__title">Manage players to start.</h1>
             <button
               className="btn btn--primary btn--xl"
               type="button"
-              onClick={() => addDialogRef.current?.open()}
+              onClick={() => managePlayersDialogRef.current?.open()}
             >
-              Add first player
+              Manage players
             </button>
           </section>
         ) : (
@@ -186,18 +190,7 @@ export function GameScreen({
                       delta,
                     });
                   }}
-                  onDelete={async (playerId) => {
-                    const p = game.players.find((x) => x.id === playerId);
-                    const label = p ? capitalizeFirst(p.name) : "this player";
-                    const ok = await confirmRef.current?.confirm({
-                      title: "Remove player",
-                      message: `Do you want to remove ${label} from this game?`,
-                      confirmText: "Remove",
-                      tone: "danger",
-                    });
-                    if (!ok) return;
-                    onDeletePlayer(playerId);
-                  }}
+                  onDelete={(playerId) => void onDeletePlayer(playerId)}
                 />
               );
             })}
@@ -235,17 +228,22 @@ export function GameScreen({
 
       {game.timerEnabled ? (
         <GameTimer
+          key={`${game.id}:${game.timerMode}:${game.timerSeconds}`}
           gameId={game.id}
           mode={game.timerMode}
           durationSeconds={game.timerSeconds}
         />
       ) : null}
 
-      <AddPlayerDialog
-        ref={addDialogRef}
+      <ManagePlayersDialog
+        ref={managePlayersDialogRef}
         profiles={profiles}
+        currentPlayers={game.players}
         takenProfileIds={takenProfileIds}
+        isAuthenticated={isAuthenticated}
         onDeleteProfile={(profileId) => onDeleteProfile(profileId)}
+        onDeletePlayer={onDeletePlayer}
+        onUpdatePlayer={onUpdatePlayer}
         onStartGame={onStartGame}
       />
     </>

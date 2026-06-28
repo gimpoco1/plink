@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
-import type { Game } from "../types";
-import { findWinner } from "../utils/ranking";
-import { capitalizeFirst, getGameDisplayName } from "../utils/text";
+import type { Game } from "../../types";
+import { findWinner } from "../../utils/ranking";
+import { capitalizeFirst, getGameDisplayName } from "../../utils/text";
+import "./GameRowCard.css";
 
 type Props = {
   game: Game;
@@ -290,3 +291,4 @@ export function GameRowCard({
     </div>
   );
 }
+
