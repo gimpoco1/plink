@@ -362,3 +362,4 @@ const DotGrid: React.FC<DotGridProps> = ({
 };
 
 export default DotGrid;
+

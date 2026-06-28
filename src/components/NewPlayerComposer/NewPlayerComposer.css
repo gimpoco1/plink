@@ -1,0 +1,431 @@
+.newPlayerTrigger,
+.newPlayerComposer {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(216, 255, 79, 0.08),
+      transparent 34%
+    ),
+    rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 12px 28px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.newPlayerTrigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 5px 9px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.newPlayerTrigger:hover {
+  transform: translateY(-1px);
+  border-color: rgba(216, 255, 79, 0.22);
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(216, 255, 79, 0.14),
+      transparent 34%
+    ),
+    rgba(255, 255, 255, 0.055);
+}
+
+.newPlayerTrigger__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: currentColor;
+  border: 0;
+  font-size: 31px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.newPlayerTrigger__copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.newPlayerTrigger__copy strong {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.newPlayerComposer {
+  padding: 2px 0 0;
+  display: grid;
+  gap: 11px;
+  animation: fadeIn 0.2s ease-out;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.newPlayerComposer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(17, 24, 10, 0.86);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.newPlayerComposer__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 78px;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.newGamePanel .newPlayerComposer__field {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.newGamePanel .newPlayerComposer__input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #f6f8eb;
+  box-shadow: none;
+}
+
+.homeForm--newSession .newPlayerComposer__input.input {
+  background: transparent;
+  border-color: transparent;
+  color: #f6f8eb;
+  outline: 0;
+  box-shadow: none;
+}
+
+.homeForm--newSession .newPlayerComposer__input.input::placeholder {
+  color: rgba(246, 248, 235, 0.66);
+}
+
+.homeForm--newSession .newPlayerComposer__input.input:focus,
+.homeForm--newSession .newPlayerComposer__input.input:focus-visible {
+  border-color: transparent;
+  outline: 0;
+  box-shadow: none;
+}
+
+.newGamePanel .newPlayerComposer__input:focus-visible {
+  box-shadow: none;
+}
+
+.newPlayerComposer__inputShell {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 50px;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid rgba(17, 24, 10, 0.16);
+  border-radius: 12px;
+  background: rgba(13, 20, 15, 0.88);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.newPlayerComposer__inputShell:focus-within {
+  border-color: rgba(17, 24, 10, 0.16);
+  box-shadow: none;
+}
+
+.newPlayerComposer__preview {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 900;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.newGamePanel .newPlayerComposer__submit {
+  width: 78px;
+  min-width: 78px;
+  min-height: 50px;
+  height: 50px;
+  padding: 0 12px;
+  justify-content: center;
+  border-radius: 999px;
+  border-color: rgba(17, 24, 10, 0.9);
+  background: rgba(17, 24, 10, 0.92);
+  color: var(--accent);
+  box-shadow: 0 10px 20px rgba(17, 24, 10, 0.14);
+}
+
+.newGamePanel .newPlayerComposer__submit:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.newPlayerComposer__error {
+  min-height: 28px;
+  border-radius: 12px;
+  padding: 7px 10px;
+  background: rgba(255, 103, 116, 0.18);
+  color: rgba(60, 12, 16, 0.95);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.newPlayerComposer__colors {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding-top: 1px;
+}
+
+.newPlayerComposer__label {
+  color: rgba(17, 24, 10, 0.64);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.newPlayerComposer__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.colorDisc--large {
+  width: 28px;
+  height: 28px;
+}
+
+.newPlayerComposer__save {
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  align-items: flex-start;
+}
+
+.newPlayerComposer__save span {
+  display: grid;
+  gap: 2px;
+}
+
+.newPlayerComposer__guestNote {
+  width: 100%;
+  min-height: 32px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(17, 24, 10, 0.76);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0 2px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.newPlayerComposer__guestNote span {
+  color: rgba(17, 24, 10, 0.62);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.newPlayerComposer__guestNote strong {
+  color: #11180f;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.newPlayerComposer__footer {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  padding-top: 10px;
+  border-top: 0;
+}
+
+.newPlayerComposer__footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -10px;
+  right: -10px;
+  height: 1px;
+  background: rgba(17, 24, 10, 0.1);
+}
+
+.newPlayerComposer__close {
+  width: fit-content;
+  min-height: 32px;
+  border: 1px solid rgba(17, 24, 10, 0.1);
+  border-radius: 12px;
+  background: rgba(17, 24, 10, 0.07);
+  color: rgba(17, 24, 10, 0.72);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.saveProfileOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 2px 0;
+}
+
+.saveProfileOption input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+@media (max-width: 420px) {
+  .timerModeToggle__btn {
+    font-size: 13px;
+    padding: 0 6px;
+  }
+}
+
+.colorDisc {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(17, 24, 10, 0.04);
+  padding: 0;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.colorDisc:hover {
+  transform: scale(1.1);
+}
+
+.colorDisc[data-active="true"] {
+  border-color: rgba(246, 248, 235, 0.98);
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 3px rgba(17, 24, 10, 0.14),
+    0 0 0 5px rgba(246, 248, 235, 0.46);
+}
+
+@media (max-width: 560px) {
+  .newPlayerTrigger {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+  .newPlayerTrigger__chips {
+    display: none;
+  }
+  .newPlayerComposer__top {
+    grid-template-columns: minmax(0, 1fr) 76px;
+  }
+  .newGamePanel .newPlayerComposer__submit {
+    width: 76px;
+    min-width: 76px;
+    padding-inline: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .newPlayerComposer {
+    padding-top: 1px;
+  }
+  .newPlayerComposer__top {
+    grid-template-columns: minmax(0, 1fr) 68px;
+    gap: 7px;
+  }
+  .newGamePanel .newPlayerComposer__submit {
+    width: 68px;
+    min-width: 68px;
+  }
+  .newPlayerComposer__colors {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+  .newPlayerComposer__guestNote span {
+    display: none;
+  }
+  .colorDisc--large {
+    width: 27px;
+    height: 27px;
+  }
+}

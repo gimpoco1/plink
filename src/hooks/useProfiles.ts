@@ -1,17 +1,210 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import type { PlayerProfile } from "../types";
+import { supabase } from "../lib/supabase";
 import { loadProfiles, saveProfiles } from "../storage/profilesStorage";
+import { loadRemoteProfiles, saveRemoteProfiles } from "../storage/remoteStorage";
 import { uid } from "../utils/id";
 import { formatPlayerName } from "../utils/text";
 
-export function useProfiles() {
+function getProfileSyncSignature(profiles: PlayerProfile[]) {
+  return profiles
+    .map((profile) => `${profile.id}:${profile.updatedAt}`)
+    .sort()
+    .join("|");
+}
+
+function getSyncErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  return "Unknown database error";
+}
+
+function mergeProfilesById(
+  baseProfiles: PlayerProfile[],
+  incomingProfiles: PlayerProfile[],
+) {
+  const merged = new Map(baseProfiles.map((profile) => [profile.id, profile]));
+
+  for (const incoming of incomingProfiles) {
+    const existing = merged.get(incoming.id);
+    if (!existing || incoming.updatedAt >= existing.updatedAt) {
+      merged.set(incoming.id, incoming);
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => {
+    if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function shouldKeepLocalProfiles(
+  localProfiles: PlayerProfile[],
+  remoteProfiles: PlayerProfile[],
+) {
+  const remoteById = new Map(
+    remoteProfiles.map((profile) => [profile.id, profile]),
+  );
+  return localProfiles.some((localProfile) => {
+    const remoteProfile = remoteById.get(localProfile.id);
+    return !remoteProfile || remoteProfile.updatedAt < localProfile.updatedAt;
+  });
+}
+
+export function useProfiles(session: Session | null) {
   const [profiles, setProfiles] = useState<PlayerProfile[]>(() =>
     loadProfiles(),
   );
+  const [remoteReady, setRemoteReady] = useState(!session);
+  const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const remoteSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
-    saveProfiles(profiles);
-  }, [profiles]);
+    let alive = true;
+
+    if (!session) {
+      setRemoteUserId(null);
+      setSyncNotice(null);
+      remoteSignatureRef.current = null;
+      setProfiles(loadProfiles());
+      setRemoteReady(true);
+      return () => {
+        alive = false;
+      };
+    }
+
+    setRemoteReady(false);
+    setRemoteUserId(null);
+    remoteSignatureRef.current = null;
+    setProfiles([]);
+    loadRemoteProfiles(session.user.id)
+      .then((remoteProfiles) => {
+        if (!alive) return;
+        setProfiles(remoteProfiles);
+        remoteSignatureRef.current = getProfileSyncSignature(remoteProfiles);
+        setRemoteUserId(session.user.id);
+        setRemoteReady(true);
+      })
+      .catch((error) => {
+        if (!alive) return;
+        console.error("Failed to load profiles from Supabase", error);
+        setProfiles([]);
+        setRemoteUserId(null);
+        setSyncNotice(`Could not load saved players from the database: ${getSyncErrorMessage(error)}`);
+        setRemoteReady(true);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || remoteUserId !== session.user.id) return;
+    let alive = true;
+
+    async function refreshRemoteProfiles() {
+      try {
+        const remoteProfiles = await loadRemoteProfiles(session!.user.id);
+        if (!alive) return;
+        setProfiles((previousProfiles) => {
+          if (shouldKeepLocalProfiles(previousProfiles, remoteProfiles)) {
+            return previousProfiles;
+          }
+          const remoteSignature = getProfileSyncSignature(remoteProfiles);
+          const previousSignature = getProfileSyncSignature(previousProfiles);
+          if (remoteSignature === previousSignature) {
+            remoteSignatureRef.current = remoteSignature;
+            return previousProfiles;
+          }
+          const remoteById = new Map(
+            remoteProfiles.map((profile) => [profile.id, profile]),
+          );
+          const removed = previousProfiles.filter(
+            (profile) => !remoteById.has(profile.id),
+          );
+          const changed = previousProfiles.filter((profile) => {
+            const remote = remoteById.get(profile.id);
+            return remote && remote.updatedAt !== profile.updatedAt;
+          });
+          if (removed.length > 0) {
+            setSyncNotice(
+              removed.length === 1
+                ? `"${removed[0].name}" was removed from your saved players.`
+                : `${removed.length} saved players were removed from your account.`,
+            );
+          } else if (changed.length > 0) {
+            setSyncNotice("Your saved players were updated from the database.");
+          }
+          remoteSignatureRef.current = remoteSignature;
+          return remoteProfiles;
+        });
+      } catch {
+        // Keep local in-memory state if a background refresh fails.
+      }
+    }
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") void refreshRemoteProfiles();
+    }
+
+    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    if (supabase) {
+      channel = supabase.channel(`profiles:${session.user.id}`);
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "player_profiles",
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        () => {
+          void refreshRemoteProfiles();
+        },
+      );
+      void channel.subscribe();
+    }
+
+    const intervalId = window.setInterval(refreshRemoteProfiles, 5000);
+    window.addEventListener("focus", refreshRemoteProfiles);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      alive = false;
+      window.clearInterval(intervalId);
+      if (channel) {
+        void channel.unsubscribe();
+        if (supabase) {
+          supabase.removeChannel(channel);
+        }
+      }
+      window.removeEventListener("focus", refreshRemoteProfiles);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [remoteUserId, session]);
+
+  useEffect(() => {
+    if (!session) {
+      if (!remoteReady || remoteUserId !== null) return;
+      saveProfiles(profiles);
+      return;
+    }
+    if (!remoteReady || remoteUserId !== session.user.id) return;
+    void saveRemoteProfiles(session.user.id, profiles)
+      .then(() => {
+        remoteSignatureRef.current = getProfileSyncSignature(profiles);
+      })
+      .catch((error) => {
+        console.error("Failed to save profiles to Supabase", error);
+        setSyncNotice(`Could not save players to the database: ${getSyncErrorMessage(error)}`);
+      });
+  }, [profiles, remoteReady, remoteUserId, session]);
 
   const sortedProfiles = useMemo(() => {
     return [...profiles].sort((a, b) => {
@@ -31,7 +224,12 @@ export function useProfiles() {
       (p) => p.name.toLowerCase() === name.toLowerCase(),
     );
     if (existing) {
-      const updated: PlayerProfile = { ...existing, name, avatarColor };
+      const updated: PlayerProfile = {
+        ...existing,
+        name,
+        avatarColor,
+        updatedAt: Date.now(),
+      };
       setProfiles((prev) =>
         prev.map((p) => (p.id === existing.id ? updated : p)),
       );
@@ -39,7 +237,13 @@ export function useProfiles() {
     }
 
     const createdAt = Date.now();
-    const created: PlayerProfile = { id: uid(), name, avatarColor, createdAt };
+    const created: PlayerProfile = {
+      id: uid(),
+      name,
+      avatarColor,
+      createdAt,
+      updatedAt: createdAt,
+    };
     setProfiles((prev) => [...prev, created]);
     return created;
   }
@@ -60,15 +264,25 @@ export function useProfiles() {
           const formatted = formatPlayerName(updates.name);
           if (formatted) name = formatted;
         }
-        return { ...p, ...updates, name };
+        return { ...p, ...updates, name, updatedAt: Date.now() };
       }),
     );
   }
+
+  function importProfiles(incomingProfiles: PlayerProfile[]) {
+    const mergedProfiles = mergeProfilesById(profiles, incomingProfiles);
+    setProfiles(mergedProfiles);
+    return mergedProfiles.length - profiles.length;
+  }
+
 
   return {
     profiles: sortedProfiles,
     upsertProfile,
     deleteProfile,
     updateProfile,
+    importProfiles,
+    remoteReady,
+    syncNotice,
   };
 }

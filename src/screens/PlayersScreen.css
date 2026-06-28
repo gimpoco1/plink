@@ -1,0 +1,485 @@
+.profilesTabContent {
+  padding: 24px 0;
+}
+
+.profilesOverview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.profilesOverview__item {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent 70%),
+    var(--surface);
+  display: grid;
+  gap: 4px;
+}
+
+.profilesOverview__item strong {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+}
+
+.profilesOverview__label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profilesGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profileCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(216, 255, 79, 0.08),
+      transparent 36%
+    ),
+    var(--surface);
+  backdrop-filter: blur(3px);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.profileCard--editing {
+  border-color: rgba(216, 255, 79, 0.2);
+  box-shadow: 0 0 0 1px rgba(216, 255, 79, 0.08) inset;
+}
+
+.profileCard__topRow {
+  display: flex;
+  align-items: center; /* center avatar and name vertically */
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profileCard__main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.profileCard__nameEdit {
+  width: 100%;
+}
+
+.profileAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 22px;
+  color: white;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.profileCard__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profileCard__header {
+  display: grid;
+  gap: 8px;
+}
+
+.profileCard__titleBlock {
+  min-width: 0;
+}
+
+/* Keep title block height stable so switching to the input doesn't jump layout */
+.profileCard__titleBlock {
+  min-height: 56px; /* match avatar height */
+  display: flex;
+  align-items: center;
+}
+
+.profileCard__nameText {
+  color: var(--text);
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+/* Make the inline name input match the visual size of the name text to avoid jumps */
+.profileCard__nameEdit .editInput {
+  font-size: 24px;
+  font-weight: 800;
+  padding: 6px 12px;
+  height: 40px;
+  line-height: 1;
+  border-radius: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.profileCard__gameWin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(216, 255, 79, 0.1);
+  border: 1px solid rgba(216, 255, 79, 0.22);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.profileCard__gameWin strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.profileCard__gameWinLabel {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profileCard__gameResults {
+  margin-top: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.profileCard__gameResult {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.profileCard__gameResult strong {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.profileStatsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profileStatPill {
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.profileStatPill__label {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profileStatPill__value {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+
+.profileGamesDropdown {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.profileGamesDropdown__summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.profileGamesDropdown__summaryLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profileGamesDropdown__topGame {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(216, 255, 79, 0.1);
+  border: 1px solid rgba(216, 255, 79, 0.22);
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.profileGamesDropdown__topGame strong {
+  color: var(--text);
+  font-size: 10px;
+}
+
+.profileGamesDropdown__topGameLabel {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profileGamesDropdown__summary::-webkit-details-marker {
+  display: none;
+}
+
+.profileGamesDropdown__summary::after {
+  content: "+";
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.profileGamesDropdown[open] .profileGamesDropdown__summary::after {
+  content: "−";
+}
+
+.profileGamesDropdown__count {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 11px;
+}
+
+.profileCard__colors {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 140px;
+}
+
+.profileCard__colorRow {
+  padding: 6px 0 0 0;
+}
+
+.profileCard__paletteRow {
+  padding: 6px 0 8px 0; /* slightly less top padding, more bottom padding */
+  display: flex;
+  align-items: center;
+}
+
+.colorDot[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.profileCard__colors--compact {
+  gap: 7px;
+  min-width: 0;
+}
+
+.colorDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.colorDot.active {
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: var(--neg);
+  padding: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.deleteBtn:hover {
+  opacity: 1;
+}
+
+.deleteBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.editGroup {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.newProfileActions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.profileCard--new .profileCard__footer {
+  display: grid;
+  gap: 8px;
+}
+
+.profileCard--new .newProfileActions {
+  width: 100%;
+  margin-left: 0;
+  justify-content: flex-end;
+}
+
+.profileCard--new .profileCard__colors {
+  padding: 4px 0 10px;
+}
+
+@media (max-width: 640px) {
+  .profilesOverview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.editInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid rgba(216, 255, 79, 0.22);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.miniBtn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0 16px;
+  min-height: 42px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.profileEditBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.profileUndoBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.profileCard__actions {
+  display: flex;
+  gap: 6px; /* small gap between undo + tick */
+  align-items: center;
+}
+
+.profileUndoBtn img {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+}
+
+.profileEditBtn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(216, 255, 79, 0.18);
+  background: rgba(216, 255, 79, 0.08);
+}
+
+.profileEditBtn--active {
+  border-color: rgba(216, 255, 79, 0.22);
+  background: rgba(216, 255, 79, 0.12);
+  color: var(--accent);
+}
+
+.profileEditBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.profileCard__editor {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.profileCard__footerHint {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}

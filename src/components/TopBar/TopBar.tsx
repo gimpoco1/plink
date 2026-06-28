@@ -8,10 +8,12 @@ type Props = {
   showBackButton?: boolean;
   showActionMenu?: boolean;
   primaryActionLabel?: string;
+  authLabel?: string;
   metaItems?: Array<{ label: string; tone?: "accent" | "muted" }>;
   onBack?: () => void;
   onLogoClick?: () => void;
   onPrimaryAction?: () => void;
+  onOpenAuth?: () => void;
   onAddPlayer: () => void;
   onOpenSettings?: () => void;
   onResetGame: () => void;
@@ -25,10 +27,12 @@ export function TopBar({
   showBackButton = false,
   showActionMenu = false,
   primaryActionLabel,
+  authLabel,
   metaItems,
   onBack,
   onLogoClick,
   onPrimaryAction,
+  onOpenAuth,
   onAddPlayer,
   onOpenSettings,
   onResetGame,
@@ -137,6 +141,11 @@ export function TopBar({
       </div>
 
       <div className="topbar__actions">
+        {authLabel && onOpenAuth ? (
+          <button className="topbarAuth" type="button" onClick={onOpenAuth}>
+            {authLabel}
+          </button>
+        ) : null}
         {showActionMenu ? (
           <div className="topbarMenu" ref={menuRef}>
             <button
@@ -177,7 +186,7 @@ export function TopBar({
                     onAddPlayer();
                   }}
                 >
-                  Add player
+                  Manage players
                 </button>
                 <button
                   className="topbarMenu__item topbarMenu__item--danger"

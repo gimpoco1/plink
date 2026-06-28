@@ -9,6 +9,8 @@ export type GameSettingsDialogHandle = {
 
 type Props = {
   game: Game;
+  isAuthenticated: boolean;
+  onOpenAuth?: () => void;
   onSave: (input: {
     name: string;
     targetPoints: number;
@@ -20,7 +22,10 @@ type Props = {
 };
 
 export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
-  function GameSettingsDialog({ game, onSave }, ref) {
+  function GameSettingsDialog(
+    { game, isAuthenticated, onOpenAuth, onSave },
+    ref,
+  ) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const [name, setName] = useState(game.name);
     const [targetRaw, setTargetRaw] = useState(String(game.targetPoints));
@@ -97,7 +102,10 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
           }}
         >
           <div className="dialog__head">
-            <div className="dialog__title">Game settings</div>
+            <div className="dialog__titleWrap">
+              <div className="dialog__eyebrow">Session rules</div>
+              <div className="dialog__title">Game settings</div>
+            </div>
             <button
               className="iconbtn"
               type="button"
@@ -109,6 +117,28 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
           </div>
 
           <div className="dialog__body settingsDialogBody">
+            {!isAuthenticated ? (
+              <div className="settingsAuthCard">
+                <div className="settingsAuthCard__copy">
+                  <strong>Sign in to save this game</strong>
+                  <span>
+                    Keep this session on your account and sync it across
+                    devices.
+                  </span>
+                </div>
+                <button
+                  className="btn btn--primary"
+                  type="button"
+                  onClick={() => {
+                    close();
+                    onOpenAuth?.();
+                  }}
+                >
+                  Sign in
+                </button>
+              </div>
+            ) : null}
+
             <label className="field">
               <span className="field__label">Game name</span>
               <input
@@ -209,7 +239,11 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
             <button className="btn btn--ghost" type="button" onClick={close}>
               Cancel
             </button>
-            <button className="btn btn--primary" type="submit" disabled={!canSave}>
+            <button
+              className="btn btn--primary"
+              type="submit"
+              disabled={!canSave}
+            >
               Save
             </button>
           </div>

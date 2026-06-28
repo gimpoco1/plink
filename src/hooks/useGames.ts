@@ -1,16 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import type { Game, Player } from "../types";
+import { MAX_ABS_SCORE } from "../constants";
+import { supabase } from "../lib/supabase";
 import { clampName, formatPlayerName } from "../utils/text";
 import { uid } from "../utils/id";
 import {
-  loadGames,
   loadCurrentGameId,
+  loadGuestCurrentGameId,
+  loadGuestGames,
   migrateSingleGameToGamesIfNeeded,
-  saveGames,
   saveCurrentGameId,
+  saveGuestCurrentGameId,
+  saveGuestGames,
 } from "../storage/gamesStorage";
+import { loadRemoteGames, saveRemoteGames } from "../storage/remoteStorage";
 import { computeRanks, hasReachedTarget, sortPlayers } from "../utils/ranking";
-import { GAME_ACCENT_COLORS } from "../constants";
 
 type CreateGameInput = {
   name: string;
@@ -31,66 +36,331 @@ type UpdateGameSettingsInput = {
   timerSeconds: number;
 };
 
-export function useGames() {
+function getGameSyncSignature(games: Game[]) {
+  return games
+    .map((game) => `${game.id}:${game.updatedAt}`)
+    .sort()
+    .join("|");
+}
+
+function getSyncErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  return "Unknown database error";
+}
+
+function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
+  const merged = new Map(baseGames.map((game) => [game.id, game]));
+
+  for (const incoming of incomingGames) {
+    const existing = merged.get(incoming.id);
+    if (!existing || incoming.updatedAt >= existing.updatedAt) {
+      merged.set(incoming.id, incoming);
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+function clampScore(value: number) {
+  return Math.max(-MAX_ABS_SCORE, Math.min(MAX_ABS_SCORE, value));
+}
+
+function shouldKeepLocalGames(localGames: Game[], remoteGames: Game[]) {
+  const remoteById = new Map(remoteGames.map((game) => [game.id, game]));
+  return localGames.some((localGame) => {
+    const remoteGame = remoteById.get(localGame.id);
+    return !remoteGame || remoteGame.updatedAt < localGame.updatedAt;
+  });
+}
+
+function getPendingGuestState(
+  hasRemoteAccountLoaded: boolean,
+  inMemoryGames: Game[],
+  inMemoryCurrentGameId: string | null,
+) {
+  if (hasRemoteAccountLoaded) {
+    return {
+      games: loadGuestGames(),
+      currentGameId: loadGuestCurrentGameId(),
+    };
+  }
+
+  return {
+    games: inMemoryGames,
+    currentGameId: inMemoryCurrentGameId,
+  };
+}
+
+export function useGames(session: Session | null, authLoading = false) {
   const migrated = useMemo(() => migrateSingleGameToGamesIfNeeded(), []);
   const [games, setGames] = useState<Game[]>(
-    () => migrated?.games ?? loadGames(),
+    () => migrated?.games ?? loadGuestGames(),
   );
   const [currentGameId, setCurrentGameId] = useState<string | null>(
-    () => migrated?.currentGameId ?? loadCurrentGameId(),
+    () =>
+      migrated?.currentGameId ??
+      loadCurrentGameId() ??
+      loadGuestCurrentGameId(),
   );
+  const [remoteReady, setRemoteReady] = useState(!session && !authLoading);
+  const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const remoteSignatureRef = useRef<string | null>(null);
+  const pendingGuestGamesRef = useRef<Game[]>([]);
+  const pendingGuestCurrentGameIdRef = useRef<string | null>(null);
 
-  function pickUniqueAccent(used: Set<string>): string {
-    const available = GAME_ACCENT_COLORS.filter((c) => !used.has(c));
-    if (available.length) {
-      return (
-        available[Math.floor(Math.random() * available.length)] ?? "#94a3b8"
+  useEffect(() => {
+    let alive = true;
+
+    function applyRemoteGames(remoteGames: Game[], notify: boolean) {
+      setGames((previousGames) => {
+        const remoteSignature = getGameSyncSignature(remoteGames);
+        const previousSignature = getGameSyncSignature(previousGames);
+        if (remoteSignature === previousSignature) {
+          remoteSignatureRef.current = remoteSignature;
+          return previousGames;
+        }
+        if (notify) {
+          const remoteById = new Map(
+            remoteGames.map((game) => [game.id, game]),
+          );
+          const removed = previousGames.filter(
+            (game) => !remoteById.has(game.id),
+          );
+          const changed = previousGames.filter((game) => {
+            const remote = remoteById.get(game.id);
+            return remote && remote.updatedAt !== game.updatedAt;
+          });
+          if (removed.length > 0) {
+            setSyncNotice(
+              removed.length === 1
+                ? `"${removed[0].name}" was removed from your account.`
+                : `${removed.length} games were removed from your account.`,
+            );
+          } else if (changed.length > 0) {
+            setSyncNotice("Your games were updated from the database.");
+          }
+        }
+        remoteSignatureRef.current = remoteSignature;
+        return remoteGames;
+      });
+      setCurrentGameId((current) =>
+        current && remoteGames.some((game) => game.id === current)
+          ? current
+          : null,
       );
     }
 
-    // Fallback: generate a mostly-unique color (still stored) if palette is exhausted.
-    for (let i = 0; i < 24; i++) {
-      const hue = Math.floor(Math.random() * 360);
-      const color = `hsl(${hue} 65% 70%)`;
-      if (!used.has(color)) return color;
+    if (authLoading) {
+      setRemoteReady(false);
+      return () => {
+        alive = false;
+      };
     }
-    return `hsl(${Math.floor(Math.random() * 360)} 65% 70%)`;
-  }
 
-  useEffect(() => {
-    // Ensure each game has its own accent color (fix older duplicates/missing values).
-    const used = new Set<string>();
-    let changed = false;
-    const next = games
-      .slice()
-      .sort((a, b) => a.createdAt - b.createdAt)
-      .map((g) => {
-        const color = g.accentColor?.trim();
-        if (!color || used.has(color)) {
-          const accentColor = pickUniqueAccent(used);
-          used.add(accentColor);
-          changed = true;
-          return { ...g, accentColor };
-        }
-        used.add(color);
-        return g;
+    if (!session) {
+      setRemoteUserId(null);
+      setSyncNotice(null);
+      remoteSignatureRef.current = null;
+      setGames(migrated?.games ?? loadGuestGames());
+      setCurrentGameId(migrated?.currentGameId ?? loadGuestCurrentGameId());
+      setRemoteReady(true);
+      return () => {
+        alive = false;
+      };
+    }
+
+    setRemoteReady(false);
+    setRemoteUserId(null);
+    remoteSignatureRef.current = null;
+    const pendingGuestState = getPendingGuestState(
+      remoteUserId !== null,
+      games,
+      currentGameId,
+    );
+    pendingGuestGamesRef.current = pendingGuestState.games;
+    pendingGuestCurrentGameIdRef.current = pendingGuestState.currentGameId;
+    loadRemoteGames(session.user.id)
+      .then((remoteGames) => {
+        if (!alive) return;
+        const mergedGames = [
+          ...pendingGuestGamesRef.current.filter(
+            (guestGame) =>
+              !remoteGames.some((remoteGame) => remoteGame.id === guestGame.id),
+          ),
+          ...remoteGames,
+        ];
+        applyRemoteGames(mergedGames, false);
+        setCurrentGameId((current) => {
+          const persistedCurrent = loadCurrentGameId();
+          const pendingCurrent = pendingGuestCurrentGameIdRef.current;
+          if (
+            pendingCurrent &&
+            mergedGames.some((game) => game.id === pendingCurrent)
+          ) {
+            return pendingCurrent;
+          }
+          if (
+            persistedCurrent &&
+            mergedGames.some((game) => game.id === persistedCurrent)
+          ) {
+            return persistedCurrent;
+          }
+          return current && mergedGames.some((game) => game.id === current)
+            ? current
+            : (mergedGames[0]?.id ?? null);
+        });
+        pendingGuestGamesRef.current = [];
+        pendingGuestCurrentGameIdRef.current = null;
+        setRemoteUserId(session.user.id);
+        setRemoteReady(true);
+      })
+      .catch((error) => {
+        if (!alive) return;
+        console.error("Failed to load games from Supabase", error);
+        setGames([]);
+        setCurrentGameId(null);
+        setRemoteUserId(null);
+        setSyncNotice(
+          `Could not load games from the database: ${getSyncErrorMessage(error)}`,
+        );
+        setRemoteReady(true);
       });
 
-    if (changed) {
-      // Preserve original ordering by updatedAt in state; we only changed accentColor values.
-      const byId = new Map(next.map((g) => [g.id, g] as const));
-      setGames((prev) => prev.map((g) => byId.get(g.id) ?? g));
+    return () => {
+      alive = false;
+    };
+  }, [authLoading, migrated, session]);
+
+  useEffect(() => {
+    if (!session || remoteUserId !== session.user.id) return;
+    let alive = true;
+
+    async function refreshRemoteGames() {
+      try {
+        const remoteGames = await loadRemoteGames(session!.user.id);
+        if (!alive) return;
+        let appliedRemoteState = false;
+        setGames((previousGames) => {
+          if (shouldKeepLocalGames(previousGames, remoteGames)) {
+            return previousGames;
+          }
+          const remoteSignature = getGameSyncSignature(remoteGames);
+          const previousSignature = getGameSyncSignature(previousGames);
+          if (remoteSignature === previousSignature) {
+            remoteSignatureRef.current = remoteSignature;
+            return previousGames;
+          }
+          const remoteById = new Map(
+            remoteGames.map((game) => [game.id, game]),
+          );
+          const removed = previousGames.filter(
+            (game) => !remoteById.has(game.id),
+          );
+          const changed = previousGames.filter((game) => {
+            const remote = remoteById.get(game.id);
+            return remote && remote.updatedAt !== game.updatedAt;
+          });
+          if (removed.length > 0) {
+            setSyncNotice(
+              removed.length === 1
+                ? `"${removed[0].name}" was removed from your account.`
+                : `${removed.length} games were removed from your account.`,
+            );
+          } else if (changed.length > 0) {
+            setSyncNotice("Your games were updated from the database.");
+          }
+          remoteSignatureRef.current = remoteSignature;
+          appliedRemoteState = true;
+          return remoteGames;
+        });
+        if (appliedRemoteState) {
+          setCurrentGameId((current) =>
+            current && remoteGames.some((game) => game.id === current)
+              ? current
+              : null,
+          );
+        }
+      } catch {
+        // Keep local in-memory state if a background refresh fails.
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") void refreshRemoteGames();
+    }
+
+    let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
+      null;
+    if (supabase) {
+      channel = supabase.channel(`games:${session.user.id}`);
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "games",
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        () => {
+          void refreshRemoteGames();
+        },
+      );
+      void channel.subscribe();
+    }
+
+    const intervalId = window.setInterval(refreshRemoteGames, 5000);
+    window.addEventListener("focus", refreshRemoteGames);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      alive = false;
+      window.clearInterval(intervalId);
+      if (channel) {
+        void channel.unsubscribe();
+        if (supabase) {
+          supabase.removeChannel(channel);
+        }
+      }
+      window.removeEventListener("focus", refreshRemoteGames);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [remoteUserId, session]);
 
   useEffect(() => {
-    saveGames(games);
-  }, [games]);
+    if (!session) {
+      if (!remoteReady || remoteUserId !== null) return;
+      saveGuestGames(games);
+      return;
+    }
+    if (!remoteReady || remoteUserId !== session.user.id) return;
+    void saveRemoteGames(session.user.id, games)
+      .then(() => {
+        remoteSignatureRef.current = getGameSyncSignature(games);
+      })
+      .catch((error) => {
+        console.error("Failed to save games to Supabase", error);
+        setSyncNotice(
+          `Could not save games to the database: ${getSyncErrorMessage(error)}`,
+        );
+      });
+  }, [games, remoteReady, remoteUserId, session]);
 
   useEffect(() => {
+    if (!session) {
+      const guestGameIds = new Set(loadGuestGames().map((game) => game.id));
+      if (currentGameId === null || guestGameIds.has(currentGameId)) {
+        saveGuestCurrentGameId(currentGameId);
+      }
+      return;
+    }
+
     saveCurrentGameId(currentGameId);
-  }, [currentGameId]);
+  }, [currentGameId, session]);
 
   const currentGame = useMemo(
     () =>
@@ -113,11 +383,10 @@ export function useGames() {
     if (targetPoints <= 0) return null;
 
     const now = Date.now();
-    const used = new Set(games.map((g) => g.accentColor).filter(Boolean));
-    const accentColor = pickUniqueAccent(used);
     const isLowScoreWins = input.isLowScoreWins === true;
     const timerEnabled = input.timerEnabled === true;
-    const timerMode = input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
+    const timerMode =
+      input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
     const timerSeconds =
       typeof input.timerSeconds === "number" && input.timerSeconds > 0
         ? Math.trunc(input.timerSeconds)
@@ -133,6 +402,8 @@ export function useGames() {
       profileId: p.profileId,
     }));
 
+    if (isLowScoreWins && players.length < 2) return null;
+
     const game: Game = {
       id: uid(),
       name,
@@ -141,7 +412,6 @@ export function useGames() {
       timerEnabled,
       timerMode,
       timerSeconds,
-      accentColor,
       players,
       createdAt: now,
       updatedAt: now,
@@ -163,10 +433,9 @@ export function useGames() {
   function duplicateGame(gameId: string): Game | null {
     const original = games.find((g) => g.id === gameId);
     if (!original) return null;
+    if (original.isLowScoreWins && original.players.length < 2) return null;
 
     const now = Date.now();
-    const used = new Set(games.map((g) => g.accentColor).filter(Boolean));
-    const accentColor = pickUniqueAccent(used);
 
     const duplicatedPlayers: Player[] = original.players.map((p) => ({
       ...p,
@@ -196,7 +465,6 @@ export function useGames() {
       ...original,
       id: uid(),
       name: nextName,
-      accentColor,
       players: duplicatedPlayers,
       createdAt: now,
       updatedAt: now,
@@ -250,6 +518,24 @@ export function useGames() {
     }));
   }
 
+  function updatePlayer(
+    gameId: string,
+    playerId: string,
+    updates: Partial<Pick<Player, "name" | "avatarColor" | "profileId">>,
+  ) {
+    updateGame(gameId, (g) => ({
+      ...g,
+      players: g.players.map((p) => {
+        if (p.id !== playerId) return p;
+        return {
+          ...p,
+          ...updates,
+          name: updates.name ? formatPlayerName(updates.name) : p.name,
+        };
+      }),
+    }));
+  }
+
   function resetScores(gameId: string) {
     const now = Date.now();
     updateGame(gameId, (g) => ({
@@ -265,7 +551,7 @@ export function useGames() {
     updateGame(gameId, (g) => {
       const players = g.players.map((p) =>
         p.id === playerId
-          ? { ...p, score: p.score + delta, reachedAt: now }
+          ? { ...p, score: clampScore(p.score + delta), reachedAt: now }
           : p,
       );
       const hasWinner = hasReachedTarget(players, g.targetPoints);
@@ -322,6 +608,23 @@ export function useGames() {
     );
   }
 
+  function importGames(incomingGames: Game[]) {
+    const mergedGames = mergeGamesById(games, incomingGames);
+    setGames(mergedGames);
+    if (
+      currentGameId &&
+      mergedGames.some((game) => game.id === currentGameId)
+    ) {
+      setCurrentGameId(currentGameId);
+    } else if (
+      incomingGames[0]?.id &&
+      mergedGames.some((game) => game.id === incomingGames[0]?.id)
+    ) {
+      setCurrentGameId(incomingGames[0].id);
+    }
+    return mergedGames.length - games.length;
+  }
+
   const sortedPlayers = useMemo(() => {
     if (!currentGame) return [];
     return [...currentGame.players].sort((a, b) =>
@@ -349,6 +652,7 @@ export function useGames() {
     renameGame,
     addPlayer,
     removePlayer,
+    updatePlayer,
     resetScores,
     updateScore,
     updateGameSettings,
@@ -356,6 +660,9 @@ export function useGames() {
     sortedPlayers,
     ranks,
     allZero,
+    remoteReady,
+    syncNotice,
     updateGame,
+    importGames,
   };
 }

@@ -1,0 +1,195 @@
+.gameRowCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.gameRowCard:hover {
+  background: var(--surface2);
+  border-color: var(--border);
+  transform: translateY(-2px);
+  box-shadow: var(--glow);
+}
+
+.swipeRow .card.gameRowCard {
+  background: var(--surface);
+  border-color: var(--border);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: var(--glow);
+}
+
+.gameRow__main {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 24px 24px 20px 26px;
+  display: grid;
+  gap: 0;
+  width: 100%;
+  cursor: pointer;
+}
+
+.gameRowCard::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+}
+
+.gameRowCard .gameRow__main {
+  cursor: pointer;
+  padding-left: 26px;
+}
+
+.gameRow__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+}
+
+.gameRow__name {
+  font-weight: 850;
+  font-size: 21px;
+  letter-spacing: -0.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gameRow__titleGroup {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  overflow: hidden;
+}
+
+.gameRow__replay {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.gameRow__winnerIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.gameRow__winnerIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.gameRow__winnerDetail {
+  color: var(--accent);
+}
+
+.gameRow__winnerLabel {
+  color: var(--muted);
+}
+
+.gameRow__winnerDetail strong {
+  max-width: 110px;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+}
+
+.gameRow__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 0;
+  margin-top: 18px;
+  color: var(--muted);
+}
+
+.gameRow__detail {
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 11px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.gameRow__detail + .gameRow__detail {
+  padding-left: 11px;
+  border-left: 1px solid var(--border);
+}
+
+.gameRow__detail svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-dim);
+}
+
+.gameRow__statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(216, 255, 79, 0.1);
+}
+
+.gameRow__target {
+  gap: 5px;
+}
+
+.gameRow__target strong {
+  color: var(--text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gameRow__date {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .gameRow__main,
+  .gameRowCard .gameRow__main {
+    padding: 20px 18px 18px 25px;
+  }
+
+  .gameRow__name {
+    font-size: 19px;
+  }
+
+  .gameRow__detail {
+    padding-right: 8px;
+  }
+
+  .gameRow__detail + .gameRow__detail {
+    padding-left: 8px;
+  }
+}

@@ -1,0 +1,59 @@
+.tabBar {
+  position: fixed;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 440px;
+  height: 64px;
+  background: rgba(9, 13, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--floating-curve);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  padding: 0 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.tabItem {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--muted);
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 8px 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.tabItem svg {
+  width: 22px;
+  height: 22px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 2;
+}
+
+.tabItem span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  position: relative;
+  z-index: 2;
+}
+
+.tabItem[data-active="true"] {
+  color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .tabBar { width: calc(100% - 24px); }
+}

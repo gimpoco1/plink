@@ -10,6 +10,8 @@
   --shadow: 0 24px 64px rgba(0, 0, 0, 0.34);
   --radius: 14px;
   --radius-sm: 10px;
+  --floating-curve: 32px;
+  --card-tab-inset: 4px;
   --focus: 0 0 0 4px rgba(216, 255, 79, 0.2);
   --pos: #d8ff4f;
   --neg: #ff8c82;
@@ -45,7 +47,11 @@ body {
     -apple-system,
     system-ui;
   background:
-    radial-gradient(circle at 8% -10%, rgba(216, 255, 79, 0.08), transparent 38%),
+    radial-gradient(
+      circle at 8% -10%,
+      rgba(216, 255, 79, 0.08),
+      transparent 38%
+    ),
     var(--bg);
   color: var(--text);
   overflow: hidden;
@@ -66,13 +72,54 @@ input {
   isolation: isolate;
 }
 
+.appView {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.appView > * {
+  flex: 1;
+  min-height: 0;
+}
+
 .appBackdrop {
   position: absolute;
   inset: 0;
   overflow: hidden;
   opacity: 0.62;
   z-index: -1;
-  mask-image: linear-gradient(to bottom, black, rgba(0, 0, 0, 0.25) 72%, transparent);
+  mask-image: linear-gradient(
+    to bottom,
+    black,
+    rgba(0, 0, 0, 0.25) 72%,
+    transparent
+  );
+}
+
+.appBackdrop--hidden {
+  opacity: 0;
+}
+
+.syncNotice {
+  position: fixed;
+  left: 50%;
+  bottom: max(96px, calc(env(safe-area-inset-bottom) + 88px));
+  z-index: 1600;
+  width: min(420px, calc(100% - 32px));
+  transform: translateX(-50%);
+  padding: 12px 16px;
+  border: 1px solid rgba(216, 255, 79, 0.28);
+  border-radius: 18px;
+  background: rgba(12, 17, 21, 0.94);
+  color: var(--text);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-align: center;
+  backdrop-filter: blur(14px);
 }
 
 .content {
@@ -125,11 +172,15 @@ input {
 }
 
 @media (max-width: 560px) {
-  .content { padding: 14px 12px 40px; }
+  .content {
+    padding: 14px 12px 40px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
