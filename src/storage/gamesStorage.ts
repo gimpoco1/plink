@@ -9,6 +9,38 @@ import {
 import { uid } from "../utils/id";
 import { loadPlayers } from "./playersStorage";
 
+function sanitizeScoreHistory(input: unknown): Game["scoreHistory"] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const obj = entry as Record<string, unknown>;
+      if (
+        typeof obj.id !== "string" ||
+        typeof obj.playerId !== "string" ||
+        typeof obj.playerName !== "string" ||
+        typeof obj.avatarColor !== "string" ||
+        typeof obj.delta !== "number" ||
+        typeof obj.scoreBefore !== "number" ||
+        typeof obj.scoreAfter !== "number" ||
+        typeof obj.createdAt !== "number"
+      ) {
+        return null;
+      }
+      return {
+        id: obj.id,
+        playerId: obj.playerId,
+        playerName: obj.playerName,
+        avatarColor: obj.avatarColor,
+        delta: obj.delta,
+        scoreBefore: obj.scoreBefore,
+        scoreAfter: obj.scoreAfter,
+        createdAt: obj.createdAt,
+      } satisfies Game["scoreHistory"][number];
+    })
+    .filter(Boolean) as Game["scoreHistory"];
+}
+
 export function sanitizeGames(input: unknown): Game[] {
   if (!Array.isArray(input)) return [];
   return input
@@ -45,6 +77,7 @@ export function sanitizeGames(input: unknown): Game[] {
         updatedAt: obj.updatedAt,
         endedAt: typeof obj.endedAt === "number" ? obj.endedAt : undefined,
         players: obj.players as Game["players"],
+        scoreHistory: sanitizeScoreHistory(obj.scoreHistory),
       } satisfies Game;
     })
     .filter(Boolean) as Game[];
@@ -114,6 +147,7 @@ export function migrateSingleGameToGamesIfNeeded(): {
     timerMode: "countdown",
     timerSeconds: 300,
     players: legacyPlayers,
+    scoreHistory: [],
     createdAt: now,
     updatedAt: now,
   };

@@ -16,6 +16,17 @@ export type PlayerProfile = {
   updatedAt: number;
 };
 
+export type ScoreHistoryEntry = {
+  id: string;
+  playerId: string;
+  playerName: string;
+  avatarColor: string;
+  delta: number;
+  scoreBefore: number;
+  scoreAfter: number;
+  createdAt: number;
+};
+
 export type Game = {
   id: string;
   name: string;
@@ -25,6 +36,7 @@ export type Game = {
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   players: Player[];
+  scoreHistory: ScoreHistoryEntry[];
   createdAt: number;
   updatedAt: number;
   endedAt?: number;

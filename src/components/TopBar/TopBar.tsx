@@ -5,6 +5,7 @@ type Props = {
   showReset?: boolean;
   title?: string;
   titleSuffix?: string;
+  backLabel?: string;
   showBackButton?: boolean;
   showActionMenu?: boolean;
   primaryActionLabel?: string;
@@ -16,6 +17,7 @@ type Props = {
   onOpenAuth?: () => void;
   onAddPlayer: () => void;
   onOpenSettings?: () => void;
+  onOpenHistory?: () => void;
   onResetGame: () => void;
   onRename?: () => void;
 };
@@ -24,6 +26,7 @@ export function TopBar({
   showReset = true,
   title = "Plink",
   titleSuffix,
+  backLabel = "Back to games",
   showBackButton = false,
   showActionMenu = false,
   primaryActionLabel,
@@ -35,6 +38,7 @@ export function TopBar({
   onOpenAuth,
   onAddPlayer,
   onOpenSettings,
+  onOpenHistory,
   onResetGame,
   onRename,
 }: Props) {
@@ -77,7 +81,7 @@ export function TopBar({
             className="backBtn"
             type="button"
             onClick={onBack}
-            aria-label="Back to games"
+            aria-label={backLabel}
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
@@ -175,6 +179,19 @@ export function TopBar({
                     }}
                   >
                     Game settings
+                  </button>
+                ) : null}
+                {onOpenHistory ? (
+                  <button
+                    className="topbarMenu__item"
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onOpenHistory();
+                    }}
+                  >
+                    Game history
                   </button>
                 ) : null}
                 <button

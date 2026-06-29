@@ -293,7 +293,11 @@ export function HomeScreen({
     <div className="tabContent tabContent--home">
       {!isAuthenticated ? <HomeGuestPreview onOpenAuth={onOpenAuth} /> : null}
 
-      <section className={`homeHero${showForm ? " homeHero--creating" : ""}`}>
+      <section
+        className={`homeHero${showForm ? " homeHero--creating" : ""}${
+          resumableGame ? " homeHero--hasResume" : ""
+        }`}
+      >
         <div className="homeHero__intro">
           <div>
             <div className="homeHero__eyebrow">Your scoreboard</div>

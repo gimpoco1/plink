@@ -3,6 +3,10 @@ import { supabase } from "../lib/supabase";
 
 const GAMES_TABLE = "games";
 const PROFILES_TABLE = "player_profiles";
+const GAME_SELECT_COLUMNS =
+  "id,user_id,name,target_points,is_low_score_wins,timer_enabled,timer_mode,timer_seconds,players,score_history,created_at,updated_at,ended_at";
+const LEGACY_GAME_SELECT_COLUMNS =
+  "id,user_id,name,target_points,is_low_score_wins,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
 
 type GameRow = {
   id: string;
@@ -14,6 +18,7 @@ type GameRow = {
   timer_mode: "countdown" | "stopwatch";
   timer_seconds: number;
   players: Game["players"];
+  score_history?: Game["scoreHistory"] | null;
   created_at: number;
   updated_at: number;
   ended_at: number | null;
@@ -39,6 +44,7 @@ function gameToRow(userId: string, game: Game): GameRow {
     timer_mode: game.timerMode,
     timer_seconds: game.timerSeconds,
     players: game.players,
+    score_history: game.scoreHistory,
     created_at: game.createdAt,
     updated_at: game.updatedAt,
     ended_at: game.endedAt ?? null,
@@ -55,10 +61,23 @@ function rowToGame(row: GameRow): Game {
     timerMode: row.timer_mode,
     timerSeconds: row.timer_seconds,
     players: Array.isArray(row.players) ? (row.players as Game["players"]) : [],
+    scoreHistory: Array.isArray(row.score_history)
+      ? (row.score_history as Game["scoreHistory"])
+      : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     endedAt: row.ended_at ?? undefined,
   };
+}
+
+function isMissingScoreHistoryColumn(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: unknown; message?: unknown };
+  return (
+    value.code === "42703" ||
+    (typeof value.message === "string" &&
+      value.message.toLowerCase().includes("score_history"))
+  );
 }
 
 function profileToRow(userId: string, profile: PlayerProfile): ProfileRow {
@@ -84,15 +103,23 @@ function rowToProfile(row: ProfileRow): PlayerProfile {
 
 export async function loadRemoteGames(userId: string): Promise<Game[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
+  const result = await supabase
     .from(GAMES_TABLE)
-    .select(
-      "id,user_id,name,target_points,is_low_score_wins,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at",
-    )
+    .select(GAME_SELECT_COLUMNS)
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((row) => rowToGame(row as GameRow));
+  if (!result.error) {
+    return (result.data ?? []).map((row) => rowToGame(row as GameRow));
+  }
+  if (!isMissingScoreHistoryColumn(result.error)) throw result.error;
+
+  const legacyResult = await supabase
+    .from(GAMES_TABLE)
+    .select(LEGACY_GAME_SELECT_COLUMNS)
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+  if (legacyResult.error) throw legacyResult.error;
+  return (legacyResult.data ?? []).map((row) => rowToGame(row as GameRow));
 }
 
 export async function saveRemoteGames(userId: string, games: Game[]) {
@@ -102,7 +129,14 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
     const { error } = await supabase
       .from(GAMES_TABLE)
       .upsert(rows, { onConflict: "id" });
-    if (error) throw error;
+    if (error) {
+      if (!isMissingScoreHistoryColumn(error)) throw error;
+      const legacyRows = rows.map(({ score_history, ...row }) => row);
+      const { error: legacyError } = await supabase
+        .from(GAMES_TABLE)
+        .upsert(legacyRows, { onConflict: "id" });
+      if (legacyError) throw legacyError;
+    }
   }
 
   const { data, error: loadError } = await supabase

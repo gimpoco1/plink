@@ -75,7 +75,11 @@
 }
 
 .homeHero__newGameWrap {
-  margin-top: -28px;
+  margin-top: 0;
+}
+
+.homeHero--hasResume .homeHero__newGameWrap {
+  margin-top: -10px;
 }
 
 .homeHero__action,
