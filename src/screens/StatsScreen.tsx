@@ -5,7 +5,11 @@ import { StatsSkeleton } from "../components/HomeLockedState/StatsSkeleton";
 import { avatarStyleFor } from "../utils/color";
 import { computeProfileStats, createEmptyProfileStats } from "../utils/profileStats";
 import { findWinner } from "../utils/ranking";
-import { getGameDisplayName, getInitials } from "../utils/text";
+import {
+  formatAccountPlayerName,
+  getGameDisplayName,
+  getInitials,
+} from "../utils/text";
 import "./StatsScreen.css";
 
 type StatsScreenProps = {
@@ -16,6 +20,12 @@ type StatsScreenProps = {
 };
 
 export function StatsScreen({ games, profiles, isAuthenticated, onOpenAuth }: StatsScreenProps) {
+  function getProfileDisplayName(profile: PlayerProfile) {
+    return profile.isAccountPlayer
+      ? formatAccountPlayerName(profile.name)
+      : profile.name;
+  }
+
   const overview = useMemo(() => {
     const profileStats = computeProfileStats(games);
     const ranked = profiles.map((profile) => ({ profile, stats: profileStats.get(profile.id) ?? createEmptyProfileStats() }));
@@ -53,15 +63,15 @@ export function StatsScreen({ games, profiles, isAuthenticated, onOpenAuth }: St
           <div className="statsHeroGrid">
             <SummaryCard accent label="Completed" value={overview.completedGames} copy="Finished sessions tracked locally." />
             <SummaryCard label="In progress" value={overview.activeGames} copy="Games still live right now." />
-            <SummaryCard label="Top player" value={overview.topPlayer?.profile.name ?? "—"} copy={overview.topPlayer ? `${overview.topPlayer.stats.wins} wins` : "No winners yet"} />
-            <SummaryCard label="Hottest streak" value={overview.hottestStreak?.stats.currentWinStreak ? `${overview.hottestStreak.stats.currentWinStreak}x` : "—"} copy={overview.hottestStreak?.stats.currentWinStreak ? overview.hottestStreak.profile.name : "No active streaks"} />
+            <SummaryCard label="Top player" value={overview.topPlayer ? getProfileDisplayName(overview.topPlayer.profile) : "—"} copy={overview.topPlayer ? `${overview.topPlayer.stats.wins} wins` : "No winners yet"} />
+            <SummaryCard label="Hottest streak" value={overview.hottestStreak?.stats.currentWinStreak ? `${overview.hottestStreak.stats.currentWinStreak}x` : "—"} copy={overview.hottestStreak?.stats.currentWinStreak ? getProfileDisplayName(overview.hottestStreak.profile) : "No active streaks"} />
           </div>
           <div className="statsPanels">
             <section className="statsPanel">
               <PanelHeader title="Top players" count={overview.topPlayers.length} />
               {overview.topPlayers.length ? <div className="statsList">{overview.topPlayers.map(({ profile, stats }, index) => (
                 <div key={profile.id} className="statsRow">
-                  <div className="statsRow__left"><span className="statsRow__rank">#{index + 1}</span><span className="statsRow__avatar" style={avatarStyleFor(profile.avatarColor)}>{getInitials(profile.name)}</span><span className="statsRow__meta"><strong>{profile.name}</strong><span>{stats.currentWinStreak > 0 ? `${stats.currentWinStreak}x streak` : `${stats.winRate}% rate`}</span></span></div>
+                  <div className="statsRow__left"><span className="statsRow__rank">#{index + 1}</span><span className="statsRow__avatar" style={avatarStyleFor(profile.avatarColor)}>{getInitials(profile.name)}</span><span className="statsRow__meta"><strong>{getProfileDisplayName(profile)}</strong><span>{stats.currentWinStreak > 0 ? `${stats.currentWinStreak}x streak` : `${stats.winRate}% rate`}</span></span></div>
                   <span className="statsRow__value">{stats.wins}</span>
                 </div>
               ))}</div> : <div className="emptyMsg">No player stats yet.</div>}

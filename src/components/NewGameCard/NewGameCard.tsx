@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AVATAR_COLORS } from "../../constants";
 import type { PlayerProfile } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
-import { getInitials } from "../../utils/text";
+import { formatAccountPlayerName, getInitials } from "../../utils/text";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import "./NewGameCard.css";
 
@@ -526,7 +526,13 @@ export function NewGameCard({
                             {getInitials(player.name)}
                           </span>
                           <span className="selectedPlayerChip__name">
-                            {player.name}
+                            {profiles.some(
+                              (profile) =>
+                                profile.id === player.id &&
+                                profile.isAccountPlayer,
+                            )
+                              ? formatAccountPlayerName(player.name)
+                              : player.name}
                           </span>
                           <span className="selectedPlayerChip__action">×</span>
                         </button>
@@ -570,7 +576,9 @@ export function NewGameCard({
                               </span>
                               <span className="profileOption__copy">
                                 <span className="profileOption__name">
-                                  {profile.name}
+                                  {profile.isAccountPlayer
+                                    ? formatAccountPlayerName(profile.name)
+                                    : profile.name}
                                 </span>
                                 <span className="profileOption__hint">
                                   Tap to add

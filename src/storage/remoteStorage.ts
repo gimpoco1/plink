@@ -7,6 +7,10 @@ const GAME_SELECT_COLUMNS =
   "id,user_id,name,target_points,is_low_score_wins,timer_enabled,timer_mode,timer_seconds,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
   "id,user_id,name,target_points,is_low_score_wins,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
+const PROFILE_SELECT_COLUMNS =
+  "id,user_id,name,avatar_color,is_account_player,created_at,updated_at";
+const LEGACY_PROFILE_SELECT_COLUMNS =
+  "id,user_id,name,avatar_color,created_at,updated_at";
 
 type GameRow = {
   id: string;
@@ -29,6 +33,7 @@ type ProfileRow = {
   user_id: string;
   name: string;
   avatar_color: string;
+  is_account_player?: boolean | null;
   created_at: number;
   updated_at: number;
 };
@@ -86,6 +91,7 @@ function profileToRow(userId: string, profile: PlayerProfile): ProfileRow {
     user_id: userId,
     name: profile.name,
     avatar_color: profile.avatarColor,
+    is_account_player: profile.isAccountPlayer === true,
     created_at: profile.createdAt,
     updated_at: profile.updatedAt,
   };
@@ -96,9 +102,20 @@ function rowToProfile(row: ProfileRow): PlayerProfile {
     id: row.id,
     name: row.name,
     avatarColor: row.avatar_color,
+    isAccountPlayer: row.is_account_player === true,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function isMissingAccountPlayerColumn(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: unknown; message?: unknown };
+  return (
+    value.code === "42703" ||
+    (typeof value.message === "string" &&
+      value.message.toLowerCase().includes("is_account_player"))
+  );
 }
 
 export async function loadRemoteGames(userId: string): Promise<Game[]> {
@@ -164,13 +181,25 @@ export async function loadRemoteProfiles(
   userId: string,
 ): Promise<PlayerProfile[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
+  const result = await supabase
     .from(PROFILES_TABLE)
-    .select("id,user_id,name,avatar_color,created_at,updated_at")
+    .select(PROFILE_SELECT_COLUMNS)
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((row) => rowToProfile(row as ProfileRow));
+  if (!result.error) {
+    return (result.data ?? []).map((row) => rowToProfile(row as ProfileRow));
+  }
+  if (!isMissingAccountPlayerColumn(result.error)) throw result.error;
+
+  const legacyResult = await supabase
+    .from(PROFILES_TABLE)
+    .select(LEGACY_PROFILE_SELECT_COLUMNS)
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+  if (legacyResult.error) throw legacyResult.error;
+  return (legacyResult.data ?? []).map((row) =>
+    rowToProfile(row as ProfileRow),
+  );
 }
 
 export async function saveRemoteProfiles(
@@ -183,7 +212,14 @@ export async function saveRemoteProfiles(
     const { error } = await supabase
       .from(PROFILES_TABLE)
       .upsert(rows, { onConflict: "id" });
-    if (error) throw error;
+    if (error) {
+      if (!isMissingAccountPlayerColumn(error)) throw error;
+      const legacyRows = rows.map(({ is_account_player, ...row }) => row);
+      const { error: legacyError } = await supabase
+        .from(PROFILES_TABLE)
+        .upsert(legacyRows, { onConflict: "id" });
+      if (legacyError) throw legacyError;
+    }
   }
 
   const { data, error: loadError } = await supabase

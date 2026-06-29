@@ -8,7 +8,11 @@ import {
   computeProfileStats,
   createEmptyProfileStats,
 } from "../utils/profileStats";
-import { formatPlayerName, getInitials } from "../utils/text";
+import {
+  formatAccountPlayerName,
+  formatPlayerName,
+  getInitials,
+} from "../utils/text";
 import { SwipeableCard } from "../components/SwipeableCard/SwipeableCard";
 import "./PlayersScreen.css";
 
@@ -181,7 +185,7 @@ export function PlayersScreen({
                   <SwipeableCard
                     key={profile.id}
                     actionWidth={120}
-                    disabled={isEditing}
+                    disabled={isEditing || profile.isAccountPlayer}
                     cardClassName={`profileCard${isEditing ? " profileCard--editing" : ""}`}
                     renderActions={({ closeSwipe }) => (
                       <button
@@ -244,7 +248,9 @@ export function PlayersScreen({
                                     </div>
                                   ) : (
                                     <div className="profileCard__nameText">
-                                      {profile.name}
+                                      {profile.isAccountPlayer
+                                        ? formatAccountPlayerName(profile.name)
+                                        : profile.name}
                                     </div>
                                   )}
                                 </div>

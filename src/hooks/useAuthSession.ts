@@ -9,6 +9,8 @@ import {
 export function useAuthSession() {
   const initialPersistedSession = loadPersistedSupabaseSession();
   const [session, setSession] = useState<Session | null>(initialPersistedSession);
+  const [passwordRecoveryRequestedAt, setPasswordRecoveryRequestedAt] =
+    useState(0);
   const [loading, setLoading] = useState(
     hasSupabaseConfig && !initialPersistedSession,
   );
@@ -35,9 +37,12 @@ export function useAuthSession() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setLoading(false);
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecoveryRequestedAt(Date.now());
+      }
     });
 
     return () => {
@@ -46,5 +51,10 @@ export function useAuthSession() {
     };
   }, []);
 
-  return { session, loading, authEnabled: !!supabase };
+  return {
+    session,
+    loading,
+    authEnabled: !!supabase,
+    passwordRecoveryRequestedAt,
+  };
 }

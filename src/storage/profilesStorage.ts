@@ -21,6 +21,7 @@ export function sanitizeProfiles(input: unknown): PlayerProfile[] {
         id: obj.id,
         name: obj.name,
         avatarColor: obj.avatarColor,
+        isAccountPlayer: obj.isAccountPlayer === true,
         createdAt: obj.createdAt,
         updatedAt,
       } satisfies PlayerProfile;

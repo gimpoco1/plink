@@ -2,7 +2,11 @@ import { useMemo, useState } from "react";
 import type { Player } from "../../types";
 import { MAX_ABS_SCORE, QUICK_DELTAS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
-import { capitalizeFirst, getInitials } from "../../utils/text";
+import {
+  capitalizeFirst,
+  formatAccountPlayerName,
+  getInitials,
+} from "../../utils/text";
 import { SwipeableCard } from "../SwipeableCard/SwipeableCard";
 import "./PlayerCard.css";
 
@@ -12,6 +16,7 @@ type Props = {
   showRank: boolean;
   pulse?: "pos" | "neg";
   isWinner?: boolean;
+  isAccountPlayer?: boolean;
   targetPoints: number;
   onDelta: (playerId: string, delta: number) => void;
   onDelete: (playerId: string) => void;
@@ -23,11 +28,14 @@ export function PlayerCard({
   showRank,
   pulse,
   isWinner,
+  isAccountPlayer,
   targetPoints,
   onDelta,
   onDelete,
 }: Props) {
-  const displayName = capitalizeFirst(player.name);
+  const displayName = isAccountPlayer
+    ? formatAccountPlayerName(player.name)
+    : capitalizeFirst(player.name);
   const initials = getInitials(player.name);
   const scoreClass =
     player.score > 0

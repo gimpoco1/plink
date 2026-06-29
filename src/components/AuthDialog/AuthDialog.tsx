@@ -1,12 +1,20 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import "./AuthDialog.css";
+import { AVATAR_COLORS } from "../../constants";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
 import type { BackupSelection } from "../../storage/backupFile";
 import type { Game, PlayerProfile } from "../../types";
+import { avatarStyleFor } from "../../utils/color";
+import {
+  formatAccountPlayerName,
+  formatPlayerName,
+  getInitials,
+} from "../../utils/text";
 
 export type AuthDialogHandle = {
   open: () => void;
+  openPasswordReset: () => void;
   close: () => void;
 };
 
@@ -21,6 +29,10 @@ type Props = {
   accountProfilesCount?: number;
   accountGames?: Game[];
   accountProfiles?: PlayerProfile[];
+  onUpdateProfile?: (
+    id: string,
+    updates: Partial<Pick<PlayerProfile, "name" | "avatarColor">>,
+  ) => void;
   onImportLocalData?: (selection: {
     gameIds: string[];
     profileIds: string[];
@@ -53,6 +65,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       accountProfilesCount = 0,
       accountGames = [],
       accountProfiles = [],
+      onUpdateProfile,
       onImportLocalData,
       onImportBackupFile,
       onDownloadBackupFile,
@@ -62,8 +75,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const backupInputRef = useRef<HTMLInputElement | null>(null);
     const [mode, setMode] = useState<"signin" | "signup">("signin");
+    const [recoveryMode, setRecoveryMode] = useState(false);
+    const [accountName, setAccountName] = useState("");
+    const [accountDraftName, setAccountDraftName] = useState("");
+    const [accountDraftColor, setAccountDraftColor] = useState("");
+    const [editingAccountPlayer, setEditingAccountPlayer] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [notice, setNotice] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
@@ -85,6 +105,11 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       games: includeGames,
       profiles: includeProfiles,
     };
+    const accountPlayer =
+      accountProfiles.find((profile) => profile.isAccountPlayer) ?? null;
+    const accountPlayerName = accountPlayer?.name ?? "";
+    const accountPlayerColor =
+      accountPlayer?.avatarColor ?? AVATAR_COLORS[0]?.value ?? "#64748b";
 
     useImperativeHandle(
       ref,
@@ -92,13 +117,36 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         open() {
           setNotice(null);
           setError(null);
+          setRecoveryMode(false);
+          setNewPassword("");
+          setConfirmNewPassword("");
           setShowTransferTools(false);
           setShowDeviceImport(false);
           setShowAccountDetails(false);
+          setEditingAccountPlayer(false);
+          setAccountDraftName(accountPlayerName);
+          setAccountDraftColor(accountPlayerColor);
           setSelectedLocalGameIds(localGames.map((game) => game.id));
           setSelectedLocalProfileIds(
             localProfiles.map((profile) => profile.id),
           );
+          if (!dialogRef.current?.open) {
+            onOpenChange?.(true);
+            dialogRef.current?.showModal();
+          }
+        },
+        openPasswordReset() {
+          setMode("signin");
+          setRecoveryMode(true);
+          setNotice("Enter a new password for your account.");
+          setError(null);
+          setPassword("");
+          setNewPassword("");
+          setConfirmNewPassword("");
+          setShowTransferTools(false);
+          setShowDeviceImport(false);
+          setShowAccountDetails(false);
+          setEditingAccountPlayer(false);
           if (!dialogRef.current?.open) {
             onOpenChange?.(true);
             dialogRef.current?.showModal();
@@ -111,7 +159,13 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           }
         },
       }),
-      [localGames, localProfiles, onOpenChange],
+      [
+        accountPlayerColor,
+        accountPlayerName,
+        localGames,
+        localProfiles,
+        onOpenChange,
+      ],
     );
 
     function toggleLocalGame(gameId: string) {
@@ -130,6 +184,20 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       );
     }
 
+    function getAuthErrorMessage(err: unknown, fallback: string) {
+      const message = err instanceof Error ? err.message : "";
+      const status =
+        typeof err === "object" && err !== null && "status" in err
+          ? Number((err as { status?: unknown }).status)
+          : null;
+
+      if (status === 429 || message.toLowerCase().includes("rate limit")) {
+        return "Too many auth emails were requested. Wait before trying again, or configure custom SMTP in Supabase for higher email limits.";
+      }
+
+      return message || fallback;
+    }
+
     async function submit() {
       if (!supabase) {
         setError("Supabase is not configured yet.");
@@ -137,7 +205,12 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       }
 
       const trimmedEmail = email.trim();
+      const trimmedAccountName = formatPlayerName(accountName);
       if (!trimmedEmail || !password) return;
+      if (mode === "signup" && !trimmedAccountName) {
+        setError("Enter your player name.");
+        return;
+      }
 
       setBusy(true);
       setError(null);
@@ -160,6 +233,14 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           const { data, error: signUpError } = await supabase.auth.signUp({
             email: trimmedEmail,
             password,
+            options: {
+              data: {
+                name: trimmedAccountName,
+                full_name: trimmedAccountName,
+                display_name: trimmedAccountName,
+                player_name: trimmedAccountName,
+              },
+            },
           });
           if (signUpError) throw signUpError;
           if (!data.session) {
@@ -174,7 +255,108 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Authentication failed.");
+        setError(getAuthErrorMessage(err, "Authentication failed."));
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function sendPasswordReset() {
+      if (!supabase) {
+        setError("Supabase is not configured yet.");
+        return;
+      }
+
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail) {
+        setError("Enter your email first.");
+        return;
+      }
+
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+
+      try {
+        const redirectTo = `${window.location.origin}${window.location.pathname}`;
+        const { error: resetError } =
+          await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+            redirectTo,
+          });
+        if (resetError) throw resetError;
+        setNotice("Check your email for a password reset link.");
+      } catch (err) {
+        setError(getAuthErrorMessage(err, "Could not send reset link."));
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function submitNewPassword() {
+      if (!supabase) {
+        setError("Supabase is not configured yet.");
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        setError("Enter a password with at least 6 characters.");
+        return;
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        setError("Passwords do not match.");
+        return;
+      }
+
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+
+      try {
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
+        if (updateError) throw updateError;
+        setNewPassword("");
+        setConfirmNewPassword("");
+        setRecoveryMode(false);
+        setNotice("Password updated.");
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Could not update password.",
+        );
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function saveAccountPlayerName() {
+      const name = formatPlayerName(accountDraftName);
+      if (!name || !accountPlayer || !onUpdateProfile) return;
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      try {
+        const { error: updateError } = await supabase?.auth.updateUser({
+          data: {
+            name,
+            full_name: name,
+            display_name: name,
+            player_name: name,
+          },
+        }) ?? { error: null };
+        if (updateError) throw updateError;
+        onUpdateProfile(accountPlayer.id, {
+          name,
+          avatarColor: accountDraftColor || accountPlayer.avatarColor,
+        });
+        setAccountDraftName(name);
+        setEditingAccountPlayer(false);
+        setNotice("Account player updated.");
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Could not update player name.",
+        );
       } finally {
         setBusy(false);
       }
@@ -310,13 +492,16 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           onOpenChange?.(false);
           setNotice(null);
           setError(null);
+          setRecoveryMode(false);
         }}
       >
         <div className="dialog__form authDialog__form">
           <div className="dialog__head">
             <div className="authDialog__headCopy dialog__titleWrap">
               <div className="dialog__eyebrow">Profile and sync</div>
-              <div className="dialog__title">Account</div>
+              <div className="dialog__title">
+                {recoveryMode ? "Reset password" : "Account"}
+              </div>
             </div>
             <button
               className="iconbtn"
@@ -339,6 +524,49 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                 cloud sync.
               </p>
             </div>
+          ) : recoveryMode ? (
+            <div className="authDialog__panel">
+              <label className="authField">
+                <span>New password</span>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </label>
+
+              <label className="authField">
+                <span>Confirm password</span>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void submitNewPassword();
+                  }}
+                />
+              </label>
+
+              {notice ? (
+                <div className="authDialog__notice">{notice}</div>
+              ) : null}
+              {error ? <div className="authDialog__error">{error}</div> : null}
+
+              <button
+                className="btn btn--primary btn--wide"
+                type="button"
+                onClick={() => void submitNewPassword()}
+                disabled={busy || !newPassword || !confirmNewPassword}
+              >
+                {busy ? "Updating..." : "Update password"}
+              </button>
+            </div>
           ) : session ? (
             <div className="authDialog__panel">
               {session.user.email ? (
@@ -354,6 +582,145 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   </span>
                 </div>
               ) : null}
+              <section className="authDialog__accountPlayerSection">
+                <div className="authDialog__accountPlayerTitle">
+                  Account player
+                </div>
+                <article
+                  className={`authDialog__accountPlayerCard${
+                    editingAccountPlayer && accountPlayer
+                      ? " authDialog__accountPlayerCard--editing"
+                      : ""
+                  }`}
+                >
+                  <div className="authDialog__accountPlayerMain">
+                    <span
+                      className="authDialog__accountPlayerAvatar"
+                      style={avatarStyleFor(
+                        editingAccountPlayer && accountPlayer
+                          ? accountDraftColor || accountPlayer.avatarColor
+                          : accountPlayerColor,
+                      )}
+                      aria-hidden="true"
+                    >
+                      {getInitials(accountDraftName || accountPlayerName || "Player")}
+                    </span>
+                    {editingAccountPlayer && accountPlayer ? (
+                      <div className="authDialog__accountPlayerEditStack">
+                        <div className="authDialog__accountPlayerEditTop">
+                          <input
+                            className="input input--compact authDialog__accountPlayerInput"
+                            type="text"
+                            value={accountDraftName}
+                            onChange={(event) =>
+                              setAccountDraftName(event.target.value)
+                            }
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                void saveAccountPlayerName();
+                              }
+                              if (event.key === "Escape") {
+                                setAccountDraftName(accountPlayer.name);
+                                setAccountDraftColor(accountPlayer.avatarColor);
+                                setEditingAccountPlayer(false);
+                              }
+                            }}
+                            autoFocus
+                            maxLength={28}
+                            placeholder="Player name"
+                          />
+                          <div className="authDialog__accountPlayerActions authDialog__accountPlayerActions--edit">
+                            <button
+                              className="iconbtn iconbtn--sm iconbtn--primary authDialog__accountPlayerAction"
+                              type="button"
+                              onClick={() => void saveAccountPlayerName()}
+                              disabled={
+                                busy || !formatPlayerName(accountDraftName)
+                              }
+                              aria-label="Save account player"
+                              title="Save"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              className="iconbtn iconbtn--sm authDialog__accountPlayerAction"
+                              type="button"
+                              onClick={() => {
+                                setAccountDraftName(accountPlayer.name);
+                                setAccountDraftColor(accountPlayer.avatarColor);
+                                setEditingAccountPlayer(false);
+                              }}
+                              aria-label="Cancel editing account player"
+                              title="Cancel"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                        <div
+                          className="authDialog__accountPlayerSwatches"
+                          role="radiogroup"
+                          aria-label="Choose account player color"
+                        >
+                          {AVATAR_COLORS.map((color) => (
+                            <button
+                              key={color.id}
+                              type="button"
+                              className={
+                                color.value === accountDraftColor
+                                  ? "authDialog__accountPlayerSwatch authDialog__accountPlayerSwatch--selected"
+                                  : "authDialog__accountPlayerSwatch"
+                              }
+                              style={{ backgroundColor: color.value }}
+                              onClick={() => setAccountDraftColor(color.value)}
+                              aria-label={color.label}
+                              aria-checked={color.value === accountDraftColor}
+                              role="radio"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="authDialog__accountPlayerIdentity">
+                        <span className="authDialog__accountPlayerName">
+                          {accountPlayerName
+                            ? formatAccountPlayerName(accountPlayerName)
+                            : "Not created yet"}
+                        </span>
+                        {accountPlayer && onUpdateProfile ? (
+                          <div className="authDialog__accountPlayerActions">
+                            <button
+                              className="iconbtn iconbtn--sm authDialog__accountPlayerAction"
+                              type="button"
+                              onClick={() => {
+                                setAccountDraftName(accountPlayer.name);
+                                setAccountDraftColor(accountPlayer.avatarColor);
+                                setEditingAccountPlayer(true);
+                              }}
+                              aria-label="Edit account player"
+                              title="Edit"
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M4 20h4.2L18.6 9.6a1.6 1.6 0 0 0 0-2.2l-2-2a1.6 1.6 0 0 0-2.2 0L4 15.8V20Z"
+                                  stroke="currentColor"
+                                  strokeWidth="1.9"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              </section>
               <div className="authDialog__storage">
                 <div
                   className={`authDialog__storageCard${showAccountDetails ? "" : " authDialog__storageCard--collapsed"}`}
@@ -446,7 +813,11 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                 key={profile.id}
                                 className="authDialog__accountItem"
                               >
-                                <strong>{profile.name}</strong>
+                                <strong>
+                                  {profile.isAccountPlayer
+                                    ? formatAccountPlayerName(profile.name)
+                                    : profile.name}
+                                </strong>
                               </li>
                             ))}
                           </ul>
@@ -659,6 +1030,20 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
               </div>
 
               <div className="authDialog__panel">
+                {mode === "signup" ? (
+                  <label className="authField">
+                    <span>Name</span>
+                    <input
+                      className="input"
+                      type="text"
+                      autoComplete="name"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      placeholder="Your name"
+                    />
+                  </label>
+                ) : null}
+
                 <label className="authField">
                   <span>Email</span>
                   <input
@@ -688,6 +1073,17 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   />
                 </label>
 
+                {mode === "signin" ? (
+                  <button
+                    className="authDialog__forgotPassword"
+                    type="button"
+                    onClick={() => void sendPasswordReset()}
+                    disabled={busy || !email.trim()}
+                  >
+                    Forgot password?
+                  </button>
+                ) : null}
+
                 {notice ? (
                   <div className="authDialog__notice">{notice}</div>
                 ) : null}
@@ -699,7 +1095,12 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   className="btn btn--primary btn--wide"
                   type="button"
                   onClick={submit}
-                  disabled={busy || !email.trim() || !password}
+                  disabled={
+                    busy ||
+                    !email.trim() ||
+                    !password ||
+                    (mode === "signup" && !formatPlayerName(accountName))
+                  }
                 >
                   {busy
                     ? mode === "signin"
