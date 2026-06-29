@@ -413,6 +413,7 @@ export function useGames(session: Session | null, authLoading = false) {
       timerMode,
       timerSeconds,
       players,
+      scoreHistory: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -466,6 +467,7 @@ export function useGames(session: Session | null, authLoading = false) {
       id: uid(),
       name: nextName,
       players: duplicatedPlayers,
+      scoreHistory: [],
       createdAt: now,
       updatedAt: now,
       endedAt: undefined,
@@ -487,6 +489,7 @@ export function useGames(session: Session | null, authLoading = false) {
       prev.map((g) => {
         if (g.id !== gameId) return g;
         const next = updater(g);
+        if (next === g) return g;
         return { ...next, updatedAt: Date.now() };
       }),
     );
@@ -541,6 +544,7 @@ export function useGames(session: Session | null, authLoading = false) {
     updateGame(gameId, (g) => ({
       ...g,
       endedAt: undefined,
+      scoreHistory: [],
       players: g.players.map((p) => ({ ...p, score: 0, reachedAt: now })),
     }));
   }
@@ -549,15 +553,39 @@ export function useGames(session: Session | null, authLoading = false) {
     if (!delta) return;
     const now = Date.now();
     updateGame(gameId, (g) => {
-      const players = g.players.map((p) =>
-        p.id === playerId
-          ? { ...p, score: clampScore(p.score + delta), reachedAt: now }
-          : p,
-      );
+      let scoreHistory = g.scoreHistory ?? [];
+      let didUpdateScore = false;
+      const players = g.players.map((p) => {
+        if (p.id !== playerId) return p;
+
+        const scoreBefore = p.score;
+        const scoreAfter = clampScore(p.score + delta);
+        const actualDelta = scoreAfter - scoreBefore;
+        if (actualDelta === 0) return p;
+
+        didUpdateScore = true;
+        scoreHistory = [
+          {
+            id: uid(),
+            playerId: p.id,
+            playerName: p.name,
+            avatarColor: p.avatarColor,
+            delta: actualDelta,
+            scoreBefore,
+            scoreAfter,
+            createdAt: now,
+          },
+          ...scoreHistory,
+        ];
+        return { ...p, score: scoreAfter, reachedAt: now };
+      });
+
+      if (!didUpdateScore) return g;
       const hasWinner = hasReachedTarget(players, g.targetPoints);
       return {
         ...g,
         players,
+        scoreHistory,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });

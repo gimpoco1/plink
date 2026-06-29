@@ -17,6 +17,7 @@ import { useScorePulse } from "./hooks/useScorePulse";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { DashboardScreen } from "./screens/DashboardScreen";
 import { GameScreen } from "./screens/GameScreen";
+import { GameHistoryScreen } from "./screens/GameHistoryScreen";
 import {
   GameSettingsDialog,
   GameSettingsDialogHandle,
@@ -83,7 +84,7 @@ export default function App() {
       return false;
     }
   }, []);
-  const [view, setView] = useState<"home" | "game">(() => {
+  const [view, setView] = useState<"home" | "game" | "history">(() => {
     try {
       return localStorage.getItem(APP_VIEW_STORAGE_KEY) === "game"
         ? "game"
@@ -188,7 +189,10 @@ export default function App() {
   }, [gameSyncNotice, profileSyncNotice]);
 
   useEffect(() => {
-    localStorage.setItem(APP_VIEW_STORAGE_KEY, view);
+    localStorage.setItem(
+      APP_VIEW_STORAGE_KEY,
+      view === "home" ? "home" : "game",
+    );
   }, [view]);
 
   useEffect(() => {
@@ -198,7 +202,7 @@ export default function App() {
   useEffect(() => {
     if (
       hasCompletedInitialViewRestore &&
-      view === "game" &&
+      view !== "home" &&
       gamesReady &&
       !currentGameId
     ) {
@@ -345,7 +349,13 @@ export default function App() {
 
     const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStartX;
     const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStartY;
-    if (view === "game" && deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (view === "history" && deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      setView("game");
+    } else if (
+      view === "game" &&
+      deltaX > 60 &&
+      Math.abs(deltaX) > Math.abs(deltaY)
+    ) {
       setView("home");
     }
 
@@ -443,13 +453,20 @@ export default function App() {
         transition={{ duration: reduceMotion ? 0 : 0.24, ease: "easeOut" }}
       >
         <TopBar
-          title={view === "game" && currentGame ? gameDisplayName.title : ""}
+          title={
+            view === "history" && currentGame
+              ? "History"
+              : view === "game" && currentGame
+                ? gameDisplayName.title
+                : ""
+          }
           titleSuffix={
             view === "game" && currentGame && gameDisplayName.replayNumber
               ? `#${gameDisplayName.replayNumber}`
               : undefined
           }
-          showBackButton={view === "game" && !!currentGame}
+          backLabel={view === "history" ? "Back to game" : "Back to games"}
+          showBackButton={view !== "home" && !!currentGame}
           showActionMenu={view === "game" && !!currentGame}
           primaryActionLabel={
             view === "home" &&
@@ -471,9 +488,15 @@ export default function App() {
                   : "Local only"
               : undefined
           }
-          metaItems={view === "game" && currentGame ? gameMetaItems : undefined}
+          metaItems={
+            view === "history" && currentGame
+              ? [{ label: gameDisplayName.title, tone: "muted" }]
+              : view === "game" && currentGame
+                ? gameMetaItems
+                : undefined
+          }
           showReset={view === "game" && hasNonZeroScore}
-          onBack={() => setView("home")}
+          onBack={() => setView(view === "history" ? "game" : "home")}
           onLogoClick={() => setView("home")}
           onPrimaryAction={() => {
             setView("home");
@@ -493,6 +516,11 @@ export default function App() {
               ? () => settingsDialogRef.current?.open()
               : undefined
           }
+          onOpenHistory={
+            view === "game" && currentGame
+              ? () => setView("history")
+              : undefined
+          }
           onResetGame={async () => {
             if (!currentGame) return;
             const ok = await confirmRef.current?.confirm({
@@ -508,7 +536,18 @@ export default function App() {
       </motion.div>
 
       <AnimatePresence mode="wait" initial={false}>
-        {isResolvingInitialGameView ? null : view === "game" && currentGame ? (
+        {isResolvingInitialGameView ? null : view === "history" && currentGame ? (
+          <motion.div
+            className="appView"
+            key={`view-history-${currentGame.id}`}
+            initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.995 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduceMotion ? {} : { opacity: 0, y: -16, scale: 0.995 }}
+            transition={{ duration: reduceMotion ? 0 : 0.26, ease: "easeOut" }}
+          >
+            <GameHistoryScreen game={currentGame} />
+          </motion.div>
+        ) : view === "game" && currentGame ? (
           <motion.div
             className="appView"
             key={`view-game-${currentGame.id}`}

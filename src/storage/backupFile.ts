@@ -65,6 +65,13 @@ function getGameImportSignature(game: Game) {
     createdAt: game.createdAt,
     updatedAt: game.updatedAt,
     endedAt: game.endedAt ?? null,
+    scoreHistory: game.scoreHistory.map((entry) => ({
+      playerName: entry.playerName,
+      delta: entry.delta,
+      scoreBefore: entry.scoreBefore,
+      scoreAfter: entry.scoreAfter,
+      createdAt: entry.createdAt,
+    })),
     players: game.players.map((player) => ({
       name: player.name,
       score: player.score,

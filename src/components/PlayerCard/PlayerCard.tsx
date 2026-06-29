@@ -6,17 +6,6 @@ import { capitalizeFirst, getInitials } from "../../utils/text";
 import { SwipeableCard } from "../SwipeableCard/SwipeableCard";
 import "./PlayerCard.css";
 
-function formatRelativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp;
-  const sec = Math.floor(diff / 1000);
-  if (sec < 60) return "just now";
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  return "long ago";
-}
-
 type Props = {
   player: Player;
   rank: number;
@@ -127,11 +116,6 @@ export function PlayerCard({
                     </div>
                   ) : null}
                 </div>
-                {player.reachedAt > player.createdAt && (
-                  <div className="who__lastUpdate">
-                    Last: {formatRelativeTime(player.reachedAt)}
-                  </div>
-                )}
               </div>
             </div>
 
