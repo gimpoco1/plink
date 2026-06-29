@@ -5,6 +5,7 @@ import {
   type NewGameInput,
 } from "../components/NewGameCard/NewGameCard";
 import { HomeGuestPreview } from "../components/HomeGuestPreview/HomeGuestPreview";
+import { HOME_NEW_GAME_OPEN_KEY } from "../constants";
 import { avatarStyleFor } from "../utils/color";
 import { getGameDisplayName } from "../utils/text";
 import { getInitials } from "../utils/text";
@@ -58,18 +59,42 @@ export function HomeScreen({
   onUpsertProfile,
   onEnter,
 }: HomeScreenProps) {
-  const [hasDismissedEmptyState, setHasDismissedEmptyState] = useState(false);
+  const [persistedNewGameOpen, setPersistedNewGameOpen] = useState<
+    boolean | null
+  >(() => {
+    try {
+      const stored = localStorage.getItem(HOME_NEW_GAME_OPEN_KEY);
+      if (stored === "open") return true;
+      if (stored === "closed") return false;
+      return null;
+    } catch {
+      return null;
+    }
+  });
   const newGameCardWrapRef = useRef<HTMLDivElement | null>(null);
+  const defaultOpen =
+    isAuthenticated && games.length === 0 ? true : false;
   const showForm =
-    isCreating ||
-    (isAuthenticated && games.length === 0 && !hasDismissedEmptyState);
+    isCreating || (persistedNewGameOpen ?? defaultOpen);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        HOME_NEW_GAME_OPEN_KEY,
+        showForm ? "open" : "closed",
+      );
+      setPersistedNewGameOpen(showForm);
+    } catch {
+      // Ignore storage failures and keep the current session state.
+    }
+  }, [showForm]);
   const profilesById = useMemo(
     () => new Map(profiles.map((profile) => [profile.id, profile])),
     [profiles],
   );
 
   function handleOpenChange(nextOpen: boolean) {
-    setHasDismissedEmptyState(!nextOpen);
+    setPersistedNewGameOpen(nextOpen);
     onCreatingChange(nextOpen);
   }
 
@@ -296,7 +321,7 @@ export function HomeScreen({
             </div>
           </div>
         ) : null}
-        <div ref={newGameCardWrapRef}>
+        <div ref={newGameCardWrapRef} className="homeHero__newGameWrap">
           <NewGameCard
             open={showForm}
             profiles={profiles}

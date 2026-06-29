@@ -49,7 +49,7 @@ function getSyncErrorMessage(error: unknown) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message) return message;
   }
-  return "Unknown database error";
+  return "Unknown sync error";
 }
 
 function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
@@ -73,7 +73,7 @@ function shouldKeepLocalGames(localGames: Game[], remoteGames: Game[]) {
   const remoteById = new Map(remoteGames.map((game) => [game.id, game]));
   return localGames.some((localGame) => {
     const remoteGame = remoteById.get(localGame.id);
-    return !remoteGame || remoteGame.updatedAt < localGame.updatedAt;
+    return !!remoteGame && remoteGame.updatedAt < localGame.updatedAt;
   });
 }
 
@@ -142,7 +142,7 @@ export function useGames(session: Session | null, authLoading = false) {
                 : `${removed.length} games were removed from your account.`,
             );
           } else if (changed.length > 0) {
-            setSyncNotice("Your games were updated from the database.");
+            setSyncNotice("Your games were updated.");
           }
         }
         remoteSignatureRef.current = remoteSignature;
@@ -226,7 +226,7 @@ export function useGames(session: Session | null, authLoading = false) {
         setCurrentGameId(null);
         setRemoteUserId(null);
         setSyncNotice(
-          `Could not load games from the database: ${getSyncErrorMessage(error)}`,
+          `Could not load games: ${getSyncErrorMessage(error)}`,
         );
         setRemoteReady(true);
       });
@@ -272,7 +272,7 @@ export function useGames(session: Session | null, authLoading = false) {
                 : `${removed.length} games were removed from your account.`,
             );
           } else if (changed.length > 0) {
-            setSyncNotice("Your games were updated from the database.");
+            setSyncNotice("Your games were updated.");
           }
           remoteSignatureRef.current = remoteSignature;
           appliedRemoteState = true;
@@ -345,7 +345,7 @@ export function useGames(session: Session | null, authLoading = false) {
       .catch((error) => {
         console.error("Failed to save games to Supabase", error);
         setSyncNotice(
-          `Could not save games to the database: ${getSyncErrorMessage(error)}`,
+          `Could not save games: ${getSyncErrorMessage(error)}`,
         );
       });
   }, [games, remoteReady, remoteUserId, session]);

@@ -6,6 +6,12 @@ function idsKey(players: Player[]): string {
   return players.map((p) => p.id).join("|");
 }
 
+function rankingKey(players: Player[]): string {
+  return players
+    .map((p) => `${p.id}:${p.score}:${p.reachedAt}:${p.createdAt}:${p.name}`)
+    .join("|");
+}
+
 function sortedIds(players: Player[], isLowScoreWins: boolean): string[] {
   return [...players]
     .sort((a, b) => sortPlayers(a, b, isLowScoreWins))
@@ -32,6 +38,7 @@ export function useDelayedRanking(
   const timerRef = useRef<number | null>(null);
 
   const key = useMemo(() => idsKey(players), [players]);
+  const rankKey = useMemo(() => rankingKey(players), [players]);
 
   const forceResort = useCallback(() => {
     setOrderIds(sortedIds(playersRef.current, isLowScoreWinsRef.current));
@@ -54,6 +61,13 @@ export function useDelayedRanking(
     setOrderIds(sortedIds(players, isLowScoreWins));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, isLowScoreWins]);
+
+  useEffect(() => {
+    // Remote score updates do not call scheduleResort(), so apply them
+    // immediately. Local score taps keep their delayed resort while pending.
+    if (timerRef.current) return;
+    setOrderIds(sortedIds(players, isLowScoreWins));
+  }, [rankKey, isLowScoreWins, players]);
 
   useEffect(() => {
     return () => {

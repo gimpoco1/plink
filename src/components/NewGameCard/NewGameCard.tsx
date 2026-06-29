@@ -49,6 +49,7 @@ export function NewGameCard({
   onCreate,
   onUpsertProfile,
 }: NewGameCardProps) {
+  const [hasMounted, setHasMounted] = useState(false);
   const [name, setName] = useState("");
   const [target, setTarget] = useState("8");
   const [isLowScoreWins, setIsLowScoreWins] = useState(false);
@@ -70,6 +71,10 @@ export function NewGameCard({
     (typeof AVATAR_COLORS)[number]["value"]
   >(AVATAR_COLORS[0].value);
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   function resetForm() {
     setName("");
@@ -331,12 +336,12 @@ export function NewGameCard({
 
   return (
     <motion.div
-      layout
-      transition={panelTransition}
+      layout={hasMounted}
+      transition={hasMounted ? panelTransition : { duration: 0 }}
       className={`newGamePanel${open ? " newGamePanel--open" : ""}`}
     >
       <motion.button
-        layout
+        layout={hasMounted}
         className={`btn btn--primary btn--xl homeHero__action newGamePanel__trigger${open ? " newGamePanel__trigger--open" : ""}`}
         type="button"
         aria-expanded={open}
@@ -373,7 +378,7 @@ export function NewGameCard({
             className="newGamePanel__body"
             key="new-game-body"
             initial={
-              reduceMotion
+              !hasMounted || reduceMotion
                 ? false
                 : {
                     height: 0,

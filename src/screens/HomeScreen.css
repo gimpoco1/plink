@@ -10,7 +10,7 @@
 .homeHero {
   padding: clamp(24px, 7vw, 52px) 4px 38px;
   display: grid;
-  gap: 24px;
+  gap: 16px;
 }
 
 .homeHero--creating {
@@ -74,8 +74,8 @@
   z-index: 1;
 }
 
-.homeHero__actions + .newGamePanel {
-  margin-top: -10px;
+.homeHero__newGameWrap {
+  margin-top: -28px;
 }
 
 .homeHero__action,
