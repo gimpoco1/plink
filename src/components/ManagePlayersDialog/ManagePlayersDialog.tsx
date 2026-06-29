@@ -8,7 +8,12 @@ import {
 import { AVATAR_COLORS } from "../../constants";
 import type { Player, PlayerProfile } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
-import { capitalizeFirst, clampName, getInitials } from "../../utils/text";
+import {
+  capitalizeFirst,
+  clampName,
+  formatAccountPlayerName,
+  getInitials,
+} from "../../utils/text";
 import "./ManagePlayersDialog.css";
 
 export type ManagePlayersDialogHandle = {
@@ -29,6 +34,7 @@ type Props = {
   isAuthenticated: boolean;
   onDeleteProfile: (profileId: string) => void;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
+  onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
   onUpdatePlayer: (
     playerId: string,
     updates: Partial<Pick<Player, "name" | "avatarColor" | "profileId">>,
@@ -45,6 +51,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
       isAuthenticated,
       onDeleteProfile,
       onDeletePlayer,
+      onUpsertProfile,
       onUpdatePlayer,
       onStartGame,
     },
@@ -188,6 +195,17 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
     function submit() {
       const name = clampName(pendingName);
       if (!name || newPlayerValidationMessage) return;
+      if (saveForLater && isAuthenticated) {
+        const profile = onUpsertProfile(name, selectedColor);
+        if (profile) {
+          setStagedProfileIds((prev) => new Set(prev).add(profile.id));
+          setPendingName("");
+          setSelectedColor(AVATAR_COLORS[0]?.value ?? "#64748b");
+          setSaveForLater(isAuthenticated);
+          setIsCreating(false);
+          return;
+        }
+      }
       setStagedCustomPlayers((prev) => [
         ...prev,
         { name, avatarColor: selectedColor, saveForLater },
@@ -262,7 +280,9 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                   </div>
                   <div className="managePlayersDialog__queueList">
                     {stagedProfiles.map((profile) => {
-                      const displayName = capitalizeFirst(profile.name);
+                      const displayName = profile.isAccountPlayer
+                        ? formatAccountPlayerName(profile.name)
+                        : capitalizeFirst(profile.name);
                       return (
                         <button
                           key={`queued-profile-${profile.id}`}
@@ -323,7 +343,14 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
 
                     <div className="managePlayersDialog__list">
                       {currentGamePlayers.map((player) => {
-                        const displayName = capitalizeFirst(player.name);
+                        const linkedProfile = player.profileId
+                          ? profiles.find(
+                              (profile) => profile.id === player.profileId,
+                            )
+                          : undefined;
+                        const displayName = linkedProfile?.isAccountPlayer
+                          ? formatAccountPlayerName(player.name)
+                          : capitalizeFirst(player.name);
                         const isEditing = editingPlayerId === player.id;
 
                         return (
@@ -549,7 +576,9 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                         {filteredProfiles.map((profile) => {
                           const isTaken = takenProfileIds.has(profile.id);
                           const isStaged = stagedProfileIds.has(profile.id);
-                          const displayName = capitalizeFirst(profile.name);
+                          const displayName = profile.isAccountPlayer
+                            ? formatAccountPlayerName(profile.name)
+                            : capitalizeFirst(profile.name);
 
                           return (
                             <article
@@ -593,17 +622,19 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                                           {isStaged ? "✓" : "+"}
                                         </button>
                                       )}
-                                      <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
-                                        type="button"
-                                        onClick={() =>
-                                          onDeleteProfile(profile.id)
-                                        }
-                                        aria-label={`Delete saved player ${displayName}`}
-                                        title="Delete saved player"
-                                      >
-                                        ×
-                                      </button>
+                                      {!profile.isAccountPlayer ? (
+                                        <button
+                                          className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
+                                          type="button"
+                                          onClick={() =>
+                                            onDeleteProfile(profile.id)
+                                          }
+                                          aria-label={`Delete saved player ${displayName}`}
+                                          title="Delete saved player"
+                                        >
+                                          ×
+                                        </button>
+                                      ) : null}
                                     </div>
                                   </div>
                                   {isTaken ? (

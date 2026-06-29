@@ -56,6 +56,7 @@ function shouldKeepLocalProfiles(
 }
 
 export function useProfiles(session: Session | null) {
+  const userId = session?.user.id ?? null;
   const [profiles, setProfiles] = useState<PlayerProfile[]>(() =>
     loadProfiles(),
   );
@@ -67,7 +68,7 @@ export function useProfiles(session: Session | null) {
   useEffect(() => {
     let alive = true;
 
-    if (!session) {
+    if (!userId) {
       setRemoteUserId(null);
       setSyncNotice(null);
       remoteSignatureRef.current = null;
@@ -82,12 +83,12 @@ export function useProfiles(session: Session | null) {
     setRemoteUserId(null);
     remoteSignatureRef.current = null;
     setProfiles([]);
-    loadRemoteProfiles(session.user.id)
+    loadRemoteProfiles(userId)
       .then((remoteProfiles) => {
         if (!alive) return;
         setProfiles(remoteProfiles);
         remoteSignatureRef.current = getProfileSyncSignature(remoteProfiles);
-        setRemoteUserId(session.user.id);
+        setRemoteUserId(userId);
         setRemoteReady(true);
       })
       .catch((error) => {
@@ -102,15 +103,16 @@ export function useProfiles(session: Session | null) {
     return () => {
       alive = false;
     };
-  }, [session]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!session || remoteUserId !== session.user.id) return;
+    if (!userId || remoteUserId !== userId) return;
     let alive = true;
+    const activeUserId = userId;
 
     async function refreshRemoteProfiles() {
       try {
-        const remoteProfiles = await loadRemoteProfiles(session!.user.id);
+        const remoteProfiles = await loadRemoteProfiles(activeUserId);
         if (!alive) return;
         setProfiles((previousProfiles) => {
           if (shouldKeepLocalProfiles(previousProfiles, remoteProfiles)) {
@@ -155,14 +157,14 @@ export function useProfiles(session: Session | null) {
 
     let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
     if (supabase) {
-      channel = supabase.channel(`profiles:${session.user.id}`);
+      channel = supabase.channel(`profiles:${activeUserId}`);
       channel.on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "player_profiles",
-          filter: `user_id=eq.${session.user.id}`,
+          filter: `user_id=eq.${activeUserId}`,
         },
         () => {
           void refreshRemoteProfiles();
@@ -187,16 +189,16 @@ export function useProfiles(session: Session | null) {
       window.removeEventListener("focus", refreshRemoteProfiles);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [remoteUserId, session]);
+  }, [remoteUserId, userId]);
 
   useEffect(() => {
-    if (!session) {
+    if (!userId) {
       if (!remoteReady || remoteUserId !== null) return;
       saveProfiles(profiles);
       return;
     }
-    if (!remoteReady || remoteUserId !== session.user.id) return;
-    void saveRemoteProfiles(session.user.id, profiles)
+    if (!remoteReady || remoteUserId !== userId) return;
+    void saveRemoteProfiles(userId, profiles)
       .then(() => {
         remoteSignatureRef.current = getProfileSyncSignature(profiles);
       })
@@ -204,7 +206,7 @@ export function useProfiles(session: Session | null) {
         console.error("Failed to save profiles to Supabase", error);
         setSyncNotice(`Could not save players: ${getSyncErrorMessage(error)}`);
       });
-  }, [profiles, remoteReady, remoteUserId, session]);
+  }, [profiles, remoteReady, remoteUserId, userId]);
 
   const sortedProfiles = useMemo(() => {
     return [...profiles].sort((a, b) => {
@@ -269,6 +271,40 @@ export function useProfiles(session: Session | null) {
     );
   }
 
+  function upsertAccountPlayer(rawName: string, avatarColor: string) {
+    const name = formatPlayerName(rawName);
+    if (!name) return null;
+
+    const existing =
+      profiles.find((p) => p.isAccountPlayer) ??
+      profiles.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    const now = Date.now();
+    if (existing) {
+      const updated: PlayerProfile = {
+        ...existing,
+        name,
+        avatarColor: existing.avatarColor || avatarColor,
+        isAccountPlayer: true,
+        updatedAt: now,
+      };
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === existing.id ? updated : p)),
+      );
+      return updated;
+    }
+
+    const created: PlayerProfile = {
+      id: uid(),
+      name,
+      avatarColor,
+      isAccountPlayer: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setProfiles((prev) => [created, ...prev]);
+    return created;
+  }
+
   function importProfiles(incomingProfiles: PlayerProfile[]) {
     const mergedProfiles = mergeProfilesById(profiles, incomingProfiles);
     setProfiles(mergedProfiles);
@@ -279,6 +315,7 @@ export function useProfiles(session: Session | null) {
   return {
     profiles: sortedProfiles,
     upsertProfile,
+    upsertAccountPlayer,
     deleteProfile,
     updateProfile,
     importProfiles,

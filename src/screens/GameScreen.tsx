@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Game, Player } from "../types";
 import type { PlayerProfile } from "../types";
-import { capitalizeFirst, getGameDisplayName, getInitials } from "../utils/text";
+import {
+  capitalizeFirst,
+  formatAccountPlayerName,
+  getGameDisplayName,
+  getInitials,
+} from "../utils/text";
 import { computeRanks, findWinner, sortPlayers } from "../utils/ranking";
 import { WinCelebration } from "../components/WinCelebration/WinCelebration";
 import { useDelayedRanking } from "../hooks/useDelayedRanking";
@@ -22,6 +27,7 @@ type Props = {
   pulseById: Record<string, "pos" | "neg" | undefined>;
   onTriggerPulse: (playerId: string, delta: number) => void;
   onDeleteProfile: (profileId: string) => void;
+  onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
   onStartGame: (
     profileIds: string[],
     newPlayers: Array<{
@@ -49,6 +55,7 @@ export function GameScreen({
   pulseById,
   onTriggerPulse,
   onDeleteProfile,
+  onUpsertProfile,
   onStartGame,
   onUpdateScore,
   onDeletePlayer,
@@ -62,6 +69,21 @@ export function GameScreen({
       new Set(game.players.map((p) => p.profileId).filter(Boolean) as string[]),
     [game.players],
   );
+  const accountProfileIds = useMemo(
+    () =>
+      new Set(
+        profiles
+          .filter((profile) => profile.isAccountPlayer)
+          .map((profile) => profile.id),
+      ),
+    [profiles],
+  );
+
+  function getPlayerDisplayName(player: Player) {
+    return player.profileId && accountProfileIds.has(player.profileId)
+      ? formatAccountPlayerName(player.name)
+      : capitalizeFirst(player.name);
+  }
 
   const hasPlayers = game.players.length > 0;
   const [winFxName, setWinFxName] = useState<string | null>(null);
@@ -131,7 +153,7 @@ export function GameScreen({
           winnerStats={winnerStats}
           standings={finalStandings.map(({ player, rank, isWinner }) => ({
             id: player.id,
-            name: capitalizeFirst(player.name),
+            name: getPlayerDisplayName(player),
             initials: getInitials(player.name),
             avatarColor: player.avatarColor,
             score: player.score,
@@ -171,6 +193,8 @@ export function GameScreen({
             {orderedPlayers.map((player) => {
               const rank = ranks.get(player.id) ?? 1;
               const pulse = pulseById[player.id];
+              const isAccountPlayer =
+                !!player.profileId && accountProfileIds.has(player.profileId);
               return (
                 <PlayerCard
                   key={player.id}
@@ -179,6 +203,7 @@ export function GameScreen({
                   showRank={!allZero}
                   pulse={pulse}
                   isWinner={winner?.id === player.id}
+                  isAccountPlayer={isAccountPlayer}
                   targetPoints={game.targetPoints}
                   onDelta={(playerId, delta) => {
                     onUpdateScore(playerId, delta);
@@ -186,7 +211,7 @@ export function GameScreen({
                     scheduleResort();
                     setLastScoreAction({
                       playerId,
-                      playerName: capitalizeFirst(player.name),
+                      playerName: getPlayerDisplayName(player),
                       delta,
                     });
                   }}
@@ -243,6 +268,7 @@ export function GameScreen({
         isAuthenticated={isAuthenticated}
         onDeleteProfile={(profileId) => onDeleteProfile(profileId)}
         onDeletePlayer={onDeletePlayer}
+        onUpsertProfile={onUpsertProfile}
         onUpdatePlayer={onUpdatePlayer}
         onStartGame={onStartGame}
       />

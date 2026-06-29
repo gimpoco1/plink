@@ -15,6 +15,7 @@ import { useProfiles } from "./hooks/useProfiles";
 import { useGames } from "./hooks/useGames";
 import { useScorePulse } from "./hooks/useScorePulse";
 import { useAuthSession } from "./hooks/useAuthSession";
+import { supabase } from "./lib/supabase";
 import { DashboardScreen } from "./screens/DashboardScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { GameHistoryScreen } from "./screens/GameHistoryScreen";
@@ -38,14 +39,24 @@ import {
 } from "./storage/backupFile";
 import { loadGuestGames } from "./storage/gamesStorage";
 import { loadProfiles } from "./storage/profilesStorage";
-import { APP_VIEW_STORAGE_KEY, HOME_TAB_STORAGE_KEY } from "./constants";
+import {
+  APP_VIEW_STORAGE_KEY,
+  AVATAR_COLORS,
+  HOME_TAB_STORAGE_KEY,
+} from "./constants";
 
 export default function App() {
   const reduceMotion = useReducedMotion();
-  const { session, loading: authLoading, authEnabled } = useAuthSession();
+  const {
+    session,
+    loading: authLoading,
+    authEnabled,
+    passwordRecoveryRequestedAt,
+  } = useAuthSession();
   const {
     profiles,
     upsertProfile,
+    upsertAccountPlayer,
     deleteProfile,
     updateProfile,
     importProfiles,
@@ -130,6 +141,39 @@ export default function App() {
   );
   const localGuestGames = useMemo(() => loadGuestGames(), [localDataVersion]);
   const localGuestProfiles = useMemo(() => loadProfiles(), [localDataVersion]);
+
+  useEffect(() => {
+    if (passwordRecoveryRequestedAt > 0) {
+      authDialogRef.current?.openPasswordReset();
+    }
+  }, [passwordRecoveryRequestedAt]);
+
+  function randomAvatarColor() {
+    const index = Math.floor(Math.random() * AVATAR_COLORS.length);
+    return AVATAR_COLORS[index]?.value ?? "#64748b";
+  }
+
+  function updateProfileEverywhere(
+    profileId: string,
+    updates: Parameters<typeof updateProfile>[1],
+  ) {
+    updateProfile(profileId, updates);
+    syncProfile(profileId, updates);
+
+    const profile = profiles.find((item) => item.id === profileId);
+    if (!profile?.isAccountPlayer || updates.name === undefined || !supabase) {
+      return;
+    }
+
+    void supabase.auth.updateUser({
+      data: {
+        name: updates.name,
+        full_name: updates.name,
+        display_name: updates.name,
+        player_name: updates.name,
+      },
+    });
+  }
 
   const gameMetaItems = useMemo(() => {
     if (!currentGame) return [];
@@ -258,6 +302,20 @@ export default function App() {
     updatePlayer,
     upsertProfile,
   ]);
+
+  useEffect(() => {
+    if (!session || !profilesReady) return;
+    if (profiles.some((profile) => profile.isAccountPlayer)) return;
+
+    const metadata = session.user.user_metadata ?? {};
+    const playerName =
+      metadata.player_name ??
+      metadata.name ??
+      metadata.full_name ??
+      metadata.display_name;
+    if (typeof playerName !== "string" || !playerName.trim()) return;
+    upsertAccountPlayer(playerName, randomAvatarColor());
+  }, [profiles, profilesReady, session, upsertAccountPlayer]);
 
   async function handleCreateGame(input: Parameters<typeof createGame>[0]) {
     if (!session) {
@@ -565,6 +623,10 @@ export default function App() {
               managePlayersDialogRef={managePlayersDialogRef}
               onDeleteProfile={async (profileId) => {
                 const profile = profiles.find((p) => p.id === profileId);
+                if (profile?.isAccountPlayer) {
+                  setVisibleSyncNotice("Your account player cannot be deleted.");
+                  return;
+                }
                 const label = profile ? profile.name : "this player";
                 const ok = await confirmRef.current?.confirm({
                   title: "Delete saved player",
@@ -575,6 +637,7 @@ export default function App() {
                 if (!ok) return;
                 deleteProfile(profileId);
               }}
+              onUpsertProfile={upsertProfile}
               onStartGame={(profileIds, newPlayers) => {
                 if (!currentGame) return;
 
@@ -628,9 +691,26 @@ export default function App() {
                 if (!ok) return;
                 removePlayer(currentGame.id, playerId);
               }}
-              onUpdatePlayer={(playerId, updates) =>
-                updatePlayer(currentGame.id, playerId, updates)
-              }
+              onUpdatePlayer={(playerId, updates) => {
+                const player = currentGame.players.find(
+                  (item) => item.id === playerId,
+                );
+                const profileId = player?.profileId;
+                if (profileId) {
+                  const profileUpdates: Parameters<typeof updateProfile>[1] =
+                    {};
+                  if (updates.name !== undefined) {
+                    profileUpdates.name = updates.name;
+                  }
+                  if (updates.avatarColor !== undefined) {
+                    profileUpdates.avatarColor = updates.avatarColor;
+                  }
+                  if (Object.keys(profileUpdates).length > 0) {
+                    updateProfileEverywhere(profileId, profileUpdates);
+                  }
+                }
+                updatePlayer(currentGame.id, playerId, updates);
+              }}
               winnerStats={currentWinnerStats}
               onReplayGame={() => {
                 const duplicated = duplicateGame(currentGame.id);
@@ -667,11 +747,14 @@ export default function App() {
               onStartQuickSetup={handleStartQuickSetup}
               onUpsertProfile={upsertProfile}
               onUpdateProfile={(id, updates) => {
-                updateProfile(id, updates);
-                syncProfile(id, updates);
+                updateProfileEverywhere(id, updates);
               }}
               onDeleteProfile={async (profileId) => {
                 const profile = profiles.find((p) => p.id === profileId);
+                if (profile?.isAccountPlayer) {
+                  setVisibleSyncNotice("Your account player cannot be deleted.");
+                  return;
+                }
                 const ok = await confirmRef.current?.confirm({
                   title: "Delete saved player",
                   message: `Delete "${profile?.name || "this player"}"? They will be removed from your list.`,
@@ -740,6 +823,9 @@ export default function App() {
         accountProfilesCount={profiles.length}
         accountGames={games}
         accountProfiles={profiles}
+        onUpdateProfile={(id, updates) => {
+          updateProfileEverywhere(id, updates);
+        }}
         onImportLocalData={handleImportLocalData}
         onImportBackupFile={handleImportBackupFile}
         onDownloadBackupFile={handleDownloadBackupFile}

@@ -35,6 +35,149 @@
   word-break: break-word;
 }
 
+.authDialog__accountPlayerSection {
+  display: grid;
+  gap: 8px;
+}
+
+.authDialog__accountPlayerTitle {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+}
+
+.authDialog__accountPlayerCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.authDialog__accountPlayerCard--editing {
+  align-items: flex-start;
+}
+
+.authDialog__accountPlayerMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.authDialog__accountPlayerAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
+}
+
+.authDialog__accountPlayerIdentity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  min-width: 0;
+}
+
+.authDialog__accountPlayerName {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.authDialog__accountPlayerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  justify-self: end;
+}
+
+.authDialog__accountPlayerActions--edit {
+  margin-left: 0;
+  justify-self: auto;
+}
+
+.authDialog__accountPlayerAction {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  font-size: 12px;
+}
+
+.authDialog__accountPlayerEditStack {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.authDialog__accountPlayerEditTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.authDialog__accountPlayerInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.authDialog__accountPlayerSwatches {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+}
+
+.authDialog__accountPlayerSwatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    border-color 120ms ease;
+}
+
+.authDialog__accountPlayerSwatch:hover {
+  transform: translateY(-1px);
+}
+
+.authDialog__accountPlayerSwatch--selected {
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 0 2px rgba(216, 255, 79, 0.28),
+    0 8px 20px rgba(0, 0, 0, 0.25);
+  transform: scale(1.04);
+}
+
 .authDialog__switch {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -336,6 +479,22 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.authDialog__forgotPassword {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+  padding: 0;
+}
+
+.authDialog__forgotPassword:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .authDialog__text {

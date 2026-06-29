@@ -12,6 +12,7 @@ export type PlayerProfile = {
   id: string;
   name: string;
   avatarColor: string;
+  isAccountPlayer?: boolean;
   createdAt: number;
   updatedAt: number;
 };
