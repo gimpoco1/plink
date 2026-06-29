@@ -44,6 +44,7 @@ import {
   AVATAR_COLORS,
   HOME_TAB_STORAGE_KEY,
 } from "./constants";
+import { CircleUser } from "lucide-react";
 
 export default function App() {
   const reduceMotion = useReducedMotion();
@@ -407,7 +408,11 @@ export default function App() {
 
     const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStartX;
     const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStartY;
-    if (view === "history" && deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (
+      view === "history" &&
+      deltaX > 60 &&
+      Math.abs(deltaX) > Math.abs(deltaY)
+    ) {
       setView("game");
     } else if (
       view === "game" &&
@@ -541,11 +546,17 @@ export default function App() {
                 ? "Loading..."
                 : authEnabled
                   ? session
-                    ? "Account"
+                    ? undefined
                     : "Sign in"
                   : "Local only"
               : undefined
           }
+          authIcon={
+            view === "home" && authEnabled && !authLoading && session ? (
+              <CircleUser size={26} strokeWidth={2.3} aria-hidden="true" />
+            ) : undefined
+          }
+          authAriaLabel={session ? "Account" : "Sign in"}
           metaItems={
             view === "history" && currentGame
               ? [{ label: gameDisplayName.title, tone: "muted" }]
@@ -594,7 +605,8 @@ export default function App() {
       </motion.div>
 
       <AnimatePresence mode="wait" initial={false}>
-        {isResolvingInitialGameView ? null : view === "history" && currentGame ? (
+        {isResolvingInitialGameView ? null : view === "history" &&
+          currentGame ? (
           <motion.div
             className="appView"
             key={`view-history-${currentGame.id}`}
@@ -624,7 +636,9 @@ export default function App() {
               onDeleteProfile={async (profileId) => {
                 const profile = profiles.find((p) => p.id === profileId);
                 if (profile?.isAccountPlayer) {
-                  setVisibleSyncNotice("Your account player cannot be deleted.");
+                  setVisibleSyncNotice(
+                    "Your account player cannot be deleted.",
+                  );
                   return;
                 }
                 const label = profile ? profile.name : "this player";
@@ -752,7 +766,9 @@ export default function App() {
               onDeleteProfile={async (profileId) => {
                 const profile = profiles.find((p) => p.id === profileId);
                 if (profile?.isAccountPlayer) {
-                  setVisibleSyncNotice("Your account player cannot be deleted.");
+                  setVisibleSyncNotice(
+                    "Your account player cannot be deleted.",
+                  );
                   return;
                 }
                 const ok = await confirmRef.current?.confirm({

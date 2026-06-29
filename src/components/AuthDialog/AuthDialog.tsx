@@ -279,10 +279,12 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
 
       try {
         const redirectTo = `${window.location.origin}${window.location.pathname}`;
-        const { error: resetError } =
-          await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+          trimmedEmail,
+          {
             redirectTo,
-          });
+          },
+        );
         if (resetError) throw resetError;
         setNotice("Check your email for a password reset link.");
       } catch (err) {
@@ -337,14 +339,14 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setError(null);
       setNotice(null);
       try {
-        const { error: updateError } = await supabase?.auth.updateUser({
+        const { error: updateError } = (await supabase?.auth.updateUser({
           data: {
             name,
             full_name: name,
             display_name: name,
             player_name: name,
           },
-        }) ?? { error: null };
+        })) ?? { error: null };
         if (updateError) throw updateError;
         onUpdateProfile(accountPlayer.id, {
           name,
@@ -603,7 +605,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                       )}
                       aria-hidden="true"
                     >
-                      {getInitials(accountDraftName || accountPlayerName || "Player")}
+                      {getInitials(
+                        accountDraftName || accountPlayerName || "Player",
+                      )}
                     </span>
                     {editingAccountPlayer && accountPlayer ? (
                       <div className="authDialog__accountPlayerEditStack">
