@@ -15,6 +15,7 @@ import {
 } from "../utils/text";
 import { SwipeableCard } from "../components/SwipeableCard/SwipeableCard";
 import "./PlayersScreen.css";
+import { Check, Pencil, Trash2, Undo2 } from "lucide-react";
 
 type PlayersScreenProps = {
   games: Game[];
@@ -197,15 +198,11 @@ export function PlayersScreen({
                         }}
                         aria-label={`Delete player ${profile.name}`}
                       >
-                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path
-                            d="M9 3h6m-8 4h10m-9 0 .7 13h6.6L16 7"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                        <Trash2
+                          size={20}
+                          strokeWidth={2.2}
+                          aria-hidden="true"
+                        />
                         Delete
                       </button>
                     )}
@@ -268,7 +265,11 @@ export function PlayersScreen({
                                   aria-label={`Undo changes for ${profile.name}`}
                                   onClick={() => undoEdit()}
                                 >
-                                  <img src="/undo-icon.png" alt="Undo" />
+                                  <Undo2
+                                    size={18}
+                                    strokeWidth={2.2}
+                                    aria-hidden="true"
+                                  />
                                 </button>
                               ) : null}
 
@@ -278,19 +279,11 @@ export function PlayersScreen({
                                 aria-label={`Finish editing ${profile.name}`}
                                 onClick={() => finishRename(profile.id)}
                               >
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  fill="none"
+                                <Check
+                                  size={18}
+                                  strokeWidth={2.3}
                                   aria-hidden="true"
-                                >
-                                  <path
-                                    d="M5 13l4 4L19 7"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
+                                />
                               </button>
                             </div>
                           ) : (
@@ -300,19 +293,11 @@ export function PlayersScreen({
                               aria-label={`Edit ${profile.name}`}
                               onClick={() => startEditing(profile)}
                             >
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
+                              <Pencil
+                                size={18}
+                                strokeWidth={2.3}
                                 aria-hidden="true"
-                              >
-                                <path
-                                  d="M4 20h4l9.5-9.5a2.1 2.1 0 0 0-4-4L4 16v4Z"
-                                  stroke="currentColor"
-                                  strokeWidth="1.8"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                              />
                             </button>
                           )}
                         </div>

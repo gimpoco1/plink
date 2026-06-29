@@ -10,6 +10,8 @@ type Props = {
   showActionMenu?: boolean;
   primaryActionLabel?: string;
   authLabel?: string;
+  authIcon?: React.ReactNode;
+  authAriaLabel?: string;
   metaItems?: Array<{ label: string; tone?: "accent" | "muted" }>;
   onBack?: () => void;
   onLogoClick?: () => void;
@@ -31,6 +33,8 @@ export function TopBar({
   showActionMenu = false,
   primaryActionLabel,
   authLabel,
+  authIcon,
+  authAriaLabel,
   metaItems,
   onBack,
   onLogoClick,
@@ -108,7 +112,7 @@ export function TopBar({
             aria-label="Go to games"
           >
             <span className="logo__mark" aria-hidden="true">
-              <img src="/icon-transparent.png" alt="" className="logo__img" />
+              <img src="/favicon.png" alt="" className="logo__img" />
             </span>
             <span className="logo__text">Plink</span>
           </button>
@@ -145,9 +149,14 @@ export function TopBar({
       </div>
 
       <div className="topbar__actions">
-        {authLabel && onOpenAuth ? (
-          <button className="topbarAuth" type="button" onClick={onOpenAuth}>
-            {authLabel}
+        {(authLabel || authIcon) && onOpenAuth ? (
+          <button
+            className={`topbarAuth${authIcon ? " topbarAuth--icon" : " topbarAuth--text"}`}
+            type="button"
+            aria-label={authAriaLabel ?? authLabel ?? "Account"}
+            onClick={onOpenAuth}
+          >
+            {authIcon ?? authLabel}
           </button>
         ) : null}
         {showActionMenu ? (

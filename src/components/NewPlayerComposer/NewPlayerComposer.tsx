@@ -65,7 +65,7 @@ export function NewPlayerComposer({
             <input
               className="input input--sm newPlayerComposer__input"
               autoFocus
-              placeholder="e.g. Gia"
+              placeholder="e.g. John"
               value={name}
               aria-invalid={!!validationMessage}
               onChange={(e) => onNameChange(e.target.value)}

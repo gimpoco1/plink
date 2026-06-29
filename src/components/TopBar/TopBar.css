@@ -36,8 +36,8 @@
 }
 
 .topbarAuth {
-  height: 42px;
-  padding: 0 14px;
+  height: 50px;
+  padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.05);
@@ -50,6 +50,41 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.topbarAuth--icon {
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+}
+
+.topbarAuth--text {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 1;
+}
+.topbarAuth:hover {
+  transform: translateY(-1px);
+}
+
+.topbarAuth--text:hover {
+  background: var(--accent);
+  filter: brightness(1.05);
+}
+.topbarAuth svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .topbarAuth:hover {
@@ -209,10 +244,6 @@
   }
   .topbar__actions {
     gap: 8px;
-  }
-  .logo__mark {
-    width: 29px;
-    height: 36px;
   }
   .logo__text {
     font-size: 22px;

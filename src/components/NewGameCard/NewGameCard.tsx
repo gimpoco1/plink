@@ -6,7 +6,7 @@ import { avatarStyleFor } from "../../utils/color";
 import { formatAccountPlayerName, getInitials } from "../../utils/text";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import "./NewGameCard.css";
-
+import { ArrowDownUp, Timer, Gamepad2, Trophy, Users, Dices, Target } from "lucide-react";
 type StagedPlayer = {
   name: string;
   avatarColor: string;
@@ -446,7 +446,9 @@ export function NewGameCard({
                 transition={sectionTransition}
               >
                 <label className="field newSessionNameField">
-                  <span className="field__label">Game name</span>
+                  <SectionLabel icon={<Dices size={16} strokeWidth={2.4} />}>
+                    Game name
+                  </SectionLabel>{" "}
                   <input
                     className="input input--featured"
                     value={name}
@@ -457,7 +459,9 @@ export function NewGameCard({
                 </label>
                 <div className="targetControl">
                   <label className="targetControl__head">
-                    <span className="targetControl__label">Target</span>
+                    <SectionLabel icon={<Target size={16} strokeWidth={2.4} />}>
+                      Target
+                    </SectionLabel>{" "}
                     <input
                       className="targetControl__value"
                       value={target}
@@ -495,7 +499,9 @@ export function NewGameCard({
                 transition={sectionTransition}
               >
                 <div className="newSessionPlayers__head">
-                  <div className="field__label">Players</div>
+                  <SectionLabel icon={<Users size={16} strokeWidth={2.4} />}>
+                    Players
+                  </SectionLabel>{" "}
                   <span className="newSessionPlayers__count">
                     {selectedPlayers.length}
                   </span>
@@ -614,14 +620,14 @@ export function NewGameCard({
                 transition={sectionTransition}
               >
                 <ModeButton
-                  icon="↕"
+                  icon={<ArrowDownUp size={22} strokeWidth={2.3} />}
                   title="Reverse scoring"
                   description="Lowest score wins the round."
                   active={isLowScoreWins}
                   onClick={() => setIsLowScoreWins((value) => !value)}
                 />
                 <ModeButton
-                  icon="◷"
+                  icon={<Timer size={22} strokeWidth={2.3} />}
                   title="Timer"
                   description={
                     timerEnabled
@@ -729,6 +735,23 @@ export function NewGameCard({
   );
 }
 
+function SectionLabel({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="sectionLabel">
+      <span className="sectionLabel__icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span>{children}</span>
+    </span>
+  );
+}
+
 function ModeButton({
   icon,
   title,
@@ -736,7 +759,7 @@ function ModeButton({
   active,
   onClick,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   description: string;
   active: boolean;

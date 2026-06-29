@@ -289,22 +289,22 @@
 }
 
 .targetControl__head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .targetControl__label {
+  min-width: 0;
   color: rgba(17, 24, 10, 0.88);
   font-size: 12px;
   font-weight: 800;
   text-transform: none;
   letter-spacing: 0.02em;
 }
-
 .targetControl__value {
   width: 64px;
   height: 40px;
@@ -834,7 +834,7 @@
 
 @media (max-width: 420px) {
   .newSessionPrimary {
-    grid-template-columns: minmax(0, 1.45fr) minmax(112px, 0.8fr);
+    grid-template-columns: minmax(0, 1.25fr) minmax(132px, 0.85fr);
     gap: 8px;
   }
   .newSessionHeader {
@@ -865,11 +865,68 @@
   .targetControl__label {
     font-size: 12px;
   }
-  .targetControl__value {
-    width: 46px;
-    height: 34px;
-    min-width: 46px;
-    flex-basis: 46px;
-    font-size: 21px;
+  .targetControl {
+    padding: 9px;
   }
+
+  .targetControl__value {
+    width: 3.4ch;
+    min-width: 3.4ch;
+    max-width: 3.4ch;
+    text-align: center;
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .targetControl__label .sectionLabel > span:last-child {
+    display: none;
+  }
+
+  .newSessionPrimary {
+    grid-template-columns: minmax(0, 1.2fr) minmax(104px, 0.75fr);
+  }
+}
+
+.modeCard__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeCard__icon svg {
+  display: block;
+}
+
+.targetControl__label .sectionLabel {
+  min-width: 0;
+  max-width: 100%;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.targetControl__label .sectionLabel > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sectionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #11180f;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.sectionLabel__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.sectionLabel__icon svg {
+  display: block;
+  flex-shrink: 0;
 }
