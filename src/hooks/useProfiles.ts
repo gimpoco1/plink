@@ -20,7 +20,7 @@ function getSyncErrorMessage(error: unknown) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message) return message;
   }
-  return "Unknown database error";
+  return "Unknown sync error";
 }
 
 function mergeProfilesById(
@@ -51,7 +51,7 @@ function shouldKeepLocalProfiles(
   );
   return localProfiles.some((localProfile) => {
     const remoteProfile = remoteById.get(localProfile.id);
-    return !remoteProfile || remoteProfile.updatedAt < localProfile.updatedAt;
+    return !!remoteProfile && remoteProfile.updatedAt < localProfile.updatedAt;
   });
 }
 
@@ -95,7 +95,7 @@ export function useProfiles(session: Session | null) {
         console.error("Failed to load profiles from Supabase", error);
         setProfiles([]);
         setRemoteUserId(null);
-        setSyncNotice(`Could not load saved players from the database: ${getSyncErrorMessage(error)}`);
+        setSyncNotice(`Could not load saved players: ${getSyncErrorMessage(error)}`);
         setRemoteReady(true);
       });
 
@@ -139,7 +139,7 @@ export function useProfiles(session: Session | null) {
                 : `${removed.length} saved players were removed from your account.`,
             );
           } else if (changed.length > 0) {
-            setSyncNotice("Your saved players were updated from the database.");
+            setSyncNotice("Your saved players were updated.");
           }
           remoteSignatureRef.current = remoteSignature;
           return remoteProfiles;
@@ -202,7 +202,7 @@ export function useProfiles(session: Session | null) {
       })
       .catch((error) => {
         console.error("Failed to save profiles to Supabase", error);
-        setSyncNotice(`Could not save players to the database: ${getSyncErrorMessage(error)}`);
+        setSyncNotice(`Could not save players: ${getSyncErrorMessage(error)}`);
       });
   }, [profiles, remoteReady, remoteUserId, session]);
 
