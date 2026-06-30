@@ -77,7 +77,6 @@ function getGameImportSignature(game: Game) {
       score: player.score,
       createdAt: player.createdAt,
       reachedAt: player.reachedAt,
-      avatarColor: player.avatarColor,
     })),
   });
 }

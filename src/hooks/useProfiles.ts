@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { PlayerProfile } from "../types";
+import type { PlayerProfile, ToastState } from "../types";
 import { supabase } from "../lib/supabase";
 import { loadProfiles, saveProfiles } from "../storage/profilesStorage";
 import { loadRemoteProfiles, saveRemoteProfiles } from "../storage/remoteStorage";
@@ -62,7 +62,7 @@ export function useProfiles(session: Session | null) {
   );
   const [remoteReady, setRemoteReady] = useState(!session);
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
-  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
   const remoteSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -96,7 +96,10 @@ export function useProfiles(session: Session | null) {
         console.error("Failed to load profiles from Supabase", error);
         setProfiles([]);
         setRemoteUserId(null);
-        setSyncNotice(`Could not load saved players: ${getSyncErrorMessage(error)}`);
+        setSyncNotice({
+          message: `Could not load saved players: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
         setRemoteReady(true);
       });
 
@@ -115,11 +118,22 @@ export function useProfiles(session: Session | null) {
         const remoteProfiles = await loadRemoteProfiles(activeUserId);
         if (!alive) return;
         setProfiles((previousProfiles) => {
+          const remoteSignature = getProfileSyncSignature(remoteProfiles);
+          const previousSignature = getProfileSyncSignature(previousProfiles);
+          const lastSyncedSignature = remoteSignatureRef.current;
+
+          if (
+            lastSyncedSignature &&
+            previousSignature !== lastSyncedSignature &&
+            remoteSignature === lastSyncedSignature
+          ) {
+            return previousProfiles;
+          }
+
           if (shouldKeepLocalProfiles(previousProfiles, remoteProfiles)) {
             return previousProfiles;
           }
-          const remoteSignature = getProfileSyncSignature(remoteProfiles);
-          const previousSignature = getProfileSyncSignature(previousProfiles);
+
           if (remoteSignature === previousSignature) {
             remoteSignatureRef.current = remoteSignature;
             return previousProfiles;
@@ -136,12 +150,19 @@ export function useProfiles(session: Session | null) {
           });
           if (removed.length > 0) {
             setSyncNotice(
-              removed.length === 1
-                ? `"${removed[0].name}" was removed from your saved players.`
-                : `${removed.length} saved players were removed from your account.`,
+              {
+                message:
+                  removed.length === 1
+                    ? `"${removed[0].name}" was removed from your saved players.`
+                    : `${removed.length} saved players were removed from your account.`,
+                tone: "default",
+              },
             );
           } else if (changed.length > 0) {
-            setSyncNotice("Your saved players were updated.");
+            setSyncNotice({
+              message: "Your saved players were updated.",
+              tone: "default",
+            });
           }
           remoteSignatureRef.current = remoteSignature;
           return remoteProfiles;
@@ -204,7 +225,10 @@ export function useProfiles(session: Session | null) {
       })
       .catch((error) => {
         console.error("Failed to save profiles to Supabase", error);
-        setSyncNotice(`Could not save players: ${getSyncErrorMessage(error)}`);
+        setSyncNotice({
+          message: `Could not save players: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
       });
   }, [profiles, remoteReady, remoteUserId, userId]);
 
@@ -306,9 +330,19 @@ export function useProfiles(session: Session | null) {
   }
 
   function importProfiles(incomingProfiles: PlayerProfile[]) {
+    const existingProfilesById = new Map(
+      profiles.map((profile) => [profile.id, profile]),
+    );
+    const changedCount = incomingProfiles.reduce((count, incomingProfile) => {
+      const existingProfile = existingProfilesById.get(incomingProfile.id);
+      if (!existingProfile) return count + 1;
+      return incomingProfile.updatedAt > existingProfile.updatedAt
+        ? count + 1
+        : count;
+    }, 0);
     const mergedProfiles = mergeProfilesById(profiles, incomingProfiles);
     setProfiles(mergedProfiles);
-    return mergedProfiles.length - profiles.length;
+    return changedCount;
   }
 
 

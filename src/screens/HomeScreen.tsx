@@ -5,6 +5,7 @@ import {
   type NewGameInput,
 } from "../components/NewGameCard/NewGameCard";
 import { HomeGuestPreview } from "../components/HomeGuestPreview/HomeGuestPreview";
+import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
 import { HOME_NEW_GAME_OPEN_KEY } from "../constants";
 import { avatarStyleFor } from "../utils/color";
 import { getGameDisplayName } from "../utils/text";
@@ -28,11 +29,15 @@ type HomeScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
   isAuthenticated: boolean;
+  showLocalSessionsHint: boolean;
+  pendingLocalSessionsCount: number;
   isCreating: boolean;
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
   onCreatingChange: (creating: boolean) => void;
   onOpenAuth: () => void;
+  onOpenLocalImport: () => void;
+  onDismissLocalSessionsHint: () => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   onStartQuickSetup: (
     input: NewGameInput,
@@ -49,11 +54,15 @@ export function HomeScreen({
   games,
   profiles,
   isAuthenticated,
+  showLocalSessionsHint,
+  pendingLocalSessionsCount,
   isCreating,
   presetDraft,
   presetDraftToken,
   onCreatingChange,
   onOpenAuth,
+  onOpenLocalImport,
+  onDismissLocalSessionsHint,
   onCreate,
   onStartQuickSetup,
   onUpsertProfile,
@@ -72,10 +81,8 @@ export function HomeScreen({
     }
   });
   const newGameCardWrapRef = useRef<HTMLDivElement | null>(null);
-  const defaultOpen =
-    isAuthenticated && games.length === 0 ? true : false;
-  const showForm =
-    isCreating || (persistedNewGameOpen ?? defaultOpen);
+  const defaultOpen = isAuthenticated && games.length === 0 ? true : false;
+  const showForm = isCreating || (persistedNewGameOpen ?? defaultOpen);
 
   useEffect(() => {
     try {
@@ -292,6 +299,14 @@ export function HomeScreen({
   return (
     <div className="tabContent tabContent--home">
       {!isAuthenticated ? <HomeGuestPreview onOpenAuth={onOpenAuth} /> : null}
+      {showLocalSessionsHint ? (
+        <LocalSessionsHint
+          className="homeLocalSessionsHint"
+          count={pendingLocalSessionsCount}
+          onDismiss={onDismissLocalSessionsHint}
+          onAdd={onOpenLocalImport}
+        />
+      ) : null}
 
       <section
         className={`homeHero${showForm ? " homeHero--creating" : ""}${

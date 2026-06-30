@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Game } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
+import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
 import { findWinner } from "../utils/ranking";
 import { getGameDisplayName } from "../utils/text";
 import "../components/GameRowCard/GameRowCard.css";
@@ -8,6 +9,10 @@ import "./SessionsScreen.css";
 
 type SessionsScreenProps = {
   games: Game[];
+  showLocalSessionsHint: boolean;
+  pendingLocalSessionsCount: number;
+  onDismissLocalSessionsHint: () => void;
+  onOpenAuth: () => void;
   onEnter: (gameId: string) => void;
   onDuplicate: (gameId: string) => void;
   onRename: (gameId: string) => void;
@@ -16,6 +21,10 @@ type SessionsScreenProps = {
 
 export function SessionsScreen({
   games,
+  showLocalSessionsHint,
+  pendingLocalSessionsCount,
+  onDismissLocalSessionsHint,
+  onOpenAuth,
   onEnter,
   onDuplicate,
   onRename,
@@ -48,6 +57,14 @@ export function SessionsScreen({
 
   return (
     <div className="tabContent tabContent--sessions">
+      {showLocalSessionsHint ? (
+        <LocalSessionsHint
+          className="signedInHint"
+          count={pendingLocalSessionsCount}
+          onDismiss={onDismissLocalSessionsHint}
+          onAdd={onOpenAuth}
+        />
+      ) : null}
       <ScreenHeader title="Sessions" subtitle="Reopen recent rounds and keep your history organized." />
       {games.length > 0 ? (
         <section className="homeList" aria-label="Game history">

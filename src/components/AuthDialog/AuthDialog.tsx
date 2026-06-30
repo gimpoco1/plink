@@ -1,10 +1,25 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { Session } from "@supabase/supabase-js";
+import {
+  ChevronDown,
+  Download,
+  FileUp,
+  LogOut,
+  Pencil,
+  Plus,
+} from "lucide-react";
 import "./AuthDialog.css";
 import { AVATAR_COLORS } from "../../constants";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
 import type { BackupSelection } from "../../storage/backupFile";
-import type { Game, PlayerProfile } from "../../types";
+import type { Game, PlayerProfile, ToastState, ToastTone } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
 import {
   formatAccountPlayerName,
@@ -14,6 +29,7 @@ import {
 
 export type AuthDialogHandle = {
   open: () => void;
+  openLocalImport: () => void;
   openPasswordReset: () => void;
   close: () => void;
 };
@@ -74,6 +90,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
   ) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const backupInputRef = useRef<HTMLInputElement | null>(null);
+    const deviceImportRef = useRef<HTMLDivElement | null>(null);
     const [mode, setMode] = useState<"signin" | "signup">("signin");
     const [recoveryMode, setRecoveryMode] = useState(false);
     const [accountName, setAccountName] = useState("");
@@ -85,11 +102,13 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [notice, setNotice] = useState<string | null>(null);
+    const [transferToast, setTransferToast] = useState<ToastState | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     const [showTransferTools, setShowTransferTools] = useState(false);
     const [showDeviceImport, setShowDeviceImport] = useState(false);
     const [showAccountDetails, setShowAccountDetails] = useState(false);
+    const [localSessionSearch, setLocalSessionSearch] = useState("");
     const [includeGames, setIncludeGames] = useState(true);
     const [includeProfiles, setIncludeProfiles] = useState(true);
     const [selectedLocalGameIds, setSelectedLocalGameIds] = useState<string[]>(
@@ -101,6 +120,27 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const hasLocalData = localGamesCount > 0 || localProfilesCount > 0;
     const hasSelectedLocalData =
       selectedLocalGameIds.length > 0 || selectedLocalProfileIds.length > 0;
+    const normalizedLocalSessionSearch = localSessionSearch
+      .trim()
+      .toLowerCase();
+    const filteredLocalGames = useMemo(() => {
+      if (!normalizedLocalSessionSearch) return localGames;
+      return localGames.filter((game) => {
+        const searchable = [
+          game.name,
+          ...game.players.map((player) => player.name),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return searchable.includes(normalizedLocalSessionSearch);
+      });
+    }, [localGames, normalizedLocalSessionSearch]);
+    const hasFilteredLocalGames = filteredLocalGames.length > 0;
+    const allFilteredLocalGamesSelected =
+      hasFilteredLocalGames &&
+      filteredLocalGames.every((game) =>
+        selectedLocalGameIds.includes(game.id),
+      );
     const transferSelection: BackupSelection = {
       games: includeGames,
       profiles: includeProfiles,
@@ -111,34 +151,65 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const accountPlayerColor =
       accountPlayer?.avatarColor ?? AVATAR_COLORS[0]?.value ?? "#64748b";
 
+    function resetDialogState() {
+      setNotice(null);
+      setTransferToast(null);
+      setError(null);
+      setRecoveryMode(false);
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setShowTransferTools(false);
+      setShowDeviceImport(false);
+      setShowAccountDetails(false);
+      setEditingAccountPlayer(false);
+      setLocalSessionSearch("");
+      setAccountDraftName(accountPlayerName);
+      setAccountDraftColor(accountPlayerColor);
+      setSelectedLocalGameIds(localGames.map((game) => game.id));
+      setSelectedLocalProfileIds(localProfiles.map((profile) => profile.id));
+    }
+
+    function showDialog() {
+      if (!dialogRef.current?.open) {
+        onOpenChange?.(true);
+        dialogRef.current?.showModal();
+      }
+    }
+
+    function scrollToLocalImportSection() {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const dialog = dialogRef.current;
+          const target = deviceImportRef.current;
+          if (!dialog || !target) return;
+          const offset = target.offsetTop - 104;
+          dialog.scrollTo({
+            top: Math.max(0, offset),
+            behavior: "smooth",
+          });
+        });
+      });
+    }
+
     useImperativeHandle(
       ref,
       () => ({
         open() {
-          setNotice(null);
-          setError(null);
-          setRecoveryMode(false);
-          setNewPassword("");
-          setConfirmNewPassword("");
-          setShowTransferTools(false);
-          setShowDeviceImport(false);
-          setShowAccountDetails(false);
-          setEditingAccountPlayer(false);
-          setAccountDraftName(accountPlayerName);
-          setAccountDraftColor(accountPlayerColor);
-          setSelectedLocalGameIds(localGames.map((game) => game.id));
-          setSelectedLocalProfileIds(
-            localProfiles.map((profile) => profile.id),
-          );
-          if (!dialogRef.current?.open) {
-            onOpenChange?.(true);
-            dialogRef.current?.showModal();
-          }
+          resetDialogState();
+          showDialog();
+        },
+        openLocalImport() {
+          resetDialogState();
+          setShowTransferTools(true);
+          setShowDeviceImport(true);
+          showDialog();
+          scrollToLocalImportSection();
         },
         openPasswordReset() {
           setMode("signin");
           setRecoveryMode(true);
           setNotice("Enter a new password for your account.");
+          setTransferToast(null);
           setError(null);
           setPassword("");
           setNewPassword("");
@@ -147,10 +218,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           setShowDeviceImport(false);
           setShowAccountDetails(false);
           setEditingAccountPlayer(false);
-          if (!dialogRef.current?.open) {
-            onOpenChange?.(true);
-            dialogRef.current?.showModal();
-          }
+          showDialog();
         },
         close() {
           if (dialogRef.current?.open) {
@@ -168,12 +236,49 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       ],
     );
 
+    useEffect(() => {
+      if (!transferToast) return;
+      const timeout = window.setTimeout(() => setTransferToast(null), 5200);
+      return () => window.clearTimeout(timeout);
+    }, [transferToast]);
+
+    useEffect(() => {
+      const visibleGameIds = new Set(localGames.map((game) => game.id));
+      setSelectedLocalGameIds((current) =>
+        current.filter((id) => visibleGameIds.has(id)),
+      );
+    }, [localGames]);
+
+    useEffect(() => {
+      const visibleProfileIds = new Set(
+        localProfiles.map((profile) => profile.id),
+      );
+      setSelectedLocalProfileIds((current) =>
+        current.filter((id) => visibleProfileIds.has(id)),
+      );
+    }, [localProfiles]);
+
     function toggleLocalGame(gameId: string) {
       setSelectedLocalGameIds((current) =>
         current.includes(gameId)
           ? current.filter((id) => id !== gameId)
           : [...current, gameId],
       );
+    }
+
+    function toggleFilteredLocalGames() {
+      const visibleIds = filteredLocalGames.map((game) => game.id);
+      if (visibleIds.length === 0) return;
+
+      setSelectedLocalGameIds((current) => {
+        const allVisibleSelected = visibleIds.every((id) =>
+          current.includes(id),
+        );
+        if (allVisibleSelected) {
+          return current.filter((id) => !visibleIds.includes(id));
+        }
+        return Array.from(new Set([...current, ...visibleIds]));
+      });
     }
 
     function toggleLocalProfile(profileId: string) {
@@ -215,6 +320,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setTransferToast(null);
 
       try {
         if (mode === "signin") {
@@ -276,6 +382,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setTransferToast(null);
 
       try {
         const redirectTo = `${window.location.origin}${window.location.pathname}`;
@@ -313,6 +420,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setTransferToast(null);
 
       try {
         const { error: updateError } = await supabase.auth.updateUser({
@@ -338,6 +446,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setTransferToast(null);
       try {
         const { error: updateError } = (await supabase?.auth.updateUser({
           data: {
@@ -393,6 +502,11 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       ].filter(Boolean);
     }
 
+    function showTransferToast(message: string, tone: ToastTone = "default") {
+      setNotice(null);
+      setTransferToast({ message, tone });
+    }
+
     async function runImportFromDevice() {
       if (!hasSelectedLocalData) {
         setError("Select at least one session or player to import.");
@@ -404,6 +518,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setTransferToast(null);
 
       try {
         const result = await onImportLocalData({
@@ -413,11 +528,14 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         const parts = formatTransferParts(result);
 
         if (parts.length === 0) {
-          setNotice("Nothing new to import from this device.");
+          showTransferToast("Nothing new to import from this device.");
           return;
         }
 
-        setNotice(`Imported ${parts.join(" and ")} to your account.`);
+        showTransferToast(
+          `Imported ${parts.join(" and ")} to your account.`,
+          "success",
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Import failed.");
       } finally {
@@ -435,19 +553,23 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setTransferToast(null);
 
       try {
         const result = await onImportBackupFile(file, transferSelection);
         const parts = formatTransferParts(result);
 
         if (parts.length === 0) {
-          setNotice(
+          showTransferToast(
             "No new sessions or players were found in that backup file.",
           );
           return;
         }
 
-        setNotice(`Imported ${parts.join(" and ")} from backup file.`);
+        showTransferToast(
+          `Imported ${parts.join(" and ")} from backup file.`,
+          "success",
+        );
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Import from file failed.",
@@ -468,14 +590,16 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setTransferToast(null);
 
       try {
         const result = await onDownloadBackupFile(transferSelection);
         const parts = formatTransferParts(result);
-        setNotice(
+        showTransferToast(
           parts.length > 0
             ? `Downloaded backup file with ${parts.join(" and ")}.`
             : "Downloaded an empty backup file.",
+          "success",
         );
       } catch (err) {
         setError(
@@ -493,6 +617,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         onClose={() => {
           onOpenChange?.(false);
           setNotice(null);
+          setTransferToast(null);
           setError(null);
           setRecoveryMode(false);
         }}
@@ -517,6 +642,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
               ×
             </button>
           </div>
+          {transferToast && session && !recoveryMode ? (
+            <div
+              className={`authDialog__toast authDialog__toast--${transferToast.tone}`}
+              role="status"
+              aria-live="polite"
+            >
+              {transferToast.message}
+            </div>
+          ) : null}
 
           {!hasSupabaseConfig ? (
             <div className="authDialog__panel">
@@ -577,7 +711,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   aria-label="Signed in account"
                 >
                   <span className="authDialog__accountIdentityLabel">
-                    Signed in as
+                    Email
                   </span>
                   <span className="authDialog__accountEmail">
                     {session.user.email}
@@ -586,7 +720,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
               ) : null}
               <section className="authDialog__accountPlayerSection">
                 <div className="authDialog__accountPlayerTitle">
-                  Account player
+                  Your player profile
                 </div>
                 <article
                   className={`authDialog__accountPlayerCard${
@@ -704,19 +838,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               aria-label="Edit account player"
                               title="Edit"
                             >
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  d="M4 20h4.2L18.6 9.6a1.6 1.6 0 0 0 0-2.2l-2-2a1.6 1.6 0 0 0-2.2 0L4 15.8V20Z"
-                                  stroke="currentColor"
-                                  strokeWidth="1.9"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                              <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
                             </button>
                           </div>
                         ) : null}
@@ -741,27 +863,18 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                       className={`authDialog__storageChevron${showAccountDetails ? " authDialog__storageChevron--open" : ""}`}
                       aria-hidden="true"
                     >
-                      <svg
-                        viewBox="0 0 20 20"
-                        focusable="false"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M5.5 7.5 10 12.5l4.5-5"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      <ChevronDown size={18} strokeWidth={2.2} />
                     </span>
                   </button>
                   <div className="authDialog__storageStats">
-                    <strong>{accountGamesCount}</strong>
-                    <span>sessions</span>
-                    <strong>{accountProfilesCount}</strong>
-                    <span>players</span>
+                    <span>
+                      <strong>{accountGamesCount}</strong>
+                      <span>sessions</span>
+                    </span>
+                    <span>
+                      <strong>{accountProfilesCount}</strong>
+                      <span>players</span>
+                    </span>
                   </div>
                   {showAccountDetails ? (
                     <div
@@ -847,171 +960,265 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   ) : null}
                 </div>
               </div>
-              <button
-                className="btn btn--ghost btn--wide authDialog__toggleTransfer"
-                type="button"
-                onClick={() => setShowTransferTools((value) => !value)}
-              >
-                {showTransferTools ? "Hide data tools" : "Move or back up data"}
-              </button>
-              {showTransferTools ? (
-                <div className="authDialog__transfer">
-                  <div className="authDialog__transferHead">
-                    <div className="authDialog__label">Data tools</div>
-                    <p className="authDialog__text">
-                      Import guest-mode data from this browser, import from a
-                      backup file, or download a backup.
-                    </p>
-                  </div>
-                  <div className="authDialog__transferBlock">
-                    <div className="authDialog__transferTitle">
-                      Import into account
-                    </div>
-                    <div className="authDialog__transferActions">
-                      <button
-                        className="btn btn--ghost"
-                        type="button"
-                        onClick={() => setShowDeviceImport((value) => !value)}
-                        disabled={busy || !hasLocalData}
-                      >
-                        {showDeviceImport
-                          ? "Hide device items"
-                          : "From guest sessions"}
-                      </button>
-                      <button
-                        className="btn btn--ghost"
-                        type="button"
-                        onClick={() => backupInputRef.current?.click()}
-                        disabled={busy}
-                      >
-                        From backup file
-                      </button>
-                    </div>
-                    {showDeviceImport && hasLocalData ? (
-                      <div className="authDialog__deviceImport">
-                        {localGames.length > 0 ? (
-                          <div className="authDialog__deviceGroup">
-                            <div className="authDialog__deviceGroupTitle">
-                              Guest sessions on this device
-                            </div>
-                            <div className="authDialog__deviceList">
-                              {localGames.map((game) => (
-                                <label
-                                  key={game.id}
-                                  className="authDialog__deviceItem"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedLocalGameIds.includes(
-                                      game.id,
-                                    )}
-                                    onChange={() => toggleLocalGame(game.id)}
-                                  />
-                                  <span>
-                                    <strong>{game.name}</strong>
-                                    <em>{game.players.length} players</em>
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-                        {localProfiles.length > 0 ? (
-                          <div className="authDialog__deviceGroup">
-                            <div className="authDialog__deviceGroupTitle">
-                              Guest players on this device
-                            </div>
-                            <div className="authDialog__deviceList">
-                              {localProfiles.map((profile) => (
-                                <label
-                                  key={profile.id}
-                                  className="authDialog__deviceItem"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedLocalProfileIds.includes(
-                                      profile.id,
-                                    )}
-                                    onChange={() =>
-                                      toggleLocalProfile(profile.id)
-                                    }
-                                  />
-                                  <span>
-                                    <strong>{profile.name}</strong>
-                                    <em>Player profile</em>
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
+              <div className="authDialog__transfer">
+                <button
+                  className="authDialog__transferToggle"
+                  type="button"
+                  onClick={() => setShowTransferTools((value) => !value)}
+                  aria-expanded={showTransferTools}
+                  aria-controls="auth-data-tools"
+                >
+                  <span className="authDialog__transferHead">
+                    <span className="authDialog__label">Data transfer</span>
+                    <span className="authDialog__text">
+                      Add device sessions to this account, restore a backup,
+                      or download a copy.
+                    </span>
+                  </span>
+                  <span
+                    className={`authDialog__transferChevron${showTransferTools ? " authDialog__transferChevron--open" : ""}`}
+                    aria-hidden="true"
+                  >
+                    <ChevronDown size={18} strokeWidth={2.2} />
+                  </span>
+                </button>
+                {showTransferTools ? (
+                  <div
+                    id="auth-data-tools"
+                    className="authDialog__transferBody"
+                  >
+                    <div className="authDialog__transferBlock">
+                      <div className="authDialog__transferTitle">
+                        Add to account
+                      </div>
+                      <p className="authDialog__text">
+                        Choose sessions or players you want saved in this
+                        account.
+                      </p>
+                      <div className="authDialog__transferActions">
                         <button
-                          className="btn btn--ghost"
+                          className="authDialog__deviceToggle"
                           type="button"
-                          onClick={() => void runImportFromDevice()}
-                          disabled={busy || !hasSelectedLocalData}
+                          onClick={() => setShowDeviceImport((value) => !value)}
+                          disabled={busy || !hasLocalData}
+                          aria-expanded={showDeviceImport}
                         >
-                          {busy ? "Working..." : "Import selected items"}
+                          <span>Sessions on this device</span>
+                          <span
+                            className={`authDialog__deviceToggleChevron${showDeviceImport ? " authDialog__deviceToggleChevron--open" : ""}`}
+                            aria-hidden="true"
+                          >
+                            <ChevronDown size={17} strokeWidth={2.2} />
+                          </span>
                         </button>
                       </div>
-                    ) : null}
+                      {showDeviceImport && hasLocalData ? (
+                        <div
+                          ref={deviceImportRef}
+                          className="authDialog__deviceImport"
+                        >
+                          {localGames.length > 0 ? (
+                            <div className="authDialog__deviceGroup">
+                              <div className="authDialog__deviceGroupTitle">
+                                Choose sessions to add
+                              </div>
+                              <div className="authDialog__deviceTools">
+                                <input
+                                  className="input input--compact authDialog__deviceSearch"
+                                  type="search"
+                                  value={localSessionSearch}
+                                  onChange={(event) =>
+                                    setLocalSessionSearch(event.target.value)
+                                  }
+                                  placeholder="Search sessions or players"
+                                  aria-label="Search sessions saved on this device"
+                                />
+                                {filteredLocalGames.length >= 2 ? (
+                                  <label className="authDialog__selectAll">
+                                    <input
+                                      type="checkbox"
+                                      checked={allFilteredLocalGamesSelected}
+                                      onChange={toggleFilteredLocalGames}
+                                      disabled={!hasFilteredLocalGames}
+                                    />
+                                    <span>Select all</span>
+                                  </label>
+                                ) : null}
+                              </div>
+                              <div className="authDialog__deviceList authDialog__deviceList--scroll">
+                                {filteredLocalGames.map((game) => (
+                                  <label
+                                    key={game.id}
+                                    className="authDialog__deviceItem authDialog__deviceItem--session"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedLocalGameIds.includes(
+                                        game.id,
+                                      )}
+                                      onChange={() => toggleLocalGame(game.id)}
+                                    />
+                                    <span className="authDialog__deviceSessionText">
+                                      <span className="authDialog__deviceSessionTitle">
+                                        <strong>{game.name}</strong>
+                                        <span
+                                          className="authDialog__sessionAvatars"
+                                          aria-label={`${game.players.length} player${game.players.length === 1 ? "" : "s"}`}
+                                        >
+                                          {game.players
+                                            .slice(0, 4)
+                                            .map((player) => (
+                                              <span
+                                                key={player.id}
+                                                className="authDialog__sessionAvatar"
+                                                style={avatarStyleFor(
+                                                  player.avatarColor,
+                                                )}
+                                                title={player.name}
+                                              >
+                                                {getInitials(player.name)}
+                                              </span>
+                                            ))}
+                                          {game.players.length > 4 ? (
+                                            <span className="authDialog__sessionAvatar authDialog__sessionAvatar--more">
+                                              +{game.players.length - 4}
+                                            </span>
+                                          ) : null}
+                                        </span>
+                                      </span>
+                                    </span>
+                                  </label>
+                                ))}
+                                {!hasFilteredLocalGames ? (
+                                  <div className="authDialog__deviceEmpty">
+                                    No sessions match your search.
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          ) : null}
+                          {localProfiles.length > 0 ? (
+                            <div className="authDialog__deviceGroup">
+                              <div className="authDialog__deviceGroupTitle">
+                                Players saved on this device
+                              </div>
+                              <div className="authDialog__deviceList">
+                                {localProfiles.map((profile) => (
+                                  <label
+                                    key={profile.id}
+                                    className="authDialog__deviceItem"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedLocalProfileIds.includes(
+                                        profile.id,
+                                      )}
+                                      onChange={() =>
+                                        toggleLocalProfile(profile.id)
+                                      }
+                                    />
+                                    <span>
+                                      <strong>{profile.name}</strong>
+                                      <em>Player profile</em>
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                          <button
+                            className="btn authDialog__actionBtn authDialog__actionBtn--add"
+                            type="button"
+                            onClick={() => void runImportFromDevice()}
+                            disabled={busy || !hasSelectedLocalData}
+                          >
+                            <span className="authDialog__actionIcon" aria-hidden="true">
+                              <Plus size={16} strokeWidth={2.4} />
+                            </span>
+                            <span>{busy ? "Working..." : "Add selected to account"}</span>
+                          </button>
+                        </div>
+                      ) : null}
+                      <div className="authDialog__transferActions">
+                        <button
+                          className="btn btn--ghost authDialog__actionBtn authDialog__actionBtn--file"
+                          type="button"
+                          onClick={() => backupInputRef.current?.click()}
+                          disabled={busy}
+                        >
+                          <span className="authDialog__actionIcon" aria-hidden="true">
+                            <FileUp size={15} strokeWidth={2.1} />
+                          </span>
+                          <span>Restore from backup file</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="authDialog__transferBlock">
+                      <div className="authDialog__transferTitle">
+                        Backup copy
+                      </div>
+                      <p className="authDialog__text">
+                        Download a file you can keep safe or restore later.
+                      </p>
+                      <div className="authDialog__checks">
+                        <label className="authDialog__check">
+                          <input
+                            type="checkbox"
+                            checked={includeGames}
+                            onChange={(e) => setIncludeGames(e.target.checked)}
+                          />
+                          <span>Sessions</span>
+                        </label>
+                        <label className="authDialog__check">
+                          <input
+                            type="checkbox"
+                            checked={includeProfiles}
+                            onChange={(e) =>
+                              setIncludeProfiles(e.target.checked)
+                            }
+                          />
+                          <span>Players</span>
+                        </label>
+                      </div>
+                      <div className="authDialog__transferActions">
+                        <button
+                          className="btn btn--ghost authDialog__actionBtn authDialog__actionBtn--download"
+                          type="button"
+                          onClick={() => void runDownloadBackupFile()}
+                          disabled={busy}
+                        >
+                          <span className="authDialog__actionIcon" aria-hidden="true">
+                            <Download size={15} strokeWidth={2.1} />
+                          </span>
+                          <span>{busy ? "Working..." : "Download backup copy"}</span>
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      ref={backupInputRef}
+                      className="authDialog__fileInput"
+                      type="file"
+                      accept="application/json,.json"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void runImportFromFile(file);
+                      }}
+                    />
                   </div>
-                  <div className="authDialog__transferBlock">
-                    <div className="authDialog__transferTitle">
-                      Backup this account
-                    </div>
-                    <div className="authDialog__checks">
-                      <label className="authDialog__check">
-                        <input
-                          type="checkbox"
-                          checked={includeGames}
-                          onChange={(e) => setIncludeGames(e.target.checked)}
-                        />
-                        <span>Sessions</span>
-                      </label>
-                      <label className="authDialog__check">
-                        <input
-                          type="checkbox"
-                          checked={includeProfiles}
-                          onChange={(e) => setIncludeProfiles(e.target.checked)}
-                        />
-                        <span>Players</span>
-                      </label>
-                    </div>
-                    <div className="authDialog__transferActions">
-                      <button
-                        className="btn btn--ghost"
-                        type="button"
-                        onClick={() => void runDownloadBackupFile()}
-                        disabled={busy}
-                      >
-                        {busy ? "Working..." : "Download backup file"}
-                      </button>
-                    </div>
-                  </div>
-                  <input
-                    ref={backupInputRef}
-                    className="authDialog__fileInput"
-                    type="file"
-                    accept="application/json,.json"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) void runImportFromFile(file);
-                    }}
-                  />
-                </div>
-              ) : null}
+                ) : null}
+              </div>
               {notice ? (
                 <div className="authDialog__notice">{notice}</div>
               ) : null}
               {error ? <div className="authDialog__error">{error}</div> : null}
               <button
-                className="btn btn--primary btn--wide"
+                className="btn btn--primary btn--wide authDialog__signOutBtn"
                 type="button"
                 onClick={signOut}
                 disabled={busy}
               >
-                {busy ? "Signing out..." : "Sign out"}
+                <LogOut size={17} strokeWidth={2.3} aria-hidden="true" />
+                <span>{busy ? "Signing out..." : "Sign out"}</span>
               </button>
             </div>
           ) : (

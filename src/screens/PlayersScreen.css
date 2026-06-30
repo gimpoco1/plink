@@ -2,6 +2,10 @@
   padding: 24px 0;
 }
 
+.profilesHint {
+  margin-bottom: 24px;
+}
+
 .profilesOverview {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
