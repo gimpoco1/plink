@@ -14,9 +14,13 @@ type DashboardScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
   isAuthenticated: boolean;
+  showLocalSessionsHint: boolean;
+  pendingLocalSessionsCount: number;
+  onDismissLocalSessionsHint: () => void;
   activeTab: HomeTab;
   onActiveTabChange: (tab: HomeTab) => void;
   onOpenAuth: () => void;
+  onOpenLocalImport: () => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
@@ -120,6 +124,10 @@ export function DashboardScreen(props: DashboardScreenProps) {
         return (
           <SessionsScreen
             games={props.games}
+            showLocalSessionsHint={props.showLocalSessionsHint}
+            pendingLocalSessionsCount={props.pendingLocalSessionsCount}
+            onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
+            onOpenAuth={props.onOpenLocalImport}
             onEnter={props.onEnter}
             onDuplicate={props.onDuplicate}
             onRename={props.onRename}
@@ -141,9 +149,12 @@ export function DashboardScreen(props: DashboardScreenProps) {
             games={props.games}
             profiles={props.profiles}
             isAuthenticated={props.isAuthenticated}
+            showLocalSessionsHint={props.showLocalSessionsHint}
+            pendingLocalSessionsCount={props.pendingLocalSessionsCount}
+            onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             addingPlayer={isAddingPlayer}
             onAddingPlayerChange={setIsAddingPlayer}
-            onOpenAuth={props.onOpenAuth}
+            onOpenAuth={props.onOpenLocalImport}
             onUpsertProfile={props.onUpsertProfile}
             onUpdateProfile={props.onUpdateProfile}
             onDeleteProfile={props.onDeleteProfile}
@@ -156,11 +167,15 @@ export function DashboardScreen(props: DashboardScreenProps) {
             games={props.games}
             profiles={props.profiles}
             isAuthenticated={props.isAuthenticated}
+            showLocalSessionsHint={props.showLocalSessionsHint}
+            pendingLocalSessionsCount={props.pendingLocalSessionsCount}
             isCreating={isCreating}
             presetDraft={props.presetDraft}
             presetDraftToken={props.presetDraftToken}
             onCreatingChange={setIsCreating}
             onOpenAuth={props.onOpenAuth}
+            onOpenLocalImport={props.onOpenLocalImport}
+            onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             onCreate={props.onCreate}
             onStartQuickSetup={props.onStartQuickSetup}
             onUpsertProfile={props.onUpsertProfile}

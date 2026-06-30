@@ -3,6 +3,7 @@
 }
 
 .authDialog__form {
+  position: relative;
   display: grid;
   gap: 16px;
 }
@@ -15,47 +16,51 @@
 
 .authDialog__accountIdentity {
   display: grid;
-  gap: 4px;
-  padding: 0 2px;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .authDialog__accountIdentityLabel {
-  color: var(--muted);
+  color: var(--accent);
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 900;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .authDialog__accountEmail {
   color: var(--text);
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 850;
   line-height: 1.35;
   word-break: break-word;
 }
 
 .authDialog__accountPlayerSection {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .authDialog__accountPlayerTitle {
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 850;
-  letter-spacing: 0.02em;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .authDialog__accountPlayerCard {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.035);
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .authDialog__accountPlayerCard--editing {
@@ -65,21 +70,21 @@
 .authDialog__accountPlayerMain {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   flex: 1;
 }
 
 .authDialog__accountPlayerAvatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #fff;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 900;
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
 }
@@ -95,7 +100,7 @@
 
 .authDialog__accountPlayerName {
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 850;
   line-height: 1.2;
   min-width: 0;
@@ -118,10 +123,10 @@
 }
 
 .authDialog__accountPlayerAction {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   font-size: 12px;
 }
 
@@ -214,12 +219,13 @@
 
 .authDialog__storageCard {
   display: grid;
-  gap: 8px;
-  padding: 11px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.035);
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid rgba(126, 211, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.022);
   position: relative;
+  margin-bottom: 18px;
 }
 
 .authDialog__storageToggle {
@@ -227,25 +233,27 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 4px 10px;
   width: 100%;
-  padding: 0 36px 0 0;
+  padding: 0;
   text-align: left;
 }
 
 .authDialog__storageChevron {
-  color: var(--text);
-  width: 20px;
-  height: 20px;
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  right: 12px;
-  top: 46px;
-  transform: translateY(-50%) rotate(0deg);
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  transform: rotate(0deg);
   transition: transform 0.2s ease;
 }
 
@@ -255,7 +263,7 @@
 }
 
 .authDialog__storageChevron--open {
-  transform: translateY(-50%) rotate(180deg);
+  transform: rotate(180deg);
 }
 
 .authDialog__storageCard--muted {
@@ -264,28 +272,48 @@
 
 .authDialog__storageStats {
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr;
-  gap: 6px 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   align-items: baseline;
+}
+
+.authDialog__storageStats > span {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .authDialog__storageStats strong {
   color: var(--text);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 850;
+  display: block;
+  line-height: 1;
 }
 
-.authDialog__storageStats span {
-  color: var(--text-dim);
-  font-size: 12px;
+.authDialog__storageStats > span > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .authDialog__storageLabel {
   color: var(--accent);
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-weight: 900;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.authDialog__storageTitle {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
 }
 
 .authDialog__accountDetails {
@@ -347,27 +375,89 @@
 
 .authDialog__transfer {
   display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  gap: 0;
+  padding: 0;
+  border: 1px solid rgba(126, 211, 255, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(126, 211, 255, 0.055), transparent 120px),
+    rgba(255, 255, 255, 0.022);
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+.authDialog__transferToggle {
+  width: 100%;
+  border: 0;
+  background:
+    linear-gradient(180deg, rgba(126, 211, 255, 0.08), transparent 100%),
+    transparent;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 14px;
+  text-align: left;
 }
 
 .authDialog__transferHead {
   display: grid;
   gap: 4px;
+  min-width: 0;
+}
+
+.authDialog__transferChevron {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(216, 255, 79, 0.2);
+  border-radius: 999px;
+  background: rgba(216, 255, 79, 0.075);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.authDialog__transferChevron svg {
+  width: 18px;
+  height: 18px;
+}
+
+.authDialog__transferChevron--open {
+  transform: rotate(180deg);
+  border-color: rgba(216, 255, 79, 0.24);
+  background: rgba(216, 255, 79, 0.08);
+}
+
+.authDialog__transferBody {
+  display: grid;
+  gap: 0;
+  padding: 0 16px 16px;
 }
 
 .authDialog__transferBlock {
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  padding: 16px 0;
+}
+
+.authDialog__transferBlock + .authDialog__transferBlock {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .authDialog__transferTitle {
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 850;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .authDialog__checks {
@@ -379,10 +469,7 @@
 .authDialog__deviceImport {
   display: grid;
   gap: 10px;
-  padding: 10px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 6px;
 }
 
 .authDialog__deviceGroup {
@@ -392,13 +479,50 @@
 
 .authDialog__deviceGroupTitle {
   color: var(--text);
-  font-size: 12px;
-  font-weight: 850;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.authDialog__deviceTools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.authDialog__deviceSearch {
+  min-width: 0;
+  min-height: 42px;
+  font-size: 13px;
+}
+
+.authDialog__selectAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.authDialog__selectAll input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
 }
 
 .authDialog__deviceList {
   display: grid;
-  gap: 6px;
+  gap: 0;
+}
+
+.authDialog__deviceList--scroll {
+  max-height: min(32vh, 260px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 
 .authDialog__deviceItem {
@@ -406,10 +530,17 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 10px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  padding: 9px 0;
   color: var(--text);
+}
+
+.authDialog__deviceItem--session {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.authDialog__deviceItem + .authDialog__deviceItem {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .authDialog__deviceItem input {
@@ -419,7 +550,7 @@
   accent-color: var(--accent);
 }
 
-.authDialog__deviceItem span {
+.authDialog__deviceItem > span {
   min-width: 0;
   display: grid;
   gap: 2px;
@@ -436,6 +567,65 @@
   color: var(--text-dim);
   font-size: 11px;
   font-style: normal;
+}
+
+.authDialog__deviceEmpty {
+  padding: 12px 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.authDialog__deviceSessionText {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.authDialog__deviceItem .authDialog__deviceSessionTitle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.authDialog__deviceItem .authDialog__deviceSessionTitle strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.authDialog__deviceItem .authDialog__sessionAvatars {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  flex: 0 0 auto;
+}
+
+.authDialog__sessionAvatar {
+  width: 26px;
+  height: 26px;
+  border: 2px solid #0f121c;
+  border-radius: 9px;
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
+}
+
+.authDialog__sessionAvatar + .authDialog__sessionAvatar {
+  margin-left: -6px;
+}
+
+.authDialog__sessionAvatar--more {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text);
 }
 
 .authDialog__check {
@@ -459,8 +649,98 @@
   gap: 8px;
 }
 
-.authDialog__toggleTransfer {
+.authDialog__deviceToggle {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.authDialog__deviceToggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.authDialog__deviceToggleChevron {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(216, 255, 79, 0.09);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  transition: transform 0.18s ease;
+}
+
+.authDialog__deviceToggleChevron svg {
+  width: 17px;
+  height: 17px;
+}
+
+.authDialog__deviceToggleChevron--open {
+  transform: rotate(180deg);
+}
+
+.authDialog__actionBtn {
+  gap: 8px;
+  min-height: 44px;
+  font-size: 13px;
+}
+
+.authDialog__actionIcon {
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.authDialog__actionIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.authDialog__actionBtn--add {
+  width: 100%;
+  border-color: rgba(216, 255, 79, 0.32);
+  background: rgba(216, 255, 79, 0.12);
+  color: var(--accent);
+  box-shadow: none;
+}
+
+.authDialog__actionBtn--add:not(:disabled):hover {
+  border-color: rgba(216, 255, 79, 0.48);
+  background: rgba(216, 255, 79, 0.2);
+  color: var(--accent);
+}
+
+.authDialog__actionBtn--file {
+  width: 100%;
+  border-color: rgba(126, 211, 255, 0.28);
+  background: rgba(126, 211, 255, 0.055);
+  color: #dff5ff;
+}
+
+.authDialog__actionBtn--download {
+  width: 100%;
+  border-color: rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+
+.authDialog__signOutBtn {
+  gap: 8px;
 }
 
 .authDialog__fileInput {
@@ -499,9 +779,47 @@
 
 .authDialog__text {
   margin: 0;
-  color: var(--text-dim);
-  font-size: 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 650;
   line-height: 1.45;
+}
+
+.authDialog__toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(24px, calc(env(safe-area-inset-bottom) + 100px));
+  transform: translateX(-50%);
+  z-index: 2100;
+  width: min(420px, calc(100vw - 72px));
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(216, 255, 79, 0.22);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.14), rgba(216, 255, 79, 0.06)),
+    rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(216, 255, 79, 0.08) inset;
+  backdrop-filter: blur(14px);
+}
+
+.authDialog__toast--success {
+  border-color: rgba(74, 222, 128, 0.34);
+  background:
+    linear-gradient(180deg, rgba(34, 197, 94, 0.22), rgba(22, 163, 74, 0.08)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.authDialog__toast--error {
+  border-color: rgba(248, 113, 113, 0.34);
+  background:
+    linear-gradient(180deg, rgba(239, 68, 68, 0.22), rgba(185, 28, 28, 0.08)),
+    rgba(255, 255, 255, 0.04);
 }
 
 .authDialog__notice {
@@ -537,5 +855,10 @@
 
   .authDialog__transferActions {
     flex-direction: column;
+  }
+
+  .authDialog__deviceTools {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 }

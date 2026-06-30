@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Ellipsis, Plus, Undo2 } from "lucide-react";
 import "./TopBar.css";
 
 type Props = {
@@ -87,22 +88,7 @@ export function TopBar({
             onClick={onBack}
             aria-label={backLabel}
           >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M19 19v-6.2c0-2.65-2.15-4.8-4.8-4.8H6.6"
-                stroke="currentColor"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M11 4 5 8.6 11 13.2"
-                stroke="currentColor"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Undo2 size={18} strokeWidth={2.4} aria-hidden="true" />
           </button>
         ) : (
           <button
@@ -149,16 +135,6 @@ export function TopBar({
       </div>
 
       <div className="topbar__actions">
-        {(authLabel || authIcon) && onOpenAuth ? (
-          <button
-            className={`topbarAuth${authIcon ? " topbarAuth--icon" : " topbarAuth--text"}`}
-            type="button"
-            aria-label={authAriaLabel ?? authLabel ?? "Account"}
-            onClick={onOpenAuth}
-          >
-            {authIcon ?? authLabel}
-          </button>
-        ) : null}
         {showActionMenu ? (
           <div className="topbarMenu" ref={menuRef}>
             <button
@@ -169,11 +145,7 @@ export function TopBar({
               aria-expanded={menuOpen}
               aria-haspopup="menu"
             >
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="6" cy="12" r="1.8" fill="currentColor" />
-                <circle cx="12" cy="12" r="1.8" fill="currentColor" />
-                <circle cx="18" cy="12" r="1.8" fill="currentColor" />
-              </svg>
+              <Ellipsis size={22} strokeWidth={2.4} aria-hidden="true" />
             </button>
             {menuOpen ? (
               <div className="topbarMenu__panel" role="menu">
@@ -236,16 +208,18 @@ export function TopBar({
             onClick={onPrimaryAction}
             aria-label={primaryActionLabel}
           >
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M12 5v14M5 12h14"
-                stroke="currentColor"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
             <span>{primaryActionLabel}</span>
+          </button>
+        ) : null}
+        {(authLabel || authIcon) && onOpenAuth ? (
+          <button
+            className={`topbarAuth${authIcon ? " topbarAuth--icon" : " topbarAuth--text"}`}
+            type="button"
+            aria-label={authAriaLabel ?? authLabel ?? "Account"}
+            onClick={onOpenAuth}
+          >
+            {authIcon ?? authLabel}
           </button>
         ) : null}
       </div>

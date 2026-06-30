@@ -42,4 +42,12 @@ export type Game = {
   updatedAt: number;
   endedAt?: number;
 };
+
+export type ToastTone = "default" | "success" | "error";
+
+export type ToastState = {
+  message: string;
+  tone: ToastTone;
+};
+
 export type HomeTab = "home" | "sessions" | "players" | "stats";

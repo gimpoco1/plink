@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { Game, Player } from "../types";
+import type { Game, Player, ToastState } from "../types";
 import { MAX_ABS_SCORE } from "../constants";
 import { supabase } from "../lib/supabase";
 import { clampName, formatPlayerName } from "../utils/text";
@@ -77,24 +77,6 @@ function shouldKeepLocalGames(localGames: Game[], remoteGames: Game[]) {
   });
 }
 
-function getPendingGuestState(
-  hasRemoteAccountLoaded: boolean,
-  inMemoryGames: Game[],
-  inMemoryCurrentGameId: string | null,
-) {
-  if (hasRemoteAccountLoaded) {
-    return {
-      games: loadGuestGames(),
-      currentGameId: loadGuestCurrentGameId(),
-    };
-  }
-
-  return {
-    games: inMemoryGames,
-    currentGameId: inMemoryCurrentGameId,
-  };
-}
-
 export function useGames(session: Session | null, authLoading = false) {
   const migrated = useMemo(() => migrateSingleGameToGamesIfNeeded(), []);
   const [games, setGames] = useState<Game[]>(
@@ -108,10 +90,8 @@ export function useGames(session: Session | null, authLoading = false) {
   );
   const [remoteReady, setRemoteReady] = useState(!session && !authLoading);
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
-  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
   const remoteSignatureRef = useRef<string | null>(null);
-  const pendingGuestGamesRef = useRef<Game[]>([]);
-  const pendingGuestCurrentGameIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -137,12 +117,16 @@ export function useGames(session: Session | null, authLoading = false) {
           });
           if (removed.length > 0) {
             setSyncNotice(
-              removed.length === 1
-                ? `"${removed[0].name}" was removed from your account.`
-                : `${removed.length} games were removed from your account.`,
+              {
+                message:
+                  removed.length === 1
+                    ? `"${removed[0].name}" was removed from your account.`
+                    : `${removed.length} games were removed from your account.`,
+                tone: "default",
+              },
             );
           } else if (changed.length > 0) {
-            setSyncNotice("Your games were updated.");
+            setSyncNotice({ message: "Your games were updated.", tone: "default" });
           }
         }
         remoteSignatureRef.current = remoteSignature;
@@ -177,45 +161,23 @@ export function useGames(session: Session | null, authLoading = false) {
     setRemoteReady(false);
     setRemoteUserId(null);
     remoteSignatureRef.current = null;
-    const pendingGuestState = getPendingGuestState(
-      remoteUserId !== null,
-      games,
-      currentGameId,
-    );
-    pendingGuestGamesRef.current = pendingGuestState.games;
-    pendingGuestCurrentGameIdRef.current = pendingGuestState.currentGameId;
+    setGames([]);
     loadRemoteGames(session.user.id)
       .then((remoteGames) => {
         if (!alive) return;
-        const mergedGames = [
-          ...pendingGuestGamesRef.current.filter(
-            (guestGame) =>
-              !remoteGames.some((remoteGame) => remoteGame.id === guestGame.id),
-          ),
-          ...remoteGames,
-        ];
-        applyRemoteGames(mergedGames, false);
+        applyRemoteGames(remoteGames, false);
         setCurrentGameId((current) => {
           const persistedCurrent = loadCurrentGameId();
-          const pendingCurrent = pendingGuestCurrentGameIdRef.current;
-          if (
-            pendingCurrent &&
-            mergedGames.some((game) => game.id === pendingCurrent)
-          ) {
-            return pendingCurrent;
-          }
           if (
             persistedCurrent &&
-            mergedGames.some((game) => game.id === persistedCurrent)
+            remoteGames.some((game) => game.id === persistedCurrent)
           ) {
             return persistedCurrent;
           }
-          return current && mergedGames.some((game) => game.id === current)
+          return current && remoteGames.some((game) => game.id === current)
             ? current
-            : (mergedGames[0]?.id ?? null);
+            : (remoteGames[0]?.id ?? null);
         });
-        pendingGuestGamesRef.current = [];
-        pendingGuestCurrentGameIdRef.current = null;
         setRemoteUserId(session.user.id);
         setRemoteReady(true);
       })
@@ -226,7 +188,10 @@ export function useGames(session: Session | null, authLoading = false) {
         setCurrentGameId(null);
         setRemoteUserId(null);
         setSyncNotice(
-          `Could not load games: ${getSyncErrorMessage(error)}`,
+          {
+            message: `Could not load games: ${getSyncErrorMessage(error)}`,
+            tone: "error",
+          },
         );
         setRemoteReady(true);
       });
@@ -246,11 +211,22 @@ export function useGames(session: Session | null, authLoading = false) {
         if (!alive) return;
         let appliedRemoteState = false;
         setGames((previousGames) => {
+          const remoteSignature = getGameSyncSignature(remoteGames);
+          const previousSignature = getGameSyncSignature(previousGames);
+          const lastSyncedSignature = remoteSignatureRef.current;
+
+          if (
+            lastSyncedSignature &&
+            previousSignature !== lastSyncedSignature &&
+            remoteSignature === lastSyncedSignature
+          ) {
+            return previousGames;
+          }
+
           if (shouldKeepLocalGames(previousGames, remoteGames)) {
             return previousGames;
           }
-          const remoteSignature = getGameSyncSignature(remoteGames);
-          const previousSignature = getGameSyncSignature(previousGames);
+
           if (remoteSignature === previousSignature) {
             remoteSignatureRef.current = remoteSignature;
             return previousGames;
@@ -267,12 +243,16 @@ export function useGames(session: Session | null, authLoading = false) {
           });
           if (removed.length > 0) {
             setSyncNotice(
-              removed.length === 1
-                ? `"${removed[0].name}" was removed from your account.`
-                : `${removed.length} games were removed from your account.`,
+              {
+                message:
+                  removed.length === 1
+                    ? `"${removed[0].name}" was removed from your account.`
+                    : `${removed.length} games were removed from your account.`,
+                tone: "default",
+              },
             );
           } else if (changed.length > 0) {
-            setSyncNotice("Your games were updated.");
+            setSyncNotice({ message: "Your games were updated.", tone: "default" });
           }
           remoteSignatureRef.current = remoteSignature;
           appliedRemoteState = true;
@@ -345,7 +325,10 @@ export function useGames(session: Session | null, authLoading = false) {
       .catch((error) => {
         console.error("Failed to save games to Supabase", error);
         setSyncNotice(
-          `Could not save games: ${getSyncErrorMessage(error)}`,
+          {
+            message: `Could not save games: ${getSyncErrorMessage(error)}`,
+            tone: "error",
+          },
         );
       });
   }, [games, remoteReady, remoteUserId, session]);
@@ -637,6 +620,14 @@ export function useGames(session: Session | null, authLoading = false) {
   }
 
   function importGames(incomingGames: Game[]) {
+    const existingGamesById = new Map(games.map((game) => [game.id, game]));
+    const changedCount = incomingGames.reduce((count, incomingGame) => {
+      const existingGame = existingGamesById.get(incomingGame.id);
+      if (!existingGame) return count + 1;
+      return incomingGame.updatedAt > existingGame.updatedAt
+        ? count + 1
+        : count;
+    }, 0);
     const mergedGames = mergeGamesById(games, incomingGames);
     setGames(mergedGames);
     if (
@@ -650,7 +641,7 @@ export function useGames(session: Session | null, authLoading = false) {
     ) {
       setCurrentGameId(incomingGames[0].id);
     }
-    return mergedGames.length - games.length;
+    return changedCount;
   }
 
   const sortedPlayers = useMemo(() => {

@@ -6,7 +6,7 @@ import { avatarStyleFor } from "../../utils/color";
 import { formatAccountPlayerName, getInitials } from "../../utils/text";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import "./NewGameCard.css";
-import { ArrowDownUp, Timer, Gamepad2, Trophy, Users, Dices, Target } from "lucide-react";
+import { ArrowDownUp, Timer, Users, Dices, Target } from "lucide-react";
 type StagedPlayer = {
   name: string;
   avatarColor: string;

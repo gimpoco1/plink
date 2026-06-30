@@ -3,6 +3,7 @@ import { AVATAR_COLORS } from "../constants";
 import type { Game, PlayerProfile } from "../types";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
 import { PlayersSkeleton } from "../components/HomeLockedState/PlayersSkeleton";
+import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
 import { avatarStyleFor } from "../utils/color";
 import {
   computeProfileStats,
@@ -21,6 +22,9 @@ type PlayersScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
   isAuthenticated: boolean;
+  showLocalSessionsHint: boolean;
+  pendingLocalSessionsCount: number;
+  onDismissLocalSessionsHint: () => void;
   addingPlayer: boolean;
   onAddingPlayerChange: (adding: boolean) => void;
   onOpenAuth: () => void;
@@ -36,6 +40,9 @@ export function PlayersScreen({
   games,
   profiles,
   isAuthenticated,
+  showLocalSessionsHint,
+  pendingLocalSessionsCount,
+  onDismissLocalSessionsHint,
   addingPlayer,
   onAddingPlayerChange,
   onOpenAuth,
@@ -103,6 +110,14 @@ export function PlayersScreen({
 
   return (
     <div className="tabContent tabContent--players">
+      {showLocalSessionsHint ? (
+        <LocalSessionsHint
+          className="profilesHint"
+          count={pendingLocalSessionsCount}
+          onDismiss={onDismissLocalSessionsHint}
+          onAdd={onOpenAuth}
+        />
+      ) : null}
       <div className="tabHeader">
         <div>
           <h2 className="tabTitle">Players</h2>
