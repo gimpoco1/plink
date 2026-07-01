@@ -12,28 +12,28 @@ function rankingKey(players: Player[]): string {
     .join("|");
 }
 
-function sortedIds(players: Player[], isLowScoreWins: boolean): string[] {
+function sortedIds(players: Player[], lowToHigh: boolean): string[] {
   return [...players]
-    .sort((a, b) => sortPlayers(a, b, isLowScoreWins))
+    .sort((a, b) => sortPlayers(a, b, lowToHigh))
     .map((p) => p.id);
 }
 
 export function useDelayedRanking(
   players: Player[],
   delayMs = 1200,
-  isLowScoreWins = false,
+  lowToHigh = false,
 ) {
   const playersRef = useRef<Player[]>(players);
   useEffect(() => {
     playersRef.current = players;
   }, [players]);
-  const isLowScoreWinsRef = useRef(isLowScoreWins);
+  const lowToHighRef = useRef(lowToHigh);
   useEffect(() => {
-    isLowScoreWinsRef.current = isLowScoreWins;
-  }, [isLowScoreWins]);
+    lowToHighRef.current = lowToHigh;
+  }, [lowToHigh]);
 
   const [orderIds, setOrderIds] = useState<string[]>(() =>
-    sortedIds(players, isLowScoreWins),
+    sortedIds(players, lowToHigh),
   );
   const timerRef = useRef<number | null>(null);
 
@@ -41,7 +41,7 @@ export function useDelayedRanking(
   const rankKey = useMemo(() => rankingKey(players), [players]);
 
   const forceResort = useCallback(() => {
-    setOrderIds(sortedIds(playersRef.current, isLowScoreWinsRef.current));
+    setOrderIds(sortedIds(playersRef.current, lowToHighRef.current));
   }, []);
 
   const scheduleResort = useCallback(() => {
@@ -58,16 +58,16 @@ export function useDelayedRanking(
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-    setOrderIds(sortedIds(players, isLowScoreWins));
+    setOrderIds(sortedIds(players, lowToHigh));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, isLowScoreWins]);
+  }, [key, lowToHigh]);
 
   useEffect(() => {
     // Remote score updates do not call scheduleResort(), so apply them
     // immediately. Local score taps keep their delayed resort while pending.
     if (timerRef.current) return;
-    setOrderIds(sortedIds(players, isLowScoreWins));
-  }, [rankKey, isLowScoreWins, players]);
+    setOrderIds(sortedIds(players, lowToHigh));
+  }, [rankKey, lowToHigh, players]);
 
   useEffect(() => {
     return () => {
@@ -86,11 +86,11 @@ export function useDelayedRanking(
     if (out.length !== players.length) {
       const missing = players
         .filter((p) => !orderIds.includes(p.id))
-        .sort((a, b) => sortPlayers(a, b, isLowScoreWins));
+        .sort((a, b) => sortPlayers(a, b, lowToHigh));
       out.push(...missing);
     }
     return out;
-  }, [orderIds, players, isLowScoreWins]);
+  }, [orderIds, players, lowToHigh]);
 
   const ranks = useMemo(() => computeRanks(orderedPlayers), [orderedPlayers]);
 

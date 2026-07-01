@@ -1,32 +1,55 @@
-import type { Player } from "../types";
+import type { Game, Player } from "../types";
+import { hasGameEnded, shouldSortLowToHigh } from "./scoring";
 
 export function sortPlayers(
   a: Player,
   b: Player,
-  isLowScoreWins = false,
+  lowToHigh = false,
 ): number {
   if (a.score !== b.score) {
-    return isLowScoreWins ? a.score - b.score : b.score - a.score;
+    return lowToHigh ? a.score - b.score : b.score - a.score;
   }
   if (a.reachedAt !== b.reachedAt) return a.reachedAt - b.reachedAt;
   if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
   return a.name.localeCompare(b.name);
 }
 
-export function hasReachedTarget(players: Player[], targetPoints: number): boolean {
-  return players.some((p) => p.score >= targetPoints);
-}
-
 export function findWinner(
   players: Player[],
-  targetPoints: number,
-  isLowScoreWins = false,
+  game: Pick<
+    Game,
+    | "scoreDirection"
+    | "targetScore"
+    | "winCondition"
+    | "winByTwo"
+    | "manualEndOnly"
+    | "endedAt"
+  >,
 ): Player | null {
-  if (!players.length || !hasReachedTarget(players, targetPoints)) return null;
+  if (!players.length || !hasGameEnded(players, game)) return null;
   const sorted = [...players].sort((a, b) =>
-    sortPlayers(a, b, isLowScoreWins),
+    sortPlayers(a, b, shouldSortLowToHigh(game)),
   );
-  return sorted[0] ?? null;
+  const winner = sorted[0] ?? null;
+  if (!winner) return null;
+  const tiedWinner = sorted[1];
+  if (tiedWinner && tiedWinner.score === winner.score) return null;
+  return winner;
+}
+
+export function isGameComplete(
+  game: Pick<
+    Game,
+    | "players"
+    | "scoreDirection"
+    | "targetScore"
+    | "winCondition"
+    | "winByTwo"
+    | "manualEndOnly"
+    | "endedAt"
+  >,
+) {
+  return hasGameEnded(game.players, game);
 }
 
 export function computeRanks(sortedPlayers: Player[]): Map<string, number> {

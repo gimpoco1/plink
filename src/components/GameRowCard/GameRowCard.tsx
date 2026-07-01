@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { Game } from "../../types";
-import { findWinner } from "../../utils/ranking";
+import { findWinner, isGameComplete } from "../../utils/ranking";
 import { capitalizeFirst, getGameDisplayName } from "../../utils/text";
 import "./GameRowCard.css";
 
@@ -101,8 +101,9 @@ export function GameRowCard({
   }
 
   const winner = useMemo(() => {
-    return findWinner(game.players, game.targetPoints, game.isLowScoreWins);
-  }, [game.players, game.targetPoints, game.isLowScoreWins]);
+    return findWinner(game.players, game);
+  }, [game]);
+  const complete = useMemo(() => isGameComplete(game), [game]);
 
   const parsedName = getGameDisplayName(game.name);
   const displayName = parsedName.title
@@ -243,7 +244,13 @@ export function GameRowCard({
                 <strong>{winnerName}</strong>
               </span>
             ) : null}
-            {!winner ? (
+            {complete && !winner ? (
+              <span className="gameRow__detail">
+                <span className="gameRow__statusDot" aria-hidden="true" />
+                Draw
+              </span>
+            ) : null}
+            {!complete ? (
               <span className="gameRow__detail">
                 <span className="gameRow__statusDot" aria-hidden="true" />
                 In progress
@@ -266,9 +273,21 @@ export function GameRowCard({
                   strokeWidth="1.8"
                 />
               </svg>
-              <span>Target</span>
-              <strong>{game.targetPoints}</strong>
-              <span>{game.targetPoints === 1 ? "pt" : "pts"}</span>
+              <span>
+                {game.winCondition === "reach_zero" ? "Start" : "Target"}
+              </span>
+              <strong>
+                {game.winCondition === "reach_zero"
+                  ? game.startingScore
+                  : game.targetScore}
+              </strong>
+              <span>
+                {(game.winCondition === "reach_zero"
+                  ? game.startingScore
+                  : game.targetScore) === 1
+                  ? "pt"
+                  : "pts"}
+              </span>
             </span>
             <span
               className="gameRow__detail gameRow__players"
@@ -291,4 +310,3 @@ export function GameRowCard({
     </div>
   );
 }
-

@@ -21,6 +21,7 @@ type Props = {
   onAddPlayer: () => void;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
+  onEndGame?: () => void;
   onResetGame: () => void;
   onRename?: () => void;
 };
@@ -44,6 +45,7 @@ export function TopBar({
   onAddPlayer,
   onOpenSettings,
   onOpenHistory,
+  onEndGame,
   onResetGame,
   onRename,
 }: Props) {
@@ -198,6 +200,19 @@ export function TopBar({
                 >
                   Reset scores
                 </button>
+                {onEndGame ? (
+                  <button
+                    className="topbarMenu__item topbarMenu__item--finish"
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onEndGame();
+                    }}
+                  >
+                    End game
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </div>

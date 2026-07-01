@@ -4,7 +4,7 @@ import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
 import { StatsSkeleton } from "../components/HomeLockedState/StatsSkeleton";
 import { avatarStyleFor } from "../utils/color";
 import { computeProfileStats, createEmptyProfileStats } from "../utils/profileStats";
-import { findWinner } from "../utils/ranking";
+import { isGameComplete } from "../utils/ranking";
 import {
   formatAccountPlayerName,
   getGameDisplayName,
@@ -29,7 +29,7 @@ export function StatsScreen({ games, profiles, isAuthenticated, onOpenAuth }: St
   const overview = useMemo(() => {
     const profileStats = computeProfileStats(games);
     const ranked = profiles.map((profile) => ({ profile, stats: profileStats.get(profile.id) ?? createEmptyProfileStats() }));
-    const completedGames = games.filter((game) => !!findWinner(game.players, game.targetPoints, game.isLowScoreWins)).length;
+    const completedGames = games.filter((game) => isGameComplete(game)).length;
     const topPlayers = ranked
       .filter(({ stats }) => stats.gamesPlayed > 0)
       .sort((a, b) => b.stats.wins - a.stats.wins || b.stats.currentWinStreak - a.stats.currentWinStreak || b.stats.winRate - a.stats.winRate)

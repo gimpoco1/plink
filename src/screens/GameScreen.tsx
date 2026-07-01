@@ -7,7 +7,13 @@ import {
   getGameDisplayName,
   getInitials,
 } from "../utils/text";
-import { computeRanks, findWinner, sortPlayers } from "../utils/ranking";
+import {
+  computeRanks,
+  findWinner,
+  isGameComplete,
+  sortPlayers,
+} from "../utils/ranking";
+import { shouldSortLowToHigh } from "../utils/scoring";
 import { WinCelebration } from "../components/WinCelebration/WinCelebration";
 import { useDelayedRanking } from "../hooks/useDelayedRanking";
 import {
@@ -45,6 +51,7 @@ type Props = {
   winnerStats: ProfileStats | null;
   onReplayGame: () => void;
   onBackToHome: () => void;
+  onEndGame: () => void;
 };
 
 export function GameScreen({
@@ -63,6 +70,7 @@ export function GameScreen({
   winnerStats,
   onReplayGame,
   onBackToHome,
+  onEndGame,
 }: Props) {
   const takenProfileIds = useMemo(
     () =>
@@ -87,32 +95,41 @@ export function GameScreen({
 
   const hasPlayers = game.players.length > 0;
   const [winFxName, setWinFxName] = useState<string | null>(null);
-  const [dismissedWinnerId, setDismissedWinnerId] = useState<string | null>(null);
+  const [dismissedOutcomeKey, setDismissedOutcomeKey] = useState<string | null>(null);
   const [lastScoreAction, setLastScoreAction] = useState<{
     playerId: string;
     playerName: string;
     delta: number;
   } | null>(null);
-  const prevWinnerIdRef = useRef<string | null>(null);
+  const prevOutcomeKeyRef = useRef<string | null>(null);
+  const lowToHigh = shouldSortLowToHigh(game);
   const { orderedPlayers, ranks, scheduleResort } = useDelayedRanking(
     game.players,
     1200,
-    game.isLowScoreWins,
+    lowToHigh,
   );
   const allZero = useMemo(
-    () => game.players.length > 0 && game.players.every((p) => p.score === 0),
-    [game.players],
+    () =>
+      game.players.length > 0 &&
+      game.players.every((p) => p.score === game.startingScore),
+    [game.players, game.startingScore],
   );
 
   const winner = useMemo(() => {
-    return findWinner(game.players, game.targetPoints, game.isLowScoreWins);
-  }, [game.players, game.targetPoints, game.isLowScoreWins]);
+    return findWinner(game.players, game);
+  }, [game]);
+  const gameComplete = useMemo(() => isGameComplete(game), [game]);
+  const outcomeKey = gameComplete
+    ? winner
+      ? `winner:${winner.id}:${game.endedAt ?? game.updatedAt}`
+      : `draw:${game.endedAt ?? game.updatedAt}`
+    : null;
 
   const gameDisplayName = useMemo(() => getGameDisplayName(game.name), [game.name]);
 
   const finalStandings = useMemo(() => {
     const sorted = [...game.players].sort((a, b) =>
-      sortPlayers(a, b, game.isLowScoreWins),
+      sortPlayers(a, b, lowToHigh),
     );
     const ranksMap = computeRanks(sorted);
     return sorted.map((player) => ({
@@ -120,18 +137,33 @@ export function GameScreen({
       rank: ranksMap.get(player.id) ?? 1,
       isWinner: winner?.id === player.id,
     }));
-  }, [game.players, game.isLowScoreWins, winner?.id]);
+  }, [game.players, lowToHigh, winner?.id]);
 
-  const showWinSummary = !!winner && dismissedWinnerId !== winner.id;
+  const showWinSummary = !!outcomeKey && dismissedOutcomeKey !== outcomeKey;
+  const referenceReached = useMemo(() => {
+    if (
+      !game.manualEndOnly ||
+      gameComplete ||
+      game.targetScore <= 0 ||
+      !game.players.length
+    ) {
+      return false;
+    }
+
+    if (game.winCondition === "reach_zero" || game.scoreDirection === "down") {
+      return game.players.some((player) => player.score <= game.targetScore);
+    }
+
+    return game.players.some((player) => player.score >= game.targetScore);
+  }, [game, gameComplete]);
 
   useEffect(() => {
-    const winnerId = winner?.id ?? null;
-    if (winnerId && prevWinnerIdRef.current !== winnerId) {
+    if (outcomeKey && prevOutcomeKeyRef.current !== outcomeKey) {
       setWinFxName(capitalizeFirst(winner?.name ?? ""));
-      setDismissedWinnerId(null);
+      setDismissedOutcomeKey(null);
     }
-    prevWinnerIdRef.current = winnerId;
-  }, [winner]);
+    prevOutcomeKeyRef.current = outcomeKey;
+  }, [outcomeKey, winner?.name]);
 
   useEffect(() => {
     if (!lastScoreAction) return;
@@ -140,16 +172,19 @@ export function GameScreen({
   }, [lastScoreAction]);
 
   useEffect(() => setLastScoreAction(null), [game.id]);
-  useEffect(() => setDismissedWinnerId(null), [game.id]);
+  useEffect(() => setDismissedOutcomeKey(null), [game.id]);
 
   return (
     <>
-      {showWinSummary && winFxName ? (
+      {showWinSummary ? (
         <WinCelebration
           winnerName={winFxName}
+          isDraw={!winner}
           gameName={gameDisplayName.title}
-          targetPoints={game.targetPoints}
-          isLowScoreWins={game.isLowScoreWins}
+          targetScore={game.targetScore}
+          startingScore={game.startingScore}
+          winCondition={game.winCondition}
+          manualEndOnly={game.manualEndOnly}
           winnerStats={winnerStats}
           standings={finalStandings.map(({ player, rank, isWinner }) => ({
             id: player.id,
@@ -161,16 +196,16 @@ export function GameScreen({
             isWinner,
           }))}
           onDismiss={() => {
-            setDismissedWinnerId(winner?.id ?? null);
+            setDismissedOutcomeKey(outcomeKey);
             setWinFxName(null);
           }}
           onReplay={() => {
-            setDismissedWinnerId(winner?.id ?? null);
+            setDismissedOutcomeKey(outcomeKey);
             setWinFxName(null);
             onReplayGame();
           }}
           onBackToHome={() => {
-            setDismissedWinnerId(winner?.id ?? null);
+            setDismissedOutcomeKey(outcomeKey);
             setWinFxName(null);
             onBackToHome();
           }}
@@ -204,7 +239,9 @@ export function GameScreen({
                   pulse={pulse}
                   isWinner={winner?.id === player.id}
                   isAccountPlayer={isAccountPlayer}
-                  targetPoints={game.targetPoints}
+                  targetScore={game.targetScore}
+                  startingScore={game.startingScore}
+                  winCondition={game.winCondition}
                   onDelta={(playerId, delta) => {
                     onUpdateScore(playerId, delta);
                     onTriggerPulse(playerId, delta);
@@ -247,6 +284,19 @@ export function GameScreen({
             }}
           >
             Undo
+          </button>
+        </div>
+      ) : null}
+
+      {referenceReached ? (
+        <div
+          className={`manualEndPrompt${game.timerEnabled ? " manualEndPrompt--withTimer" : ""}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span>Reference reached</span>
+          <button type="button" onClick={onEndGame}>
+            End game
           </button>
         </div>
       ) : null}

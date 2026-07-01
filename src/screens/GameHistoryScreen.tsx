@@ -15,6 +15,21 @@ type Props = {
   game: Game;
 };
 
+type HistoryTurn = {
+  key: string;
+  turnNumber: number;
+  playerId: string;
+  playerName: string;
+  avatarColor: string;
+  createdAt: number;
+  scoreBefore: number;
+  scoreAfter: number;
+  totalDelta: number;
+  entries: ScoreHistoryEntry[];
+};
+
+const TURN_GROUP_WINDOW_MS = 15_000;
+
 function getDeltaLabel(delta: number) {
   return delta > 0 ? `+${delta}` : String(delta);
 }
@@ -110,30 +125,66 @@ export function GameHistoryScreen({ game }: Props) {
     selectedPlayerId === "all" || !hasSelectedPlayer
       ? entries
       : entries.filter((entry) => entry.playerId === selectedPlayerId);
+  const visibleTurns = useMemo(() => {
+    const chronologicalEntries = [...visibleEntries].reverse();
+    const turns: HistoryTurn[] = [];
+
+    for (const entry of chronologicalEntries) {
+      const currentTurn = turns[turns.length - 1];
+      const shouldAppendToTurn =
+        currentTurn &&
+        currentTurn.playerId === entry.playerId &&
+        entry.createdAt - currentTurn.createdAt <= TURN_GROUP_WINDOW_MS;
+
+      if (shouldAppendToTurn) {
+        currentTurn.entries.push(entry);
+        currentTurn.createdAt = entry.createdAt;
+        currentTurn.scoreAfter = entry.scoreAfter;
+        currentTurn.totalDelta += entry.delta;
+        continue;
+      }
+
+      turns.push({
+        key: entry.id,
+        turnNumber: turns.length + 1,
+        playerId: entry.playerId,
+        playerName: entry.playerName,
+        avatarColor: entry.avatarColor,
+        createdAt: entry.createdAt,
+        scoreBefore: entry.scoreBefore,
+        scoreAfter: entry.scoreAfter,
+        totalDelta: entry.delta,
+        entries: [entry],
+      });
+    }
+
+    return turns.reverse();
+  }, [visibleEntries]);
+
   const groupedEntries = useMemo(() => {
     const groups: Array<{
       key: string;
       label: string;
-      entries: ScoreHistoryEntry[];
+      turns: HistoryTurn[];
     }> = [];
 
-    for (const entry of visibleEntries) {
-      const key = getDayKey(entry.createdAt);
+    for (const turn of visibleTurns) {
+      const key = getDayKey(turn.createdAt);
       const currentGroup = groups[groups.length - 1];
       if (currentGroup?.key === key) {
-        currentGroup.entries.push(entry);
+        currentGroup.turns.push(turn);
         continue;
       }
 
       groups.push({
         key,
-        label: formatDayLabel(entry.createdAt, dateFormat, dateWithYearFormat),
-        entries: [entry],
+        label: formatDayLabel(turn.createdAt, dateFormat, dateWithYearFormat),
+        turns: [turn],
       });
     }
 
     return groups;
-  }, [dateFormat, dateWithYearFormat, visibleEntries]);
+  }, [dateFormat, dateWithYearFormat, visibleTurns]);
 
   function handleFilterPointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -229,11 +280,11 @@ export function GameHistoryScreen({ game }: Props) {
             <section className="historyGroup" key={group.key}>
               <h2 className="historyGroup__title">{group.label}</h2>
               <div className="historyRows">
-                {group.entries.map((entry) => (
-                  <HistoryRow
-                    key={entry.id}
-                    entry={entry}
-                    timeLabel={timeFormat.format(new Date(entry.createdAt))}
+                {group.turns.map((turn) => (
+                  <HistoryTurnRow
+                    key={turn.key}
+                    turn={turn}
+                    timeLabel={timeFormat.format(new Date(turn.createdAt))}
                   />
                 ))}
               </div>
@@ -250,16 +301,16 @@ export function GameHistoryScreen({ game }: Props) {
   );
 }
 
-function HistoryRow({
-  entry,
+function HistoryTurnRow({
+  turn,
   timeLabel,
 }: {
-  entry: ScoreHistoryEntry;
+  turn: HistoryTurn;
   timeLabel: string;
 }) {
-  const displayName = capitalizeFirst(entry.playerName);
+  const displayName = capitalizeFirst(turn.playerName);
   const deltaClass =
-    entry.delta > 0
+    turn.totalDelta >= 0
       ? "historyDelta historyDelta--pos"
       : "historyDelta historyDelta--neg";
 
@@ -267,22 +318,37 @@ function HistoryRow({
     <article className="historyRow">
       <div
         className="historyAvatar"
-        style={avatarStyleFor(entry.avatarColor)}
+        style={avatarStyleFor(turn.avatarColor)}
         aria-hidden="true"
       >
-        {getInitials(entry.playerName)}
+        {getInitials(turn.playerName)}
       </div>
       <div className="historyInfo">
         <div className="historyInfo__top">
           <div className="historyInfo__name">{displayName}</div>
-          <div className={deltaClass}>{getDeltaLabel(entry.delta)}</div>
+          <div className={deltaClass}>{getDeltaLabel(turn.totalDelta)}</div>
         </div>
         <div className="historyInfo__meta">
+          <span>Turn {turn.turnNumber}</span>
           <span>{timeLabel}</span>
         </div>
+        {turn.entries.length > 1 ? (
+          <div className="historyTurnSteps" aria-label="Score changes in this turn">
+            {turn.entries.map((entry) => (
+              <span
+                key={entry.id}
+                className={`historyTurnStep${
+                  entry.delta >= 0 ? " historyTurnStep--pos" : " historyTurnStep--neg"
+                }`}
+              >
+                {getDeltaLabel(entry.delta)}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div className="historyScore">
-        <span>{entry.scoreBefore}</span>
+        <span>{turn.scoreBefore}</span>
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
             d="M5 12h14m0 0-5-5m5 5-5 5"
@@ -292,7 +358,7 @@ function HistoryRow({
             strokeLinejoin="round"
           />
         </svg>
-        <strong>{entry.scoreAfter}</strong>
+        <strong>{turn.scoreAfter}</strong>
       </div>
     </article>
   );
