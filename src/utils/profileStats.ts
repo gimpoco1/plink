@@ -1,5 +1,5 @@
 import type { Game } from "../types";
-import { findWinner } from "./ranking";
+import { findWinner, isGameComplete } from "./ranking";
 import { getGameDisplayName } from "./text";
 
 export type ProfileStats = {
@@ -37,12 +37,8 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
   >();
 
   games.forEach((game) => {
-    const winner = findWinner(
-      game.players,
-      game.targetPoints,
-      game.isLowScoreWins,
-    );
-    const isComplete = winner !== null;
+    const winner = findWinner(game.players, game);
+    const isComplete = isGameComplete(game);
     const winnerProfileId = winner?.profileId ?? null;
     const normalizedGameName = getGameDisplayName(game.name).title;
 

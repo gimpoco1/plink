@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import type { Game, Player, ToastState } from "../types";
+import type {
+  Game,
+  Player,
+  ScoreDirection,
+  ToastState,
+  WinCondition,
+} from "../types";
 import { MAX_ABS_SCORE } from "../constants";
 import { supabase } from "../lib/supabase";
 import { clampName, formatPlayerName } from "../utils/text";
@@ -15,12 +21,21 @@ import {
   saveGuestGames,
 } from "../storage/gamesStorage";
 import { loadRemoteGames, saveRemoteGames } from "../storage/remoteStorage";
-import { computeRanks, hasReachedTarget, sortPlayers } from "../utils/ranking";
+import { computeRanks, sortPlayers } from "../utils/ranking";
+import {
+  clampScoreForGame,
+  hasGameEnded,
+  shouldSortLowToHigh,
+} from "../utils/scoring";
 
 type CreateGameInput = {
   name: string;
-  targetPoints: number;
-  isLowScoreWins?: boolean;
+  scoreDirection: ScoreDirection;
+  startingScore: number;
+  targetScore: number;
+  winCondition: WinCondition;
+  winByTwo?: boolean;
+  manualEndOnly?: boolean;
   timerEnabled?: boolean;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
@@ -29,8 +44,12 @@ type CreateGameInput = {
 
 type UpdateGameSettingsInput = {
   name: string;
-  targetPoints: number;
-  isLowScoreWins: boolean;
+  scoreDirection: ScoreDirection;
+  startingScore: number;
+  targetScore: number;
+  winCondition: WinCondition;
+  winByTwo: boolean;
+  manualEndOnly: boolean;
   timerEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
@@ -41,6 +60,16 @@ function getGameSyncSignature(games: Game[]) {
     .map((game) => `${game.id}:${game.updatedAt}`)
     .sort()
     .join("|");
+}
+
+function getSyncedGameIds(signature: string | null) {
+  if (!signature) return new Set<string>();
+  return new Set(
+    signature
+      .split("|")
+      .map((entry) => entry.split(":")[0])
+      .filter(Boolean),
+  );
 }
 
 function getSyncErrorMessage(error: unknown) {
@@ -67,14 +96,6 @@ function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
 
 function clampScore(value: number) {
   return Math.max(-MAX_ABS_SCORE, Math.min(MAX_ABS_SCORE, value));
-}
-
-function shouldKeepLocalGames(localGames: Game[], remoteGames: Game[]) {
-  const remoteById = new Map(remoteGames.map((game) => [game.id, game]));
-  return localGames.some((localGame) => {
-    const remoteGame = remoteById.get(localGame.id);
-    return !!remoteGame && remoteGame.updatedAt < localGame.updatedAt;
-  });
 }
 
 export function useGames(session: Session | null, authLoading = false) {
@@ -108,8 +129,9 @@ export function useGames(session: Session | null, authLoading = false) {
           const remoteById = new Map(
             remoteGames.map((game) => [game.id, game]),
           );
+          const lastSyncedIds = getSyncedGameIds(remoteSignatureRef.current);
           const removed = previousGames.filter(
-            (game) => !remoteById.has(game.id),
+            (game) => lastSyncedIds.has(game.id) && !remoteById.has(game.id),
           );
           const changed = previousGames.filter((game) => {
             const remote = remoteById.get(game.id);
@@ -223,10 +245,6 @@ export function useGames(session: Session | null, authLoading = false) {
             return previousGames;
           }
 
-          if (shouldKeepLocalGames(previousGames, remoteGames)) {
-            return previousGames;
-          }
-
           if (remoteSignature === previousSignature) {
             remoteSignatureRef.current = remoteSignature;
             return previousGames;
@@ -234,8 +252,9 @@ export function useGames(session: Session | null, authLoading = false) {
           const remoteById = new Map(
             remoteGames.map((game) => [game.id, game]),
           );
+          const lastSyncedIds = getSyncedGameIds(remoteSignatureRef.current);
           const removed = previousGames.filter(
-            (game) => !remoteById.has(game.id),
+            (game) => lastSyncedIds.has(game.id) && !remoteById.has(game.id),
           );
           const changed = previousGames.filter((game) => {
             const remote = remoteById.get(game.id);
@@ -359,14 +378,30 @@ export function useGames(session: Session | null, authLoading = false) {
 
   function createGame(input: CreateGameInput): Game | null {
     const name = clampName(input.name).toUpperCase();
-    const targetPoints = Number.isFinite(input.targetPoints)
-      ? Math.trunc(input.targetPoints)
+    const startingScore = Number.isFinite(input.startingScore)
+      ? Math.trunc(input.startingScore)
+      : 0;
+    const targetScore = Number.isFinite(input.targetScore)
+      ? Math.trunc(input.targetScore)
       : 0;
     if (!name) return null;
-    if (targetPoints <= 0) return null;
+    const manualEndOnly = input.manualEndOnly === true;
+    if (
+      !manualEndOnly &&
+      input.winCondition !== "reach_zero" &&
+      targetScore <= 0
+    ) return null;
+    if (input.winCondition === "reach_zero" && startingScore <= targetScore)
+      return null;
 
     const now = Date.now();
-    const isLowScoreWins = input.isLowScoreWins === true;
+    const scoreDirection =
+      input.scoreDirection === "down" ? "down" : "up";
+    const winCondition =
+      input.winCondition === "reach_zero" ||
+      input.winCondition === "lowest"
+        ? input.winCondition
+        : "reach_target";
     const timerEnabled = input.timerEnabled === true;
     const timerMode =
       input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
@@ -378,20 +413,26 @@ export function useGames(session: Session | null, authLoading = false) {
     const players: Player[] = (input.initialPlayers ?? []).map((p) => ({
       id: uid(),
       name: formatPlayerName(p.name),
-      score: 0,
+      score: startingScore,
       createdAt: now,
       reachedAt: now,
       avatarColor: p.avatarColor,
       profileId: p.profileId,
     }));
 
-    if (isLowScoreWins && players.length < 2) return null;
+    if ((winCondition === "lowest" || input.winByTwo === true) && players.length < 2) {
+      return null;
+    }
 
     const game: Game = {
       id: uid(),
       name,
-      targetPoints,
-      isLowScoreWins,
+      scoreDirection,
+      startingScore,
+      targetScore,
+      winCondition,
+      winByTwo: input.winByTwo === true,
+      manualEndOnly,
       timerEnabled,
       timerMode,
       timerSeconds,
@@ -417,14 +458,18 @@ export function useGames(session: Session | null, authLoading = false) {
   function duplicateGame(gameId: string): Game | null {
     const original = games.find((g) => g.id === gameId);
     if (!original) return null;
-    if (original.isLowScoreWins && original.players.length < 2) return null;
+    if (
+      (original.winCondition === "lowest" || original.winByTwo) &&
+      original.players.length < 2
+    )
+      return null;
 
     const now = Date.now();
 
     const duplicatedPlayers: Player[] = original.players.map((p) => ({
       ...p,
       id: uid(),
-      score: 0,
+      score: original.startingScore,
       createdAt: now,
       reachedAt: now,
     }));
@@ -485,16 +530,18 @@ export function useGames(session: Session | null, authLoading = false) {
     const name = formatPlayerName(input.name);
     if (!name) return;
     const now = Date.now();
-    const player: Player = {
-      id: uid(),
-      name,
-      score: 0,
-      createdAt: now,
-      reachedAt: now,
-      avatarColor: input.avatarColor,
-      profileId: input.profileId,
-    };
-    updateGame(gameId, (g) => ({ ...g, players: [player, ...g.players] }));
+    updateGame(gameId, (g) => {
+      const player: Player = {
+        id: uid(),
+        name,
+        score: g.startingScore,
+        createdAt: now,
+        reachedAt: now,
+        avatarColor: input.avatarColor,
+        profileId: input.profileId,
+      };
+      return { ...g, players: [player, ...g.players] };
+    });
   }
 
   function removePlayer(gameId: string, playerId: string) {
@@ -528,7 +575,11 @@ export function useGames(session: Session | null, authLoading = false) {
       ...g,
       endedAt: undefined,
       scoreHistory: [],
-      players: g.players.map((p) => ({ ...p, score: 0, reachedAt: now })),
+      players: g.players.map((p) => ({
+        ...p,
+        score: g.startingScore,
+        reachedAt: now,
+      })),
     }));
   }
 
@@ -541,8 +592,15 @@ export function useGames(session: Session | null, authLoading = false) {
       const players = g.players.map((p) => {
         if (p.id !== playerId) return p;
 
-        const scoreBefore = p.score;
-        const scoreAfter = clampScore(p.score + delta);
+        const scoreBefore =
+          typeof p.score === "number" && Number.isFinite(p.score)
+            ? p.score
+            : g.startingScore;
+        const scoreAfter = clampScoreForGame(
+          scoreBefore + delta,
+          g,
+          clampScore,
+        );
         const actualDelta = scoreAfter - scoreBefore;
         if (actualDelta === 0) return p;
 
@@ -564,7 +622,7 @@ export function useGames(session: Session | null, authLoading = false) {
       });
 
       if (!didUpdateScore) return g;
-      const hasWinner = hasReachedTarget(players, g.targetPoints);
+      const hasWinner = hasGameEnded(players, { ...g, endedAt: undefined });
       return {
         ...g,
         players,
@@ -576,23 +634,46 @@ export function useGames(session: Session | null, authLoading = false) {
 
   function updateGameSettings(gameId: string, input: UpdateGameSettingsInput) {
     const name = clampName(input.name).toUpperCase();
-    const targetPoints = Number.isFinite(input.targetPoints)
-      ? Math.trunc(input.targetPoints)
+    const startingScore = Number.isFinite(input.startingScore)
+      ? Math.trunc(input.startingScore)
+      : 0;
+    const targetScore = Number.isFinite(input.targetScore)
+      ? Math.trunc(input.targetScore)
       : 0;
     const timerSeconds = Number.isFinite(input.timerSeconds)
       ? Math.trunc(input.timerSeconds)
       : 0;
-    if (!name || targetPoints <= 0) return false;
+    if (!name) return false;
+    if (
+      !input.manualEndOnly &&
+      input.winCondition !== "reach_zero" &&
+      targetScore <= 0
+    ) return false;
+    if (input.winCondition === "reach_zero" && startingScore <= targetScore)
+      return false;
     if (input.timerEnabled && timerSeconds <= 0) return false;
 
     const now = Date.now();
     updateGame(gameId, (g) => {
-      const hasWinner = hasReachedTarget(g.players, targetPoints);
+      const nextGame = {
+        ...g,
+        scoreDirection: input.scoreDirection,
+        startingScore,
+        targetScore,
+        winCondition: input.winCondition,
+        winByTwo: input.winByTwo,
+        manualEndOnly: input.manualEndOnly,
+      };
+      const hasWinner = hasGameEnded(g.players, nextGame);
       return {
         ...g,
         name,
-        targetPoints,
-        isLowScoreWins: input.isLowScoreWins,
+        scoreDirection: input.scoreDirection,
+        startingScore,
+        targetScore,
+        winCondition: input.winCondition,
+        winByTwo: input.winByTwo,
+        manualEndOnly: input.manualEndOnly,
         timerEnabled: input.timerEnabled,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
@@ -600,6 +681,13 @@ export function useGames(session: Session | null, authLoading = false) {
       };
     });
     return true;
+  }
+
+  function finishGame(gameId: string) {
+    updateGame(gameId, (g) => {
+      if (!g.players.length || g.endedAt) return g;
+      return { ...g, endedAt: Date.now() };
+    });
   }
 
   function syncProfile(
@@ -647,7 +735,7 @@ export function useGames(session: Session | null, authLoading = false) {
   const sortedPlayers = useMemo(() => {
     if (!currentGame) return [];
     return [...currentGame.players].sort((a, b) =>
-      sortPlayers(a, b, currentGame.isLowScoreWins),
+      sortPlayers(a, b, shouldSortLowToHigh(currentGame)),
     );
   }, [currentGame]);
 
@@ -656,7 +744,7 @@ export function useGames(session: Session | null, authLoading = false) {
     () =>
       !!currentGame &&
       currentGame.players.length > 0 &&
-      currentGame.players.every((p) => p.score === 0),
+      currentGame.players.every((p) => p.score === currentGame.startingScore),
     [currentGame],
   );
 
@@ -675,6 +763,7 @@ export function useGames(session: Session | null, authLoading = false) {
     resetScores,
     updateScore,
     updateGameSettings,
+    finishGame,
     syncProfile,
     sortedPlayers,
     ranks,

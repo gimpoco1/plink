@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { Player } from "../../types";
+import type { Player, WinCondition } from "../../types";
 import { MAX_ABS_SCORE, QUICK_DELTAS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import {
@@ -17,7 +17,9 @@ type Props = {
   pulse?: "pos" | "neg";
   isWinner?: boolean;
   isAccountPlayer?: boolean;
-  targetPoints: number;
+  targetScore: number;
+  startingScore: number;
+  winCondition: WinCondition;
   onDelta: (playerId: string, delta: number) => void;
   onDelete: (playerId: string) => void;
 };
@@ -29,18 +31,24 @@ export function PlayerCard({
   pulse,
   isWinner,
   isAccountPlayer,
-  targetPoints,
+  targetScore,
+  startingScore,
+  winCondition,
   onDelta,
   onDelete,
 }: Props) {
+  const currentScore =
+    typeof player.score === "number" && Number.isFinite(player.score)
+      ? player.score
+      : startingScore;
   const displayName = isAccountPlayer
     ? formatAccountPlayerName(player.name)
     : capitalizeFirst(player.name);
   const initials = getInitials(player.name);
   const scoreClass =
-    player.score > 0
+    currentScore > 0
       ? "score score--pos"
-      : player.score < 0
+      : currentScore < 0
         ? "score score--neg"
         : "score";
   const [customRaw, setCustomRaw] = useState("");
@@ -50,10 +58,21 @@ export function PlayerCard({
   );
   const canApplyCustom =
     Number.isFinite(customValue) && Math.abs(customValue) > 0;
-  const progress = Math.min(
-    100,
-    Math.max(0, (player.score / targetPoints) * 100),
-  );
+  const progress =
+    winCondition === "reach_zero"
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            ((startingScore - currentScore) /
+              Math.max(1, startingScore - targetScore)) *
+              100,
+          ),
+        )
+      : Math.min(
+          100,
+          Math.max(0, (currentScore / Math.max(1, targetScore)) * 100),
+        );
 
   const negDeltas = QUICK_DELTAS.filter((d) => d < 0).reverse();
   const posDeltas = QUICK_DELTAS.filter((d) => d > 0).reverse();
@@ -132,7 +151,7 @@ export function PlayerCard({
                 className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`}
                 aria-label={`Score ${player.score}`}
               >
-                {player.score}
+                {currentScore}
               </div>
             </div>
           </div>
@@ -142,8 +161,14 @@ export function PlayerCard({
             role="progressbar"
             aria-label={`${displayName} progress to target`}
             aria-valuemin={0}
-            aria-valuemax={targetPoints}
-            aria-valuenow={Math.max(0, player.score)}
+            aria-valuemax={
+              winCondition === "reach_zero" ? startingScore : Math.max(1, targetScore)
+            }
+            aria-valuenow={
+              winCondition === "reach_zero"
+                ? Math.max(0, startingScore - currentScore)
+                : Math.max(0, currentScore)
+            }
           >
             <div className="progressBar" style={{ width: `${progress}%` }} />
           </div>

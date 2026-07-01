@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Game } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
 import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
-import { findWinner } from "../utils/ranking";
+import { isGameComplete } from "../utils/ranking";
 import { getGameDisplayName } from "../utils/text";
 import "../components/GameRowCard/GameRowCard.css";
 import "./SessionsScreen.css";
@@ -39,7 +39,7 @@ export function SessionsScreen({
 
   const sessions = useMemo(() => {
     const filtered = games.filter((game) => {
-      const completed = !!findWinner(game.players, game.targetPoints, game.isLowScoreWins);
+      const completed = isGameComplete(game);
       if (filter === "active") return !completed;
       if (filter === "completed") return completed;
       return true;
@@ -68,7 +68,6 @@ export function SessionsScreen({
       <ScreenHeader title="Sessions" subtitle="Reopen recent rounds and keep your history organized." />
       {games.length > 0 ? (
         <section className="homeList" aria-label="Game history">
-          <div className="homeList__title">Recent Sessions</div>
           <div className="sessionsToolbar">
             <div className="sessionsToolbar__group" role="group" aria-label="Filter sessions">
               {(["all", "active", "completed"] as const).map((value) => (

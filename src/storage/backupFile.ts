@@ -57,8 +57,12 @@ function normalizeName(value: string) {
 export function getGameImportSignature(game: Game) {
   return JSON.stringify({
     name: game.name,
-    targetPoints: game.targetPoints,
-    isLowScoreWins: game.isLowScoreWins,
+    scoreDirection: game.scoreDirection,
+    startingScore: game.startingScore,
+    targetScore: game.targetScore,
+    winCondition: game.winCondition,
+    winByTwo: game.winByTwo,
+    manualEndOnly: game.manualEndOnly,
     timerEnabled: game.timerEnabled,
     timerMode: game.timerMode,
     timerSeconds: game.timerSeconds,

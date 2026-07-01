@@ -28,11 +28,18 @@ export type ScoreHistoryEntry = {
   createdAt: number;
 };
 
+export type ScoreDirection = "up" | "down";
+export type WinCondition = "reach_target" | "reach_zero" | "lowest";
+
 export type Game = {
   id: string;
   name: string;
-  targetPoints: number;
-  isLowScoreWins: boolean;
+  scoreDirection: ScoreDirection;
+  startingScore: number;
+  targetScore: number;
+  winCondition: WinCondition;
+  winByTwo: boolean;
+  manualEndOnly: boolean;
   timerEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;

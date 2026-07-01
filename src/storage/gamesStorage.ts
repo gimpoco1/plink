@@ -41,6 +41,34 @@ function sanitizeScoreHistory(input: unknown): Game["scoreHistory"] {
     .filter(Boolean) as Game["scoreHistory"];
 }
 
+function sanitizePlayers(input: unknown, startingScore: number): Game["players"] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((player) => {
+      if (!player || typeof player !== "object") return null;
+      const obj = player as Record<string, unknown>;
+      if (
+        typeof obj.id !== "string" ||
+        typeof obj.name !== "string" ||
+        typeof obj.createdAt !== "number" ||
+        typeof obj.reachedAt !== "number" ||
+        typeof obj.avatarColor !== "string"
+      ) {
+        return null;
+      }
+      return {
+        id: obj.id,
+        name: obj.name,
+        score: typeof obj.score === "number" ? obj.score : startingScore,
+        createdAt: obj.createdAt,
+        reachedAt: obj.reachedAt,
+        avatarColor: obj.avatarColor,
+        profileId: typeof obj.profileId === "string" ? obj.profileId : undefined,
+      };
+    })
+    .filter(Boolean) as Game["players"];
+}
+
 export function sanitizeGames(input: unknown): Game[] {
   if (!Array.isArray(input)) return [];
   return input
@@ -50,14 +78,18 @@ export function sanitizeGames(input: unknown): Game[] {
       if (
         typeof obj.id !== "string" ||
         typeof obj.name !== "string" ||
-        typeof obj.targetPoints !== "number" ||
+        (obj.scoreDirection !== "up" && obj.scoreDirection !== "down") ||
+        typeof obj.startingScore !== "number" ||
+        typeof obj.targetScore !== "number" ||
+        (obj.winCondition !== "reach_target" &&
+          obj.winCondition !== "reach_zero" &&
+          obj.winCondition !== "lowest") ||
         typeof obj.createdAt !== "number" ||
         typeof obj.updatedAt !== "number" ||
         !Array.isArray(obj.players)
       ) {
         return null;
       }
-      const isLowScoreWins = obj.isLowScoreWins === true;
       const timerEnabled = obj.timerEnabled === true;
       const timerMode =
         obj.timerMode === "stopwatch" ? "stopwatch" : "countdown";
@@ -65,18 +97,23 @@ export function sanitizeGames(input: unknown): Game[] {
         typeof obj.timerSeconds === "number" && obj.timerSeconds > 0
           ? Math.trunc(obj.timerSeconds)
           : 300;
+      const startingScore = obj.startingScore;
       return {
         id: obj.id,
         name: obj.name,
-        targetPoints: obj.targetPoints,
-        isLowScoreWins,
+        scoreDirection: obj.scoreDirection,
+        startingScore,
+        targetScore: obj.targetScore,
+        winCondition: obj.winCondition,
+        winByTwo: obj.winByTwo === true,
+        manualEndOnly: obj.manualEndOnly === true,
         timerEnabled,
         timerMode,
         timerSeconds,
         createdAt: obj.createdAt,
         updatedAt: obj.updatedAt,
         endedAt: typeof obj.endedAt === "number" ? obj.endedAt : undefined,
-        players: obj.players as Game["players"],
+        players: sanitizePlayers(obj.players, startingScore),
         scoreHistory: sanitizeScoreHistory(obj.scoreHistory),
       } satisfies Game;
     })
@@ -141,8 +178,12 @@ export function migrateSingleGameToGamesIfNeeded(): {
   const migrated: Game = {
     id: gameId,
     name: "Game",
-    targetPoints: 100,
-    isLowScoreWins: false,
+    scoreDirection: "up",
+    startingScore: 0,
+    targetScore: 100,
+    winCondition: "reach_target",
+    winByTwo: false,
+    manualEndOnly: false,
     timerEnabled: false,
     timerMode: "countdown",
     timerSeconds: 300,

@@ -166,6 +166,10 @@
   will-change: height, transform, opacity;
 }
 
+.newGamePanel--open .newGamePanel__body {
+  overflow: visible;
+}
+
 .newGamePanel__body > .homeForm {
   min-height: 0;
 }
@@ -177,14 +181,17 @@
   align-items: start;
   gap: 16px;
   padding: 0 4px 4px 0;
+  position: relative;
+  z-index: 6;
 }
 
 .newSessionHeader__copy {
+  position: relative;
   display: grid;
   gap: 3px;
   min-width: 0;
   margin-top: 0;
-  margin-left: 7px;
+  margin-left: 4px;
 }
 
 .newSessionHeader__eyebrow {
@@ -196,12 +203,33 @@
   text-transform: uppercase;
 }
 
-.newSessionHeader__title {
+.newSessionHeader__manual {
+  min-width: 0;
+}
+
+.newSessionHeader__manual span {
+  display: block;
   color: #11180f;
   font-size: clamp(23px, 3.8vw, 29px);
   font-weight: 900;
   line-height: 1.02;
   letter-spacing: -0.05em;
+}
+
+.newSessionHeader__choice {
+  width: min(100%, 520px);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.newSessionHeader__or {
+  color: rgba(17, 24, 10, 0.58);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .newSessionHeader__dismiss {
@@ -211,7 +239,7 @@
   height: 40px;
   aspect-ratio: 1;
   position: relative;
-  z-index: 2;
+  z-index: 8;
   justify-self: end;
   margin-right: 0;
   padding: 0;
@@ -306,10 +334,10 @@
   letter-spacing: 0.02em;
 }
 .targetControl__value {
-  width: 64px;
+  width: 54px;
   height: 40px;
-  flex: 0 0 64px;
-  min-width: 64px;
+  flex: 0 0 54px;
+  min-width: 54px;
   padding: 2px 6px 4px;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -354,6 +382,303 @@
   color: var(--accent);
   font-size: 18px;
   font-weight: 800;
+}
+
+.gamePresetBrowser__trigger {
+  width: auto;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(17, 24, 10, 0.14);
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.08);
+  color: #11180f;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1 1 180px;
+  max-width: 260px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gamePresetBrowser__trigger[aria-expanded="true"] {
+  background: rgba(17, 24, 10, 0.92);
+  color: var(--accent);
+}
+
+.gamePresetBrowserWrap {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 7;
+  width: min(100vw - 64px, 100%);
+  translate: -50% 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.gamePresetBrowser {
+  width: min(430px, calc(100vw - 64px));
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(17, 24, 10, 0.18);
+  border-radius: 20px;
+  background: rgba(218, 255, 82, 0.98);
+  box-shadow:
+    0 26px 54px rgba(17, 24, 10, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform-origin: top center;
+  pointer-events: auto;
+}
+
+.gamePresetBrowser__search {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(17, 24, 10, 0.14);
+  border-radius: 14px;
+  background: rgba(13, 20, 15, 0.88);
+  color: rgba(246, 248, 235, 0.72);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.gamePresetBrowser__search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f6f8eb;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gamePresetBrowser__search input::placeholder {
+  color: rgba(246, 248, 235, 0.58);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.gamePresetBrowser__hint {
+  margin: -1px 3px 1px;
+  color: rgba(17, 24, 10, 0.66);
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.gamePresetBrowser__list {
+  display: grid;
+  max-height: min(300px, 42vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 10px;
+  margin-right: -10px;
+  scrollbar-gutter: stable;
+}
+
+.gamePresetCard {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 0;
+  border: 0;
+  border-top: 1px solid rgba(17, 24, 10, 0.1);
+  background: transparent;
+  color: #11180f;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  grid-template-areas:
+    "main actions"
+    "facts actions";
+  align-items: center;
+  gap: 6px 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gamePresetCard:first-child {
+  border-top: 0;
+}
+
+.gamePresetCard__main {
+  grid-area: main;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gamePresetCard__meta {
+  color: rgba(17, 24, 10, 0.58);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gamePresetCard__category {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(17, 24, 10, 0.58);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gamePresetCard__main strong {
+  color: #11180f;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.gamePresetCard__facts {
+  grid-area: facts;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-content: start;
+  gap: 5px;
+  max-width: none;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gamePresetCard__facts span {
+  min-height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
+  color: rgba(17, 24, 10, 0.82);
+  display: inline-flex;
+  align-items: center;
+  font-size: 8.5px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.gamePresetCard__apply {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.9);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+}
+
+.gamePresetCard__info {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.1);
+  color: rgba(17, 24, 10, 0.78);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.gamePresetCard__apply {
+  grid-area: actions;
+}
+
+.gamePresetCard__apply {
+  align-self: center;
+  justify-self: end;
+}
+
+.gamePresetInfo {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(17, 24, 10, 0.14);
+  border-radius: 16px;
+  background: rgba(17, 24, 10, 0.92);
+  color: #f6f8eb;
+}
+
+.gamePresetInfo__head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gamePresetInfo__head div {
+  display: grid;
+  gap: 2px;
+}
+
+.gamePresetInfo__head span {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gamePresetInfo__head strong {
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.gamePresetInfo__head button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(246, 248, 235, 0.08);
+  color: #f6f8eb;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.gamePresetInfo p {
+  margin: 0;
+  color: rgba(246, 248, 235, 0.82);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.gamePresetInfo ul {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(246, 248, 235, 0.72);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.gamePresetInfo li + li {
+  margin-top: 3px;
+}
+
+.gamePresetBrowser__empty {
+  padding: 14px 2px 6px;
+  color: rgba(17, 24, 10, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
 }
 
 .newSessionOptions {
@@ -734,7 +1059,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
 }
 
@@ -845,11 +1170,22 @@
   }
   .newSessionPrimary > .field,
   .newSessionPlayers,
+  .gamePresetBrowser,
   .targetControl {
     border-radius: 18px;
   }
   .newSessionNameField .input {
     padding-inline: 12px;
+  }
+  .gamePresetBrowser__trigger {
+    white-space: nowrap;
+  }
+  .gamePresetCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gamePresetCard__facts {
+    justify-content: flex-start;
+    max-width: none;
   }
   .modeCard {
     min-height: 48px;
@@ -860,6 +1196,7 @@
     display: none;
   }
   .targetControl__head {
+    grid-template-columns: minmax(0, 1fr) minmax(3.8ch, 0.7fr);
     gap: 4px;
   }
   .targetControl__label {
@@ -870,9 +1207,9 @@
   }
 
   .targetControl__value {
-    width: 3.4ch;
-    min-width: 3.4ch;
-    max-width: 3.4ch;
+    width: 3.8ch;
+    min-width: 3.8ch;
+    max-width: 3.8ch;
     text-align: center;
     padding-inline: 0;
   }

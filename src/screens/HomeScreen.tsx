@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Game, PlayerProfile } from "../types";
+import type {
+  Game,
+  PlayerProfile,
+  ScoreDirection,
+  WinCondition,
+} from "../types";
 import {
   NewGameCard,
   type NewGameInput,
@@ -16,8 +21,12 @@ import "./HomeScreen.css";
 type QuickSetup = {
   key: string;
   label: string;
-  targetPoints: number;
-  isLowScoreWins: boolean;
+  scoreDirection: ScoreDirection;
+  startingScore: number;
+  targetScore: number;
+  winCondition: WinCondition;
+  winByTwo: boolean;
+  manualEndOnly: boolean;
   timerEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
@@ -149,7 +158,7 @@ export function HomeScreen({
       [...games]
         .filter(
           (game) =>
-            !findWinner(game.players, game.targetPoints, game.isLowScoreWins),
+            !findWinner(game.players, game),
         )
         .sort((a, b) => b.updatedAt - a.updatedAt)[0] ?? null
     );
@@ -170,8 +179,12 @@ export function HomeScreen({
       const label = getGameDisplayName(game.name).title;
       const key = [
         label,
-        game.targetPoints,
-        game.isLowScoreWins ? "low" : "high",
+        game.scoreDirection,
+        game.startingScore,
+        game.targetScore,
+        game.winCondition,
+        game.winByTwo,
+        game.manualEndOnly,
         game.timerEnabled ? game.timerMode : "off",
         game.timerEnabled ? game.timerSeconds : 0,
       ].join("|");
@@ -185,8 +198,12 @@ export function HomeScreen({
       setups.set(key, {
         key,
         label,
-        targetPoints: game.targetPoints,
-        isLowScoreWins: game.isLowScoreWins,
+        scoreDirection: game.scoreDirection,
+        startingScore: game.startingScore,
+        targetScore: game.targetScore,
+        winCondition: game.winCondition,
+        winByTwo: game.winByTwo,
+        manualEndOnly: game.manualEndOnly,
         timerEnabled: game.timerEnabled,
         timerMode: game.timerMode,
         timerSeconds: game.timerSeconds,
@@ -232,8 +249,12 @@ export function HomeScreen({
     void onStartQuickSetup(
       {
         name: nextSuggestionName(setup.label),
-        targetPoints: setup.targetPoints,
-        isLowScoreWins: setup.isLowScoreWins,
+        scoreDirection: setup.scoreDirection,
+        startingScore: setup.startingScore,
+        targetScore: setup.targetScore,
+        winCondition: setup.winCondition,
+        winByTwo: setup.winByTwo,
+        manualEndOnly: setup.manualEndOnly,
         timerEnabled: setup.timerEnabled,
         timerMode: setup.timerMode,
         timerSeconds: setup.timerSeconds,
@@ -250,10 +271,28 @@ export function HomeScreen({
   }
 
   function getSuggestionFacts(setup: QuickSetup) {
-    const parts = [`${setup.targetPoints} pts`];
+    const parts = [
+      setup.manualEndOnly
+        ? setup.targetScore > 0
+          ? `${setup.targetScore} ref`
+          : "manual end"
+        : setup.winCondition === "reach_zero"
+          ? `${setup.startingScore} start`
+          : `${setup.targetScore} pts`,
+    ];
 
-    if (setup.isLowScoreWins) {
+    if (setup.winCondition === "lowest") {
       parts.push("lowest wins");
+    } else if (setup.winCondition === "reach_zero") {
+      parts.push("reach zero");
+    }
+
+    if (setup.winByTwo) {
+      parts.push("win by 2");
+    }
+
+    if (setup.manualEndOnly && setup.targetScore > 0) {
+      parts.push("manual end");
     }
 
     if (setup.timerEnabled) {
@@ -356,9 +395,9 @@ export function HomeScreen({
       </section>
 
       {quickSetups.length > 0 ? (
-        <section className="quickSetups" aria-label="Quick start presets">
+        <section className="quickSetups" aria-label="Games you play often">
           <div className="quickSetups__head">
-            <div className="homeList__title">Quick start presets</div>
+            <div className="homeList__title">Games you play often</div>
           </div>
           <div className="quickSetups__grid">
             {quickSetups.map((setup) => (
