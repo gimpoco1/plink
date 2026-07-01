@@ -39,6 +39,7 @@ import {
 } from "./utils/profileStats";
 import {
   createBackupPayload,
+  getGameImportSignature,
   parseBackupPayload,
   prepareBackupImport,
   type BackupSelection,
@@ -652,8 +653,15 @@ export default function App() {
       selection.games ? prepared.games : [],
       selection.profiles ? prepared.profiles : [],
     );
+    const existingGameSignatures = new Set(games.map(getGameImportSignature));
+    const uniqueReconciledGames = reconciled.games.filter((game) => {
+      const signature = getGameImportSignature(game);
+      if (existingGameSignatures.has(signature)) return false;
+      existingGameSignatures.add(signature);
+      return true;
+    });
     const importedProfiles = importProfiles(reconciled.profiles);
-    const importedGames = importGames(reconciled.games);
+    const importedGames = importGames(uniqueReconciledGames);
 
     return { games: importedGames, profiles: importedProfiles };
   }

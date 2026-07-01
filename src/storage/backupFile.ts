@@ -54,7 +54,7 @@ function normalizeName(value: string) {
   return value.trim().toLowerCase();
 }
 
-function getGameImportSignature(game: Game) {
+export function getGameImportSignature(game: Game) {
   return JSON.stringify({
     name: game.name,
     targetPoints: game.targetPoints,
