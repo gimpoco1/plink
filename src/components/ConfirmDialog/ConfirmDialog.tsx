@@ -30,9 +30,21 @@ type ConfirmOptions = {
   layout?: "default" | "feature";
 };
 
+type PromptOptions = {
+  title: string;
+  message: string;
+  initialValue?: string;
+  placeholder?: string;
+  confirmText?: string;
+  cancelText?: string;
+  eyebrow?: string;
+  maxLength?: number;
+};
+
 export type ConfirmDialogHandle = {
   confirm: (options: ConfirmOptions) => Promise<boolean>;
   choose: (options: ConfirmOptions) => Promise<ConfirmResult>;
+  prompt: (options: PromptOptions) => Promise<string | null>;
 };
 
 function resolveEyebrow(next: ConfirmOptions): string {
@@ -55,6 +67,10 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
   function ConfirmDialog(_, ref) {
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const resolverRef = useRef<((value: ConfirmResult) => void) | null>(null);
+    const promptResolverRef = useRef<((value: string | null) => void) | null>(
+      null,
+    );
+    const [promptValue, setPromptValue] = useState("");
     const [options, setOptions] = useState<ConfirmOptions>({
       title: "",
       bodyTitle: "",
@@ -70,6 +86,11 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       players: [],
       layout: "default",
     });
+    const [promptOptions, setPromptOptions] = useState<PromptOptions | null>(
+      null,
+    );
+
+    const isPrompt = promptOptions !== null;
 
     function closeWith(value: ConfirmResult) {
       dialogRef.current?.close();
@@ -77,10 +98,19 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       resolverRef.current = null;
     }
 
+    function closePrompt(value: string | null) {
+      dialogRef.current?.close();
+      promptResolverRef.current?.(value);
+      promptResolverRef.current = null;
+      setPromptOptions(null);
+      setPromptValue("");
+    }
+
     useImperativeHandle(
       ref,
       () => ({
         choose: (next) => {
+          setPromptOptions(null);
           setOptions({
             title: next.title,
             bodyTitle: next.bodyTitle ?? "",
@@ -102,6 +132,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
           });
         },
         confirm: async (next) => {
+          setPromptOptions(null);
           setOptions({
             title: next.title,
             bodyTitle: next.bodyTitle ?? "",
@@ -123,6 +154,29 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
           });
           return result === "confirm";
         },
+        prompt: async (next) => {
+          setPromptOptions(next);
+          setPromptValue(next.initialValue ?? "");
+          setOptions({
+            title: next.title,
+            bodyTitle: "",
+            message: next.message,
+            confirmText: next.confirmText ?? "Save",
+            cancelText: next.cancelText ?? "Cancel",
+            hideCancelAction: false,
+            extraActionText: "",
+            tone: "default",
+            eyebrow: next.eyebrow ?? "Edit",
+            highlights: [],
+            details: [],
+            players: [],
+            layout: "default",
+          });
+          dialogRef.current?.showModal();
+          return new Promise<string | null>((resolve) => {
+            promptResolverRef.current = resolve;
+          });
+        },
       }),
       [],
     );
@@ -132,6 +186,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         className={`dialog dialog--confirm${options.layout === "feature" ? " dialog--confirmFeature" : ""}`}
         ref={dialogRef}
         onClose={() => {
+          if (promptResolverRef.current) closePrompt(null);
           if (resolverRef.current) closeWith("cancel");
         }}
       >
@@ -140,6 +195,11 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
           className="dialog__form"
           onSubmit={(e) => {
             e.preventDefault();
+            if (isPrompt) {
+              const value = promptValue.trim();
+              if (value) closePrompt(value);
+              return;
+            }
             closeWith("confirm");
           }}
         >
@@ -153,7 +213,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             <button
               className="iconbtn"
               type="button"
-              onClick={() => closeWith("cancel")}
+              onClick={() => (isPrompt ? closePrompt(null) : closeWith("cancel"))}
               aria-label="Close"
             >
               ×
@@ -211,6 +271,17 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             {options.message && !options.players?.length ? (
               <p className="dialog__message">{options.message}</p>
             ) : null}
+            {isPrompt ? (
+              <input
+                className="input"
+                type="text"
+                value={promptValue}
+                onChange={(event) => setPromptValue(event.target.value)}
+                placeholder={promptOptions?.placeholder}
+                maxLength={promptOptions?.maxLength}
+                autoFocus
+              />
+            ) : null}
           </div>
 
           <div className="dialog__actions">
@@ -218,7 +289,9 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
               <button
                 className="btn btn--ghost"
                 type="button"
-                onClick={() => closeWith("cancel")}
+                onClick={() =>
+                  isPrompt ? closePrompt(null) : closeWith("cancel")
+                }
               >
                 {options.cancelText ?? "Cancel"}
               </button>
@@ -239,6 +312,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                   : "btn btn--primary"
               }
               type="submit"
+              disabled={isPrompt && !promptValue.trim()}
             >
               {options.confirmText ?? "Confirm"}
             </button>

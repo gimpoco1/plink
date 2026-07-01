@@ -593,14 +593,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setTransferToast(null);
 
       try {
-        const result = await onDownloadBackupFile(transferSelection);
-        const parts = formatTransferParts(result);
-        showTransferToast(
-          parts.length > 0
-            ? `Downloaded backup file with ${parts.join(" and ")}.`
-            : "Downloaded an empty backup file.",
-          "success",
-        );
+        await onDownloadBackupFile(transferSelection);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Backup download failed.",
@@ -1220,6 +1213,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                 <LogOut size={17} strokeWidth={2.3} aria-hidden="true" />
                 <span>{busy ? "Signing out..." : "Sign out"}</span>
               </button>
+              <div className="authDialog__links" aria-label="Account links">
+                <a href="/privacy.html">
+                  Privacy
+                </a>
+                <span aria-hidden="true">·</span>
+                <a href="/support.html">
+                  Support
+                </a>
+              </div>
             </div>
           ) : (
             <>
@@ -1321,6 +1323,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                       ? "Sign in"
                       : "Create account"}
                 </button>
+                <div className="authDialog__links" aria-label="Account links">
+                  <a href="/privacy.html">
+                    Privacy
+                  </a>
+                  <span aria-hidden="true">·</span>
+                  <a href="/support.html">
+                    Support
+                  </a>
+                </div>
               </div>
             </>
           )}
