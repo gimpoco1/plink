@@ -4,9 +4,9 @@ import { supabase } from "../lib/supabase";
 const GAMES_TABLE = "games";
 const PROFILES_TABLE = "player_profiles";
 const GAME_SELECT_COLUMNS =
-  "id,user_id,name,target_points,is_low_score_wins,timer_enabled,timer_mode,timer_seconds,players,score_history,created_at,updated_at,ended_at";
+  "id,user_id,name,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,timer_mode,timer_seconds,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
-  "id,user_id,name,target_points,is_low_score_wins,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
+  "id,user_id,name,score_direction,starting_score,target_score,win_condition,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
 const PROFILE_SELECT_COLUMNS =
   "id,user_id,name,avatar_color,is_account_player,created_at,updated_at";
 const LEGACY_PROFILE_SELECT_COLUMNS =
@@ -16,8 +16,14 @@ type GameRow = {
   id: string;
   user_id: string;
   name: string;
-  target_points: number;
-  is_low_score_wins: boolean;
+  score_direction: Game["scoreDirection"];
+  starting_score: number;
+  target_score: number;
+  win_condition: Game["winCondition"];
+  win_by_two?: boolean | null;
+  manual_end_only?: boolean | null;
+  target_points?: number;
+  is_low_score_wins?: boolean;
   timer_enabled: boolean;
   timer_mode: "countdown" | "stopwatch";
   timer_seconds: number;
@@ -26,6 +32,11 @@ type GameRow = {
   created_at: number;
   updated_at: number;
   ended_at: number | null;
+};
+
+type LegacyCompatibleGameRow = GameRow & {
+  target_points: number;
+  is_low_score_wins: boolean;
 };
 
 type ProfileRow = {
@@ -43,8 +54,12 @@ function gameToRow(userId: string, game: Game): GameRow {
     id: game.id,
     user_id: userId,
     name: game.name,
-    target_points: game.targetPoints,
-    is_low_score_wins: game.isLowScoreWins,
+    score_direction: game.scoreDirection,
+    starting_score: game.startingScore,
+    target_score: game.targetScore,
+    win_condition: game.winCondition,
+    win_by_two: game.winByTwo,
+    manual_end_only: game.manualEndOnly,
     timer_enabled: game.timerEnabled,
     timer_mode: game.timerMode,
     timer_seconds: game.timerSeconds,
@@ -56,16 +71,58 @@ function gameToRow(userId: string, game: Game): GameRow {
   };
 }
 
+function gameToLegacyCompatibleRow(
+  userId: string,
+  game: Game,
+): LegacyCompatibleGameRow {
+  return {
+    ...gameToRow(userId, game),
+    target_points:
+      game.winCondition === "reach_zero" ? game.startingScore : game.targetScore,
+    is_low_score_wins:
+      game.winCondition === "lowest" || game.winCondition === "reach_zero",
+  };
+}
+
+function sanitizeRemotePlayers(
+  players: Game["players"],
+  startingScore: number,
+): Game["players"] {
+  return Array.isArray(players)
+    ? players.map((player) => ({
+        ...player,
+        score:
+          typeof player.score === "number" && Number.isFinite(player.score)
+            ? player.score
+            : startingScore,
+      }))
+    : [];
+}
+
 function rowToGame(row: GameRow): Game {
+  const scoreDirection = row.score_direction === "down" ? "down" : "up";
+  const startingScore =
+    typeof row.starting_score === "number" ? row.starting_score : 0;
+  const targetScore =
+    typeof row.target_score === "number" ? row.target_score : 100;
+  const winCondition =
+    row.win_condition === "reach_zero" || row.win_condition === "lowest"
+      ? row.win_condition
+      : "reach_target";
+
   return {
     id: row.id,
     name: row.name,
-    targetPoints: row.target_points,
-    isLowScoreWins: row.is_low_score_wins,
+    scoreDirection,
+    startingScore,
+    targetScore,
+    winCondition,
+    winByTwo: row.win_by_two === true,
+    manualEndOnly: row.manual_end_only === true,
     timerEnabled: row.timer_enabled,
     timerMode: row.timer_mode,
     timerSeconds: row.timer_seconds,
-    players: Array.isArray(row.players) ? (row.players as Game["players"]) : [],
+    players: sanitizeRemotePlayers(row.players, startingScore),
     scoreHistory: Array.isArray(row.score_history)
       ? (row.score_history as Game["scoreHistory"])
       : [],
@@ -82,6 +139,27 @@ function isMissingScoreHistoryColumn(error: unknown) {
     value.code === "42703" ||
     (typeof value.message === "string" &&
       value.message.toLowerCase().includes("score_history"))
+  );
+}
+
+function isMissingGameRuleColumn(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: unknown; message?: unknown };
+  return (
+    value.code === "42703" ||
+    (typeof value.message === "string" &&
+      (value.message.toLowerCase().includes("win_by_two") ||
+        value.message.toLowerCase().includes("manual_end_only")))
+  );
+}
+
+function isMissingLegacyRequiredColumnValue(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { message?: unknown };
+  return (
+    typeof value.message === "string" &&
+    value.message.includes("target_points") &&
+    value.message.includes("not-null constraint")
   );
 }
 
@@ -128,7 +206,12 @@ export async function loadRemoteGames(userId: string): Promise<Game[]> {
   if (!result.error) {
     return (result.data ?? []).map((row) => rowToGame(row as GameRow));
   }
-  if (!isMissingScoreHistoryColumn(result.error)) throw result.error;
+  if (
+    !isMissingScoreHistoryColumn(result.error) &&
+    !isMissingGameRuleColumn(result.error)
+  ) {
+    throw result.error;
+  }
 
   const legacyResult = await supabase
     .from(GAMES_TABLE)
@@ -147,12 +230,47 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
       .from(GAMES_TABLE)
       .upsert(rows, { onConflict: "id" });
     if (error) {
-      if (!isMissingScoreHistoryColumn(error)) throw error;
-      const legacyRows = rows.map(({ score_history, ...row }) => row);
-      const { error: legacyError } = await supabase
-        .from(GAMES_TABLE)
-        .upsert(legacyRows, { onConflict: "id" });
-      if (legacyError) throw legacyError;
+      if (isMissingLegacyRequiredColumnValue(error)) {
+        const legacyRows = games.map((game) =>
+          gameToLegacyCompatibleRow(userId, game),
+        );
+        const { error: legacyConstraintError } = await supabase
+          .from(GAMES_TABLE)
+          .upsert(legacyRows, { onConflict: "id" });
+        if (legacyConstraintError) {
+          if (
+            !isMissingScoreHistoryColumn(legacyConstraintError) &&
+            !isMissingGameRuleColumn(legacyConstraintError)
+          ) {
+            throw legacyConstraintError;
+          }
+          const legacyFallbackRows = legacyRows.map(
+            ({ score_history, win_by_two, manual_end_only, ...row }) => row,
+          );
+          const { error: legacyFallbackError } = await supabase
+            .from(GAMES_TABLE)
+            .upsert(legacyFallbackRows, { onConflict: "id" });
+          if (legacyFallbackError) throw legacyFallbackError;
+        }
+      } else if (
+        !isMissingScoreHistoryColumn(error) &&
+        !isMissingGameRuleColumn(error)
+      ) throw error;
+      else {
+        const legacyRows = games.map((game) => {
+          const {
+            score_history,
+            win_by_two,
+            manual_end_only,
+            ...row
+          } = gameToLegacyCompatibleRow(userId, game);
+          return row;
+        });
+        const { error: legacyError } = await supabase
+          .from(GAMES_TABLE)
+          .upsert(legacyRows, { onConflict: "id" });
+        if (legacyError) throw legacyError;
+      }
     }
   }
 

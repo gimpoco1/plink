@@ -1,12 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AVATAR_COLORS } from "../../constants";
-import type { PlayerProfile } from "../../types";
+import type { PlayerProfile, ScoreDirection, WinCondition } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
 import { formatAccountPlayerName, getInitials } from "../../utils/text";
+import { GAME_PRESETS, type GamePreset } from "./gamePresets";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import "./NewGameCard.css";
-import { ArrowDownUp, Timer, Users, Dices, Target } from "lucide-react";
+import {
+  ArrowDownUp,
+  Check,
+  Dices,
+  Flag,
+  Info,
+  Library,
+  Search,
+  Timer,
+  Target,
+  Trophy,
+  Users,
+  X,
+} from "lucide-react";
 type StagedPlayer = {
   name: string;
   avatarColor: string;
@@ -14,8 +28,12 @@ type StagedPlayer = {
 
 export type NewGameInput = {
   name: string;
-  targetPoints: number;
-  isLowScoreWins: boolean;
+  scoreDirection: ScoreDirection;
+  startingScore: number;
+  targetScore: number;
+  winCondition: WinCondition;
+  winByTwo: boolean;
+  manualEndOnly: boolean;
   timerEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
@@ -52,7 +70,11 @@ export function NewGameCard({
   const [hasMounted, setHasMounted] = useState(false);
   const [name, setName] = useState("");
   const [target, setTarget] = useState("8");
-  const [isLowScoreWins, setIsLowScoreWins] = useState(false);
+  const [scoreDirection, setScoreDirection] = useState<ScoreDirection>("up");
+  const [winCondition, setWinCondition] =
+    useState<WinCondition>("reach_target");
+  const [winByTwo, setWinByTwo] = useState(false);
+  const [manualEndOnly, setManualEndOnly] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
     "countdown",
@@ -65,11 +87,17 @@ export function NewGameCard({
   const [stagedPlayers, setStagedPlayers] = useState<StagedPlayer[]>([]);
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
   const [isSavedPickerOpen, setIsSavedPickerOpen] = useState(false);
+  const [isPresetBrowserOpen, setIsPresetBrowserOpen] = useState(false);
+  const [presetSearch, setPresetSearch] = useState("");
+  const [selectedPresetInfoId, setSelectedPresetInfoId] = useState<
+    string | null
+  >(null);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [saveAsProfile, setSaveAsProfile] = useState(true);
   const [newPlayerColor, setNewPlayerColor] = useState<
     (typeof AVATAR_COLORS)[number]["value"]
   >(AVATAR_COLORS[0].value);
+  const presetBrowserRef = useRef<HTMLDivElement | null>(null);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -79,7 +107,10 @@ export function NewGameCard({
   function resetForm() {
     setName("");
     setTarget("8");
-    setIsLowScoreWins(false);
+    setScoreDirection("up");
+    setWinCondition("reach_target");
+    setWinByTwo(false);
+    setManualEndOnly(false);
     setTimerEnabled(false);
     setTimerMode("countdown");
     setTimerMinutes("5");
@@ -88,6 +119,9 @@ export function NewGameCard({
     setStagedPlayers([]);
     setIsAddingPlayer(false);
     setIsSavedPickerOpen(false);
+    setIsPresetBrowserOpen(false);
+    setPresetSearch("");
+    setSelectedPresetInfoId(null);
     setNewPlayerName("");
     setSaveAsProfile(true);
     setNewPlayerColor(AVATAR_COLORS[0].value);
@@ -122,15 +156,19 @@ export function NewGameCard({
     return [...saved, ...staged];
   }, [profiles, selectedProfileIds, stagedPlayers]);
 
-  const lowScoreNeedsMorePlayers = isLowScoreWins && selectedPlayers.length < 2;
+  const lowScoreNeedsMorePlayers =
+    winCondition === "lowest" && selectedPlayers.length < 2;
+  const winByTwoNeedsMorePlayers = winByTwo && selectedPlayers.length < 2;
+  const ruleNeedsMorePlayers =
+    lowScoreNeedsMorePlayers || winByTwoNeedsMorePlayers;
 
   const canCreate =
     name.trim().length > 0 &&
     Number.isFinite(parsedTarget) &&
-    parsedTarget > 0 &&
+    (manualEndOnly || parsedTarget > 0) &&
     (!timerEnabled || timerMode === "stopwatch" || timerTotalSeconds > 0) &&
     selectedPlayers.length > 0 &&
-    !lowScoreNeedsMorePlayers;
+    !ruleNeedsMorePlayers;
 
   const availableProfiles = useMemo(
     () => profiles.filter((profile) => !selectedProfileIds.has(profile.id)),
@@ -152,8 +190,17 @@ export function NewGameCard({
     if (!draft) return;
 
     setName(draft.name);
-    setTarget(String(draft.targetPoints));
-    setIsLowScoreWins(draft.isLowScoreWins);
+    setTarget(
+      String(
+        draft.winCondition === "reach_zero"
+          ? draft.startingScore
+          : draft.targetScore,
+      ),
+    );
+    setScoreDirection(draft.scoreDirection);
+    setWinCondition(draft.winCondition);
+    setWinByTwo(draft.winByTwo);
+    setManualEndOnly(draft.manualEndOnly);
     setTimerEnabled(draft.timerEnabled);
     setTimerMode(draft.timerMode);
     setTimerMinutes(String(Math.floor(draft.timerSeconds / 60)));
@@ -183,8 +230,50 @@ export function NewGameCard({
     );
     setIsAddingPlayer(false);
     setIsSavedPickerOpen(false);
+    setIsPresetBrowserOpen(false);
+    setPresetSearch("");
+    setSelectedPresetInfoId(null);
   }, [draft, draftToken, profiles]);
 
+  useEffect(() => {
+    if (!isPresetBrowserOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+      if (!target || presetBrowserRef.current?.contains(target)) return;
+      setIsPresetBrowserOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isPresetBrowserOpen]);
+
+  const filteredGamePresets = useMemo(() => {
+    const query = presetSearch.trim().toLocaleLowerCase();
+    if (!query) return GAME_PRESETS;
+
+    return GAME_PRESETS.filter((preset) => {
+      const haystack = [
+        preset.name,
+        preset.category,
+        preset.description,
+        preset.winCondition === "reach_zero"
+          ? preset.startingScore
+          : preset.targetScore,
+        preset.winCondition === "lowest"
+          ? "lowest wins"
+          : preset.winCondition === "reach_zero"
+            ? "reach zero"
+            : preset.winByTwo
+              ? "win by 2"
+              : "highest wins",
+        preset.timerEnabled ? "timer" : "no timer",
+      ]
+        .join(" ")
+        .toLocaleLowerCase();
+      return haystack.includes(query);
+    });
+  }, [presetSearch]);
   function toggleProfile(profileId: string) {
     setSelectedProfileIds((current) => {
       const next = new Set(current);
@@ -196,19 +285,42 @@ export function NewGameCard({
 
   function updateTarget(value: string) {
     const digits = value.replace(/[^\d]/g, "");
-    setTarget(digits ? String(Math.min(200, Number.parseInt(digits, 10))) : "");
+    setTarget(
+      digits ? String(Math.min(5000, Number.parseInt(digits, 10))) : "",
+    );
   }
 
   function adjustTarget(delta: number) {
     const base =
       Number.isFinite(parsedTarget) && parsedTarget > 0 ? parsedTarget : 8;
-    setTarget(String(Math.min(200, Math.max(1, base + delta))));
+    setTarget(String(Math.min(5000, Math.max(1, base + delta))));
   }
 
   function applyCountdownPreset(totalSeconds: number) {
     setTimerMode("countdown");
     setTimerMinutes(String(Math.floor(totalSeconds / 60)));
     setTimerSeconds(String(totalSeconds % 60));
+  }
+
+  function applyGamePreset(preset: GamePreset) {
+    setName(preset.name);
+    setTarget(
+      String(
+        preset.winCondition === "reach_zero"
+          ? preset.startingScore
+          : preset.targetScore,
+      ),
+    );
+    setScoreDirection(preset.scoreDirection);
+    setWinCondition(preset.winCondition);
+    setWinByTwo(preset.winByTwo);
+    setManualEndOnly(preset.manualEndOnly);
+    setTimerEnabled(preset.timerEnabled);
+    setTimerMode(preset.timerMode);
+    setTimerMinutes(String(Math.floor(preset.timerSeconds / 60)));
+    setTimerSeconds(String(preset.timerSeconds % 60));
+    setIsPresetBrowserOpen(false);
+    setSelectedPresetInfoId(null);
   }
 
   function addPlayer() {
@@ -253,8 +365,12 @@ export function NewGameCard({
 
     const created = await onCreate({
       name,
-      targetPoints: parsedTarget,
-      isLowScoreWins,
+      scoreDirection,
+      startingScore: scoreDirection === "down" ? parsedTarget : 0,
+      targetScore: winCondition === "reach_zero" ? 0 : parsedTarget,
+      winCondition,
+      winByTwo,
+      manualEndOnly,
       timerEnabled,
       timerMode,
       timerSeconds:
@@ -421,7 +537,191 @@ export function NewGameCard({
               >
                 <div className="newSessionHeader__copy">
                   <div className="newSessionHeader__eyebrow">New session</div>
-                  <div className="newSessionHeader__title">Build the match</div>
+                  <div className="newSessionHeader__choice">
+                    <div className="newSessionHeader__manual">
+                      <span>Build the match</span>
+                    </div>
+                    <span className="newSessionHeader__or">or</span>
+                    <button
+                      type="button"
+                      className="gamePresetBrowser__trigger"
+                      aria-expanded={isPresetBrowserOpen}
+                      onClick={() =>
+                        setIsPresetBrowserOpen((current) => !current)
+                      }
+                    >
+                      <Library size={15} strokeWidth={2.4} aria-hidden="true" />
+                      Browse games
+                    </button>
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {isPresetBrowserOpen ? (
+                      <div
+                        ref={presetBrowserRef}
+                        className="gamePresetBrowserWrap"
+                      >
+                        <motion.section
+                          className="gamePresetBrowser"
+                          initial={
+                            reduceMotion
+                              ? false
+                              : { opacity: 0, y: -6, scale: 0.98 }
+                          }
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={
+                            reduceMotion
+                              ? { opacity: 0 }
+                              : { opacity: 0, y: -6, scale: 0.98 }
+                          }
+                          transition={
+                            reduceMotion
+                              ? { duration: 0 }
+                              : { duration: 0.16, ease: "easeOut" }
+                          }
+                          role="dialog"
+                          aria-label="Browse game presets"
+                        >
+                          <label className="gamePresetBrowser__search">
+                            <Search
+                              size={16}
+                              strokeWidth={2.4}
+                              aria-hidden="true"
+                            />
+                            <input
+                              value={presetSearch}
+                              placeholder="Search cards, sports, pub games"
+                              onChange={(event) =>
+                                setPresetSearch(event.target.value)
+                              }
+                            />
+                          </label>
+                          <p className="gamePresetBrowser__hint">
+                            Pick a game. Edit anything after.
+                          </p>
+                          <div className="gamePresetBrowser__list">
+                            {filteredGamePresets.length > 0 ? (
+                              filteredGamePresets.map((preset) => (
+                                <Fragment key={preset.id}>
+                                <button
+                                  type="button"
+                                  className="gamePresetCard"
+                                  onClick={() => applyGamePreset(preset)}
+                                >
+                                  <span className="gamePresetCard__main">
+                                    <strong>{preset.name}</strong>
+                                    <span className="gamePresetCard__category">
+                                      <span>{preset.category}</span>
+                                      <button
+                                        className="gamePresetCard__info"
+                                        type="button"
+                                        aria-label={`Show ${preset.name} scoring reminder`}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          setSelectedPresetInfoId((current) =>
+                                            current === preset.id
+                                              ? null
+                                              : preset.id,
+                                          );
+                                        }}
+                                      >
+                                        <Info
+                                          size={14}
+                                          strokeWidth={2.6}
+                                          aria-hidden="true"
+                                        />
+                                      </button>
+                                    </span>
+                                  </span>
+                                  <span className="gamePresetCard__facts">
+                                    <span>
+                                      {preset.winCondition === "reach_zero"
+                                        ? `${preset.startingScore} start`
+                                        : `${preset.targetScore} pts`}
+                                    </span>
+                                    <span>
+                                      {preset.winCondition === "lowest"
+                                        ? "lowest wins"
+                                        : preset.winCondition === "reach_zero"
+                                          ? "reach zero"
+                                          : preset.winByTwo
+                                            ? "win by 2"
+                                            : "highest wins"}
+                                    </span>
+                                    <span>
+                                      {preset.timerEnabled
+                                        ? "timer"
+                                        : "no timer"}
+                                    </span>
+                                  </span>
+                                  <span
+                                    className="gamePresetCard__apply"
+                                    aria-hidden="true"
+                                  >
+                                    <Check
+                                      size={17}
+                                      strokeWidth={2.4}
+                                    />
+                                  </span>
+                                </button>
+                                {selectedPresetInfoId === preset.id ? (
+                                  <motion.aside
+                                    className="gamePresetInfo"
+                                    initial={
+                                      reduceMotion
+                                        ? false
+                                        : { opacity: 0, y: -4, scale: 0.98 }
+                                    }
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={
+                                      reduceMotion
+                                        ? { opacity: 0 }
+                                        : { opacity: 0, y: -4, scale: 0.98 }
+                                    }
+                                    transition={
+                                      reduceMotion
+                                        ? { duration: 0 }
+                                        : { duration: 0.14, ease: "easeOut" }
+                                    }
+                                  >
+                                    <div className="gamePresetInfo__head">
+                                      <div>
+                                        <span>Rules reminder</span>
+                                        <strong>{preset.name}</strong>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        aria-label="Close scoring reminder"
+                                        onClick={() =>
+                                          setSelectedPresetInfoId(null)
+                                        }
+                                      >
+                                        <X
+                                          size={16}
+                                          strokeWidth={2.5}
+                                          aria-hidden="true"
+                                        />
+                                      </button>
+                                    </div>
+                                    <p>{preset.rulesNote}</p>
+                                    <ul>
+                                      {preset.rulesSummary.map((rule) => (
+                                        <li key={rule}>{rule}</li>
+                                      ))}
+                                    </ul>
+                                  </motion.aside>
+                                ) : null}
+                                </Fragment>
+                              ))
+                            ) : (
+                              <div className="gamePresetBrowser__empty">
+                                No preset matches that search.
+                              </div>
+                            )}
+                          </div>
+                        </motion.section>
+                      </div>
+                    ) : null}
+                  </AnimatePresence>
                 </div>
                 <button
                   className="newSessionHeader__dismiss"
@@ -460,15 +760,25 @@ export function NewGameCard({
                 <div className="targetControl">
                   <label className="targetControl__head">
                     <SectionLabel icon={<Target size={16} strokeWidth={2.4} />}>
-                      Target
+                      {winCondition === "reach_zero"
+                        ? "Start"
+                        : manualEndOnly
+                          ? "Ref"
+                          : "Target"}
                     </SectionLabel>{" "}
                     <input
                       className="targetControl__value"
                       value={target}
                       min={1}
-                      max={200}
+                      max={5000}
                       inputMode="numeric"
-                      aria-label="Target score"
+                      aria-label={
+                        winCondition === "reach_zero"
+                          ? "Starting score"
+                          : manualEndOnly
+                            ? "Reference target"
+                          : "Target score"
+                      }
                       onChange={(event) => updateTarget(event.target.value)}
                     />
                   </label>
@@ -476,7 +786,11 @@ export function NewGameCard({
                     <button
                       type="button"
                       className="targetControl__stepBtn"
-                      aria-label="Decrease target score"
+                      aria-label={
+                        winCondition === "reach_zero"
+                          ? "Decrease starting score"
+                          : "Decrease target score"
+                      }
                       onClick={() => adjustTarget(-1)}
                     >
                       −
@@ -484,7 +798,11 @@ export function NewGameCard({
                     <button
                       type="button"
                       className="targetControl__stepBtn"
-                      aria-label="Increase target score"
+                      aria-label={
+                        winCondition === "reach_zero"
+                          ? "Increase starting score"
+                          : "Increase target score"
+                      }
                       onClick={() => adjustTarget(1)}
                     >
                       +
@@ -622,9 +940,32 @@ export function NewGameCard({
                 <ModeButton
                   icon={<ArrowDownUp size={22} strokeWidth={2.3} />}
                   title="Reverse scoring"
-                  description="Lowest score wins the round."
-                  active={isLowScoreWins}
-                  onClick={() => setIsLowScoreWins((value) => !value)}
+                  description="Lowest score wins."
+                  active={winCondition === "lowest"}
+                  onClick={() => {
+                    setScoreDirection("up");
+                    setWinCondition((value) =>
+                      value === "lowest" ? "reach_target" : "lowest",
+                    );
+                  }}
+                />
+                <ModeButton
+                  icon={<Trophy size={22} strokeWidth={2.3} />}
+                  title="Win by 2"
+                  description="Leader needs a 2 point gap."
+                  active={winByTwo}
+                  onClick={() => {
+                    if (winCondition === "reach_zero") return;
+                    setScoreDirection("up");
+                    setWinByTwo((value) => !value);
+                  }}
+                />
+                <ModeButton
+                  icon={<Flag size={22} strokeWidth={2.3} />}
+                  title="Manual finish"
+                  description="End from the game menu."
+                  active={manualEndOnly}
+                  onClick={() => setManualEndOnly((value) => !value)}
                 />
                 <ModeButton
                   icon={<Timer size={22} strokeWidth={2.3} />}
@@ -641,7 +982,7 @@ export function NewGameCard({
                 />
               </motion.div>
 
-              {lowScoreNeedsMorePlayers ? (
+              {ruleNeedsMorePlayers ? (
                 <motion.p
                   className="newSessionRuleHint"
                   role="status"
@@ -649,7 +990,9 @@ export function NewGameCard({
                   variants={sectionVariants}
                   transition={sectionTransition}
                 >
-                  Lowest score mode requires at least 2 players.
+                  {lowScoreNeedsMorePlayers
+                    ? "Reverse scoring mode requires at least 2 players."
+                    : "Win by 2 requires at least 2 players."}
                 </motion.p>
               ) : null}
 

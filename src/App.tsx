@@ -87,6 +87,7 @@ export default function App() {
     resetScores,
     updateScore,
     updateGameSettings,
+    finishGame,
     syncProfile,
     importGames,
     remoteReady: gamesReady,
@@ -255,20 +256,27 @@ export default function App() {
     if (!currentGame) return [];
 
     const items: Array<{ label: string; tone?: "accent" | "muted" }> = [];
-    const winner = findWinner(
-      currentGame.players,
-      currentGame.targetPoints,
-      currentGame.isLowScoreWins,
-    );
+    const winner = findWinner(currentGame.players, currentGame);
 
     if (winner) {
       items.push({ label: `Winner ${winner.name}`, tone: "accent" });
     }
 
     items.push({
-      label: currentGame.isLowScoreWins
-        ? `Lowest wins · ${currentGame.targetPoints}`
-        : `Target ${currentGame.targetPoints} pts`,
+      label:
+        currentGame.manualEndOnly
+          ? currentGame.targetScore > 0
+            ? `Manual finish · ref ${currentGame.targetScore}`
+            : "Manual finish"
+          : currentGame.winCondition === "reach_zero"
+          ? `Start ${currentGame.startingScore} · reach 0`
+          : currentGame.winCondition === "lowest"
+            ? currentGame.winByTwo
+              ? `Lowest wins · ${currentGame.targetScore} · win by 2`
+              : `Lowest wins · ${currentGame.targetScore}`
+            : currentGame.winByTwo
+              ? `Target ${currentGame.targetScore} · win by 2`
+              : `Target ${currentGame.targetScore} pts`,
       tone: "accent",
     });
 
@@ -286,19 +294,27 @@ export default function App() {
 
   const hasNonZeroScore = useMemo(() => {
     if (!currentGame) return false;
-    return currentGame.players.some((p) => p.score !== 0);
+    return currentGame.players.some((p) => p.score !== currentGame.startingScore);
   }, [currentGame]);
 
   const currentWinnerStats = useMemo(() => {
     if (!currentGame) return null;
-    const winner = findWinner(
-      currentGame.players,
-      currentGame.targetPoints,
-      currentGame.isLowScoreWins,
-    );
+    const winner = findWinner(currentGame.players, currentGame);
     if (!winner?.profileId) return null;
     return profileStats.get(winner.profileId) ?? createEmptyProfileStats();
   }, [currentGame, profileStats]);
+
+  async function handleEndCurrentGame() {
+    if (!currentGame) return;
+    const ok = await confirmRef.current?.confirm({
+      title: "End game",
+      message: "Mark this game as finished using the current standings?",
+      confirmText: "End game",
+      tone: "default",
+    });
+    if (!ok) return;
+    finishGame(currentGame.id);
+  }
 
   useEffect(() => {
     const nextToast = gameSyncNotice ?? profileSyncNotice;
@@ -472,12 +488,35 @@ export default function App() {
       title: "New game details",
       details: [
         { label: "Name", value: details.label },
-        { label: "Points to win", value: String(input.targetPoints) },
+        {
+          label:
+            input.winCondition === "reach_zero"
+              ? "Starting score"
+              : input.manualEndOnly
+                ? "Reference target"
+                : "Points to win",
+          value: String(
+            input.winCondition === "reach_zero"
+              ? input.startingScore
+              : input.targetScore,
+          ),
+        },
         {
           label: "Win mode",
-          value: input.isLowScoreWins
-            ? "Lowest score wins"
-            : "Highest score wins",
+          value:
+            input.manualEndOnly
+              ? input.winByTwo
+                ? "Manual finish, win by 2"
+                : "Manual finish"
+              : input.winCondition === "reach_zero"
+              ? "First to zero wins"
+              : input.winCondition === "lowest"
+                ? input.winByTwo
+                  ? "Lowest score wins by 2"
+                  : "Lowest score wins"
+                : input.winByTwo
+                  ? "Highest score wins by 2"
+                  : "Highest score wins",
         },
         { label: "Timer", value: timerValue },
       ],
@@ -824,6 +863,14 @@ export default function App() {
               ? () => setView("history")
               : undefined
           }
+          onEndGame={
+            view === "game" &&
+            currentGame &&
+            currentGame.players.length > 0 &&
+            !findWinner(currentGame.players, currentGame)
+              ? handleEndCurrentGame
+              : undefined
+          }
           onResetGame={async () => {
             if (!currentGame) return;
             const ok = await confirmRef.current?.confirm({
@@ -963,6 +1010,7 @@ export default function App() {
                 if (duplicated) setView("game");
               }}
               onBackToHome={returnToGameSource}
+              onEndGame={handleEndCurrentGame}
             />
           </motion.div>
         ) : (
@@ -1066,6 +1114,7 @@ export default function App() {
             setShouldSaveGamePlayersOnSignIn(true);
             authDialogRef.current?.open();
           }}
+          onAddPlayer={() => managePlayersDialogRef.current?.open()}
           onSave={(input) => {
             updateGameSettings(currentGame.id, input);
           }}

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { avatarStyleFor } from "../../utils/color";
 import type { ProfileStats } from "../../utils/profileStats";
+import type { WinCondition } from "../../types";
 import "./WinCelebration.css";
 
 type Standing = {
@@ -14,10 +15,13 @@ type Standing = {
 };
 
 type Props = {
-  winnerName: string;
+  winnerName?: string | null;
+  isDraw?: boolean;
   gameName: string;
-  targetPoints: number;
-  isLowScoreWins: boolean;
+  targetScore: number;
+  startingScore: number;
+  winCondition: WinCondition;
+  manualEndOnly: boolean;
   winnerStats: ProfileStats | null;
   standings: Standing[];
   onDismiss: () => void;
@@ -27,9 +31,12 @@ type Props = {
 
 export function WinCelebration({
   winnerName,
+  isDraw = false,
   gameName,
-  targetPoints,
-  isLowScoreWins,
+  targetScore,
+  startingScore,
+  winCondition,
+  manualEndOnly,
   winnerStats,
   standings,
   onDismiss,
@@ -50,7 +57,7 @@ export function WinCelebration({
       className="winFx"
       role="dialog"
       aria-modal="true"
-      aria-label={`${winnerName} wins ${gameName}`}
+      aria-label={isDraw ? `${gameName} ended in a draw` : `${winnerName} wins ${gameName}`}
     >
       <div className="winFx__veil" />
       <div className="winFx__burst" aria-hidden="true">
@@ -91,9 +98,9 @@ export function WinCelebration({
               />
             </svg>
           </div>
-          <div className="winFx__eyebrow">Winner</div>
-          <div className="winFx__name">{winnerName}</div>
-          {winnerStats?.currentWinStreak ? (
+          <div className="winFx__eyebrow">{isDraw ? "Draw" : "Winner"}</div>
+          <div className="winFx__name">{isDraw ? "Draw game" : winnerName}</div>
+          {!isDraw && winnerStats?.currentWinStreak ? (
             <div className="winFx__streakHero" aria-label={`${winnerStats.currentWinStreak} win streak`}>
               <span className="winFx__streakHeroCount">
                 {winnerStats.currentWinStreak}
@@ -103,12 +110,20 @@ export function WinCelebration({
           ) : (
             <div className="winFx__title">{gameName}</div>
           )}
-          <div className="winFx__hint">
-            {isLowScoreWins ? "Lowest score wins" : `Target ${targetPoints} points`}
-          </div>
+          {!isDraw ? (
+            <div className="winFx__hint">
+              {manualEndOnly
+                ? "Ended manually"
+                : winCondition === "reach_zero"
+                ? `Started at ${startingScore}, reached 0`
+                : winCondition === "lowest"
+                  ? "Lowest score wins"
+                  : `Target ${targetScore} points`}
+            </div>
+          ) : null}
         </div>
 
-        {winnerStats ? (
+        {!isDraw && winnerStats ? (
           <section className="winFx__playerStats" aria-label="Updated winner stats">
             <div className="winFx__playerStatsHeader">
               <div className="winFx__playerStatsTitle">Updated player stats</div>
@@ -154,6 +169,7 @@ export function WinCelebration({
                   <div className="winFx__player">
                     <strong>{entry.name}</strong>
                     {entry.isWinner ? <span>Champion</span> : null}
+                    {isDraw && entry.rank === 1 ? <span>Draw</span> : null}
                   </div>
                 </div>
                 <div className="winFx__score">{entry.score}</div>
