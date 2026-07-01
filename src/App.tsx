@@ -668,14 +668,45 @@ export default function App() {
 
   async function handleDownloadBackupFile(selection: BackupSelection) {
     const payload = createBackupPayload(games, profiles, selection);
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    const backupJson = JSON.stringify(payload, null, 2);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const filename = `point-tracker-backup-${stamp}.json`;
+    const file = new File([backupJson], filename, {
       type: "application/json",
     });
+
+    if (
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [file] }) &&
+      typeof navigator.share === "function"
+    ) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "Plink backup",
+          text: "Backup file for Plink sessions and players.",
+        });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return {
+            games: selection.games ? payload.games.length : 0,
+            profiles: selection.profiles ? payload.profiles.length : 0,
+          };
+        }
+        throw error;
+      }
+
+      return {
+        games: selection.games ? payload.games.length : 0,
+        profiles: selection.profiles ? payload.profiles.length : 0,
+      };
+    }
+
+    const blob = new Blob([backupJson], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const stamp = new Date().toISOString().slice(0, 10);
     link.href = url;
-    link.download = `point-tracker-backup-${stamp}.json`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -989,11 +1020,18 @@ export default function App() {
                   setView("game");
                 }
               }}
-              onRename={(gameId) => {
+              onRename={async (gameId) => {
                 const g = games.find((x) => x.id === gameId);
                 if (!g) return;
-                const nextName = window.prompt("Rename game", g.name);
-                if (nextName !== null) {
+                const nextName = await confirmRef.current?.prompt({
+                  title: "Rename session",
+                  message: "Choose a clear name so this session is easy to find later.",
+                  initialValue: g.name,
+                  placeholder: "Session name",
+                  confirmText: "Save name",
+                  maxLength: 28,
+                });
+                if (nextName) {
                   renameGame(gameId, nextName);
                 }
               }}

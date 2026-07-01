@@ -1,0 +1,17 @@
+{
+  "name": "Plink",
+  "short_name": "Plink",
+  "description": "Track game sessions, players, scores, and stats across casual rounds.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1015",
+  "theme_color": "#0b1015",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
