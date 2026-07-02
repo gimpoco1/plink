@@ -92,14 +92,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     },
     ref,
   ) {
-    const {
-      source,
-      isPro,
-      shouldShowAds,
-      canUseTeams,
-      canSeeAdvancedStats,
-      maxSessions,
-    } = useEntitlementsContext();
+    const { source, isPro } = useEntitlementsContext();
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const backupInputRef = useRef<HTMLInputElement | null>(null);
     const deviceImportRef = useRef<HTMLDivElement | null>(null);

@@ -16,11 +16,7 @@ type SubscriptionStatus =
   | "inactive"
   | "past_due"
   | "canceled";
-type EntitlementSource =
-  | "default"
-  | "account"
-  | "subscription"
-  | "override";
+type EntitlementSource = "default" | "account" | "subscription" | "override";
 const FREE_SESSION_LIMIT = 2;
 const ACTIVE_PRO_STATUSES = new Set<SubscriptionStatus>(["active", "trialing"]);
 
@@ -53,7 +49,9 @@ function normalizePlan(value: unknown): SubscriptionPlan | null {
   return null;
 }
 
-function normalizeSubscriptionStatus(value: unknown): SubscriptionStatus | null {
+function normalizeSubscriptionStatus(
+  value: unknown,
+): SubscriptionStatus | null {
   if (
     value === "active" ||
     value === "trialing" ||
@@ -115,14 +113,15 @@ export function useEntitlements(session: Session | null): EntitlementsState {
 
         const normalizedPlan = normalizePlan(data.plan);
         const normalizedStatus = normalizeSubscriptionStatus(data.status);
-        const effectivePlan =
+        // Fail closed: only explicit active/trialing pro records unlock Pro.
+        const effectivePlan: SubscriptionPlan =
           normalizedPlan === "pro" &&
-          normalizedStatus &&
-          !ACTIVE_PRO_STATUSES.has(normalizedStatus)
-            ? "free"
-            : normalizedPlan;
+          normalizedStatus !== null &&
+          ACTIVE_PRO_STATUSES.has(normalizedStatus)
+            ? "pro"
+            : "free";
 
-        setSubscriptionPlan(effectivePlan ?? "free");
+        setSubscriptionPlan(effectivePlan);
         setHasSubscriptionRecord(true);
       } catch {
         if (!cancelled) {
@@ -143,9 +142,9 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       ? "override"
       : hasSubscriptionRecord
         ? "subscription"
-      : accountPlan
-        ? "account"
-        : "default";
+        : accountPlan
+          ? "account"
+          : "default";
     const isPro = plan === "pro";
 
     return {
