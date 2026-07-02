@@ -3,6 +3,7 @@ import { AVATAR_COLORS } from "../constants";
 import type { Game, PlayerProfile } from "../types";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
 import { PlayersSkeleton } from "../components/HomeLockedState/PlayersSkeleton";
+import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
 import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
 import { avatarStyleFor } from "../utils/color";
 import {
@@ -118,6 +119,10 @@ export function PlayersScreen({
           onAdd={onOpenAuth}
         />
       ) : null}
+      <AdBannerSlot
+        placement="Players"
+        slotId={import.meta.env.VITE_ADSENSE_PLAYERS_SLOT_ID}
+      />
       <div className="tabHeader">
         <div>
           <h2 className="tabTitle">Players</h2>

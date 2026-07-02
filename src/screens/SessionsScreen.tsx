@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Game } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
+import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
 import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
 import { isGameComplete } from "../utils/ranking";
 import { getGameDisplayName } from "../utils/text";
@@ -65,6 +66,10 @@ export function SessionsScreen({
           onAdd={onOpenAuth}
         />
       ) : null}
+      <AdBannerSlot
+        placement="Sessions"
+        slotId={import.meta.env.VITE_ADSENSE_SESSIONS_SLOT_ID}
+      />
       <ScreenHeader title="Sessions" subtitle="Reopen recent rounds and keep your history organized." />
       {games.length > 0 ? (
         <section className="homeList" aria-label="Game history">
