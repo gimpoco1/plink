@@ -10,6 +10,8 @@ import type { Session } from "@supabase/supabase-js";
 import {
   Check,
   ChevronDown,
+  Coffee,
+  Croissant,
   Crown,
   Download,
   FileUp,
@@ -601,7 +603,10 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           "success",
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Import failed.");
+        showTransferToast(
+          err instanceof Error ? err.message : "Import failed.",
+          "error",
+        );
       } finally {
         setBusy(false);
       }
@@ -635,8 +640,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           "success",
         );
       } catch (err) {
-        setError(
+        showTransferToast(
           err instanceof Error ? err.message : "Import from file failed.",
+          "error",
         );
       } finally {
         setBusy(false);
@@ -659,8 +665,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       try {
         await onDownloadBackupFile(transferSelection);
       } catch (err) {
-        setError(
+        showTransferToast(
           err instanceof Error ? err.message : "Backup download failed.",
+          "error",
         );
       } finally {
         setBusy(false);
@@ -938,7 +945,19 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                       aria-expanded={showAccountDetails}
                       aria-controls="auth-account-details"
                     >
-                      <span className="authDialog__storageLabel">Details</span>
+                      <span className="authDialog__accountPlayerTitle">
+                        Details
+                      </span>
+                      <div className="authDialog__storageStats">
+                        <span>
+                          <strong>{accountGamesCount}</strong>
+                          <span>sessions</span>
+                        </span>
+                        <span>
+                          <strong>{accountProfilesCount}</strong>
+                          <span>players</span>
+                        </span>
+                      </div>
                       <span
                         className={`authDialog__storageChevron${showAccountDetails ? " authDialog__storageChevron--open" : ""}`}
                         aria-hidden="true"
@@ -946,16 +965,6 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                         <ChevronDown size={18} strokeWidth={2.2} />
                       </span>
                     </button>
-                    <div className="authDialog__storageStats">
-                      <span>
-                        <strong>{accountGamesCount}</strong>
-                        <span>sessions</span>
-                      </span>
-                      <span>
-                        <strong>{accountProfilesCount}</strong>
-                        <span>players</span>
-                      </span>
-                    </div>
                     {showAccountDetails ? (
                       <div
                         className="authDialog__accountDetails"
@@ -1059,8 +1068,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                 <span>Free plan</span>
                               </strong>
                               <span className="authDialog__planMeta">
-                                Core scoring with ads and a limited session
-                                history.
+                                Upgrade to Pro for ad-free play, advanced stats,
+                                team support, and unlimited session history
                               </span>
                             </div>
                           </div>
@@ -1104,7 +1113,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                       : source === "account"
                                         ? "Subscription connected to this account"
                                         : "Pro features are enabled"
-                                  : "Core scoring with ads and a limited session history."}
+                                  : "Upgrade to Pro for ad-free play, advanced stats, team support, and unlimited session history"}
                               </span>
                             </div>
                             <div className="authDialog__planHeaderRight">
@@ -1138,10 +1147,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                           <div className="authDialog__planHero authDialog__planHero--copyOnly">
                             <div className="authDialog__planHeroCopy">
                               <strong>Need more than the basics?</strong>
-                              <span>
-                                Upgrade to Pro for ad-free play, advanced stats,
-                                team support, and unlimited session history.
-                              </span>
+                              <span>You're missing out on:</span>
                             </div>
                           </div>
                         ) : null}
@@ -1171,6 +1177,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                             >
                               <Check size={15} strokeWidth={2.6} />
                             </span>
+                            <span>Teams support for grouped players</span>
+                          </div>
+                          <div className="authDialog__planBenefit">
+                            <span
+                              className="authDialog__planBenefitIcon"
+                              aria-hidden="true"
+                            >
+                              <Check size={15} strokeWidth={2.6} />
+                            </span>
                             <span>Advanced player stats and reporting</span>
                           </div>
                           <div className="authDialog__planBenefit">
@@ -1180,7 +1195,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                             >
                               <Check size={15} strokeWidth={2.6} />
                             </span>
-                            <span>Teams support for grouped players</span>
+                            <span>Support our work</span>
                           </div>
                         </div>
 
@@ -1210,8 +1225,23 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                   <strong>Monthly</strong>
                                   <span>2.99 EUR / month</span>
                                 </div>
-                                <small>
-                                  Flexible option if you want to try Pro first.
+                                <small className="authDialog__planEquivalent">
+                                  <span className="authDialog__planEquivalentLabel">
+                                    Equivalent to:
+                                  </span>
+                                  <span className="authDialog__planEquivalentValue">
+                                    <Coffee
+                                      size={14}
+                                      strokeWidth={2.2}
+                                      aria-hidden="true"
+                                    />
+                                    <span>+</span>
+                                    <Croissant
+                                      size={14}
+                                      strokeWidth={2.2}
+                                      aria-hidden="true"
+                                    />
+                                  </span>
                                 </small>
                               </button>
                               <button
@@ -1233,9 +1263,18 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                   <strong>Yearly</strong>
                                   <span>17.99 EUR / year</span>
                                 </div>
-                                <small>
-                                  Lower annual cost and the best fit for regular
-                                  use.
+                                <small className="authDialog__planEquivalent">
+                                  <span className="authDialog__planEquivalentLabel">
+                                    Equivalent to:
+                                  </span>
+                                  <span className="authDialog__planEquivalentValue">
+                                    <Coffee
+                                      size={14}
+                                      strokeWidth={2.2}
+                                      aria-hidden="true"
+                                    />
+                                    <span>/ month</span>
+                                  </span>
                                 </small>
                               </button>
                             </div>
