@@ -42,11 +42,14 @@ function loadAdSense(clientId: string) {
 }
 
 const adsenseClientId = import.meta.env.VITE_ADSENSE_CLIENT_ID?.trim();
+const showAdSlots = import.meta.env.VITE_SHOW_AD_SLOTS === "true";
 const showPlaceholder =
   import.meta.env.DEV ||
   import.meta.env.VITE_SHOW_AD_PLACEHOLDERS === "true";
 
 export function AdBannerSlot({ slotId, placement }: AdBannerSlotProps) {
+  if (!showAdSlots) return null;
+
   const adRef = useRef<HTMLModElement | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const trimmedSlotId = slotId?.trim();

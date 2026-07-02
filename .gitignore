@@ -9,3 +9,4 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .env.local
+APP_STORE_READINESS.md
