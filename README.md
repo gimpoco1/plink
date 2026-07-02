@@ -4,34 +4,26 @@ Plink is a playful score tracker for board games, card games, party games, and a
 
 ## What It Does
 
-- Create score sessions with a game name, target score, players, and optional timer.
-- Track points for each player with quick score controls.
-- Support both highest-score-wins and lowest-score-wins games.
-- Save player profiles so recurring players are easy to add again.
-- Resume recent games and duplicate previous setups for faster rematches.
-- Review past sessions, player stats, win streaks, and common game setups.
-- Use the app as a guest on one device, or sign in to keep games and players saved to an account.
-- Import guest data, import a backup file, or download a backup when needed.
+- Start a new game in seconds with a custom game name and player list.
+- Track points live with quick score controls.
+- Use different win styles, including highest score, lowest score, and race-to-target.
+- Add optional timers for faster rounds.
+- Save players so regular groups are easy to set up again.
+- Reopen recent sessions, duplicate past setups, rename sessions, and clean up old ones.
+- Check stats like wins, activity, and trends over time.
+- Use it locally as a guest or sign in to keep your data with your account.
 
-## Main Screens
+## Main Areas
 
-- **Home**: Start a new game, resume the latest active game, or use quick-start presets.
-- **Sessions**: Browse previous games, reopen them, duplicate setups, rename sessions, or delete old ones.
-- **Stats**: See high-level trends like completed games, top players, win rates, streaks, and popular setups.
-- **Players**: Manage saved players, colors, names, and player history.
-- **Game**: Update scores, manage players, change game settings, use timers, and celebrate the winner.
+- Home: Start, resume, and quickly set up games.
+- Sessions: Browse and manage your game history.
+- Stats: See who is winning and how your games are evolving.
+- Players: Manage your saved player list.
+- Game View: Run the live scoreboard while you play.
 
-## Development
+## Why People Use It
 
-Run the app locally:
-
-```bash
-npm install
-npm run dev
-```
-
-Create a production build:
-
-```bash
-npm run build
-```
+- Fast for casual game nights.
+- Flexible for different scoring rules.
+- Clean and focused interface.
+- Keeps your sessions and player history organized.

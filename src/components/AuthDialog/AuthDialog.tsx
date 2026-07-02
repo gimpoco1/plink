@@ -1205,7 +1205,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
               ) : null}
               {error ? <div className="authDialog__error">{error}</div> : null}
               <button
-                className="btn btn--primary btn--wide authDialog__signOutBtn"
+                className="btn btn--wide btn--dangerSolid authDialog__signOutBtn"
                 type="button"
                 onClick={signOut}
                 disabled={busy}
@@ -1214,13 +1214,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                 <span>{busy ? "Signing out..." : "Sign out"}</span>
               </button>
               <div className="authDialog__links" aria-label="Account links">
-                <a href="/privacy.html">
-                  Privacy
-                </a>
+                <a href="/privacy.html">Privacy</a>
                 <span aria-hidden="true">·</span>
-                <a href="/support.html">
-                  Support
-                </a>
+                <a href="/support.html">Support</a>
               </div>
             </div>
           ) : (
@@ -1324,13 +1320,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                       : "Create account"}
                 </button>
                 <div className="authDialog__links" aria-label="Account links">
-                  <a href="/privacy.html">
-                    Privacy
-                  </a>
+                  <a href="/privacy.html">Privacy</a>
                   <span aria-hidden="true">·</span>
-                  <a href="/support.html">
-                    Support
-                  </a>
+                  <a href="/support.html">Support</a>
                 </div>
               </div>
             </>
