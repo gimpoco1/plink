@@ -8,7 +8,11 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
+  Check,
   ChevronDown,
+  Coffee,
+  Croissant,
+  Crown,
   Download,
   FileUp,
   LogOut,
@@ -17,6 +21,7 @@ import {
 } from "lucide-react";
 import "./AuthDialog.css";
 import { AVATAR_COLORS } from "../../constants";
+import { useEntitlementsContext } from "../../hooks/useEntitlements";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
 import type { BackupSelection } from "../../storage/backupFile";
 import type { Game, PlayerProfile, ToastState, ToastTone } from "../../types";
@@ -29,6 +34,7 @@ import {
 
 export type AuthDialogHandle = {
   open: () => void;
+  openPlan: () => void;
   openLocalImport: () => void;
   openPasswordReset: () => void;
   close: () => void;
@@ -88,9 +94,11 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     },
     ref,
   ) {
+    const { source, isPro } = useEntitlementsContext();
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const backupInputRef = useRef<HTMLInputElement | null>(null);
     const deviceImportRef = useRef<HTMLDivElement | null>(null);
+    const planSectionRef = useRef<HTMLElement | null>(null);
     const [mode, setMode] = useState<"signin" | "signup">("signin");
     const [recoveryMode, setRecoveryMode] = useState(false);
     const [accountName, setAccountName] = useState("");
@@ -108,6 +116,10 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const [showTransferTools, setShowTransferTools] = useState(false);
     const [showDeviceImport, setShowDeviceImport] = useState(false);
     const [showAccountDetails, setShowAccountDetails] = useState(false);
+    const [showPlanDetails, setShowPlanDetails] = useState(false);
+    const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<
+      "monthly" | "yearly"
+    >("yearly");
     const [localSessionSearch, setLocalSessionSearch] = useState("");
     const [includeGames, setIncludeGames] = useState(true);
     const [includeProfiles, setIncludeProfiles] = useState(true);
@@ -150,6 +162,11 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const accountPlayerName = accountPlayer?.name ?? "";
     const accountPlayerColor =
       accountPlayer?.avatarColor ?? AVATAR_COLORS[0]?.value ?? "#64748b";
+    const proMonthlyUrl = import.meta.env.VITE_PRO_MONTHLY_URL?.trim();
+    const proYearlyUrl = import.meta.env.VITE_PRO_YEARLY_URL?.trim();
+    const proRestoreUrl = import.meta.env.VITE_PRO_RESTORE_URL?.trim();
+    const selectedCheckoutUrl =
+      selectedBillingPeriod === "monthly" ? proMonthlyUrl : proYearlyUrl;
 
     function resetDialogState() {
       setNotice(null);
@@ -161,6 +178,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setShowTransferTools(false);
       setShowDeviceImport(false);
       setShowAccountDetails(false);
+      setShowPlanDetails(false);
+      setSelectedBillingPeriod("yearly");
       setEditingAccountPlayer(false);
       setLocalSessionSearch("");
       setAccountDraftName(accountPlayerName);
@@ -191,12 +210,33 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       });
     }
 
+    function scrollToPlanSection() {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const dialog = dialogRef.current;
+          const target = planSectionRef.current;
+          if (!dialog || !target) return;
+          const offset = target.offsetTop - 104;
+          dialog.scrollTo({
+            top: Math.max(0, offset),
+            behavior: "smooth",
+          });
+        });
+      });
+    }
+
     useImperativeHandle(
       ref,
       () => ({
         open() {
           resetDialogState();
           showDialog();
+        },
+        openPlan() {
+          resetDialogState();
+          setShowPlanDetails(true);
+          showDialog();
+          scrollToPlanSection();
         },
         openLocalImport() {
           resetDialogState();
@@ -507,6 +547,32 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setTransferToast({ message, tone });
     }
 
+    function openUrl(url: string) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    function startUpgradeFlow() {
+      if (selectedCheckoutUrl) {
+        openUrl(selectedCheckoutUrl);
+        return;
+      }
+
+      showTransferToast(
+        "Checkout is not available yet.",
+      );
+    }
+
+    function restoreSubscription() {
+      if (proRestoreUrl) {
+        openUrl(proRestoreUrl);
+        return;
+      }
+
+      showTransferToast(
+        "Restore subscription not available yet.",
+      );
+    }
+
     async function runImportFromDevice() {
       if (!hasSelectedLocalData) {
         setError("Select at least one session or player to import.");
@@ -537,7 +603,10 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           "success",
         );
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Import failed.");
+        showTransferToast(
+          err instanceof Error ? err.message : "Import failed.",
+          "error",
+        );
       } finally {
         setBusy(false);
       }
@@ -571,8 +640,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           "success",
         );
       } catch (err) {
-        setError(
+        showTransferToast(
           err instanceof Error ? err.message : "Import from file failed.",
+          "error",
         );
       } finally {
         setBusy(false);
@@ -595,8 +665,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       try {
         await onDownloadBackupFile(transferSelection);
       } catch (err) {
-        setError(
+        showTransferToast(
           err instanceof Error ? err.message : "Backup download failed.",
+          "error",
         );
       } finally {
         setBusy(false);
@@ -698,260 +769,549 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
             </div>
           ) : session ? (
             <div className="authDialog__panel">
-              {session.user.email ? (
-                <div
-                  className="authDialog__accountIdentity"
-                  aria-label="Signed in account"
-                >
-                  <span className="authDialog__accountIdentityLabel">
-                    Email
-                  </span>
-                  <span className="authDialog__accountEmail">
-                    {session.user.email}
-                  </span>
-                </div>
-              ) : null}
-              <section className="authDialog__accountPlayerSection">
-                <div className="authDialog__accountPlayerTitle">
-                  Your player profile
-                </div>
-                <article
-                  className={`authDialog__accountPlayerCard${
-                    editingAccountPlayer && accountPlayer
-                      ? " authDialog__accountPlayerCard--editing"
-                      : ""
-                  }`}
-                >
-                  <div className="authDialog__accountPlayerMain">
-                    <span
-                      className="authDialog__accountPlayerAvatar"
-                      style={avatarStyleFor(
-                        editingAccountPlayer && accountPlayer
-                          ? accountDraftColor || accountPlayer.avatarColor
-                          : accountPlayerColor,
-                      )}
-                      aria-hidden="true"
-                    >
-                      {getInitials(
-                        accountDraftName || accountPlayerName || "Player",
-                      )}
+              <div className="authDialog__accountOverview">
+                {session.user.email ? (
+                  <div
+                    className="authDialog__accountIdentity"
+                    aria-label="Signed in account"
+                  >
+                    <div className="authDialog__accountIdentityTop">
+                      <span className="authDialog__accountPlayerTitle">
+                        Email
+                      </span>
+                      <span
+                        className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
+                          isPro ? "pro" : "free"
+                        }`}
+                      >
+                        {isPro ? "PRO" : "FREE"}
+                      </span>
+                    </div>
+                    <span className="authDialog__accountEmail">
+                      {session.user.email}
                     </span>
-                    {editingAccountPlayer && accountPlayer ? (
-                      <div className="authDialog__accountPlayerEditStack">
-                        <div className="authDialog__accountPlayerEditTop">
-                          <input
-                            className="input input--compact authDialog__accountPlayerInput"
-                            type="text"
-                            value={accountDraftName}
-                            onChange={(event) =>
-                              setAccountDraftName(event.target.value)
-                            }
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                void saveAccountPlayerName();
+                  </div>
+                ) : null}
+                <section className="authDialog__accountPlayerSection">
+                  <div className="authDialog__accountPlayerTitle">
+                    Player profile
+                  </div>
+                  <article
+                    className={`authDialog__accountPlayerCard${
+                      editingAccountPlayer && accountPlayer
+                        ? " authDialog__accountPlayerCard--editing"
+                        : ""
+                    }`}
+                  >
+                    <div className="authDialog__accountPlayerMain">
+                      <span
+                        className="authDialog__accountPlayerAvatar"
+                        style={avatarStyleFor(
+                          editingAccountPlayer && accountPlayer
+                            ? accountDraftColor || accountPlayer.avatarColor
+                            : accountPlayerColor,
+                        )}
+                        aria-hidden="true"
+                      >
+                        {getInitials(
+                          accountDraftName || accountPlayerName || "Player",
+                        )}
+                      </span>
+                      {editingAccountPlayer && accountPlayer ? (
+                        <div className="authDialog__accountPlayerEditStack">
+                          <div className="authDialog__accountPlayerEditTop">
+                            <input
+                              className="input input--compact authDialog__accountPlayerInput"
+                              type="text"
+                              value={accountDraftName}
+                              onChange={(event) =>
+                                setAccountDraftName(event.target.value)
                               }
-                              if (event.key === "Escape") {
-                                setAccountDraftName(accountPlayer.name);
-                                setAccountDraftColor(accountPlayer.avatarColor);
-                                setEditingAccountPlayer(false);
-                              }
-                            }}
-                            autoFocus
-                            maxLength={28}
-                            placeholder="Player name"
-                          />
-                          <div className="authDialog__accountPlayerActions authDialog__accountPlayerActions--edit">
-                            <button
-                              className="iconbtn iconbtn--sm iconbtn--primary authDialog__accountPlayerAction"
-                              type="button"
-                              onClick={() => void saveAccountPlayerName()}
-                              disabled={
-                                busy || !formatPlayerName(accountDraftName)
-                              }
-                              aria-label="Save account player"
-                              title="Save"
-                            >
-                              ✓
-                            </button>
-                            <button
-                              className="iconbtn iconbtn--sm authDialog__accountPlayerAction"
-                              type="button"
-                              onClick={() => {
-                                setAccountDraftName(accountPlayer.name);
-                                setAccountDraftColor(accountPlayer.avatarColor);
-                                setEditingAccountPlayer(false);
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  void saveAccountPlayerName();
+                                }
+                                if (event.key === "Escape") {
+                                  setAccountDraftName(accountPlayer.name);
+                                  setAccountDraftColor(
+                                    accountPlayer.avatarColor,
+                                  );
+                                  setEditingAccountPlayer(false);
+                                }
                               }}
-                              aria-label="Cancel editing account player"
-                              title="Cancel"
-                            >
-                              ×
-                            </button>
+                              autoFocus
+                              maxLength={28}
+                              placeholder="Player name"
+                            />
+                            <div className="authDialog__accountPlayerActions authDialog__accountPlayerActions--edit">
+                              <button
+                                className="iconbtn iconbtn--sm iconbtn--primary authDialog__accountPlayerAction"
+                                type="button"
+                                onClick={() => void saveAccountPlayerName()}
+                                disabled={
+                                  busy || !formatPlayerName(accountDraftName)
+                                }
+                                aria-label="Save account player"
+                                title="Save"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                className="iconbtn iconbtn--sm authDialog__accountPlayerAction"
+                                type="button"
+                                onClick={() => {
+                                  setAccountDraftName(accountPlayer.name);
+                                  setAccountDraftColor(
+                                    accountPlayer.avatarColor,
+                                  );
+                                  setEditingAccountPlayer(false);
+                                }}
+                                aria-label="Cancel editing account player"
+                                title="Cancel"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                          <div
+                            className="authDialog__accountPlayerSwatches"
+                            role="radiogroup"
+                            aria-label="Choose account player color"
+                          >
+                            {AVATAR_COLORS.map((color) => (
+                              <button
+                                key={color.id}
+                                type="button"
+                                className={
+                                  color.value === accountDraftColor
+                                    ? "authDialog__accountPlayerSwatch authDialog__accountPlayerSwatch--selected"
+                                    : "authDialog__accountPlayerSwatch"
+                                }
+                                style={{ backgroundColor: color.value }}
+                                onClick={() =>
+                                  setAccountDraftColor(color.value)
+                                }
+                                aria-label={color.label}
+                                aria-checked={color.value === accountDraftColor}
+                                role="radio"
+                              />
+                            ))}
                           </div>
                         </div>
-                        <div
-                          className="authDialog__accountPlayerSwatches"
-                          role="radiogroup"
-                          aria-label="Choose account player color"
-                        >
-                          {AVATAR_COLORS.map((color) => (
-                            <button
-                              key={color.id}
-                              type="button"
-                              className={
-                                color.value === accountDraftColor
-                                  ? "authDialog__accountPlayerSwatch authDialog__accountPlayerSwatch--selected"
-                                  : "authDialog__accountPlayerSwatch"
-                              }
-                              style={{ backgroundColor: color.value }}
-                              onClick={() => setAccountDraftColor(color.value)}
-                              aria-label={color.label}
-                              aria-checked={color.value === accountDraftColor}
-                              role="radio"
-                            />
-                          ))}
+                      ) : (
+                        <div className="authDialog__accountPlayerIdentity">
+                          <span className="authDialog__accountPlayerName">
+                            {accountPlayerName
+                              ? formatAccountPlayerName(accountPlayerName)
+                              : "Not created yet"}
+                          </span>
+                          {accountPlayer && onUpdateProfile ? (
+                            <div className="authDialog__accountPlayerActions">
+                              <button
+                                className="iconbtn iconbtn--sm authDialog__accountPlayerAction"
+                                type="button"
+                                onClick={() => {
+                                  setAccountDraftName(accountPlayer.name);
+                                  setAccountDraftColor(
+                                    accountPlayer.avatarColor,
+                                  );
+                                  setEditingAccountPlayer(true);
+                                }}
+                                aria-label="Edit account player"
+                                title="Edit"
+                              >
+                                <Pencil
+                                  size={15}
+                                  strokeWidth={2.2}
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                </section>
+
+                <div className="authDialog__storage">
+                  <div
+                    className={`authDialog__storageCard${showAccountDetails ? "" : " authDialog__storageCard--collapsed"}`}
+                  >
+                    <button
+                      type="button"
+                      className="authDialog__storageToggle"
+                      onClick={() => setShowAccountDetails((value) => !value)}
+                      aria-expanded={showAccountDetails}
+                      aria-controls="auth-account-details"
+                    >
+                      <span className="authDialog__accountPlayerTitle">
+                        Details
+                      </span>
+                      <div className="authDialog__storageStats">
+                        <span>
+                          <strong>{accountGamesCount}</strong>
+                          <span>sessions</span>
+                        </span>
+                        <span>
+                          <strong>{accountProfilesCount}</strong>
+                          <span>players</span>
+                        </span>
+                      </div>
+                      <span
+                        className={`authDialog__storageChevron${showAccountDetails ? " authDialog__storageChevron--open" : ""}`}
+                        aria-hidden="true"
+                      >
+                        <ChevronDown size={18} strokeWidth={2.2} />
+                      </span>
+                    </button>
+                    {showAccountDetails ? (
+                      <div
+                        className="authDialog__accountDetails"
+                        id="auth-account-details"
+                      >
+                        <section className="authDialog__accountGroup">
+                          <div className="authDialog__accountGroupTitle">
+                            Sessions
+                          </div>
+                          {accountGames.length > 0 ? (
+                            <ul className="authDialog__accountList">
+                              {accountGames.slice(0, 5).map((game) => (
+                                <li
+                                  key={game.id}
+                                  className="authDialog__accountItem"
+                                >
+                                  <strong>{game.name}</strong>
+                                  <span>
+                                    {game.players.length} player
+                                    {game.players.length === 1 ? "" : "s"}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : accountGamesCount > 0 ? (
+                            <div className="authDialog__accountMore">
+                              {accountGamesCount} saved session
+                              {accountGamesCount === 1 ? "" : "s"} in your
+                              account. List will appear after sync refresh.
+                            </div>
+                          ) : (
+                            <div className="authDialog__accountEmpty">
+                              No saved sessions yet.
+                            </div>
+                          )}
+                          {accountGames.length > 5 ? (
+                            <div className="authDialog__accountMore">
+                              +{accountGames.length - 5} more session
+                              {accountGames.length - 5 === 1 ? "" : "s"}
+                            </div>
+                          ) : null}
+                        </section>
+
+                        <section className="authDialog__accountGroup">
+                          <div className="authDialog__accountGroupTitle">
+                            Players
+                          </div>
+                          {accountProfiles.length > 0 ? (
+                            <ul className="authDialog__accountList">
+                              {accountProfiles.slice(0, 6).map((profile) => (
+                                <li
+                                  key={profile.id}
+                                  className="authDialog__accountItem"
+                                >
+                                  <strong>
+                                    {profile.isAccountPlayer
+                                      ? formatAccountPlayerName(profile.name)
+                                      : profile.name}
+                                  </strong>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : accountProfilesCount > 0 ? (
+                            <div className="authDialog__accountMore">
+                              {accountProfilesCount} saved player
+                              {accountProfilesCount === 1 ? "" : "s"} in your
+                              account. List will appear after sync refresh.
+                            </div>
+                          ) : (
+                            <div className="authDialog__accountEmpty">
+                              No saved players yet.
+                            </div>
+                          )}
+                          {accountProfiles.length > 6 ? (
+                            <div className="authDialog__accountMore">
+                              +{accountProfiles.length - 6} more player
+                              {accountProfiles.length - 6 === 1 ? "" : "s"}
+                            </div>
+                          ) : null}
+                        </section>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+                <section
+                  className="authDialog__planSection"
+                  ref={planSectionRef}
+                >
+                  <div
+                    className={`authDialog__planCard${showPlanDetails ? "" : " authDialog__planCard--collapsed"}`}
+                  >
+                    {!isPro && !showPlanDetails ? (
+                      <div className="authDialog__planHeader">
+                        <div className="authDialog__planToggleHeader authDialog__planToggleHeader--static">
+                          <div className="authDialog__planTop">
+                            <div className="authDialog__planTitleWrap">
+                              <span className="authDialog__accountPlayerTitle">
+                                Plan
+                              </span>
+                              <strong className="authDialog__planName">
+                                <span>Free plan</span>
+                              </strong>
+                              <span className="authDialog__planMeta">
+                                Upgrade to Pro for ad-free play, advanced stats,
+                                team support, and unlimited session history
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="authDialog__accountPlayerIdentity">
-                        <span className="authDialog__accountPlayerName">
-                          {accountPlayerName
-                            ? formatAccountPlayerName(accountPlayerName)
-                            : "Not created yet"}
-                        </span>
-                        {accountPlayer && onUpdateProfile ? (
-                          <div className="authDialog__accountPlayerActions">
-                            <button
-                              className="iconbtn iconbtn--sm authDialog__accountPlayerAction"
-                              type="button"
-                              onClick={() => {
-                                setAccountDraftName(accountPlayer.name);
-                                setAccountDraftColor(accountPlayer.avatarColor);
-                                setEditingAccountPlayer(true);
-                              }}
-                              aria-label="Edit account player"
-                              title="Edit"
-                            >
-                              <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
-                            </button>
+                      <div className="authDialog__planHeader">
+                        <button
+                          type="button"
+                          className="authDialog__planToggleHeader"
+                          onClick={() => setShowPlanDetails((value) => !value)}
+                          aria-expanded={showPlanDetails}
+                          aria-controls="auth-plan-details"
+                        >
+                          <div className="authDialog__planTop">
+                            <div className="authDialog__planTitleWrap">
+                              <span className="authDialog__accountPlayerTitle">
+                                Plan
+                              </span>
+                              <strong className="authDialog__planName">
+                                {isPro ? (
+                                  <>
+                                    <span
+                                      className="authDialog__planNameAccent"
+                                      aria-hidden="true"
+                                    >
+                                      <Crown size={14} strokeWidth={2.4} />
+                                    </span>
+                                    <span>Plink Pro</span>
+                                  </>
+                                ) : (
+                                  <span>Free plan</span>
+                                )}
+                              </strong>
+                              <span className="authDialog__planMeta">
+                                {isPro
+                                  ? source === "override"
+                                    ? "Pro forced from environment override"
+                                    : source === "subscription"
+                                      ? "Subscription loaded from your account"
+                                      : source === "account"
+                                        ? "Subscription connected to this account"
+                                        : "Pro features are enabled"
+                                  : "Upgrade to Pro for ad-free play, advanced stats, team support, and unlimited session history"}
+                              </span>
+                            </div>
+                            <div className="authDialog__planHeaderRight">
+                              <span
+                                className={`authDialog__storageChevron${showPlanDetails ? " authDialog__storageChevron--open" : ""}`}
+                                aria-hidden="true"
+                              >
+                                <ChevronDown size={18} strokeWidth={2.2} />
+                              </span>
+                            </div>
                           </div>
-                        ) : null}
+                        </button>
                       </div>
                     )}
-                  </div>
-                </article>
-              </section>
-              <div className="authDialog__storage">
-                <div
-                  className={`authDialog__storageCard${showAccountDetails ? "" : " authDialog__storageCard--collapsed"}`}
-                >
-                  <button
-                    type="button"
-                    className="authDialog__storageToggle"
-                    onClick={() => setShowAccountDetails((value) => !value)}
-                    aria-expanded={showAccountDetails}
-                    aria-controls="auth-account-details"
-                  >
-                    <span className="authDialog__storageLabel">Details</span>
-                    <span
-                      className={`authDialog__storageChevron${showAccountDetails ? " authDialog__storageChevron--open" : ""}`}
-                      aria-hidden="true"
-                    >
-                      <ChevronDown size={18} strokeWidth={2.2} />
-                    </span>
-                  </button>
-                  <div className="authDialog__storageStats">
-                    <span>
-                      <strong>{accountGamesCount}</strong>
-                      <span>sessions</span>
-                    </span>
-                    <span>
-                      <strong>{accountProfilesCount}</strong>
-                      <span>players</span>
-                    </span>
-                  </div>
-                  {showAccountDetails ? (
-                    <div
-                      className="authDialog__accountDetails"
-                      id="auth-account-details"
-                    >
-                      <section className="authDialog__accountGroup">
-                        <div className="authDialog__accountGroupTitle">
-                          Sessions
-                        </div>
-                        {accountGames.length > 0 ? (
-                          <ul className="authDialog__accountList">
-                            {accountGames.slice(0, 5).map((game) => (
-                              <li
-                                key={game.id}
-                                className="authDialog__accountItem"
-                              >
-                                <strong>{game.name}</strong>
-                                <span>
-                                  {game.players.length} player
-                                  {game.players.length === 1 ? "" : "s"}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : accountGamesCount > 0 ? (
-                          <div className="authDialog__accountMore">
-                            {accountGamesCount} saved session
-                            {accountGamesCount === 1 ? "" : "s"} in your
-                            account. List will appear after sync refresh.
-                          </div>
-                        ) : (
-                          <div className="authDialog__accountEmpty">
-                            No saved sessions yet.
-                          </div>
-                        )}
-                        {accountGames.length > 5 ? (
-                          <div className="authDialog__accountMore">
-                            +{accountGames.length - 5} more session
-                            {accountGames.length - 5 === 1 ? "" : "s"}
+                    {!isPro && !showPlanDetails ? (
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--wide authDialog__planExpandCta authDialog__planExpandCta--bottom"
+                        onClick={() => setShowPlanDetails(true)}
+                      >
+                        <Crown size={16} strokeWidth={2.3} aria-hidden="true" />
+                        Get Pro
+                      </button>
+                    ) : null}
+                    {showPlanDetails ? (
+                      <div
+                        id="auth-plan-details"
+                        className="authDialog__planBody"
+                      >
+                        {!isPro ? (
+                          <div className="authDialog__planHero authDialog__planHero--copyOnly">
+                            <div className="authDialog__planHeroCopy">
+                              <strong>Need more than the basics?</strong>
+                              <span>You're missing out on:</span>
+                            </div>
                           </div>
                         ) : null}
-                      </section>
+                        <div className="authDialog__planBenefits">
+                          <div className="authDialog__planBenefit">
+                            <span
+                              className="authDialog__planBenefitIcon"
+                              aria-hidden="true"
+                            >
+                              <Check size={15} strokeWidth={2.6} />
+                            </span>
+                            <span>Unlimited saved sessions</span>
+                          </div>
+                          <div className="authDialog__planBenefit">
+                            <span
+                              className="authDialog__planBenefitIcon"
+                              aria-hidden="true"
+                            >
+                              <Check size={15} strokeWidth={2.6} />
+                            </span>
+                            <span>Ad-free experience</span>
+                          </div>
+                          <div className="authDialog__planBenefit">
+                            <span
+                              className="authDialog__planBenefitIcon"
+                              aria-hidden="true"
+                            >
+                              <Check size={15} strokeWidth={2.6} />
+                            </span>
+                            <span>Teams support for grouped players</span>
+                          </div>
+                          <div className="authDialog__planBenefit">
+                            <span
+                              className="authDialog__planBenefitIcon"
+                              aria-hidden="true"
+                            >
+                              <Check size={15} strokeWidth={2.6} />
+                            </span>
+                            <span>Advanced player stats and reporting</span>
+                          </div>
+                          <div className="authDialog__planBenefit">
+                            <span
+                              className="authDialog__planBenefitIcon"
+                              aria-hidden="true"
+                            >
+                              <Check size={15} strokeWidth={2.6} />
+                            </span>
+                            <span>Support our work</span>
+                          </div>
+                        </div>
 
-                      <section className="authDialog__accountGroup">
-                        <div className="authDialog__accountGroupTitle">
-                          Players
-                        </div>
-                        {accountProfiles.length > 0 ? (
-                          <ul className="authDialog__accountList">
-                            {accountProfiles.slice(0, 6).map((profile) => (
-                              <li
-                                key={profile.id}
-                                className="authDialog__accountItem"
+                        {!isPro ? (
+                          <>
+                            <div
+                              className="authDialog__planOptions"
+                              role="radiogroup"
+                              aria-label="Choose billing period"
+                            >
+                              <button
+                                type="button"
+                                role="radio"
+                                aria-checked={
+                                  selectedBillingPeriod === "monthly"
+                                }
+                                className={`authDialog__planOption${
+                                  selectedBillingPeriod === "monthly"
+                                    ? " authDialog__planOption--active"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  setSelectedBillingPeriod("monthly")
+                                }
                               >
-                                <strong>
-                                  {profile.isAccountPlayer
-                                    ? formatAccountPlayerName(profile.name)
-                                    : profile.name}
-                                </strong>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : accountProfilesCount > 0 ? (
-                          <div className="authDialog__accountMore">
-                            {accountProfilesCount} saved player
-                            {accountProfilesCount === 1 ? "" : "s"} in your
-                            account. List will appear after sync refresh.
-                          </div>
+                                <div className="authDialog__planOptionTop">
+                                  <strong>Monthly</strong>
+                                  <span>2.99 EUR / month</span>
+                                </div>
+                                <small className="authDialog__planEquivalent">
+                                  <span className="authDialog__planEquivalentLabel">
+                                    Equivalent to:
+                                  </span>
+                                  <span className="authDialog__planEquivalentValue">
+                                    <Coffee
+                                      size={14}
+                                      strokeWidth={2.2}
+                                      aria-hidden="true"
+                                    />
+                                    <span>+</span>
+                                    <Croissant
+                                      size={14}
+                                      strokeWidth={2.2}
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                </small>
+                              </button>
+                              <button
+                                type="button"
+                                role="radio"
+                                aria-checked={
+                                  selectedBillingPeriod === "yearly"
+                                }
+                                className={`authDialog__planOption${
+                                  selectedBillingPeriod === "yearly"
+                                    ? " authDialog__planOption--active"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  setSelectedBillingPeriod("yearly")
+                                }
+                              >
+                                <div className="authDialog__planOptionTop">
+                                  <strong>Yearly</strong>
+                                  <span>17.99 EUR / year</span>
+                                </div>
+                                <small className="authDialog__planEquivalent">
+                                  <span className="authDialog__planEquivalentLabel">
+                                    Equivalent to:
+                                  </span>
+                                  <span className="authDialog__planEquivalentValue">
+                                    <Coffee
+                                      size={14}
+                                      strokeWidth={2.2}
+                                      aria-hidden="true"
+                                    />
+                                    <span>/ month</span>
+                                  </span>
+                                </small>
+                              </button>
+                            </div>
+                            <div className="authDialog__planActions">
+                              <button
+                                className="btn btn--primary btn--wide"
+                                type="button"
+                                onClick={startUpgradeFlow}
+                              >
+                                {selectedBillingPeriod === "monthly"
+                                  ? "Buy Pro Monthly"
+                                  : "Buy Pro Yearly"}
+                              </button>
+                              <button
+                                className="btn btn--ghost btn--wide"
+                                type="button"
+                                onClick={restoreSubscription}
+                              >
+                                Restore subscription
+                              </button>
+                            </div>
+                          </>
                         ) : (
-                          <div className="authDialog__accountEmpty">
-                            No saved players yet.
+                          <div className="authDialog__planStatus">
+                            {source === "override"
+                              ? "Pro is currently enabled by environment override."
+                              : source === "subscription"
+                                ? "Your subscription is loaded from the subscriptions table."
+                                : source === "account"
+                                  ? "Your account is recognized as Pro."
+                                  : "Pro features are active."}
                           </div>
                         )}
-                        {accountProfiles.length > 6 ? (
-                          <div className="authDialog__accountMore">
-                            +{accountProfiles.length - 6} more player
-                            {accountProfiles.length - 6 === 1 ? "" : "s"}
-                          </div>
-                        ) : null}
-                      </section>
-                    </div>
-                  ) : null}
-                </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
               </div>
               <div className="authDialog__transfer">
                 <button
@@ -964,8 +1324,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   <span className="authDialog__transferHead">
                     <span className="authDialog__label">Data transfer</span>
                     <span className="authDialog__text">
-                      Add device sessions to this account, restore a backup,
-                      or download a copy.
+                      Add device sessions to this account, restore a backup, or
+                      download a copy.
                     </span>
                   </span>
                   <span
@@ -1125,10 +1485,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                             onClick={() => void runImportFromDevice()}
                             disabled={busy || !hasSelectedLocalData}
                           >
-                            <span className="authDialog__actionIcon" aria-hidden="true">
+                            <span
+                              className="authDialog__actionIcon"
+                              aria-hidden="true"
+                            >
                               <Plus size={16} strokeWidth={2.4} />
                             </span>
-                            <span>{busy ? "Working..." : "Add selected to account"}</span>
+                            <span>
+                              {busy ? "Working..." : "Add selected to account"}
+                            </span>
                           </button>
                         </div>
                       ) : null}
@@ -1139,7 +1504,10 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                           onClick={() => backupInputRef.current?.click()}
                           disabled={busy}
                         >
-                          <span className="authDialog__actionIcon" aria-hidden="true">
+                          <span
+                            className="authDialog__actionIcon"
+                            aria-hidden="true"
+                          >
                             <FileUp size={15} strokeWidth={2.1} />
                           </span>
                           <span>Restore from backup file</span>
@@ -1180,10 +1548,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                           onClick={() => void runDownloadBackupFile()}
                           disabled={busy}
                         >
-                          <span className="authDialog__actionIcon" aria-hidden="true">
+                          <span
+                            className="authDialog__actionIcon"
+                            aria-hidden="true"
+                          >
                             <Download size={15} strokeWidth={2.1} />
                           </span>
-                          <span>{busy ? "Working..." : "Download backup copy"}</span>
+                          <span>
+                            {busy ? "Working..." : "Download backup copy"}
+                          </span>
                         </button>
                       </div>
                     </div>

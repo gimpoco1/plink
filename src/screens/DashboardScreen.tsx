@@ -21,6 +21,7 @@ type DashboardScreenProps = {
   onActiveTabChange: (tab: HomeTab) => void;
   onOpenAuth: () => void;
   onOpenLocalImport: () => void;
+  onOpenProPlan: () => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
@@ -128,6 +129,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             onOpenAuth={props.onOpenLocalImport}
+            onOpenProPlan={props.onOpenProPlan}
             onEnter={props.onEnter}
             onDuplicate={props.onDuplicate}
             onRename={props.onRename}
