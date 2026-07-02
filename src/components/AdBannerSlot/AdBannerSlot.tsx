@@ -85,12 +85,8 @@ export function AdBannerSlot({ slotId, placement }: AdBannerSlotProps) {
   return (
     <section
       className={`adBannerSlot${loadFailed ? " adBannerSlot--fallback" : ""}`}
-      aria-label={`${placement} sponsor placement`}
+      aria-label={`${placement} ad placement`}
     >
-      <div className="adBannerSlot__meta">
-        <span className="adBannerSlot__eyebrow">Sponsor</span>
-        <span className="adBannerSlot__placement">{placement}</span>
-      </div>
       {canRenderLiveAd && !loadFailed ? (
         <ins
           ref={adRef}
@@ -98,13 +94,12 @@ export function AdBannerSlot({ slotId, placement }: AdBannerSlotProps) {
           data-ad-client={adsenseClientId}
           data-ad-format="auto"
           data-ad-slot={trimmedSlotId}
-          data-full-width-responsive="true"
+          data-full-width-responsive="false"
           style={{ display: "block" }}
         />
       ) : (
         <div className="adBannerSlot__placeholder">
-          <strong>Reserved ad space</strong>
-          <span>Small top banner for light monetization.</span>
+          <span>Ad</span>
         </div>
       )}
     </section>

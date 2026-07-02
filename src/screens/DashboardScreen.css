@@ -4,6 +4,11 @@
   .tabWindow {
     padding: 12px;
   }
+
+  .tabContent--sessions > .adBannerSlot:first-child,
+  .tabContent--players > .adBannerSlot:first-child {
+    margin-top: -12px;
+  }
 }
 
 .homeContainer {
@@ -43,6 +48,11 @@
   padding-bottom: 120px;
   max-width: 720px;
   margin: 0 auto;
+}
+
+.tabContent--sessions > .adBannerSlot:first-child,
+.tabContent--players > .adBannerSlot:first-child {
+  margin-top: -24px;
 }
 
 .tabHeader {
