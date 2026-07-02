@@ -15,6 +15,7 @@ import { useProfiles } from "./hooks/useProfiles";
 import { useGames } from "./hooks/useGames";
 import { useScorePulse } from "./hooks/useScorePulse";
 import { useAuthSession } from "./hooks/useAuthSession";
+import { EntitlementsProvider, useEntitlements } from "./hooks/useEntitlements";
 import { supabase } from "./lib/supabase";
 import { DashboardScreen } from "./screens/DashboardScreen";
 import { GameScreen } from "./screens/GameScreen";
@@ -62,6 +63,7 @@ export default function App() {
     authEnabled,
     passwordRecoveryRequestedAt,
   } = useAuthSession();
+  const entitlements = useEntitlements(session);
   const {
     profiles,
     upsertProfile,
@@ -136,14 +138,16 @@ export default function App() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<NewGameInput | null>(null);
   const [presetDraftToken, setPresetDraftToken] = useState(0);
-  const [dismissedLocalSessionsHintSignature, setDismissedLocalSessionsHintSignature] =
-    useState(() => {
-      try {
-        return localStorage.getItem(LOCAL_SESSIONS_HINT_DISMISSED_KEY) ?? "";
-      } catch {
-        return "";
-      }
-    });
+  const [
+    dismissedLocalSessionsHintSignature,
+    setDismissedLocalSessionsHintSignature,
+  ] = useState(() => {
+    try {
+      return localStorage.getItem(LOCAL_SESSIONS_HINT_DISMISSED_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
   const profileStats = useMemo(() => computeProfileStats(games), [games]);
   const canViewSavedData = !!session;
   const visibleGames = canViewSavedData && !gamesReady ? [] : games;
@@ -197,6 +201,9 @@ export default function App() {
   const showLocalSessionsHint =
     pendingLocalSessionsCount > 0 &&
     pendingLocalSessionsHintSignature !== dismissedLocalSessionsHintSignature;
+  const currentSessionCount = canViewSavedData
+    ? games.length
+    : localGuestGames.length;
 
   useEffect(() => {
     if (passwordRecoveryRequestedAt > 0) {
@@ -211,6 +218,21 @@ export default function App() {
 
   function showToast(message: string, tone: ToastTone = "default") {
     setVisibleToast({ message, tone });
+  }
+
+  function canAddMoreSessions(extra = 1) {
+    return (
+      entitlements.maxSessions === null ||
+      currentSessionCount + extra <= entitlements.maxSessions
+    );
+  }
+
+  function showSessionLimitToast() {
+    const limit = entitlements.maxSessions;
+    if (!limit) return;
+    showToast(
+      `Free plan includes up to ${limit} sessions. Upgrade to Pro for unlimited session history.`,
+    );
   }
 
   function returnToGameSource() {
@@ -263,12 +285,11 @@ export default function App() {
     }
 
     items.push({
-      label:
-        currentGame.manualEndOnly
-          ? currentGame.targetScore > 0
-            ? `Manual finish · ref ${currentGame.targetScore}`
-            : "Manual finish"
-          : currentGame.winCondition === "reach_zero"
+      label: currentGame.manualEndOnly
+        ? currentGame.targetScore > 0
+          ? `Manual finish · ref ${currentGame.targetScore}`
+          : "Manual finish"
+        : currentGame.winCondition === "reach_zero"
           ? `Start ${currentGame.startingScore} · reach 0`
           : currentGame.winCondition === "lowest"
             ? currentGame.winByTwo
@@ -294,7 +315,9 @@ export default function App() {
 
   const hasNonZeroScore = useMemo(() => {
     if (!currentGame) return false;
-    return currentGame.players.some((p) => p.score !== currentGame.startingScore);
+    return currentGame.players.some(
+      (p) => p.score !== currentGame.startingScore,
+    );
   }, [currentGame]);
 
   const currentWinnerStats = useMemo(() => {
@@ -418,7 +441,9 @@ export default function App() {
       return;
     }
 
-    const profilesById = new Map(profiles.map((profile) => [profile.id, profile]));
+    const profilesById = new Map(
+      profiles.map((profile) => [profile.id, profile]),
+    );
     const profilesByName = new Map(
       profiles.map((profile) => [
         formatPlayerName(profile.name).toLowerCase(),
@@ -451,6 +476,11 @@ export default function App() {
   }, [games, gamesReady, profiles, profilesReady, session, updatePlayer]);
 
   async function handleCreateGame(input: Parameters<typeof createGame>[0]) {
+    if (!canAddMoreSessions()) {
+      showSessionLimitToast();
+      return false;
+    }
+
     if (!session) {
       const ok = await confirmRef.current?.confirm({
         title: "Not signed in",
@@ -503,12 +533,11 @@ export default function App() {
         },
         {
           label: "Win mode",
-          value:
-            input.manualEndOnly
-              ? input.winByTwo
-                ? "Manual finish, win by 2"
-                : "Manual finish"
-              : input.winCondition === "reach_zero"
+          value: input.manualEndOnly
+            ? input.winByTwo
+              ? "Manual finish, win by 2"
+              : "Manual finish"
+            : input.winCondition === "reach_zero"
               ? "First to zero wins"
               : input.winCondition === "lowest"
                 ? input.winByTwo
@@ -668,6 +697,11 @@ export default function App() {
     );
 
     const prepared = prepareImportedData(localGames, localProfiles);
+    if (!canAddMoreSessions(prepared.games.length)) {
+      throw new Error(
+        `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to import more history.`,
+      );
+    }
     const importedProfiles = importProfiles(prepared.profiles);
     const importedGames = importGames(prepared.games);
 
@@ -699,6 +733,11 @@ export default function App() {
       existingGameSignatures.add(signature);
       return true;
     });
+    if (!canAddMoreSessions(uniqueReconciledGames.length)) {
+      throw new Error(
+        `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to restore larger backups.`,
+      );
+    }
     const importedProfiles = importProfiles(reconciled.profiles);
     const importedGames = importGames(uniqueReconciledGames);
 
@@ -758,198 +797,196 @@ export default function App() {
   }
 
   return (
-    <div
-      className="app"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <EntitlementsProvider value={entitlements}>
       <div
-        className={`appBackdrop${authDialogOpen ? " appBackdrop--hidden" : ""}`}
-        aria-hidden="true"
+        className="app"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        <DotGrid
-          dotSize={3}
-          gap={23}
-          baseColor="#202b34"
-          activeColor="#d8ff4f"
-          proximity={140}
-          shockRadius={250}
-          shockStrength={5}
-          resistance={750}
-          returnDuration={1.5}
-          idleSpeed={1.75}
-          idleStrength={4.5}
-        />
-      </div>
-      <motion.div
-        initial={reduceMotion ? false : { opacity: 0.85, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.24, ease: "easeOut" }}
-      >
-        <TopBar
-          title={
-            view === "history" && currentGame
-              ? "History"
-              : view === "game" && currentGame
-                ? gameDisplayName.title
-                : ""
-          }
-          titleSuffix={
-            view === "game" && currentGame && gameDisplayName.replayNumber
-              ? `#${gameDisplayName.replayNumber}`
-              : undefined
-          }
-          backLabel={view === "history" ? "Back to game" : "Back to games"}
-          showBackButton={view !== "home" && !!currentGame}
-          showActionMenu={view === "game" && !!currentGame}
-          primaryActionLabel={
-            view === "home" &&
-            homeTab !== "home" &&
-            (homeTab !== "players" || !!session)
-              ? homeTab === "players"
-                ? "New Player"
-                : "New game"
-              : undefined
-          }
-          authLabel={
-            view === "home"
-              ? authLoading
-                ? "Loading..."
-                : authEnabled
-                  ? session
-                    ? undefined
-                    : "Sign in"
-                  : "Local only"
-              : undefined
-          }
-          authIcon={
-            view === "home" && authEnabled && !authLoading && session ? (
-              <CircleUser size={26} strokeWidth={2.3} aria-hidden="true" />
-            ) : undefined
-          }
-          authAriaLabel={session ? "Account" : "Sign in"}
-          metaItems={
-            view === "history" && currentGame
-              ? [{ label: gameDisplayName.title, tone: "muted" }]
-              : view === "game" && currentGame
-                ? gameMetaItems
-                : undefined
-          }
-          showReset={view === "game" && hasNonZeroScore}
-          onBack={() =>
-            view === "history" ? setView("game") : returnToGameSource()
-          }
-          onLogoClick={() => setView("home")}
-          onPrimaryAction={() => {
-            setView("home");
-            if (homeTab === "players" && session) {
-              window.dispatchEvent(new CustomEvent("plink:add-player"));
-            } else {
-              window.dispatchEvent(new CustomEvent("plink:new-game"));
+        <div
+          className={`appBackdrop${authDialogOpen ? " appBackdrop--hidden" : ""}`}
+          aria-hidden="true"
+        >
+          <DotGrid
+            dotSize={3}
+            gap={23}
+            baseColor="#202b34"
+            activeColor="#d8ff4f"
+            proximity={140}
+            shockRadius={250}
+            shockStrength={5}
+            resistance={750}
+            returnDuration={1.5}
+            idleSpeed={1.75}
+            idleStrength={4.5}
+          />
+        </div>
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0.85, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.24, ease: "easeOut" }}
+        >
+          <TopBar
+            title={
+              view === "history" && currentGame
+                ? "History"
+                : view === "game" && currentGame
+                  ? gameDisplayName.title
+                  : ""
             }
-          }}
-          onOpenAuth={() => {
-            setShouldSaveGamePlayersOnSignIn(false);
-            authDialogRef.current?.open();
-          }}
-          onAddPlayer={() => managePlayersDialogRef.current?.open()}
-          onOpenSettings={
-            view === "game" && currentGame
-              ? () => settingsDialogRef.current?.open()
-              : undefined
-          }
-          onOpenHistory={
-            view === "game" && currentGame
-              ? () => setView("history")
-              : undefined
-          }
-          onEndGame={
-            view === "game" &&
-            currentGame &&
-            currentGame.players.length > 0 &&
-            !findWinner(currentGame.players, currentGame)
-              ? handleEndCurrentGame
-              : undefined
-          }
-          onResetGame={async () => {
-            if (!currentGame) return;
-            const ok = await confirmRef.current?.confirm({
-              title: "Reset game",
-              message: "Reset all scores to 0?",
-              confirmText: "Reset",
-              tone: "danger",
-            });
-            if (!ok) return;
-            resetScores(currentGame.id);
-          }}
-        />
-      </motion.div>
+            titleSuffix={
+              view === "game" && currentGame && gameDisplayName.replayNumber
+                ? `#${gameDisplayName.replayNumber}`
+                : undefined
+            }
+            backLabel={view === "history" ? "Back to game" : "Back to games"}
+            showBackButton={view !== "home" && !!currentGame}
+            showActionMenu={view === "game" && !!currentGame}
+            primaryActionLabel={
+              view === "home" &&
+              homeTab !== "home" &&
+              (homeTab !== "players" || !!session)
+                ? homeTab === "players"
+                  ? "New Player"
+                  : "New game"
+                : undefined
+            }
+            authLabel={
+              view === "home"
+                ? authLoading
+                  ? "Loading..."
+                  : authEnabled
+                    ? session
+                      ? undefined
+                      : "Sign in"
+                    : "Local only"
+                : undefined
+            }
+            authIcon={
+              view === "home" && authEnabled && !authLoading && session ? (
+                <CircleUser size={26} strokeWidth={2.3} aria-hidden="true" />
+              ) : undefined
+            }
+            authAriaLabel={session ? "Account" : "Sign in"}
+            metaItems={
+              view === "history" && currentGame
+                ? [{ label: gameDisplayName.title, tone: "muted" }]
+                : view === "game" && currentGame
+                  ? gameMetaItems
+                  : undefined
+            }
+            showReset={view === "game" && hasNonZeroScore}
+            onBack={() =>
+              view === "history" ? setView("game") : returnToGameSource()
+            }
+            onLogoClick={() => setView("home")}
+            onPrimaryAction={() => {
+              setView("home");
+              if (homeTab === "players" && session) {
+                window.dispatchEvent(new CustomEvent("plink:add-player"));
+              } else {
+                window.dispatchEvent(new CustomEvent("plink:new-game"));
+              }
+            }}
+            onOpenAuth={() => {
+              setShouldSaveGamePlayersOnSignIn(false);
+              authDialogRef.current?.open();
+            }}
+            onAddPlayer={() => managePlayersDialogRef.current?.open()}
+            onOpenSettings={
+              view === "game" && currentGame
+                ? () => settingsDialogRef.current?.open()
+                : undefined
+            }
+            onOpenHistory={
+              view === "game" && currentGame
+                ? () => setView("history")
+                : undefined
+            }
+            onEndGame={
+              view === "game" &&
+              currentGame &&
+              currentGame.players.length > 0 &&
+              !findWinner(currentGame.players, currentGame)
+                ? handleEndCurrentGame
+                : undefined
+            }
+            onResetGame={async () => {
+              if (!currentGame) return;
+              const ok = await confirmRef.current?.confirm({
+                title: "Reset game",
+                message: "Reset all scores to 0?",
+                confirmText: "Reset",
+                tone: "danger",
+              });
+              if (!ok) return;
+              resetScores(currentGame.id);
+            }}
+          />
+        </motion.div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        {isResolvingInitialGameView ? null : view === "history" &&
-          currentGame ? (
-          <motion.div
-            className="appView"
-            key={`view-history-${currentGame.id}`}
-            initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.995 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? {} : { opacity: 0, y: -16, scale: 0.995 }}
-            transition={{ duration: reduceMotion ? 0 : 0.26, ease: "easeOut" }}
-          >
-            <GameHistoryScreen game={currentGame} />
-          </motion.div>
-        ) : view === "game" && currentGame ? (
-          <motion.div
-            className="appView"
-            key={`view-game-${currentGame.id}`}
-            initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.995 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? {} : { opacity: 0, y: -16, scale: 0.995 }}
-            transition={{ duration: reduceMotion ? 0 : 0.26, ease: "easeOut" }}
-          >
-            <GameScreen
-              game={currentGame}
-              profiles={visibleProfiles}
-              isAuthenticated={canViewSavedData}
-              pulseById={pulseById}
-              onTriggerPulse={triggerPulse}
-              managePlayersDialogRef={managePlayersDialogRef}
-              onDeleteProfile={async (profileId) => {
-                const profile = profiles.find((p) => p.id === profileId);
-                if (profile?.isAccountPlayer) {
-                  showToast("Your account player cannot be deleted.");
-                  return;
-                }
-                const label = profile ? profile.name : "this player";
-                const ok = await confirmRef.current?.confirm({
-                  title: "Delete saved player",
-                  message: `Delete "${label}" from your saved players?`,
-                  confirmText: "Delete",
-                  tone: "danger",
-                });
-                if (!ok) return;
-                deleteProfile(profileId);
+        <AnimatePresence mode="wait" initial={false}>
+          {isResolvingInitialGameView ? null : view === "history" &&
+            currentGame ? (
+            <motion.div
+              className="appView"
+              key={`view-history-${currentGame.id}`}
+              initial={
+                reduceMotion ? false : { opacity: 0, y: 18, scale: 0.995 }
+              }
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? {} : { opacity: 0, y: -16, scale: 0.995 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.26,
+                ease: "easeOut",
               }}
-              onUpsertProfile={upsertProfile}
-              onStartGame={(profileIds, newPlayers) => {
-                if (!currentGame) return;
-
-                // 1. Add players from existing profiles
-                profileIds.forEach((pid) => {
-                  const profile = profiles.find((p) => p.id === pid);
-                  if (profile) {
-                    addPlayer(currentGame.id, {
-                      name: profile.name,
-                      avatarColor: profile.avatarColor,
-                      profileId: profile.id,
-                    });
+            >
+              <GameHistoryScreen game={currentGame} />
+            </motion.div>
+          ) : view === "game" && currentGame ? (
+            <motion.div
+              className="appView"
+              key={`view-game-${currentGame.id}`}
+              initial={
+                reduceMotion ? false : { opacity: 0, y: 18, scale: 0.995 }
+              }
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? {} : { opacity: 0, y: -16, scale: 0.995 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.26,
+                ease: "easeOut",
+              }}
+            >
+              <GameScreen
+                game={currentGame}
+                profiles={visibleProfiles}
+                isAuthenticated={canViewSavedData}
+                pulseById={pulseById}
+                onTriggerPulse={triggerPulse}
+                managePlayersDialogRef={managePlayersDialogRef}
+                onDeleteProfile={async (profileId) => {
+                  const profile = profiles.find((p) => p.id === profileId);
+                  if (profile?.isAccountPlayer) {
+                    showToast("Your account player cannot be deleted.");
+                    return;
                   }
-                });
+                  const label = profile ? profile.name : "this player";
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Delete saved player",
+                    message: `Delete "${label}" from your saved players?`,
+                    confirmText: "Delete",
+                    tone: "danger",
+                  });
+                  if (!ok) return;
+                  deleteProfile(profileId);
+                }}
+                onUpsertProfile={upsertProfile}
+                onStartGame={(profileIds, newPlayers) => {
+                  if (!currentGame) return;
 
-                // 2. Add newly created players
-                newPlayers.forEach((np) => {
-                  if (np.saveForLater && canViewSavedData) {
-                    const profile = upsertProfile(np.name, np.avatarColor);
+                  // 1. Add players from existing profiles
+                  profileIds.forEach((pid) => {
+                    const profile = profiles.find((p) => p.id === pid);
                     if (profile) {
                       addPlayer(currentGame.id, {
                         name: profile.name,
@@ -957,207 +994,252 @@ export default function App() {
                         profileId: profile.id,
                       });
                     }
-                  } else {
-                    addPlayer(currentGame.id, {
-                      name: np.name,
-                      avatarColor: np.avatarColor,
-                    });
+                  });
+
+                  // 2. Add newly created players
+                  newPlayers.forEach((np) => {
+                    if (np.saveForLater && canViewSavedData) {
+                      const profile = upsertProfile(np.name, np.avatarColor);
+                      if (profile) {
+                        addPlayer(currentGame.id, {
+                          name: profile.name,
+                          avatarColor: profile.avatarColor,
+                          profileId: profile.id,
+                        });
+                      }
+                    } else {
+                      addPlayer(currentGame.id, {
+                        name: np.name,
+                        avatarColor: np.avatarColor,
+                      });
+                    }
+                  });
+                }}
+                onUpdateScore={(playerId, delta) =>
+                  updateScore(currentGame.id, playerId, delta)
+                }
+                onDeletePlayer={async (playerId) => {
+                  const player = currentGame.players.find(
+                    (item) => item.id === playerId,
+                  );
+                  const label = player
+                    ? capitalizeFirst(player.name)
+                    : "this player";
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Remove player",
+                    message: `Do you want to remove ${label} from this game?`,
+                    confirmText: "Remove",
+                    tone: "danger",
+                  });
+                  if (!ok) return;
+                  removePlayer(currentGame.id, playerId);
+                }}
+                onUpdatePlayer={(playerId, updates) => {
+                  const player = currentGame.players.find(
+                    (item) => item.id === playerId,
+                  );
+                  const profileId = player?.profileId;
+                  if (profileId) {
+                    const profileUpdates: Parameters<typeof updateProfile>[1] =
+                      {};
+                    if (updates.name !== undefined) {
+                      profileUpdates.name = updates.name;
+                    }
+                    if (updates.avatarColor !== undefined) {
+                      profileUpdates.avatarColor = updates.avatarColor;
+                    }
+                    if (Object.keys(profileUpdates).length > 0) {
+                      updateProfileEverywhere(profileId, profileUpdates);
+                    }
                   }
-                });
-              }}
-              onUpdateScore={(playerId, delta) =>
-                updateScore(currentGame.id, playerId, delta)
+                  updatePlayer(currentGame.id, playerId, updates);
+                }}
+                winnerStats={currentWinnerStats}
+                onReplayGame={() => {
+                  if (!canAddMoreSessions()) {
+                    showSessionLimitToast();
+                    return;
+                  }
+                  const duplicated = duplicateGame(currentGame.id);
+                  if (duplicated) setView("game");
+                }}
+                onBackToHome={returnToGameSource}
+                onEndGame={handleEndCurrentGame}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              className="appView"
+              key="view-home"
+              initial={
+                reduceMotion ? false : { opacity: 0, y: 16, scale: 0.995 }
               }
-              onDeletePlayer={async (playerId) => {
-                const player = currentGame.players.find(
-                  (item) => item.id === playerId,
-                );
-                const label = player
-                  ? capitalizeFirst(player.name)
-                  : "this player";
-                const ok = await confirmRef.current?.confirm({
-                  title: "Remove player",
-                  message: `Do you want to remove ${label} from this game?`,
-                  confirmText: "Remove",
-                  tone: "danger",
-                });
-                if (!ok) return;
-                removePlayer(currentGame.id, playerId);
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? {} : { opacity: 0, y: -14, scale: 0.995 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.24,
+                ease: "easeOut",
               }}
-              onUpdatePlayer={(playerId, updates) => {
-                const player = currentGame.players.find(
-                  (item) => item.id === playerId,
-                );
-                const profileId = player?.profileId;
-                if (profileId) {
-                  const profileUpdates: Parameters<typeof updateProfile>[1] =
-                    {};
-                  if (updates.name !== undefined) {
-                    profileUpdates.name = updates.name;
+            >
+              <DashboardScreen
+                games={visibleGames}
+                profiles={visibleProfiles}
+                isAuthenticated={canViewSavedData}
+                showLocalSessionsHint={showLocalSessionsHint}
+                pendingLocalSessionsCount={pendingLocalSessionsCount}
+                onDismissLocalSessionsHint={dismissLocalSessionsHint}
+                presetDraft={presetDraft}
+                presetDraftToken={presetDraftToken}
+                onOpenAuth={() => {
+                  setShouldSaveGamePlayersOnSignIn(false);
+                  authDialogRef.current?.open();
+                }}
+                onOpenLocalImport={() => {
+                  setShouldSaveGamePlayersOnSignIn(false);
+                  authDialogRef.current?.openLocalImport();
+                }}
+                onOpenProPlan={() => {
+                  setShouldSaveGamePlayersOnSignIn(false);
+                  authDialogRef.current?.openPlan();
+                }}
+                activeTab={homeTab}
+                onActiveTabChange={setHomeTab}
+                onCreate={handleCreateGame}
+                onStartQuickSetup={handleStartQuickSetup}
+                onUpsertProfile={upsertProfile}
+                onUpdateProfile={(id, updates) => {
+                  updateProfileEverywhere(id, updates);
+                }}
+                onDeleteProfile={async (profileId) => {
+                  const profile = profiles.find((p) => p.id === profileId);
+                  if (profile?.isAccountPlayer) {
+                    showToast("Your account player cannot be deleted.");
+                    return;
                   }
-                  if (updates.avatarColor !== undefined) {
-                    profileUpdates.avatarColor = updates.avatarColor;
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Delete saved player",
+                    message: `Delete "${profile?.name || "this player"}"? They will be removed from your list.`,
+                    confirmText: "Delete",
+                    tone: "danger",
+                  });
+                  if (ok) deleteProfile(profileId);
+                }}
+                onDuplicate={(gameId) => {
+                  if (!canAddMoreSessions()) {
+                    showSessionLimitToast();
+                    return;
                   }
-                  if (Object.keys(profileUpdates).length > 0) {
-                    updateProfileEverywhere(profileId, profileUpdates);
+                  const duplicated = duplicateGame(gameId);
+                  if (duplicated) {
+                    setGameReturnTab(homeTab);
+                    setView("game");
                   }
-                }
-                updatePlayer(currentGame.id, playerId, updates);
-              }}
-              winnerStats={currentWinnerStats}
-              onReplayGame={() => {
-                const duplicated = duplicateGame(currentGame.id);
-                if (duplicated) setView("game");
-              }}
-              onBackToHome={returnToGameSource}
-              onEndGame={handleEndCurrentGame}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            className="appView"
-            key="view-home"
-            initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.995 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? {} : { opacity: 0, y: -14, scale: 0.995 }}
-            transition={{ duration: reduceMotion ? 0 : 0.24, ease: "easeOut" }}
-          >
-            <DashboardScreen
-              games={visibleGames}
-              profiles={visibleProfiles}
-              isAuthenticated={canViewSavedData}
-              showLocalSessionsHint={showLocalSessionsHint}
-              pendingLocalSessionsCount={pendingLocalSessionsCount}
-              onDismissLocalSessionsHint={dismissLocalSessionsHint}
-              presetDraft={presetDraft}
-              presetDraftToken={presetDraftToken}
-              onOpenAuth={() => {
-                setShouldSaveGamePlayersOnSignIn(false);
-                authDialogRef.current?.open();
-              }}
-              onOpenLocalImport={() => {
-                setShouldSaveGamePlayersOnSignIn(false);
-                authDialogRef.current?.openLocalImport();
-              }}
-              activeTab={homeTab}
-              onActiveTabChange={setHomeTab}
-              onCreate={handleCreateGame}
-              onStartQuickSetup={handleStartQuickSetup}
-              onUpsertProfile={upsertProfile}
-              onUpdateProfile={(id, updates) => {
-                updateProfileEverywhere(id, updates);
-              }}
-              onDeleteProfile={async (profileId) => {
-                const profile = profiles.find((p) => p.id === profileId);
-                if (profile?.isAccountPlayer) {
-                  showToast("Your account player cannot be deleted.");
-                  return;
-                }
-                const ok = await confirmRef.current?.confirm({
-                  title: "Delete saved player",
-                  message: `Delete "${profile?.name || "this player"}"? They will be removed from your list.`,
-                  confirmText: "Delete",
-                  tone: "danger",
-                });
-                if (ok) deleteProfile(profileId);
-              }}
-              onDuplicate={(gameId) => {
-                const duplicated = duplicateGame(gameId);
-                if (duplicated) {
+                }}
+                onRename={async (gameId) => {
+                  const g = games.find((x) => x.id === gameId);
+                  if (!g) return;
+                  const nextName = await confirmRef.current?.prompt({
+                    title: "Rename session",
+                    message:
+                      "Choose a clear name so this session is easy to find later.",
+                    initialValue: g.name,
+                    placeholder: "Session name",
+                    confirmText: "Save name",
+                    maxLength: 28,
+                  });
+                  if (nextName) {
+                    renameGame(gameId, nextName);
+                  }
+                }}
+                onEnter={(gameId) => {
+                  selectGame(gameId);
                   setGameReturnTab(homeTab);
                   setView("game");
-                }
-              }}
-              onRename={async (gameId) => {
-                const g = games.find((x) => x.id === gameId);
-                if (!g) return;
-                const nextName = await confirmRef.current?.prompt({
-                  title: "Rename session",
-                  message: "Choose a clear name so this session is easy to find later.",
-                  initialValue: g.name,
-                  placeholder: "Session name",
-                  confirmText: "Save name",
-                  maxLength: 28,
-                });
-                if (nextName) {
-                  renameGame(gameId, nextName);
-                }
-              }}
-              onEnter={(gameId) => {
-                selectGame(gameId);
-                setGameReturnTab(homeTab);
-                setView("game");
-              }}
-              onDelete={async (gameId) => {
-                const g = games.find((x) => x.id === gameId);
-                const label = g ? g.name : "this game";
-                const ok = await confirmRef.current?.confirm({
-                  title: "Delete game",
-                  message: `Delete "${label}"? This removes the game and its scores.`,
-                  confirmText: "Delete",
-                  tone: "danger",
-                });
-                if (!ok) return;
-                deleteGame(gameId);
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {view === "game" && currentGame ? (
-        <GameSettingsDialog
-          ref={settingsDialogRef}
-          game={currentGame}
-          isAuthenticated={canViewSavedData}
-          onOpenAuth={() => {
-            setShouldSaveGamePlayersOnSignIn(true);
-            authDialogRef.current?.open();
-          }}
-          onAddPlayer={() => managePlayersDialogRef.current?.open()}
-          onSave={(input) => {
-            updateGameSettings(currentGame.id, input);
-          }}
-        />
-      ) : null}
-
-      <AuthDialog
-        ref={authDialogRef}
-        session={session}
-        onOpenChange={setAuthDialogOpen}
-        localGamesCount={canViewSavedData ? pendingLocalGuestGames.length : localGamesCount}
-        localProfilesCount={canViewSavedData ? pendingLocalGuestProfiles.length : localProfilesCount}
-        localGames={canViewSavedData ? pendingLocalGuestGames : localGuestGames}
-        localProfiles={canViewSavedData ? pendingLocalGuestProfiles : localGuestProfiles}
-        accountGamesCount={games.length}
-        accountProfilesCount={profiles.length}
-        accountGames={games}
-        accountProfiles={profiles}
-        onUpdateProfile={(id, updates) => {
-          updateProfileEverywhere(id, updates);
-        }}
-        onImportLocalData={handleImportLocalData}
-        onImportBackupFile={handleImportBackupFile}
-        onDownloadBackupFile={handleDownloadBackupFile}
-      />
-      <ConfirmDialog ref={confirmRef} />
-      <AnimatePresence>
-        {visibleToast ? (
-          <div className="appToastWrap" aria-hidden="false">
-            <motion.div
-              className={`appToast appToast--${visibleToast.tone}`}
-              role="status"
-              aria-live="polite"
-              initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduceMotion ? {} : { opacity: 0, y: 8 }}
-              transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
-            >
-              {visibleToast.message}
+                }}
+                onDelete={async (gameId) => {
+                  const g = games.find((x) => x.id === gameId);
+                  const label = g ? g.name : "this game";
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Delete game",
+                    message: `Delete "${label}"? This removes the game and its scores.`,
+                    confirmText: "Delete",
+                    tone: "danger",
+                  });
+                  if (!ok) return;
+                  deleteGame(gameId);
+                }}
+              />
             </motion.div>
-          </div>
+          )}
+        </AnimatePresence>
+
+        {view === "game" && currentGame ? (
+          <GameSettingsDialog
+            ref={settingsDialogRef}
+            game={currentGame}
+            isAuthenticated={canViewSavedData}
+            onOpenAuth={() => {
+              setShouldSaveGamePlayersOnSignIn(true);
+              authDialogRef.current?.open();
+            }}
+            onAddPlayer={() => managePlayersDialogRef.current?.open()}
+            onSave={(input) => {
+              updateGameSettings(currentGame.id, input);
+            }}
+          />
         ) : null}
-      </AnimatePresence>
-    </div>
+
+        <AuthDialog
+          ref={authDialogRef}
+          session={session}
+          onOpenChange={setAuthDialogOpen}
+          localGamesCount={
+            canViewSavedData ? pendingLocalGuestGames.length : localGamesCount
+          }
+          localProfilesCount={
+            canViewSavedData
+              ? pendingLocalGuestProfiles.length
+              : localProfilesCount
+          }
+          localGames={
+            canViewSavedData ? pendingLocalGuestGames : localGuestGames
+          }
+          localProfiles={
+            canViewSavedData ? pendingLocalGuestProfiles : localGuestProfiles
+          }
+          accountGamesCount={games.length}
+          accountProfilesCount={profiles.length}
+          accountGames={games}
+          accountProfiles={profiles}
+          onUpdateProfile={(id, updates) => {
+            updateProfileEverywhere(id, updates);
+          }}
+          onImportLocalData={handleImportLocalData}
+          onImportBackupFile={handleImportBackupFile}
+          onDownloadBackupFile={handleDownloadBackupFile}
+        />
+        <ConfirmDialog ref={confirmRef} />
+        <AnimatePresence>
+          {visibleToast ? (
+            <div className="appToastWrap" aria-hidden="false">
+              <motion.div
+                className={`appToast appToast--${visibleToast.tone}`}
+                role="status"
+                aria-live="polite"
+                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduceMotion ? {} : { opacity: 0, y: 8 }}
+                transition={{
+                  duration: reduceMotion ? 0 : 0.2,
+                  ease: "easeOut",
+                }}
+              >
+                {visibleToast.message}
+              </motion.div>
+            </div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+    </EntitlementsProvider>
   );
 }

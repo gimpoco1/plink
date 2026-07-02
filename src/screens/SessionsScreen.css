@@ -6,6 +6,53 @@
   margin-bottom: 24px;
 }
 
+.sessionsLimitWarning {
+  margin-bottom: 24px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  background:
+    linear-gradient(180deg, rgba(251, 191, 36, 0.14), transparent 100%),
+    rgba(255, 255, 255, 0.035);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 14px 34px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sessionsLimitWarning__content {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
+.sessionsLimitWarning__eyebrow {
+  color: #fde68a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sessionsLimitWarning p {
+  margin: 0;
+  color: #fff8e6;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.5;
+  max-width: 34rem;
+}
+
+.sessionsLimitWarning__cta {
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .sessionsToolbar {
   display: flex;
   flex-wrap: wrap;
@@ -86,4 +133,15 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .sessionsLimitWarning {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sessionsLimitWarning__cta {
+    margin-left: 0;
+  }
 }
