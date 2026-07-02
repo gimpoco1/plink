@@ -939,7 +939,7 @@ export function NewGameCard({
               >
                 <ModeButton
                   icon={<ArrowDownUp size={22} strokeWidth={2.3} />}
-                  title="Reverse scoring"
+                  title="Lowest wins"
                   description="Lowest score wins."
                   active={winCondition === "lowest"}
                   onClick={() => {

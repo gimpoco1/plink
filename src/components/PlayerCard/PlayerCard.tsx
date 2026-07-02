@@ -149,7 +149,7 @@ export function PlayerCard({
             <div className="cardHeader__right">
               <div
                 className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`}
-                aria-label={`Score ${player.score}`}
+                aria-label={`Score ${currentScore}`}
               >
                 {currentScore}
               </div>
@@ -162,7 +162,9 @@ export function PlayerCard({
             aria-label={`${displayName} progress to target`}
             aria-valuemin={0}
             aria-valuemax={
-              winCondition === "reach_zero" ? startingScore : Math.max(1, targetScore)
+              winCondition === "reach_zero"
+                ? startingScore
+                : Math.max(1, targetScore)
             }
             aria-valuenow={
               winCondition === "reach_zero"

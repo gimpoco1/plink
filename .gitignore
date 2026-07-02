@@ -1,5 +1,6 @@
 node_modules
 dist
+*.tsbuildinfo
 .DS_Store
 .idea
 .vscode
@@ -7,4 +8,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
