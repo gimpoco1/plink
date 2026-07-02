@@ -31,6 +31,9 @@
 }
 
 .sessionsLimitWarning__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #fde68a;
   font-size: 12px;
   font-weight: 900;

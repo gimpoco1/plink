@@ -70,9 +70,7 @@ function getAccountPlan(session: Session | null): SubscriptionPlan | null {
 
   return (
     normalizePlan(session.user.app_metadata?.plan) ??
-    normalizePlan(session.user.app_metadata?.subscription_plan) ??
-    normalizePlan(session.user.user_metadata?.plan) ??
-    normalizePlan(session.user.user_metadata?.subscription_plan)
+    normalizePlan(session.user.app_metadata?.subscription_plan)
   );
 }
 

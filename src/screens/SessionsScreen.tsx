@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Crown } from "lucide-react";
+import { AlertTriangle, Crown } from "lucide-react";
 import type { Game } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
 import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
@@ -101,7 +101,10 @@ export function SessionsScreen({
       {showSessionLimitWarning ? (
         <div className="sessionsLimitWarning" role="status" aria-live="polite">
           <div className="sessionsLimitWarning__content">
-            <div className="sessionsLimitWarning__eyebrow">Session limit</div>
+            <div className="sessionsLimitWarning__eyebrow">
+              <AlertTriangle size={16} strokeWidth={2.4} aria-hidden="true" />
+              <span>Session limit</span>
+            </div>
             <p>
               {remainingSessions === 0
                 ? `You reached the Free plan limit of ${maxSessions} sessions.`

@@ -558,7 +558,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       }
 
       showTransferToast(
-        "Pro checkout is not connected yet. Add the checkout URL in env when billing is ready.",
+        "Checkout is not available yet.",
       );
     }
 
@@ -569,7 +569,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       }
 
       showTransferToast(
-        "Restore subscription will be available once billing is connected.",
+        "Restore subscription not available yet.",
       );
     }
 
