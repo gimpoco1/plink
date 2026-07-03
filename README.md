@@ -27,3 +27,4 @@ Plink is a playful score tracker for board games, card games, party games, and a
 - Flexible for different scoring rules.
 - Clean and focused interface.
 - Keeps your sessions and player history organized.
+

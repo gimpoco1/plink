@@ -10,6 +10,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
 export type SubscriptionPlan = "free" | "pro";
+export type SubscriptionBillingPeriod = "monthly" | "yearly";
 type SubscriptionStatus =
   | "active"
   | "trialing"
@@ -24,6 +25,13 @@ export type EntitlementsState = {
   plan: SubscriptionPlan;
   source: EntitlementSource;
   isPro: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
+  subscriptionBillingPeriod: SubscriptionBillingPeriod | null;
+  subscriptionCurrentPeriodEnd: string | null;
+  subscriptionStartedAt: string | null;
+  subscriptionCancelAtPeriodEnd: boolean;
+  subscriptionCancelAt: string | null;
+  subscriptionCanceledAt: string | null;
   shouldShowAds: boolean;
   canUseTeams: boolean;
   canSeeAdvancedStats: boolean;
@@ -35,6 +43,13 @@ const fallbackState: EntitlementsState = {
   plan: "free",
   source: "default",
   isPro: false,
+  subscriptionStatus: null,
+  subscriptionBillingPeriod: null,
+  subscriptionCurrentPeriodEnd: null,
+  subscriptionStartedAt: null,
+  subscriptionCancelAtPeriodEnd: false,
+  subscriptionCancelAt: null,
+  subscriptionCanceledAt: null,
   shouldShowAds: true,
   canUseTeams: false,
   canSeeAdvancedStats: false,
@@ -65,6 +80,13 @@ function normalizeSubscriptionStatus(
   return null;
 }
 
+function normalizeBillingPeriod(
+  value: unknown,
+): SubscriptionBillingPeriod | null {
+  if (value === "monthly" || value === "yearly") return value;
+  return null;
+}
+
 function getAccountPlan(session: Session | null): SubscriptionPlan | null {
   if (!session) return null;
 
@@ -80,6 +102,20 @@ export function useEntitlements(session: Session | null): EntitlementsState {
   );
   const [subscriptionPlan, setSubscriptionPlan] =
     useState<SubscriptionPlan | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] =
+    useState<SubscriptionStatus | null>(null);
+  const [subscriptionBillingPeriod, setSubscriptionBillingPeriod] =
+    useState<SubscriptionBillingPeriod | null>(null);
+  const [subscriptionCurrentPeriodEnd, setSubscriptionCurrentPeriodEnd] =
+    useState<string | null>(null);
+  const [subscriptionStartedAt, setSubscriptionStartedAt] =
+    useState<string | null>(null);
+  const [subscriptionCancelAtPeriodEnd, setSubscriptionCancelAtPeriodEnd] =
+    useState(false);
+  const [subscriptionCancelAt, setSubscriptionCancelAt] =
+    useState<string | null>(null);
+  const [subscriptionCanceledAt, setSubscriptionCanceledAt] =
+    useState<string | null>(null);
   const [hasSubscriptionRecord, setHasSubscriptionRecord] = useState(false);
   const accountPlan = getAccountPlan(session);
   const userId = session?.user.id ?? null;
@@ -87,23 +123,42 @@ export function useEntitlements(session: Session | null): EntitlementsState {
   useEffect(() => {
     if (envOverridePlan || !userId || !supabase) {
       setSubscriptionPlan(null);
+      setSubscriptionStatus(null);
+      setSubscriptionBillingPeriod(null);
+      setSubscriptionCurrentPeriodEnd(null);
+      setSubscriptionStartedAt(null);
+      setSubscriptionCancelAtPeriodEnd(false);
+      setSubscriptionCancelAt(null);
+      setSubscriptionCanceledAt(null);
       setHasSubscriptionRecord(false);
       return;
     }
 
-    let cancelled = false;
+    const client = supabase;
+    let alive = true;
 
-    void (async () => {
+    async function refreshSubscription() {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await client
           .from("subscriptions")
-          .select("plan,status")
+          .select(
+            "plan,status,billing_period,current_period_end,created_at,cancel_at_period_end,cancel_at,canceled_at",
+          )
           .eq("user_id", userId)
           .maybeSingle();
 
-        if (cancelled || error || !data) {
-          if (!cancelled) {
+        if (!alive) return;
+
+        if (error || !data) {
+          if (alive) {
             setSubscriptionPlan(null);
+            setSubscriptionStatus(null);
+            setSubscriptionBillingPeriod(null);
+            setSubscriptionCurrentPeriodEnd(null);
+            setSubscriptionStartedAt(null);
+            setSubscriptionCancelAtPeriodEnd(false);
+            setSubscriptionCancelAt(null);
+            setSubscriptionCanceledAt(null);
             setHasSubscriptionRecord(false);
           }
           return;
@@ -111,6 +166,9 @@ export function useEntitlements(session: Session | null): EntitlementsState {
 
         const normalizedPlan = normalizePlan(data.plan);
         const normalizedStatus = normalizeSubscriptionStatus(data.status);
+        const normalizedBillingPeriod = normalizeBillingPeriod(
+          data.billing_period,
+        );
         // Fail closed: only explicit active/trialing pro records unlock Pro.
         const effectivePlan: SubscriptionPlan =
           normalizedPlan === "pro" &&
@@ -120,17 +178,74 @@ export function useEntitlements(session: Session | null): EntitlementsState {
             : "free";
 
         setSubscriptionPlan(effectivePlan);
+        setSubscriptionStatus(normalizedStatus);
+        setSubscriptionBillingPeriod(normalizedBillingPeriod);
+        setSubscriptionCurrentPeriodEnd(
+          typeof data.current_period_end === "string"
+            ? data.current_period_end
+            : null,
+        );
+        setSubscriptionStartedAt(
+          typeof data.created_at === "string" ? data.created_at : null,
+        );
+        setSubscriptionCancelAtPeriodEnd(Boolean(data.cancel_at_period_end));
+        setSubscriptionCancelAt(
+          typeof data.cancel_at === "string" ? data.cancel_at : null,
+        );
+        setSubscriptionCanceledAt(
+          typeof data.canceled_at === "string" ? data.canceled_at : null,
+        );
         setHasSubscriptionRecord(true);
       } catch {
-        if (!cancelled) {
+        if (alive) {
           setSubscriptionPlan(null);
+          setSubscriptionStatus(null);
+          setSubscriptionBillingPeriod(null);
+          setSubscriptionCurrentPeriodEnd(null);
+          setSubscriptionStartedAt(null);
+          setSubscriptionCancelAtPeriodEnd(false);
+          setSubscriptionCancelAt(null);
+          setSubscriptionCanceledAt(null);
           setHasSubscriptionRecord(false);
         }
       }
-    })();
+    }
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") void refreshSubscription();
+    }
+
+    let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
+      null;
+    channel = client.channel(`subscriptions:${userId}`);
+    channel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "subscriptions",
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        void refreshSubscription();
+      },
+    );
+    void channel.subscribe();
+
+    void refreshSubscription();
+    const intervalId = window.setInterval(refreshSubscription, 5000);
+    window.addEventListener("focus", refreshSubscription);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
-      cancelled = true;
+      alive = false;
+      window.clearInterval(intervalId);
+      if (channel) {
+        void channel.unsubscribe();
+        client.removeChannel(channel);
+      }
+      window.removeEventListener("focus", refreshSubscription);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [envOverridePlan, userId]);
 
@@ -149,13 +264,32 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       plan,
       source,
       isPro,
+      subscriptionStatus,
+      subscriptionBillingPeriod,
+      subscriptionCurrentPeriodEnd,
+      subscriptionStartedAt,
+      subscriptionCancelAtPeriodEnd,
+      subscriptionCancelAt,
+      subscriptionCanceledAt,
       shouldShowAds: !isPro,
       canUseTeams: isPro,
       canSeeAdvancedStats: isPro,
       hasUnlimitedSessions: isPro,
       maxSessions: isPro ? null : FREE_SESSION_LIMIT,
     };
-  }, [accountPlan, envOverridePlan, hasSubscriptionRecord, subscriptionPlan]);
+  }, [
+    accountPlan,
+    envOverridePlan,
+    hasSubscriptionRecord,
+    subscriptionBillingPeriod,
+    subscriptionCancelAt,
+    subscriptionCancelAtPeriodEnd,
+    subscriptionCanceledAt,
+    subscriptionCurrentPeriodEnd,
+    subscriptionStartedAt,
+    subscriptionPlan,
+    subscriptionStatus,
+  ]);
 }
 
 export function EntitlementsProvider({

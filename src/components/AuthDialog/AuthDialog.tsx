@@ -6,7 +6,12 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Session } from "@supabase/supabase-js";
+import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  FunctionsRelayError,
+  type Session,
+} from "@supabase/supabase-js";
 import {
   Check,
   ChevronDown,
@@ -94,7 +99,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     },
     ref,
   ) {
-    const { source, isPro } = useEntitlementsContext();
+    const {
+      source,
+      isPro,
+      subscriptionBillingPeriod,
+      subscriptionCancelAtPeriodEnd,
+      subscriptionCurrentPeriodEnd,
+      subscriptionStartedAt,
+      subscriptionStatus,
+    } = useEntitlementsContext();
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const backupInputRef = useRef<HTMLInputElement | null>(null);
     const deviceImportRef = useRef<HTMLDivElement | null>(null);
@@ -113,13 +126,14 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const [transferToast, setTransferToast] = useState<ToastState | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    const [hasStripeBillingProfile, setHasStripeBillingProfile] = useState(false);
     const [showTransferTools, setShowTransferTools] = useState(false);
     const [showDeviceImport, setShowDeviceImport] = useState(false);
     const [showAccountDetails, setShowAccountDetails] = useState(false);
     const [showPlanDetails, setShowPlanDetails] = useState(false);
     const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<
       "monthly" | "yearly"
-    >("yearly");
+    >("monthly");
     const [localSessionSearch, setLocalSessionSearch] = useState("");
     const [includeGames, setIncludeGames] = useState(true);
     const [includeProfiles, setIncludeProfiles] = useState(true);
@@ -162,11 +176,61 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const accountPlayerName = accountPlayer?.name ?? "";
     const accountPlayerColor =
       accountPlayer?.avatarColor ?? AVATAR_COLORS[0]?.value ?? "#64748b";
-    const proMonthlyUrl = import.meta.env.VITE_PRO_MONTHLY_URL?.trim();
-    const proYearlyUrl = import.meta.env.VITE_PRO_YEARLY_URL?.trim();
-    const proRestoreUrl = import.meta.env.VITE_PRO_RESTORE_URL?.trim();
-    const selectedCheckoutUrl =
-      selectedBillingPeriod === "monthly" ? proMonthlyUrl : proYearlyUrl;
+    const userId = session?.user.id ?? null;
+    const formattedCurrentPeriodEnd = useMemo(() => {
+      if (!subscriptionCurrentPeriodEnd) return null;
+
+      const date = new Date(subscriptionCurrentPeriodEnd);
+      if (Number.isNaN(date.getTime())) return null;
+
+      return new Intl.DateTimeFormat(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+    }, [subscriptionCurrentPeriodEnd]);
+    const renewalLabel = useMemo(() => {
+      if (
+        !formattedCurrentPeriodEnd ||
+        !subscriptionStatus ||
+        source !== "subscription"
+      ) {
+        return null;
+      }
+
+      if (
+        subscriptionCancelAtPeriodEnd &&
+        (subscriptionStatus === "active" || subscriptionStatus === "trialing")
+      ) {
+        return `Ending ${formattedCurrentPeriodEnd}`;
+      }
+
+      if (subscriptionStatus === "active" || subscriptionStatus === "trialing") {
+        return `Next renewal ${formattedCurrentPeriodEnd}`;
+      }
+
+      if (subscriptionStatus === "canceled") {
+        return `Ending ${formattedCurrentPeriodEnd}`;
+      }
+
+      return null;
+    }, [
+      formattedCurrentPeriodEnd,
+      source,
+      subscriptionCancelAtPeriodEnd,
+      subscriptionStatus,
+    ]);
+    const sinceLabel = useMemo(() => {
+      if (!subscriptionStartedAt || source !== "subscription") return null;
+
+      const date = new Date(subscriptionStartedAt);
+      if (Number.isNaN(date.getTime())) return null;
+
+      return `Since ${new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        year: "numeric",
+      }).format(date)}`;
+    }, [source, subscriptionStartedAt]);
 
     function resetDialogState() {
       setNotice(null);
@@ -179,7 +243,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setShowDeviceImport(false);
       setShowAccountDetails(false);
       setShowPlanDetails(false);
-      setSelectedBillingPeriod("yearly");
+      setSelectedBillingPeriod("monthly");
       setEditingAccountPlayer(false);
       setLocalSessionSearch("");
       setAccountDraftName(accountPlayerName);
@@ -281,6 +345,60 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       const timeout = window.setTimeout(() => setTransferToast(null), 5200);
       return () => window.clearTimeout(timeout);
     }, [transferToast]);
+
+    useEffect(() => {
+      if (!userId || !supabase) {
+        setHasStripeBillingProfile(false);
+        return;
+      }
+
+      let alive = true;
+      const client = supabase;
+
+      async function refreshBillingProfile() {
+        try {
+          const { data, error: loadError } = await client
+            .from("subscriptions")
+            .select("customer_id")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          if (!alive) return;
+          if (loadError || !data?.customer_id) {
+            setHasStripeBillingProfile(false);
+            return;
+          }
+
+          setHasStripeBillingProfile(true);
+        } catch {
+          if (alive) {
+            setHasStripeBillingProfile(false);
+          }
+        }
+      }
+
+      const channel = client.channel(`subscription-billing:${userId}`);
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "subscriptions",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void refreshBillingProfile();
+        },
+      );
+      void channel.subscribe();
+      void refreshBillingProfile();
+
+      return () => {
+        alive = false;
+        void channel.unsubscribe();
+        client.removeChannel(channel);
+      };
+    }, [userId]);
 
     useEffect(() => {
       const visibleGameIds = new Set(localGames.map((game) => game.id));
@@ -548,29 +666,116 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     }
 
     function openUrl(url: string) {
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.location.assign(url);
     }
 
-    function startUpgradeFlow() {
-      if (selectedCheckoutUrl) {
-        openUrl(selectedCheckoutUrl);
+    function getBillingErrorMessage(err: unknown, fallback: string) {
+      if (err instanceof Error && err.message) {
+        return err.message;
+      }
+
+      return fallback;
+    }
+
+    async function getInvokeErrorMessage(err: unknown, fallback: string) {
+      if (err instanceof FunctionsHttpError) {
+        try {
+          const payload = (await err.context.json()) as { error?: string };
+          if (payload?.error) {
+            return payload.error;
+          }
+        } catch {
+          return fallback;
+        }
+      }
+
+      if (err instanceof FunctionsRelayError || err instanceof FunctionsFetchError) {
+        return err.message || fallback;
+      }
+
+      return getBillingErrorMessage(err, fallback);
+    }
+
+    async function requestBillingUrl(
+      functionName: "create-checkout-session" | "create-customer-portal-session",
+      body: Record<string, unknown>,
+      fallback: string,
+    ) {
+      if (!supabase || !hasSupabaseConfig) {
+        throw new Error("Supabase is not configured yet.");
+      }
+
+      const { data, error: invokeError } = await supabase.functions.invoke<{
+        url?: string;
+        error?: string;
+      }>(functionName, {
+        body,
+      });
+
+      if (invokeError) {
+        throw new Error(await getInvokeErrorMessage(invokeError, fallback));
+      }
+
+      if (!data?.url) {
+        throw new Error(data?.error || fallback);
+      }
+
+      return data.url;
+    }
+
+    async function startUpgradeFlow() {
+      if (!session) {
+        setError("Sign in before starting a subscription.");
         return;
       }
 
-      showTransferToast(
-        "Checkout is not available yet.",
-      );
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+
+      try {
+        const url = await requestBillingUrl(
+          "create-checkout-session",
+          {
+            billingPeriod: selectedBillingPeriod,
+            origin: window.location.origin,
+          },
+          "Checkout is not available yet.",
+        );
+        openUrl(url);
+      } catch (err) {
+        setError(getBillingErrorMessage(err, "Checkout is not available yet."));
+      } finally {
+        setBusy(false);
+      }
     }
 
-    function restoreSubscription() {
-      if (proRestoreUrl) {
-        openUrl(proRestoreUrl);
+    async function restoreSubscription() {
+      if (!session) {
+        setError("Sign in before opening the billing portal.");
         return;
       }
 
-      showTransferToast(
-        "Restore subscription not available yet.",
-      );
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+
+      try {
+        const url = await requestBillingUrl(
+          "create-customer-portal-session",
+          { origin: window.location.origin },
+          "Billing portal is not available yet.",
+        );
+        openUrl(url);
+      } catch (err) {
+        setError(
+          getBillingErrorMessage(err, "Billing portal is not available yet."),
+        );
+      } finally {
+        setBusy(false);
+      }
     }
 
     async function runImportFromDevice() {
@@ -1091,28 +1296,31 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               </span>
                               <strong className="authDialog__planName">
                                 {isPro ? (
-                                  <>
+                                  <span className="authDialog__planNameMain">
                                     <span
                                       className="authDialog__planNameAccent"
                                       aria-hidden="true"
                                     >
                                       <Crown size={14} strokeWidth={2.4} />
                                     </span>
-                                    <span>Plink Pro</span>
-                                  </>
+                                    <span className="authDialog__planNameText">
+                                      <span>Plink Pro</span>
+                                      {sinceLabel ? (
+                                        <span className="authDialog__planSince">
+                                          {sinceLabel}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                  </span>
                                 ) : (
                                   <span>Free plan</span>
                                 )}
                               </strong>
                               <span className="authDialog__planMeta">
                                 {isPro
-                                  ? source === "override"
-                                    ? "Pro forced from environment override"
-                                    : source === "subscription"
-                                      ? "Subscription loaded from your account"
-                                      : source === "account"
-                                        ? "Subscription connected to this account"
-                                        : "Pro features are enabled"
+                                  ? source === "subscription" && renewalLabel
+                                    ? renewalLabel
+                                    : "Premium play, built for regular game nights."
                                   : "Upgrade to Pro for ad-free play, advanced stats, team support, and unlimited session history"}
                               </span>
                             </div>
@@ -1282,31 +1490,45 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               <button
                                 className="btn btn--primary btn--wide"
                                 type="button"
+                                disabled={busy}
                                 onClick={startUpgradeFlow}
                               >
-                                {selectedBillingPeriod === "monthly"
+                                {busy
+                                  ? "Working..."
+                                  : selectedBillingPeriod === "monthly"
                                   ? "Buy Pro Monthly"
                                   : "Buy Pro Yearly"}
                               </button>
-                              <button
-                                className="btn btn--ghost btn--wide"
-                                type="button"
-                                onClick={restoreSubscription}
-                              >
-                                Restore subscription
-                              </button>
+                              {hasStripeBillingProfile ? (
+                                <button
+                                  className="btn btn--ghost btn--wide"
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={restoreSubscription}
+                                >
+                                  Manage billing
+                                </button>
+                              ) : null}
                             </div>
                           </>
                         ) : (
-                          <div className="authDialog__planStatus">
-                            {source === "override"
-                              ? "Pro is currently enabled by environment override."
-                              : source === "subscription"
-                                ? "Your subscription is loaded from the subscriptions table."
-                                : source === "account"
-                                  ? "Your account is recognized as Pro."
-                                  : "Pro features are active."}
-                          </div>
+                          <>
+                            <div className="authDialog__planSupport">
+                              Thanks for supporting Plink.
+                            </div>
+                            {source === "subscription" ? (
+                              <div className="authDialog__planActions">
+                                <button
+                                  className="btn btn--ghost btn--wide"
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={restoreSubscription}
+                                >
+                                  {busy ? "Working..." : "Manage subscription"}
+                                </button>
+                              </div>
+                            ) : null}
+                          </>
                         )}
                       </div>
                     ) : null}

@@ -226,13 +226,19 @@
   letter-spacing: -0.03em;
 }
 
+.authDialog__planNameMain {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .authDialog__planNameAccent {
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 14px;
   color: var(--accent);
   background:
     linear-gradient(180deg, rgba(216, 255, 79, 0.24), rgba(216, 255, 79, 0.08)),
@@ -243,8 +249,31 @@
 }
 
 .authDialog__planNameAccent svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
+}
+
+.authDialog__planNameText {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.authDialog__planSince {
+  display: inline-flex;
+  align-items: center;
+  min-height: 21px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(216, 255, 79, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .authDialog__planMeta {
@@ -380,10 +409,12 @@
   padding-top: 2px;
 }
 
-.authDialog__planStatus {
-  color: var(--text-dim);
+.authDialog__planSupport {
+  color: var(--accent);
   font-size: 12px;
+  font-weight: 800;
   line-height: 1.4;
+  letter-spacing: 0.01em;
 }
 
 @media (max-width: 560px) {

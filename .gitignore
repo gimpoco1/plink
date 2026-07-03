@@ -9,4 +9,5 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .env.local
+supabase/.temp/
 APP_STORE_READINESS.md
