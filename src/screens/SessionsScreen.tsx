@@ -35,12 +35,13 @@ export function SessionsScreen({
   onRename,
   onDelete,
 }: SessionsScreenProps) {
-  const { isPro, maxSessions } = useEntitlementsContext();
+  const { isLoading, isPro, maxSessions } = useEntitlementsContext();
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
   const remainingSessions =
     maxSessions === null ? null : Math.max(0, maxSessions - games.length);
   const showSessionLimitWarning =
+    !isLoading &&
     !isPro &&
     maxSessions !== null &&
     remainingSessions !== null &&

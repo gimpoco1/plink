@@ -22,6 +22,7 @@ const FREE_SESSION_LIMIT = 2;
 const ACTIVE_PRO_STATUSES = new Set<SubscriptionStatus>(["active", "trialing"]);
 
 export type EntitlementsState = {
+  isLoading: boolean;
   plan: SubscriptionPlan;
   source: EntitlementSource;
   isPro: boolean;
@@ -40,6 +41,7 @@ export type EntitlementsState = {
 };
 
 const fallbackState: EntitlementsState = {
+  isLoading: false,
   plan: "free",
   source: "default",
   isPro: false,
@@ -117,8 +119,11 @@ export function useEntitlements(session: Session | null): EntitlementsState {
   const [subscriptionCanceledAt, setSubscriptionCanceledAt] =
     useState<string | null>(null);
   const [hasSubscriptionRecord, setHasSubscriptionRecord] = useState(false);
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const accountPlan = getAccountPlan(session);
   const userId = session?.user.id ?? null;
+  const isLoading =
+    !envOverridePlan && !!userId && !!supabase && resolvedUserId !== userId;
 
   useEffect(() => {
     if (envOverridePlan || !userId || !supabase) {
@@ -131,6 +136,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       setSubscriptionCancelAt(null);
       setSubscriptionCanceledAt(null);
       setHasSubscriptionRecord(false);
+      setResolvedUserId(userId);
       return;
     }
 
@@ -160,6 +166,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
             setSubscriptionCancelAt(null);
             setSubscriptionCanceledAt(null);
             setHasSubscriptionRecord(false);
+            setResolvedUserId(userId);
           }
           return;
         }
@@ -196,6 +203,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
           typeof data.canceled_at === "string" ? data.canceled_at : null,
         );
         setHasSubscriptionRecord(true);
+        setResolvedUserId(userId);
       } catch {
         if (alive) {
           setSubscriptionPlan(null);
@@ -207,6 +215,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
           setSubscriptionCancelAt(null);
           setSubscriptionCanceledAt(null);
           setHasSubscriptionRecord(false);
+          setResolvedUserId(userId);
         }
       }
     }
@@ -261,6 +270,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     const isPro = plan === "pro";
 
     return {
+      isLoading,
       plan,
       source,
       isPro,
@@ -271,7 +281,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       subscriptionCancelAtPeriodEnd,
       subscriptionCancelAt,
       subscriptionCanceledAt,
-      shouldShowAds: !isPro,
+      shouldShowAds: !isLoading && !isPro,
       canUseTeams: isPro,
       canSeeAdvancedStats: isPro,
       hasUnlimitedSessions: isPro,
@@ -281,6 +291,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     accountPlan,
     envOverridePlan,
     hasSubscriptionRecord,
+    isLoading,
     subscriptionBillingPeriod,
     subscriptionCancelAt,
     subscriptionCancelAtPeriodEnd,

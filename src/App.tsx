@@ -201,6 +201,7 @@ export default function App() {
   const showLocalSessionsHint =
     pendingLocalSessionsCount > 0 &&
     pendingLocalSessionsHintSignature !== dismissedLocalSessionsHintSignature;
+  const isSessionCountPending = canViewSavedData && !gamesReady;
   const currentSessionCount = canViewSavedData
     ? games.length
     : localGuestGames.length;
@@ -220,11 +221,17 @@ export default function App() {
     setVisibleToast({ message, tone });
   }
 
-  function canAddMoreSessions(extra = 1) {
-    return (
-      entitlements.maxSessions === null ||
-      currentSessionCount + extra <= entitlements.maxSessions
-    );
+  function getSessionCapacityState(extra = 1) {
+    if (canViewSavedData && entitlements.isLoading) return "loading" as const;
+    if (isSessionCountPending) return "loading" as const;
+    if (entitlements.maxSessions === null) return "allowed" as const;
+    return currentSessionCount + extra <= entitlements.maxSessions
+      ? ("allowed" as const)
+      : ("blocked" as const);
+  }
+
+  function showSessionsLoadingToast() {
+    showToast("Loading your saved sessions. Try again in a moment.");
   }
 
   function showSessionLimitToast() {
@@ -233,6 +240,19 @@ export default function App() {
     showToast(
       `Free plan includes up to ${limit} sessions. Upgrade to Pro for unlimited session history.`,
     );
+  }
+
+  function guardSessionCreation(extra = 1) {
+    const capacityState = getSessionCapacityState(extra);
+    if (capacityState === "loading") {
+      showSessionsLoadingToast();
+      return false;
+    }
+    if (capacityState === "blocked") {
+      showSessionLimitToast();
+      return false;
+    }
+    return true;
   }
 
   function returnToGameSource() {
@@ -476,8 +496,7 @@ export default function App() {
   }, [games, gamesReady, profiles, profilesReady, session, updatePlayer]);
 
   async function handleCreateGame(input: Parameters<typeof createGame>[0]) {
-    if (!canAddMoreSessions()) {
-      showSessionLimitToast();
+    if (!guardSessionCreation()) {
       return false;
     }
 
@@ -697,7 +716,11 @@ export default function App() {
     );
 
     const prepared = prepareImportedData(localGames, localProfiles);
-    if (!canAddMoreSessions(prepared.games.length)) {
+    const importCapacityState = getSessionCapacityState(prepared.games.length);
+    if (importCapacityState === "loading") {
+      throw new Error("Loading your saved sessions. Try importing again in a moment.");
+    }
+    if (importCapacityState === "blocked") {
       throw new Error(
         `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to import more history.`,
       );
@@ -733,7 +756,13 @@ export default function App() {
       existingGameSignatures.add(signature);
       return true;
     });
-    if (!canAddMoreSessions(uniqueReconciledGames.length)) {
+    const restoreCapacityState = getSessionCapacityState(
+      uniqueReconciledGames.length,
+    );
+    if (restoreCapacityState === "loading") {
+      throw new Error("Loading your saved sessions. Try restoring again in a moment.");
+    }
+    if (restoreCapacityState === "blocked") {
       throw new Error(
         `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to restore larger backups.`,
       );
@@ -1056,8 +1085,7 @@ export default function App() {
                 }}
                 winnerStats={currentWinnerStats}
                 onReplayGame={() => {
-                  if (!canAddMoreSessions()) {
-                    showSessionLimitToast();
+                  if (!guardSessionCreation()) {
                     return;
                   }
                   const duplicated = duplicateGame(currentGame.id);
@@ -1125,8 +1153,7 @@ export default function App() {
                   if (ok) deleteProfile(profileId);
                 }}
                 onDuplicate={(gameId) => {
-                  if (!canAddMoreSessions()) {
-                    showSessionLimitToast();
+                  if (!guardSessionCreation()) {
                     return;
                   }
                   const duplicated = duplicateGame(gameId);

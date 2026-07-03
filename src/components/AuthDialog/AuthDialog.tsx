@@ -100,9 +100,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     ref,
   ) {
     const {
+      isLoading: entitlementsLoading,
       source,
       isPro,
-      subscriptionBillingPeriod,
       subscriptionCancelAtPeriodEnd,
       subscriptionCurrentPeriodEnd,
       subscriptionStartedAt,
@@ -112,6 +112,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const backupInputRef = useRef<HTMLInputElement | null>(null);
     const deviceImportRef = useRef<HTMLDivElement | null>(null);
     const planSectionRef = useRef<HTMLElement | null>(null);
+    const accountColorOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const billingPeriodOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const [mode, setMode] = useState<"signin" | "signup">("signin");
     const [recoveryMode, setRecoveryMode] = useState(false);
     const [accountName, setAccountName] = useState("");
@@ -231,6 +233,82 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         year: "numeric",
       }).format(date)}`;
     }, [source, subscriptionStartedAt]);
+    const billingPeriodOptions = ["monthly", "yearly"] as const;
+
+    function focusOption(
+      refs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
+      index: number,
+    ) {
+      refs.current[index]?.focus();
+    }
+
+    function getWrappedIndex(length: number, currentIndex: number, delta: number) {
+      return (currentIndex + delta + length) % length;
+    }
+
+    function handleAccountColorRadioKeyDown(
+      event: React.KeyboardEvent<HTMLButtonElement>,
+      index: number,
+    ) {
+      let nextIndex: number | null = null;
+
+      switch (event.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          nextIndex = getWrappedIndex(AVATAR_COLORS.length, index, 1);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          nextIndex = getWrappedIndex(AVATAR_COLORS.length, index, -1);
+          break;
+        case "Home":
+          nextIndex = 0;
+          break;
+        case "End":
+          nextIndex = AVATAR_COLORS.length - 1;
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      const nextColor = AVATAR_COLORS[nextIndex];
+      if (!nextColor) return;
+      setAccountDraftColor(nextColor.value);
+      focusOption(accountColorOptionRefs, nextIndex);
+    }
+
+    function handleBillingPeriodRadioKeyDown(
+      event: React.KeyboardEvent<HTMLButtonElement>,
+      index: number,
+    ) {
+      let nextIndex: number | null = null;
+
+      switch (event.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          nextIndex = getWrappedIndex(billingPeriodOptions.length, index, 1);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          nextIndex = getWrappedIndex(billingPeriodOptions.length, index, -1);
+          break;
+        case "Home":
+          nextIndex = 0;
+          break;
+        case "End":
+          nextIndex = billingPeriodOptions.length - 1;
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      const nextPeriod = billingPeriodOptions[nextIndex];
+      if (!nextPeriod) return;
+      setSelectedBillingPeriod(nextPeriod);
+      focusOption(billingPeriodOptionRefs, nextIndex);
+    }
 
     function resetDialogState() {
       setNotice(null);
@@ -666,7 +744,20 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     }
 
     function openUrl(url: string) {
-      window.location.assign(url);
+      try {
+        const parsedUrl = new URL(url, window.location.origin);
+        if (
+          parsedUrl.protocol !== "http:" &&
+          parsedUrl.protocol !== "https:"
+        ) {
+          showTransferToast("This link is not valid.", "error");
+          return;
+        }
+
+        window.location.assign(parsedUrl.toString());
+      } catch {
+        showTransferToast("This link is not valid.", "error");
+      }
     }
 
     function getBillingErrorMessage(err: unknown, fallback: string) {
@@ -984,13 +1075,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                       <span className="authDialog__accountPlayerTitle">
                         Email
                       </span>
-                      <span
-                        className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
-                          isPro ? "pro" : "free"
-                        }`}
-                      >
-                        {isPro ? "PRO" : "FREE"}
-                      </span>
+                      {!entitlementsLoading ? (
+                        <span
+                          className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
+                            isPro ? "pro" : "free"
+                          }`}
+                        >
+                          {isPro ? "PRO" : "FREE"}
+                        </span>
+                      ) : null}
                     </div>
                     <span className="authDialog__accountEmail">
                       {session.user.email}
@@ -1083,9 +1176,12 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                             role="radiogroup"
                             aria-label="Choose account player color"
                           >
-                            {AVATAR_COLORS.map((color) => (
+                            {AVATAR_COLORS.map((color, index) => (
                               <button
                                 key={color.id}
+                                ref={(node) => {
+                                  accountColorOptionRefs.current[index] = node;
+                                }}
                                 type="button"
                                 className={
                                   color.value === accountDraftColor
@@ -1096,9 +1192,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                 onClick={() =>
                                   setAccountDraftColor(color.value)
                                 }
+                                onKeyDown={(event) =>
+                                  handleAccountColorRadioKeyDown(event, index)
+                                }
                                 aria-label={color.label}
                                 aria-checked={color.value === accountDraftColor}
                                 role="radio"
+                                tabIndex={
+                                  color.value === accountDraftColor ? 0 : -1
+                                }
                               />
                             ))}
                           </div>
@@ -1261,7 +1363,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   <div
                     className={`authDialog__planCard${showPlanDetails ? "" : " authDialog__planCard--collapsed"}`}
                   >
-                    {!isPro && !showPlanDetails ? (
+                    {!entitlementsLoading && !isPro && !showPlanDetails ? (
                       <div className="authDialog__planHeader">
                         <div className="authDialog__planToggleHeader authDialog__planToggleHeader--static">
                           <div className="authDialog__planTop">
@@ -1275,6 +1377,24 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               <span className="authDialog__planMeta">
                                 Upgrade to Pro for ad-free play, advanced stats,
                                 team support, and unlimited session history
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : entitlementsLoading && !showPlanDetails ? (
+                      <div className="authDialog__planHeader">
+                        <div className="authDialog__planToggleHeader authDialog__planToggleHeader--static">
+                          <div className="authDialog__planTop">
+                            <div className="authDialog__planTitleWrap">
+                              <span className="authDialog__accountPlayerTitle">
+                                Plan
+                              </span>
+                              <strong className="authDialog__planName">
+                                <span>Loading plan…</span>
+                              </strong>
+                              <span className="authDialog__planMeta">
+                                Checking your subscription details.
                               </span>
                             </div>
                           </div>
@@ -1336,7 +1456,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                         </button>
                       </div>
                     )}
-                    {!isPro && !showPlanDetails ? (
+                    {!entitlementsLoading && !isPro && !showPlanDetails ? (
                       <button
                         type="button"
                         className="btn btn--primary btn--wide authDialog__planExpandCta authDialog__planExpandCta--bottom"
@@ -1415,10 +1535,16 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               aria-label="Choose billing period"
                             >
                               <button
+                                ref={(node) => {
+                                  billingPeriodOptionRefs.current[0] = node;
+                                }}
                                 type="button"
                                 role="radio"
                                 aria-checked={
                                   selectedBillingPeriod === "monthly"
+                                }
+                                tabIndex={
+                                  selectedBillingPeriod === "monthly" ? 0 : -1
                                 }
                                 className={`authDialog__planOption${
                                   selectedBillingPeriod === "monthly"
@@ -1427,6 +1553,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                 }`}
                                 onClick={() =>
                                   setSelectedBillingPeriod("monthly")
+                                }
+                                onKeyDown={(event) =>
+                                  handleBillingPeriodRadioKeyDown(event, 0)
                                 }
                               >
                                 <div className="authDialog__planOptionTop">
@@ -1453,10 +1582,16 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                 </small>
                               </button>
                               <button
+                                ref={(node) => {
+                                  billingPeriodOptionRefs.current[1] = node;
+                                }}
                                 type="button"
                                 role="radio"
                                 aria-checked={
                                   selectedBillingPeriod === "yearly"
+                                }
+                                tabIndex={
+                                  selectedBillingPeriod === "yearly" ? 0 : -1
                                 }
                                 className={`authDialog__planOption${
                                   selectedBillingPeriod === "yearly"
@@ -1465,6 +1600,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                 }`}
                                 onClick={() =>
                                   setSelectedBillingPeriod("yearly")
+                                }
+                                onKeyDown={(event) =>
+                                  handleBillingPeriodRadioKeyDown(event, 1)
                                 }
                               >
                                 <div className="authDialog__planOptionTop">
