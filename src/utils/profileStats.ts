@@ -9,8 +9,8 @@ export type ProfileStats = {
   wins: number;
   winRate: number;
   currentWinStreak: number;
-  topWonGame: { name: string; wins: number } | null;
-  gameResults: { name: string; wins: number }[];
+  topWonGame: { name: string; wins: number; teamWins: number } | null;
+  gameResults: { name: string; wins: number; teamWins: number }[];
 };
 
 export function createEmptyProfileStats(): ProfileStats {
@@ -29,6 +29,7 @@ export function createEmptyProfileStats(): ProfileStats {
 export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
   const stats = new Map<string, ProfileStats>();
   const winCountsByProfile = new Map<string, Map<string, number>>();
+  const teamWinCountsByProfile = new Map<string, Map<string, number>>();
   const playedGamesByProfile = new Map<string, Set<string>>();
   const topWinsByGame = new Map<string, number>();
   const completedHistoryByProfile = new Map<
@@ -40,6 +41,8 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
     const winner = findWinner(game.players, game);
     const isComplete = isGameComplete(game);
     const winnerProfileId = winner?.profileId ?? null;
+    const winningTeamId =
+      game.participantMode === "teams" ? (winner?.teamId ?? null) : null;
     const normalizedGameName = getGameDisplayName(game.name).title;
 
     game.players.forEach((player) => {
@@ -56,13 +59,28 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
       if (isComplete) current.completedGames += 1;
       else current.inProgressGames += 1;
 
-      if (winnerProfileId === player.profileId) {
+      const wonGame =
+        game.participantMode === "teams"
+          ? Boolean(winningTeamId && player.teamId === winningTeamId)
+          : winnerProfileId === player.profileId;
+
+      if (wonGame) {
         current.wins += 1;
         const gameWins =
           winCountsByProfile.get(player.profileId) ?? new Map<string, number>();
         const nextGameWins = (gameWins.get(normalizedGameName) ?? 0) + 1;
         gameWins.set(normalizedGameName, nextGameWins);
         winCountsByProfile.set(player.profileId, gameWins);
+
+        const teamGameWins =
+          teamWinCountsByProfile.get(player.profileId) ??
+          new Map<string, number>();
+        const nextTeamGameWins =
+          (teamGameWins.get(normalizedGameName) ?? 0) +
+          (game.participantMode === "teams" ? 1 : 0);
+        teamGameWins.set(normalizedGameName, nextTeamGameWins);
+        teamWinCountsByProfile.set(player.profileId, teamGameWins);
+
         topWinsByGame.set(
           normalizedGameName,
           Math.max(topWinsByGame.get(normalizedGameName) ?? 0, nextGameWins),
@@ -77,6 +95,7 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
           current.topWonGame = {
             name: normalizedGameName,
             wins: nextGameWins,
+            teamWins: nextTeamGameWins,
           };
         }
       }
@@ -89,7 +108,7 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
       if (isComplete) {
         const history = completedHistoryByProfile.get(player.profileId) ?? [];
         history.push({
-          won: winnerProfileId === player.profileId,
+          won: wonGame,
           score: player.score,
           gameName: normalizedGameName,
           order: game.endedAt ?? game.updatedAt ?? game.createdAt,
@@ -110,18 +129,27 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
   });
 
   stats.forEach((current, profileId) => {
-    const playedGames = playedGamesByProfile.get(profileId) ?? new Set<string>();
+    const playedGames =
+      playedGamesByProfile.get(profileId) ?? new Set<string>();
     const winCounts =
       winCountsByProfile.get(profileId) ?? new Map<string, number>();
+    const teamWinCounts =
+      teamWinCountsByProfile.get(profileId) ?? new Map<string, number>();
     current.gameResults = Array.from(playedGames)
       .map((name) => ({
         name,
         wins: winCounts.get(name) ?? 0,
+        teamWins: teamWinCounts.get(name) ?? 0,
       }))
       .sort((a, b) => {
         if (b.wins !== a.wins) return b.wins - a.wins;
         return a.name.localeCompare(b.name);
       });
+
+    if (current.topWonGame) {
+      current.topWonGame.teamWins =
+        teamWinCounts.get(current.topWonGame.name) ?? 0;
+    }
 
     const history = (completedHistoryByProfile.get(profileId) ?? []).sort(
       (a, b) => a.order - b.order,

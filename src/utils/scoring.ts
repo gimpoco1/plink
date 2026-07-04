@@ -1,4 +1,5 @@
 import type { Game, Player } from "../types";
+import { getGameParticipants } from "./gameParticipants";
 
 export function shouldSortLowToHigh(game: Pick<Game, "scoreDirection" | "winCondition">) {
   return game.scoreDirection === "down" || game.winCondition === "lowest";
@@ -8,31 +9,42 @@ export function hasGameEnded(
   players: Player[],
   game: Pick<
     Game,
-    "targetScore" | "winCondition" | "winByTwo" | "manualEndOnly" | "endedAt"
+    | "participantMode"
+    | "teams"
+    | "targetScore"
+    | "winCondition"
+    | "winByTwo"
+    | "manualEndOnly"
+    | "endedAt"
   >,
 ) {
-  if (!players.length) return false;
+  const participants = getGameParticipants({
+    participantMode: game.participantMode,
+    players,
+    teams: game.teams ?? [],
+  });
+  if (!participants.length) return false;
   if (typeof game.endedAt === "number") return true;
   if (game.manualEndOnly) return false;
 
   if (game.winCondition === "reach_zero") {
-    return players.some((player) => player.score <= game.targetScore);
+    return participants.some((player) => player.score <= game.targetScore);
   }
 
   if (game.winByTwo && game.winCondition === "lowest") {
-    if (players.length < 2) return false;
-    const sorted = [...players].sort((a, b) => a.score - b.score);
+    if (participants.length < 2) return false;
+    const sorted = [...participants].sort((a, b) => a.score - b.score);
     const leader = sorted[0];
     const runnerUp = sorted[1];
     return (
-      players.some((player) => player.score >= game.targetScore) &&
+      participants.some((player) => player.score >= game.targetScore) &&
       runnerUp.score - leader.score >= 2
     );
   }
 
   if (game.winByTwo && game.winCondition === "reach_target") {
-    if (players.length < 2) return false;
-    const sorted = [...players].sort((a, b) => b.score - a.score);
+    if (participants.length < 2) return false;
+    const sorted = [...participants].sort((a, b) => b.score - a.score);
     const leader = sorted[0];
     const runnerUp = sorted[1];
     return (
@@ -41,7 +53,7 @@ export function hasGameEnded(
     );
   }
 
-  return players.some((player) => player.score >= game.targetScore);
+  return participants.some((player) => player.score >= game.targetScore);
 }
 
 export function clampScoreForGame(

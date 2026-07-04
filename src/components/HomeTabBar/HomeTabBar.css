@@ -15,10 +15,18 @@
   padding: 0 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   z-index: 1000;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.tabItemWrap {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  display: flex;
 }
 
 .tabItem {
+  width: 100%;
   background: none;
   border: none;
   display: flex;
@@ -32,6 +40,39 @@
   cursor: pointer;
   position: relative;
   z-index: 1;
+}
+
+.tabSwitcher {
+  position: absolute;
+  right: 2px;
+  bottom: calc(100% + 12px);
+  min-width: 132px;
+  padding: 6px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 17, 23, 0.98);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+  display: grid;
+  gap: 4px;
+  z-index: 5;
+}
+
+.tabSwitcher__item {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tabSwitcher__item[aria-checked="true"] {
+  background: rgba(216, 255, 79, 0.12);
+  color: var(--accent);
 }
 
 .tabItem svg {

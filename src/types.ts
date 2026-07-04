@@ -6,6 +6,21 @@ export type Player = {
   reachedAt: number;
   avatarColor: string;
   profileId?: string;
+  teamId?: string;
+};
+
+export type GameTeam = {
+  id: string;
+  name: string;
+  icon?: string;
+  createdAt: number;
+  updatedAt?: number;
+};
+
+export type TeamMember = {
+  teamId: string;
+  profileId: string;
+  createdAt: number;
 };
 
 export type PlayerProfile = {
@@ -34,6 +49,7 @@ export type WinCondition = "reach_target" | "reach_zero" | "lowest";
 export type Game = {
   id: string;
   name: string;
+  participantMode?: "players" | "teams";
   scoreDirection: ScoreDirection;
   startingScore: number;
   targetScore: number;
@@ -43,6 +59,7 @@ export type Game = {
   timerEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
+  teams: GameTeam[];
   players: Player[];
   scoreHistory: ScoreHistoryEntry[];
   createdAt: number;

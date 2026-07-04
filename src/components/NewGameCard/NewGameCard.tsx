@@ -1,7 +1,13 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AVATAR_COLORS } from "../../constants";
-import type { PlayerProfile, ScoreDirection, WinCondition } from "../../types";
+import type {
+  GameTeam,
+  PlayerProfile,
+  ScoreDirection,
+  TeamMember,
+  WinCondition,
+} from "../../types";
 import { avatarStyleFor } from "../../utils/color";
 import { formatAccountPlayerName, getInitials } from "../../utils/text";
 import { GAME_PRESETS, type GamePreset } from "./gamePresets";
@@ -28,6 +34,7 @@ type StagedPlayer = {
 
 export type NewGameInput = {
   name: string;
+  participantMode: "players" | "teams";
   scoreDirection: ScoreDirection;
   startingScore: number;
   targetScore: number;
@@ -38,11 +45,20 @@ export type NewGameInput = {
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   initialPlayers: { name: string; avatarColor: string; profileId?: string }[];
+  initialTeams?: Array<{
+    id: string;
+    name: string;
+    icon?: string;
+    members: Array<{ name: string; avatarColor: string; profileId?: string }>;
+  }>;
 };
 
 type NewGameCardProps = {
   open: boolean;
   profiles: PlayerProfile[];
+  teams: GameTeam[];
+  teamMembers: TeamMember[];
+  canUseTeams: boolean;
   isAuthenticated: boolean;
   draft?: NewGameInput | null;
   draftToken?: number;
@@ -59,6 +75,9 @@ function normalizePlayerName(value: string) {
 export function NewGameCard({
   open,
   profiles,
+  teams,
+  teamMembers,
+  canUseTeams,
   isAuthenticated,
   draft,
   draftToken,
@@ -70,6 +89,9 @@ export function NewGameCard({
   const [hasMounted, setHasMounted] = useState(false);
   const [name, setName] = useState("");
   const [target, setTarget] = useState("8");
+  const [participantMode, setParticipantMode] = useState<"players" | "teams">(
+    "players",
+  );
   const [scoreDirection, setScoreDirection] = useState<ScoreDirection>("up");
   const [winCondition, setWinCondition] =
     useState<WinCondition>("reach_target");
@@ -82,6 +104,9 @@ export function NewGameCard({
   const [timerMinutes, setTimerMinutes] = useState("5");
   const [timerSeconds, setTimerSeconds] = useState("0");
   const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(
     new Set(),
   );
   const [stagedPlayers, setStagedPlayers] = useState<StagedPlayer[]>([]);
@@ -107,6 +132,7 @@ export function NewGameCard({
   function resetForm() {
     setName("");
     setTarget("8");
+    setParticipantMode("players");
     setScoreDirection("up");
     setWinCondition("reach_target");
     setWinByTwo(false);
@@ -116,6 +142,7 @@ export function NewGameCard({
     setTimerMinutes("5");
     setTimerSeconds("0");
     setSelectedProfileIds(new Set());
+    setSelectedTeamIds(new Set());
     setStagedPlayers([]);
     setIsAddingPlayer(false);
     setIsSavedPickerOpen(false);
@@ -155,10 +182,42 @@ export function NewGameCard({
     }));
     return [...saved, ...staged];
   }, [profiles, selectedProfileIds, stagedPlayers]);
+  const membersByTeamId = useMemo(() => {
+    const map = new Map<string, PlayerProfile[]>();
+    const profilesById = new Map(
+      profiles.map((profile) => [profile.id, profile]),
+    );
+    teamMembers.forEach((member) => {
+      const profile = profilesById.get(member.profileId);
+      if (!profile) return;
+      const next = map.get(member.teamId) ?? [];
+      next.push(profile);
+      map.set(member.teamId, next);
+    });
+    return map;
+  }, [profiles, teamMembers]);
+  const availableTeams = useMemo(
+    () =>
+      teams
+        .map((team) => ({
+          ...team,
+          members: (membersByTeamId.get(team.id) ?? []).sort((a, b) =>
+            a.name.localeCompare(b.name),
+          ),
+        }))
+        .filter((team) => team.members.length > 0),
+    [membersByTeamId, teams],
+  );
+  const selectedTeams = useMemo(
+    () => availableTeams.filter((team) => selectedTeamIds.has(team.id)),
+    [availableTeams, selectedTeamIds],
+  );
+  const participantCount =
+    participantMode === "teams" ? selectedTeams.length : selectedPlayers.length;
 
   const lowScoreNeedsMorePlayers =
-    winCondition === "lowest" && selectedPlayers.length < 2;
-  const winByTwoNeedsMorePlayers = winByTwo && selectedPlayers.length < 2;
+    winCondition === "lowest" && participantCount < 2;
+  const winByTwoNeedsMorePlayers = winByTwo && participantCount < 2;
   const ruleNeedsMorePlayers =
     lowScoreNeedsMorePlayers || winByTwoNeedsMorePlayers;
 
@@ -167,7 +226,8 @@ export function NewGameCard({
     Number.isFinite(parsedTarget) &&
     (manualEndOnly || parsedTarget > 0) &&
     (!timerEnabled || timerMode === "stopwatch" || timerTotalSeconds > 0) &&
-    selectedPlayers.length > 0 &&
+    participantCount > 0 &&
+    (participantMode !== "teams" || (isAuthenticated && canUseTeams)) &&
     !ruleNeedsMorePlayers;
 
   const availableProfiles = useMemo(
@@ -190,6 +250,7 @@ export function NewGameCard({
     if (!draft) return;
 
     setName(draft.name);
+    setParticipantMode(draft.participantMode ?? "players");
     setTarget(
       String(
         draft.winCondition === "reach_zero"
@@ -216,6 +277,18 @@ export function NewGameCard({
           ),
       ),
     );
+    const teamIdsByName = new Map(
+      teams.map((team) => [team.name.toLowerCase(), team.id] as const),
+    );
+    setSelectedTeamIds(
+      new Set(
+        (draft.initialTeams ?? [])
+          .map((team) => teamIdsByName.get(team.name.toLowerCase()) ?? team.id)
+          .filter((teamId) =>
+            availableTeams.some((availableTeam) => availableTeam.id === teamId),
+          ),
+      ),
+    );
     setStagedPlayers(
       draft.initialPlayers
         .filter(
@@ -233,7 +306,7 @@ export function NewGameCard({
     setIsPresetBrowserOpen(false);
     setPresetSearch("");
     setSelectedPresetInfoId(null);
-  }, [draft, draftToken, profiles]);
+  }, [availableTeams, draft, draftToken, profiles, teams]);
 
   useEffect(() => {
     if (!isPresetBrowserOpen) return;
@@ -353,6 +426,21 @@ export function NewGameCard({
     setIsAddingPlayer(false);
   }
 
+  function toggleTeam(teamId: string) {
+    setSelectedTeamIds((current) => {
+      const next = new Set(current);
+      if (next.has(teamId)) next.delete(teamId);
+      else next.add(teamId);
+      return next;
+    });
+  }
+
+  function switchParticipantMode(nextMode: "players" | "teams") {
+    setParticipantMode(nextMode);
+    setIsSavedPickerOpen(false);
+    setIsAddingPlayer(false);
+  }
+
   async function startGame() {
     if (!canCreate) return;
     const savedPlayers = profiles
@@ -365,6 +453,7 @@ export function NewGameCard({
 
     const created = await onCreate({
       name,
+      participantMode,
       scoreDirection,
       startingScore: scoreDirection === "down" ? parsedTarget : 0,
       targetScore: winCondition === "reach_zero" ? 0 : parsedTarget,
@@ -375,7 +464,21 @@ export function NewGameCard({
       timerMode,
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds) : 300,
-      initialPlayers: [...savedPlayers, ...stagedPlayers],
+      initialPlayers:
+        participantMode === "teams" ? [] : [...savedPlayers, ...stagedPlayers],
+      initialTeams:
+        participantMode === "teams"
+          ? selectedTeams.map((team) => ({
+              id: team.id,
+              name: team.name,
+              icon: team.icon,
+              members: team.members.map((member) => ({
+                name: member.name,
+                avatarColor: member.avatarColor,
+                profileId: member.id,
+              })),
+            }))
+          : [],
     });
     if (created) resetForm();
   }
@@ -602,114 +705,112 @@ export function NewGameCard({
                             {filteredGamePresets.length > 0 ? (
                               filteredGamePresets.map((preset) => (
                                 <Fragment key={preset.id}>
-                                <button
-                                  type="button"
-                                  className="gamePresetCard"
-                                  onClick={() => applyGamePreset(preset)}
-                                >
-                                  <span className="gamePresetCard__main">
-                                    <strong>{preset.name}</strong>
-                                    <span className="gamePresetCard__category">
-                                      <span>{preset.category}</span>
-                                      <button
-                                        className="gamePresetCard__info"
-                                        type="button"
-                                        aria-label={`Show ${preset.name} scoring reminder`}
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          setSelectedPresetInfoId((current) =>
-                                            current === preset.id
-                                              ? null
-                                              : preset.id,
-                                          );
-                                        }}
-                                      >
-                                        <Info
-                                          size={14}
-                                          strokeWidth={2.6}
-                                          aria-hidden="true"
-                                        />
-                                      </button>
-                                    </span>
-                                  </span>
-                                  <span className="gamePresetCard__facts">
-                                    <span>
-                                      {preset.winCondition === "reach_zero"
-                                        ? `${preset.startingScore} start`
-                                        : `${preset.targetScore} pts`}
-                                    </span>
-                                    <span>
-                                      {preset.winCondition === "lowest"
-                                        ? "lowest wins"
-                                        : preset.winCondition === "reach_zero"
-                                          ? "reach zero"
-                                          : preset.winByTwo
-                                            ? "win by 2"
-                                            : "highest wins"}
-                                    </span>
-                                    <span>
-                                      {preset.timerEnabled
-                                        ? "timer"
-                                        : "no timer"}
-                                    </span>
-                                  </span>
-                                  <span
-                                    className="gamePresetCard__apply"
-                                    aria-hidden="true"
+                                  <button
+                                    type="button"
+                                    className="gamePresetCard"
+                                    onClick={() => applyGamePreset(preset)}
                                   >
-                                    <Check
-                                      size={17}
-                                      strokeWidth={2.4}
-                                    />
-                                  </span>
-                                </button>
-                                {selectedPresetInfoId === preset.id ? (
-                                  <motion.aside
-                                    className="gamePresetInfo"
-                                    initial={
-                                      reduceMotion
-                                        ? false
-                                        : { opacity: 0, y: -4, scale: 0.98 }
-                                    }
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={
-                                      reduceMotion
-                                        ? { opacity: 0 }
-                                        : { opacity: 0, y: -4, scale: 0.98 }
-                                    }
-                                    transition={
-                                      reduceMotion
-                                        ? { duration: 0 }
-                                        : { duration: 0.14, ease: "easeOut" }
-                                    }
-                                  >
-                                    <div className="gamePresetInfo__head">
-                                      <div>
-                                        <span>Rules reminder</span>
-                                        <strong>{preset.name}</strong>
+                                    <span className="gamePresetCard__main">
+                                      <strong>{preset.name}</strong>
+                                      <span className="gamePresetCard__category">
+                                        <span>{preset.category}</span>
+                                        <button
+                                          className="gamePresetCard__info"
+                                          type="button"
+                                          aria-label={`Show ${preset.name} scoring reminder`}
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            setSelectedPresetInfoId(
+                                              (current) =>
+                                                current === preset.id
+                                                  ? null
+                                                  : preset.id,
+                                            );
+                                          }}
+                                        >
+                                          <Info
+                                            size={14}
+                                            strokeWidth={2.6}
+                                            aria-hidden="true"
+                                          />
+                                        </button>
+                                      </span>
+                                    </span>
+                                    <span className="gamePresetCard__facts">
+                                      <span>
+                                        {preset.winCondition === "reach_zero"
+                                          ? `${preset.startingScore} start`
+                                          : `${preset.targetScore} pts`}
+                                      </span>
+                                      <span>
+                                        {preset.winCondition === "lowest"
+                                          ? "lowest wins"
+                                          : preset.winCondition === "reach_zero"
+                                            ? "reach zero"
+                                            : preset.winByTwo
+                                              ? "win by 2"
+                                              : "highest wins"}
+                                      </span>
+                                      <span>
+                                        {preset.timerEnabled
+                                          ? "timer"
+                                          : "no timer"}
+                                      </span>
+                                    </span>
+                                    <span
+                                      className="gamePresetCard__apply"
+                                      aria-hidden="true"
+                                    >
+                                      <Check size={17} strokeWidth={2.4} />
+                                    </span>
+                                  </button>
+                                  {selectedPresetInfoId === preset.id ? (
+                                    <motion.aside
+                                      className="gamePresetInfo"
+                                      initial={
+                                        reduceMotion
+                                          ? false
+                                          : { opacity: 0, y: -4, scale: 0.98 }
+                                      }
+                                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                                      exit={
+                                        reduceMotion
+                                          ? { opacity: 0 }
+                                          : { opacity: 0, y: -4, scale: 0.98 }
+                                      }
+                                      transition={
+                                        reduceMotion
+                                          ? { duration: 0 }
+                                          : { duration: 0.14, ease: "easeOut" }
+                                      }
+                                    >
+                                      <div className="gamePresetInfo__head">
+                                        <div>
+                                          <span>Rules reminder</span>
+                                          <strong>{preset.name}</strong>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          aria-label="Close scoring reminder"
+                                          onClick={() =>
+                                            setSelectedPresetInfoId(null)
+                                          }
+                                        >
+                                          <X
+                                            size={16}
+                                            strokeWidth={2.5}
+                                            aria-hidden="true"
+                                          />
+                                        </button>
                                       </div>
-                                      <button
-                                        type="button"
-                                        aria-label="Close scoring reminder"
-                                        onClick={() =>
-                                          setSelectedPresetInfoId(null)
-                                        }
-                                      >
-                                        <X
-                                          size={16}
-                                          strokeWidth={2.5}
-                                          aria-hidden="true"
-                                        />
-                                      </button>
-                                    </div>
-                                    <p>{preset.rulesNote}</p>
-                                    <ul>
-                                      {preset.rulesSummary.map((rule) => (
-                                        <li key={rule}>{rule}</li>
-                                      ))}
-                                    </ul>
-                                  </motion.aside>
-                                ) : null}
+                                      <p>{preset.rulesNote}</p>
+                                      <ul>
+                                        {preset.rulesSummary.map((rule) => (
+                                          <li key={rule}>{rule}</li>
+                                        ))}
+                                      </ul>
+                                    </motion.aside>
+                                  ) : null}
                                 </Fragment>
                               ))
                             ) : (
@@ -777,7 +878,7 @@ export function NewGameCard({
                           ? "Starting score"
                           : manualEndOnly
                             ? "Reference target"
-                          : "Target score"
+                            : "Target score"
                       }
                       onChange={(event) => updateTarget(event.target.value)}
                     />
@@ -818,118 +919,242 @@ export function NewGameCard({
               >
                 <div className="newSessionPlayers__head">
                   <SectionLabel icon={<Users size={16} strokeWidth={2.4} />}>
-                    Players
+                    Participants
                   </SectionLabel>{" "}
                   <span className="newSessionPlayers__count">
-                    {selectedPlayers.length}
+                    {participantCount}
                   </span>
                 </div>
-                {selectedPlayers.length > 0 ? (
-                  <div className="selectedPlayers" aria-live="polite">
-                    <div className="selectedPlayers__list">
-                      {selectedPlayers.map((player) => (
-                        <button
-                          key={player.id}
-                          type="button"
-                          className="selectedPlayerChip"
-                          onClick={() => {
-                            if (player.stagedIndex === null)
-                              toggleProfile(player.id);
-                            else
-                              setStagedPlayers((current) =>
-                                current.filter(
-                                  (_, index) => index !== player.stagedIndex,
-                                ),
-                              );
-                          }}
-                        >
-                          <span
-                            className="selectedPlayerChip__avatar"
-                            style={avatarStyleFor(player.avatarColor)}
-                          >
-                            {getInitials(player.name)}
-                          </span>
-                          <span className="selectedPlayerChip__name">
-                            {profiles.some(
-                              (profile) =>
-                                profile.id === player.id &&
-                                profile.isAccountPlayer,
-                            )
-                              ? formatAccountPlayerName(player.name)
-                              : player.name}
-                          </span>
-                          <span className="selectedPlayerChip__action">×</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                <div className="profilePicker__list">
-                  {availableProfiles.length > 0 ? (
-                    <div className="savedPlayerPicker">
-                      <button
-                        type="button"
-                        className="savedPlayerPicker__toggle"
-                        aria-expanded={isSavedPickerOpen}
-                        onClick={() => setIsSavedPickerOpen((value) => !value)}
-                      >
-                        <span className="savedPlayerPicker__copy">
-                          <strong>Saved players</strong>
-                          <span>
-                            Select existing players to add to this game
-                          </span>
-                        </span>
-                        <span className="savedPlayerPicker__count">
-                          {availableProfiles.length}
-                        </span>
-                      </button>
-                      {isSavedPickerOpen ? (
-                        <div className="savedPlayerPicker__options">
-                          {availableProfiles.map((profile) => (
+                <div
+                  className="newSessionModeSwitch"
+                  aria-label="Participant mode"
+                >
+                  <button
+                    type="button"
+                    className={`newSessionModeSwitch__option${
+                      participantMode === "players"
+                        ? " newSessionModeSwitch__option--active"
+                        : ""
+                    }`}
+                    aria-pressed={participantMode === "players"}
+                    onClick={() => switchParticipantMode("players")}
+                  >
+                    Players
+                  </button>
+                  <button
+                    type="button"
+                    className={`newSessionModeSwitch__option${
+                      participantMode === "teams"
+                        ? " newSessionModeSwitch__option--active"
+                        : ""
+                    }`}
+                    aria-pressed={participantMode === "teams"}
+                    disabled={!isAuthenticated || !canUseTeams}
+                    onClick={() => switchParticipantMode("teams")}
+                  >
+                    Teams
+                  </button>
+                </div>
+                {participantMode === "players" ? (
+                  <>
+                    {selectedPlayers.length > 0 ? (
+                      <div className="selectedPlayers" aria-live="polite">
+                        <div className="selectedPlayers__list">
+                          {selectedPlayers.map((player) => (
                             <button
-                              key={profile.id}
+                              key={player.id}
                               type="button"
-                              className="profileOption"
-                              onClick={() => toggleProfile(profile.id)}
+                              className="selectedPlayerChip"
+                              onClick={() => {
+                                if (player.stagedIndex === null)
+                                  toggleProfile(player.id);
+                                else
+                                  setStagedPlayers((current) =>
+                                    current.filter(
+                                      (_, index) =>
+                                        index !== player.stagedIndex,
+                                    ),
+                                  );
+                              }}
                             >
                               <span
-                                className="profileOption__avatar"
-                                style={avatarStyleFor(profile.avatarColor)}
+                                className="selectedPlayerChip__avatar"
+                                style={avatarStyleFor(player.avatarColor)}
                               >
-                                {getInitials(profile.name)}
+                                {getInitials(player.name)}
                               </span>
-                              <span className="profileOption__copy">
-                                <span className="profileOption__name">
-                                  {profile.isAccountPlayer
-                                    ? formatAccountPlayerName(profile.name)
-                                    : profile.name}
-                                </span>
-                                <span className="profileOption__hint">
-                                  Tap to add
-                                </span>
+                              <span className="selectedPlayerChip__name">
+                                {profiles.some(
+                                  (profile) =>
+                                    profile.id === player.id &&
+                                    profile.isAccountPlayer,
+                                )
+                                  ? formatAccountPlayerName(player.name)
+                                  : player.name}
+                              </span>
+                              <span className="selectedPlayerChip__action">
+                                ×
                               </span>
                             </button>
                           ))}
                         </div>
+                      </div>
+                    ) : null}
+                    <div className="profilePicker__list">
+                      {availableProfiles.length > 0 ? (
+                        <div className="savedPlayerPicker">
+                          <button
+                            type="button"
+                            className="savedPlayerPicker__toggle"
+                            aria-expanded={isSavedPickerOpen}
+                            onClick={() =>
+                              setIsSavedPickerOpen((value) => !value)
+                            }
+                          >
+                            <span className="savedPlayerPicker__copy">
+                              <strong>Saved players</strong>
+                              <span>
+                                Select existing players to add to this game
+                              </span>
+                            </span>
+                            <span className="savedPlayerPicker__count">
+                              {availableProfiles.length}
+                            </span>
+                          </button>
+                          {isSavedPickerOpen ? (
+                            <div className="savedPlayerPicker__options">
+                              {availableProfiles.map((profile) => (
+                                <button
+                                  key={profile.id}
+                                  type="button"
+                                  className="profileOption"
+                                  onClick={() => toggleProfile(profile.id)}
+                                >
+                                  <span
+                                    className="profileOption__avatar"
+                                    style={avatarStyleFor(profile.avatarColor)}
+                                  >
+                                    {getInitials(profile.name)}
+                                  </span>
+                                  <span className="profileOption__copy">
+                                    <span className="profileOption__name">
+                                      {profile.isAccountPlayer
+                                        ? formatAccountPlayerName(profile.name)
+                                        : profile.name}
+                                    </span>
+                                    <span className="profileOption__hint">
+                                      Tap to add
+                                    </span>
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
                       ) : null}
+                      <NewPlayerComposer
+                        isOpen={isAddingPlayer}
+                        isAuthenticated={isAuthenticated}
+                        name={newPlayerName}
+                        color={newPlayerColor}
+                        saveAsProfile={saveAsProfile}
+                        validationMessage={newPlayerValidationMessage}
+                        onOpen={() => setIsAddingPlayer(true)}
+                        onOpenAuth={onOpenAuth}
+                        onCancel={() => setIsAddingPlayer(false)}
+                        onAdd={addPlayer}
+                        onNameChange={setNewPlayerName}
+                        onColorChange={setNewPlayerColor}
+                        onSaveAsProfileChange={setSaveAsProfile}
+                      />
                     </div>
-                  ) : null}
-                  <NewPlayerComposer
-                    isOpen={isAddingPlayer}
-                    isAuthenticated={isAuthenticated}
-                    name={newPlayerName}
-                    color={newPlayerColor}
-                    saveAsProfile={saveAsProfile}
-                    validationMessage={newPlayerValidationMessage}
-                    onOpen={() => setIsAddingPlayer(true)}
-                    onOpenAuth={onOpenAuth}
-                    onCancel={() => setIsAddingPlayer(false)}
-                    onAdd={addPlayer}
-                    onNameChange={setNewPlayerName}
-                    onColorChange={setNewPlayerColor}
-                    onSaveAsProfileChange={setSaveAsProfile}
-                  />
-                </div>
+                  </>
+                ) : (
+                  <div className="teamPicker">
+                    {selectedTeams.length > 0 ? (
+                      <div className="selectedPlayers" aria-live="polite">
+                        <div className="selectedPlayers__list">
+                          {selectedTeams.map((team) => (
+                            <button
+                              key={team.id}
+                              type="button"
+                              className="selectedPlayerChip"
+                              onClick={() => toggleTeam(team.id)}
+                            >
+                              <span
+                                className="selectedPlayerChip__avatar selectedPlayerChip__avatar--team"
+                                aria-hidden="true"
+                              >
+                                {team.members.slice(0, 2).map((member) => (
+                                  <span
+                                    key={`${team.id}-${member.id}`}
+                                    style={avatarStyleFor(member.avatarColor)}
+                                  >
+                                    {getInitials(member.name)}
+                                  </span>
+                                ))}
+                              </span>
+                              <span className="selectedPlayerChip__name">
+                                {team.name}
+                              </span>
+                              <span className="selectedPlayerChip__action">
+                                ×
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {!isAuthenticated ? (
+                      <div className="teamPicker__empty">
+                        Sign in to build games from saved teams.
+                      </div>
+                    ) : !canUseTeams ? (
+                      <div className="teamPicker__empty">
+                        Team games are a Pro feature.
+                      </div>
+                    ) : availableTeams.length > 0 ? (
+                      <div className="teamPicker__list">
+                        {availableTeams.map((team) => (
+                          <button
+                            key={team.id}
+                            type="button"
+                            className={`teamPicker__option${
+                              selectedTeamIds.has(team.id)
+                                ? " teamPicker__option--active"
+                                : ""
+                            }`}
+                            onClick={() => toggleTeam(team.id)}
+                          >
+                            <span className="teamPicker__optionHead">
+                              <strong>{team.name}</strong>
+                              <span>{team.members.length} players</span>
+                            </span>
+                            <span
+                              className="teamPicker__avatars"
+                              aria-hidden="true"
+                            >
+                              {team.members.slice(0, 4).map((member) => (
+                                <span
+                                  key={`${team.id}-${member.id}`}
+                                  className="teamPicker__avatar"
+                                  style={avatarStyleFor(member.avatarColor)}
+                                >
+                                  {getInitials(member.name)}
+                                </span>
+                              ))}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="teamPicker__empty">
+                        No saved teams yet. Create teams from the Players tab
+                        first.
+                      </div>
+                    )}
+                  </div>
+                )}
               </motion.section>
 
               <motion.div

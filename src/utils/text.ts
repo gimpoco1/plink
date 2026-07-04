@@ -12,6 +12,10 @@ export function formatPlayerName(raw: string): string {
   return capitalizeFirst(clampName(raw));
 }
 
+export function formatTeamName(raw: string): string {
+  return capitalizeFirst(clampName(raw));
+}
+
 export function formatAccountPlayerName(raw: string): string {
   const name = capitalizeFirst(raw);
   return name ? `${name} (You)` : "";

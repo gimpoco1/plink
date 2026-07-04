@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { AVATAR_COLORS } from "../../constants";
-import type { Player, PlayerProfile } from "../../types";
+import type { GameTeam, Player, PlayerProfile, TeamMember } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
 import {
   capitalizeFirst,
@@ -14,7 +14,29 @@ import {
   formatAccountPlayerName,
   getInitials,
 } from "../../utils/text";
+import { DEFAULT_TEAM_ICON } from "../../constants";
+import {
+  Dumbbell,
+  Flag,
+  Flame,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import "./ManagePlayersDialog.css";
+
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
 
 export type ManagePlayersDialogHandle = {
   open: () => void;
@@ -28,8 +50,13 @@ type StagedCustomPlayer = {
 };
 
 type Props = {
+  participantMode: "players" | "teams";
   profiles: PlayerProfile[];
+  savedTeams: GameTeam[];
+  savedTeamMembers: TeamMember[];
   currentPlayers: Player[];
+  currentTeams: GameTeam[];
+  canUseTeams: boolean;
   takenProfileIds: Set<string>;
   isAuthenticated: boolean;
   onDeleteProfile: (profileId: string) => void;
@@ -37,23 +64,40 @@ type Props = {
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
   onUpdatePlayer: (
     playerId: string,
-    updates: Partial<Pick<Player, "name" | "avatarColor" | "profileId">>,
+    updates: Partial<
+      Pick<Player, "name" | "avatarColor" | "profileId" | "teamId">
+    >,
   ) => void;
+  onCreateTeam: (
+    name: string,
+    icon?: string,
+    members?: PlayerProfile[],
+  ) => GameTeam | null;
+  onDeleteTeam: (teamId: string, teamName: string) => Promise<void> | void;
   onStartGame: (profileIds: string[], newPlayers: StagedCustomPlayer[]) => void;
+  onOpenTeamsTab: () => void;
 };
 
 export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
   function ManagePlayersDialog(
     {
+      participantMode,
       profiles,
+      savedTeams,
+      savedTeamMembers,
       currentPlayers,
+      currentTeams,
+      canUseTeams,
       takenProfileIds,
       isAuthenticated,
       onDeleteProfile,
       onDeletePlayer,
       onUpsertProfile,
       onUpdatePlayer,
+      onCreateTeam,
+      onDeleteTeam,
       onStartGame,
+      onOpenTeamsTab,
     },
     ref,
   ) {
@@ -81,6 +125,8 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
     const currentGamePlayers = useMemo(() => {
       return currentPlayers.filter((player) => player.name.trim().length > 0);
     }, [currentPlayers]);
+    const isTeamsGame = participantMode === "teams";
+    const isPlayersGame = participantMode !== "teams";
 
     const currentProfileIds = useMemo(() => {
       return new Set(
@@ -146,15 +192,73 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
     ]);
 
     const stagedCount = stagedProfileIds.size + stagedCustomPlayers.length;
-    const savedAvailableCount = filteredProfiles.length;
     const stagedProfiles = useMemo(
       () => profiles.filter((profile) => stagedProfileIds.has(profile.id)),
       [profiles, stagedProfileIds],
     );
+    const teamMembersByTeamId = useMemo(() => {
+      const grouped = new Map<string, Player[]>();
+      currentTeams.forEach((team) => grouped.set(team.id, []));
+      currentPlayers.forEach((player) => {
+        if (!player.teamId || !grouped.has(player.teamId)) return;
+        grouped.get(player.teamId)?.push(player);
+      });
+      grouped.forEach((players, teamId) => {
+        grouped.set(
+          teamId,
+          [...players].sort((a, b) => {
+            if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+            return a.name.localeCompare(b.name);
+          }),
+        );
+      });
+      return grouped;
+    }, [currentPlayers, currentTeams]);
+    const profilesById = useMemo(
+      () => new Map(profiles.map((profile) => [profile.id, profile])),
+      [profiles],
+    );
+    const savedTeamProfilesByTeamId = useMemo(() => {
+      const grouped = new Map<string, PlayerProfile[]>();
+      savedTeams.forEach((team) => grouped.set(team.id, []));
+      savedTeamMembers.forEach((member) => {
+        const profile = profilesById.get(member.profileId);
+        if (!profile || !grouped.has(member.teamId)) return;
+        grouped.get(member.teamId)?.push(profile);
+      });
+      grouped.forEach((members, teamId) => {
+        grouped.set(
+          teamId,
+          [...members].sort((a, b) => {
+            if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+            return a.name.localeCompare(b.name);
+          }),
+        );
+      });
+      return grouped;
+    }, [profilesById, savedTeamMembers, savedTeams]);
+    const availableSavedTeams = useMemo(() => {
+      const currentTeamNames = new Set(
+        currentTeams.map((team) => team.name.trim().toLowerCase()),
+      );
+      const query = search.trim().toLowerCase();
+      return savedTeams.filter((team) => {
+        const name = team.name.trim();
+        if (!name) return false;
+        if (currentTeamNames.has(name.toLowerCase())) return false;
+        if (!query) return true;
+        return name.toLowerCase().includes(query);
+      });
+    }, [currentTeams, savedTeams, search]);
     const submitLabel =
       stagedCount === 0
         ? "Add to game"
         : `Add ${stagedCount} player${stagedCount === 1 ? "" : "s"} to game`;
+
+    function addSavedTeamToCurrentGame(team: GameTeam) {
+      const members = savedTeamProfilesByTeamId.get(team.id) ?? [];
+      onCreateTeam(team.name, team.icon, members);
+    }
 
     function resetState() {
       setPendingName("");
@@ -227,7 +331,11 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
             <div>
               <div className="managePlayersDialog__eyebrow">Game roster</div>
               <div className="dialog__title">
-                {isCreating ? "Add new player" : "Manage players"}
+                {isCreating
+                  ? "Add new player"
+                  : isTeamsGame
+                    ? "Manage teams"
+                    : "Manage players"}
               </div>
             </div>
             <button
@@ -242,38 +350,42 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
 
           {!isCreating ? (
             <div className="dialog__body managePlayersDialog__body">
-              <div className="managePlayersDialog__summary">
-                <div className="managePlayersDialog__summaryStats">
-                  <div className="managePlayersDialog__summaryStat">
-                    <span>Playing</span>
-                    <strong>{currentGamePlayers.length}</strong>
+              {isPlayersGame ? (
+                <div className="managePlayersDialog__summary">
+                  <div className="managePlayersDialog__summaryStats">
+                    <div className="managePlayersDialog__summaryStat">
+                      <span>Playing</span>
+                      <strong>{currentGamePlayers.length}</strong>
+                    </div>
+                    <div className="managePlayersDialog__summaryStat">
+                      <span>To be added</span>
+                      <strong>{stagedCount}</strong>
+                    </div>
                   </div>
-                  <div className="managePlayersDialog__summaryStat">
-                    <span>To be added</span>
-                    <strong>{stagedCount}</strong>
-                  </div>
+                  <span>
+                    {isAuthenticated
+                      ? "Build your lineup: pick saved players or create a new challenger."
+                      : "Create temporary players for this game."}
+                  </span>
                 </div>
-                <span>
-                  {isAuthenticated
-                    ? "Build your lineup: pick saved players or create a new challenger."
-                    : "Create temporary players for this game."}
-                </span>
-              </div>
+              ) : null}
 
-              <div className="managePlayersDialog__toolbar">
-                <button
-                  className="btn btn--ghost managePlayersDialog__createBtn"
-                  type="button"
-                  onClick={() => {
-                    setIsCreating(true);
-                    queueMicrotask(() => nameInputRef.current?.focus());
-                  }}
-                >
-                  + Add new player
-                </button>
-              </div>
+              {isTeamsGame ? null : (
+                <div className="managePlayersDialog__toolbar">
+                  <button
+                    className="btn btn--ghost managePlayersDialog__createBtn"
+                    type="button"
+                    onClick={() => {
+                      setIsCreating(true);
+                      queueMicrotask(() => nameInputRef.current?.focus());
+                    }}
+                  >
+                    + Add new player
+                  </button>
+                </div>
+              )}
 
-              {stagedCount > 0 ? (
+              {isPlayersGame && stagedCount > 0 ? (
                 <section className="managePlayersDialog__queue">
                   <div className="managePlayersDialog__simpleTitle">
                     Ready to add
@@ -335,7 +447,240 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
               ) : null}
 
               <div className="managePlayersDialog__sections">
-                {currentGamePlayers.length > 0 ? (
+                {isTeamsGame ? (
+                  <section className="managePlayersDialog__section">
+                    <div className="managePlayersDialog__sectionHeaderRow managePlayersDialog__sectionHeaderRow--teams">
+                      <div className="managePlayersDialog__simpleTitle">
+                        Teams in this game
+                      </div>
+                    </div>
+
+                    {currentTeams.length > 0 ? (
+                      <div className="managePlayersDialog__teamList">
+                        {currentTeams.map((team) => {
+                          const members =
+                            teamMembersByTeamId.get(team.id) ?? [];
+                          const overflowCount = Math.max(0, members.length - 5);
+                          const TeamIcon =
+                            TEAM_ICON_COMPONENTS[
+                              (team.icon ??
+                                DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+                            ] ?? Dumbbell;
+                          return (
+                            <article
+                              className="managePlayersDialog__teamCard"
+                              key={team.id}
+                            >
+                              <div className="managePlayersDialog__teamCardMain">
+                                <div className="managePlayersDialog__teamIdentity">
+                                  <div className="managePlayersDialog__teamHeading">
+                                    <span
+                                      className="managePlayersDialog__teamIcon"
+                                      aria-hidden="true"
+                                    >
+                                      <TeamIcon size={15} strokeWidth={2.2} />
+                                    </span>
+                                    <span className="managePlayersDialog__teamName">
+                                      {team.name}
+                                    </span>
+                                    <div
+                                      className="managePlayersDialog__teamMembers"
+                                      aria-label={`${team.name} members`}
+                                    >
+                                      {members.slice(0, 5).map((member) => (
+                                        <span
+                                          key={`${team.id}:${member.id}`}
+                                          className="managePlayersDialog__teamMemberAvatar"
+                                          style={avatarStyleFor(
+                                            member.avatarColor,
+                                          )}
+                                          title={member.name}
+                                          aria-label={member.name}
+                                        >
+                                          {getInitials(member.name)}
+                                        </span>
+                                      ))}
+                                      {overflowCount > 0 ? (
+                                        <span
+                                          className="managePlayersDialog__teamMemberOverflow"
+                                          aria-label={`${overflowCount} more players`}
+                                        >
+                                          +{overflowCount}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </div>
+                                <button
+                                  className="managePlayersDialog__inlineAction managePlayersDialog__inlineAction--danger"
+                                  type="button"
+                                  onClick={() =>
+                                    void onDeleteTeam(team.id, team.name)
+                                  }
+                                  aria-label={`Remove ${team.name}`}
+                                  title="Remove"
+                                >
+                                  <span aria-hidden="true">×</span>
+                                  <span>Remove</span>
+                                </button>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="managePlayersDialog__empty">
+                        No teams in this game yet.
+                      </div>
+                    )}
+
+                    <div className="managePlayersDialog__sectionHeaderRow">
+                      <div className="managePlayersDialog__simpleTitle">
+                        Saved teams
+                      </div>
+                      <label className="managePlayersDialog__searchInline">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden="true"
+                          className="managePlayersDialog__searchIcon"
+                        >
+                          <circle
+                            cx="11"
+                            cy="11"
+                            r="6"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          />
+                          <path
+                            d="m20 20-4.2-4.2"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <input
+                          className="input input--compact managePlayersDialog__searchInput"
+                          placeholder="Search saved teams"
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          aria-label="Search saved teams"
+                        />
+                      </label>
+                    </div>
+
+                    {availableSavedTeams.length > 0 ? (
+                      <div className="managePlayersDialog__list managePlayersDialog__list--saved">
+                        {availableSavedTeams.map((team) => {
+                          const members =
+                            savedTeamProfilesByTeamId.get(team.id) ?? [];
+                          const overflowCount = Math.max(0, members.length - 5);
+                          const TeamIcon =
+                            TEAM_ICON_COMPONENTS[
+                              (team.icon ??
+                                DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+                            ] ?? Dumbbell;
+
+                          return (
+                            <article
+                              className="managePlayersDialog__teamCard"
+                              key={`saved-team-${team.id}`}
+                            >
+                              <div className="managePlayersDialog__teamCardMain">
+                                <div className="managePlayersDialog__teamIdentity">
+                                  <div className="managePlayersDialog__teamHeading">
+                                    <span
+                                      className="managePlayersDialog__teamIcon"
+                                      aria-hidden="true"
+                                    >
+                                      <TeamIcon size={15} strokeWidth={2.2} />
+                                    </span>
+                                    <span className="managePlayersDialog__teamName">
+                                      {team.name}
+                                    </span>
+                                    {members.length > 0 ? (
+                                      <div
+                                        className="managePlayersDialog__teamMembers"
+                                        aria-label={`${team.name} saved members`}
+                                      >
+                                        {members.slice(0, 5).map((member) => (
+                                          <span
+                                            key={`${team.id}:saved:${member.id}`}
+                                            className="managePlayersDialog__teamMemberAvatar"
+                                            style={avatarStyleFor(
+                                              member.avatarColor,
+                                            )}
+                                            title={member.name}
+                                            aria-label={member.name}
+                                          >
+                                            {getInitials(member.name)}
+                                          </span>
+                                        ))}
+                                        {overflowCount > 0 ? (
+                                          <span
+                                            className="managePlayersDialog__teamMemberOverflow"
+                                            aria-label={`${overflowCount} more saved players`}
+                                          >
+                                            +{overflowCount}
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                  {members.length === 0 ? (
+                                    <span className="managePlayersDialog__meta">
+                                      Saved team
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <button
+                                  className="managePlayersDialog__inlineAction managePlayersDialog__inlineAction--add"
+                                  type="button"
+                                  onClick={() =>
+                                    addSavedTeamToCurrentGame(team)
+                                  }
+                                  aria-label={`Add ${team.name}`}
+                                  title="Add"
+                                  disabled={!canUseTeams}
+                                >
+                                  <span aria-hidden="true">+</span>
+                                  <span>Add</span>
+                                </button>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="managePlayersDialog__empty">
+                        {search
+                          ? "No saved teams match that search."
+                          : savedTeams.length > 0
+                            ? "All saved teams are already in this game."
+                            : "No saved teams yet. Create one from the Teams tab."}
+                      </div>
+                    )}
+
+                    <div className="managePlayersDialog__modeNotice">
+                      <strong>Create or edit teams in the Teams tab.</strong>
+                      <span>
+                        Single players cannot be added directly to a teams game.
+                      </span>
+                      <button
+                        className="btn btn--primary managePlayersDialog__modeCta"
+                        type="button"
+                        onClick={() => {
+                          close();
+                          onOpenTeamsTab();
+                        }}
+                      >
+                        Go to Teams tab
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
+
+                {isPlayersGame && currentGamePlayers.length > 0 ? (
                   <section className="managePlayersDialog__section">
                     <div className="managePlayersDialog__simpleTitle">
                       Players in this game
@@ -528,13 +873,13 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                       })}
                     </div>
                   </section>
-                ) : (
+                ) : isPlayersGame ? (
                   <div className="managePlayersDialog__empty">
                     No players in this game yet.
                   </div>
-                )}
+                ) : null}
 
-                {isAuthenticated ? (
+                {isPlayersGame && isAuthenticated ? (
                   <section className="managePlayersDialog__section managePlayersDialog__section--saved">
                     <div className="managePlayersDialog__sectionHeaderRow">
                       <div className="managePlayersDialog__simpleTitle">
@@ -662,22 +1007,24 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
               </div>
 
               <div className="managePlayersDialog__footer">
-                <div className="dialog__actions managePlayersDialog__submitRow">
-                  <button
-                    className="btn btn--primary btn--wide"
-                    type="button"
-                    onClick={() => {
-                      onStartGame(
-                        Array.from(stagedProfileIds),
-                        stagedCustomPlayers,
-                      );
-                      close();
-                    }}
-                    disabled={stagedCount === 0}
-                  >
-                    {submitLabel}
-                  </button>
-                </div>
+                {isPlayersGame ? (
+                  <div className="dialog__actions managePlayersDialog__submitRow">
+                    <button
+                      className="btn btn--primary btn--wide"
+                      type="button"
+                      onClick={() => {
+                        onStartGame(
+                          Array.from(stagedProfileIds),
+                          stagedCustomPlayers,
+                        );
+                        close();
+                      }}
+                      disabled={stagedCount === 0}
+                    >
+                      {submitLabel}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : (

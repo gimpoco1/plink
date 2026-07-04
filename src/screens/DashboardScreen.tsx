@@ -1,11 +1,12 @@
 import { useEffect, useState, type TouchEvent } from "react";
-import type { Game, HomeTab, PlayerProfile } from "../types";
+import type { Game, GameTeam, HomeTab, PlayerProfile, TeamMember } from "../types";
 import type { NewGameInput } from "../components/NewGameCard/NewGameCard";
 import { HomeTabBar } from "../components/HomeTabBar/HomeTabBar";
 import { HomeScreen } from "./HomeScreen";
 import { SessionsScreen } from "./SessionsScreen";
 import { StatsScreen } from "./StatsScreen";
 import { PlayersScreen } from "./PlayersScreen";
+import { PLAYERS_VIEW_STORAGE_KEY } from "../constants";
 import "./DashboardScreen.css";
 
 const tabs: HomeTab[] = ["home", "sessions", "stats", "players"];
@@ -13,6 +14,9 @@ const tabs: HomeTab[] = ["home", "sessions", "stats", "players"];
 type DashboardScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
+  teams: GameTeam[];
+  teamMembers: TeamMember[];
+  canUseTeams: boolean;
   isAuthenticated: boolean;
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
@@ -38,6 +42,13 @@ type DashboardScreenProps = {
     updates: Partial<Pick<PlayerProfile, "name" | "avatarColor">>,
   ) => void;
   onDeleteProfile: (id: string) => void;
+  onCreateTeam: (name: string, icon?: string) => GameTeam | null;
+  onUpdateTeam: (
+    id: string,
+    updates: Partial<Pick<GameTeam, "name" | "icon">>,
+  ) => void;
+  onDeleteTeam: (id: string) => void;
+  onToggleTeamMember: (teamId: string, profileId: string) => void;
   onDuplicate: (gameId: string) => void;
   onRename: (gameId: string) => void;
   onEnter: (gameId: string) => void;
@@ -47,9 +58,26 @@ type DashboardScreenProps = {
 export function DashboardScreen(props: DashboardScreenProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
+  const [playersView, setPlayersView] = useState<"players" | "teams">(() => {
+    try {
+      return localStorage.getItem(PLAYERS_VIEW_STORAGE_KEY) === "teams"
+        ? "teams"
+        : "players";
+    } catch {
+      return "players";
+    }
+  });
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
     null,
   );
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PLAYERS_VIEW_STORAGE_KEY, playersView);
+    } catch {
+      // Ignore storage failures; the in-memory selection still works.
+    }
+  }, [playersView]);
 
   useEffect(() => {
     function handleNewGame() {
@@ -150,16 +178,25 @@ export function DashboardScreen(props: DashboardScreenProps) {
           <PlayersScreen
             games={props.games}
             profiles={props.profiles}
+            teams={props.teams}
+            teamMembers={props.teamMembers}
+            canUseTeams={props.canUseTeams}
+            activeView={playersView}
             isAuthenticated={props.isAuthenticated}
             showLocalSessionsHint={props.showLocalSessionsHint}
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             addingPlayer={isAddingPlayer}
+            onActiveViewChange={setPlayersView}
             onAddingPlayerChange={setIsAddingPlayer}
             onOpenAuth={props.onOpenLocalImport}
             onUpsertProfile={props.onUpsertProfile}
             onUpdateProfile={props.onUpdateProfile}
             onDeleteProfile={props.onDeleteProfile}
+            onCreateTeam={props.onCreateTeam}
+            onUpdateTeam={props.onUpdateTeam}
+            onDeleteTeam={props.onDeleteTeam}
+            onToggleTeamMember={props.onToggleTeamMember}
           />
         );
       case "home":
@@ -168,6 +205,9 @@ export function DashboardScreen(props: DashboardScreenProps) {
           <HomeScreen
             games={props.games}
             profiles={props.profiles}
+            teams={props.teams}
+            teamMembers={props.teamMembers}
+            canUseTeams={props.canUseTeams}
             isAuthenticated={props.isAuthenticated}
             showLocalSessionsHint={props.showLocalSessionsHint}
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
@@ -202,7 +242,12 @@ export function DashboardScreen(props: DashboardScreenProps) {
           </div>
         </div>
       </main>
-      <HomeTabBar activeTab={props.activeTab} onChange={changeTab} />
+      <HomeTabBar
+        activeTab={props.activeTab}
+        playersView={playersView}
+        onChange={changeTab}
+        onPlayersViewChange={setPlayersView}
+      />
     </div>
   );
 }

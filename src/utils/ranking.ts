@@ -1,4 +1,5 @@
 import type { Game, Player } from "../types";
+import { getGameParticipants } from "./gameParticipants";
 import { hasGameEnded, shouldSortLowToHigh } from "./scoring";
 
 export function sortPlayers(
@@ -18,6 +19,8 @@ export function findWinner(
   players: Player[],
   game: Pick<
     Game,
+    | "participantMode"
+    | "teams"
     | "scoreDirection"
     | "targetScore"
     | "winCondition"
@@ -27,20 +30,26 @@ export function findWinner(
   >,
 ): Player | null {
   if (!players.length || !hasGameEnded(players, game)) return null;
-  const sorted = [...players].sort((a, b) =>
+  const sorted = getGameParticipants({
+    participantMode: game.participantMode,
+    players,
+    teams: game.teams ?? [],
+  }).sort((a, b) =>
     sortPlayers(a, b, shouldSortLowToHigh(game)),
   );
   const winner = sorted[0] ?? null;
   if (!winner) return null;
   const tiedWinner = sorted[1];
   if (tiedWinner && tiedWinner.score === winner.score) return null;
-  return winner;
+  return winner.members[0] ?? null;
 }
 
 export function isGameComplete(
   game: Pick<
     Game,
     | "players"
+    | "participantMode"
+    | "teams"
     | "scoreDirection"
     | "targetScore"
     | "winCondition"

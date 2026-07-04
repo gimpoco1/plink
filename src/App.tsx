@@ -12,6 +12,7 @@ import {
 } from "./components/AuthDialog/AuthDialog";
 import { TopBar } from "./components/TopBar/TopBar";
 import { useProfiles } from "./hooks/useProfiles";
+import { useTeams } from "./hooks/useTeams";
 import { useGames } from "./hooks/useGames";
 import { useScorePulse } from "./hooks/useScorePulse";
 import { useAuthSession } from "./hooks/useAuthSession";
@@ -52,6 +53,7 @@ import {
   AVATAR_COLORS,
   HOME_TAB_STORAGE_KEY,
   LOCAL_SESSIONS_HINT_DISMISSED_KEY,
+  PLAYERS_VIEW_STORAGE_KEY,
 } from "./constants";
 import { CircleUser } from "lucide-react";
 
@@ -75,6 +77,17 @@ export default function App() {
     syncNotice: profileSyncNotice,
   } = useProfiles(session);
   const {
+    teams,
+    teamMembers,
+    createTeam,
+    updateTeam,
+    deleteTeam: deleteSavedTeam,
+    toggleTeamMember,
+    removeProfileMemberships,
+    remoteReady: teamsReady,
+    syncNotice: teamSyncNotice,
+  } = useTeams(session);
+  const {
     games,
     currentGameId,
     currentGame,
@@ -84,7 +97,9 @@ export default function App() {
     deleteGame,
     renameGame,
     addPlayer,
+    addTeam,
     removePlayer,
+    removeTeam,
     updatePlayer,
     resetScores,
     updateScore,
@@ -152,6 +167,8 @@ export default function App() {
   const canViewSavedData = !!session;
   const visibleGames = canViewSavedData && !gamesReady ? [] : games;
   const visibleProfiles = canViewSavedData ? profiles : [];
+  const visibleTeams = canViewSavedData && teamsReady ? teams : [];
+  const visibleTeamMembers = canViewSavedData && teamsReady ? teamMembers : [];
   const localGuestGames = useMemo(
     () => (canViewSavedData ? loadGuestGames() : games),
     [canViewSavedData, games, localDataVersion],
@@ -260,6 +277,17 @@ export default function App() {
     setView("home");
   }
 
+  function openTeamsTabFromGame() {
+    try {
+      localStorage.setItem(PLAYERS_VIEW_STORAGE_KEY, "teams");
+    } catch {
+      // Ignore storage failures; fallback tab navigation still works.
+    }
+    setGameReturnTab("players");
+    setHomeTab("players");
+    setView("home");
+  }
+
   function dismissLocalSessionsHint() {
     setDismissedLocalSessionsHintSignature(pendingLocalSessionsHintSignature);
     try {
@@ -360,10 +388,10 @@ export default function App() {
   }
 
   useEffect(() => {
-    const nextToast = gameSyncNotice ?? profileSyncNotice;
+    const nextToast = gameSyncNotice ?? profileSyncNotice ?? teamSyncNotice;
     if (!nextToast) return;
     setVisibleToast(nextToast);
-  }, [gameSyncNotice, profileSyncNotice]);
+  }, [gameSyncNotice, profileSyncNotice, teamSyncNotice]);
 
   useEffect(() => {
     if (!visibleToast) return;
@@ -718,7 +746,9 @@ export default function App() {
     const prepared = prepareImportedData(localGames, localProfiles);
     const importCapacityState = getSessionCapacityState(prepared.games.length);
     if (importCapacityState === "loading") {
-      throw new Error("Loading your saved sessions. Try importing again in a moment.");
+      throw new Error(
+        "Loading your saved sessions. Try importing again in a moment.",
+      );
     }
     if (importCapacityState === "blocked") {
       throw new Error(
@@ -760,7 +790,9 @@ export default function App() {
       uniqueReconciledGames.length,
     );
     if (restoreCapacityState === "loading") {
-      throw new Error("Loading your saved sessions. Try restoring again in a moment.");
+      throw new Error(
+        "Loading your saved sessions. Try restoring again in a moment.",
+      );
     }
     if (restoreCapacityState === "blocked") {
       throw new Error(
@@ -872,12 +904,8 @@ export default function App() {
             showBackButton={view !== "home" && !!currentGame}
             showActionMenu={view === "game" && !!currentGame}
             primaryActionLabel={
-              view === "home" &&
-              homeTab !== "home" &&
-              (homeTab !== "players" || !!session)
-                ? homeTab === "players"
-                  ? "New Player"
-                  : "New game"
+              view === "home" && homeTab !== "home" && homeTab !== "players"
+                ? "New game"
                 : undefined
             }
             authLabel={
@@ -921,6 +949,11 @@ export default function App() {
               setShouldSaveGamePlayersOnSignIn(false);
               authDialogRef.current?.open();
             }}
+            onAddPlayerLabel={
+              view === "game" && currentGame?.participantMode === "teams"
+                ? "Manage teams"
+                : "Manage players"
+            }
             onAddPlayer={() => managePlayersDialogRef.current?.open()}
             onOpenSettings={
               view === "game" && currentGame
@@ -989,7 +1022,10 @@ export default function App() {
               <GameScreen
                 game={currentGame}
                 profiles={visibleProfiles}
+                teams={visibleTeams}
+                teamMembers={visibleTeamMembers}
                 isAuthenticated={canViewSavedData}
+                canUseTeams={entitlements.canUseTeams}
                 pulseById={pulseById}
                 onTriggerPulse={triggerPulse}
                 managePlayersDialogRef={managePlayersDialogRef}
@@ -1083,6 +1119,35 @@ export default function App() {
                   }
                   updatePlayer(currentGame.id, playerId, updates);
                 }}
+                onCreateTeam={(name, icon, members = []) => {
+                  const createdTeam = addTeam(currentGame.id, name, icon);
+                  if (!createdTeam) return null;
+
+                  members.forEach((member) => {
+                    addPlayer(currentGame.id, {
+                      name: member.name,
+                      avatarColor: member.avatarColor,
+                      profileId: member.id,
+                      teamId: createdTeam.id,
+                    });
+                  });
+
+                  return createdTeam;
+                }}
+                onDeleteTeam={async (teamId, teamName) => {
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Remove team",
+                    message:
+                      currentGame.participantMode === "teams"
+                        ? `Remove "${teamName}" from this game? Players in this team will also be removed from this game.`
+                        : `Remove "${teamName}" from this game? Players will stay in the game but be unassigned from that team.`,
+                    confirmText: "Remove",
+                    tone: "danger",
+                  });
+                  if (!ok) return;
+                  removeTeam(currentGame.id, teamId);
+                }}
+                onOpenTeamsTab={openTeamsTabFromGame}
                 winnerStats={currentWinnerStats}
                 onReplayGame={() => {
                   if (!guardSessionCreation()) {
@@ -1112,6 +1177,9 @@ export default function App() {
               <DashboardScreen
                 games={visibleGames}
                 profiles={visibleProfiles}
+                teams={visibleTeams}
+                teamMembers={visibleTeamMembers}
+                canUseTeams={entitlements.canUseTeams}
                 isAuthenticated={canViewSavedData}
                 showLocalSessionsHint={showLocalSessionsHint}
                 pendingLocalSessionsCount={pendingLocalSessionsCount}
@@ -1150,7 +1218,25 @@ export default function App() {
                     confirmText: "Delete",
                     tone: "danger",
                   });
-                  if (ok) deleteProfile(profileId);
+                  if (ok) {
+                    removeProfileMemberships(profileId);
+                    deleteProfile(profileId);
+                  }
+                }}
+                onCreateTeam={(name, icon) => createTeam(name, icon)}
+                onUpdateTeam={updateTeam}
+                onDeleteTeam={async (teamId) => {
+                  const team = teams.find((item) => item.id === teamId);
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Delete team",
+                    message: `Delete "${team?.name ?? "this team"}"?`,
+                    confirmText: "Delete",
+                    tone: "danger",
+                  });
+                  if (ok) deleteSavedTeam(teamId);
+                }}
+                onToggleTeamMember={(teamId, profileId) => {
+                  toggleTeamMember(teamId, profileId);
                 }}
                 onDuplicate={(gameId) => {
                   if (!guardSessionCreation()) {

@@ -1,3 +1,48 @@
+.teamBoard {
+  display: grid;
+  gap: 18px;
+}
+
+.teamBoard__group {
+  display: grid;
+  gap: 10px;
+}
+
+.teamBoard__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.teamBoard__title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.teamBoard__meta {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.teamBoard__group--unassigned .teamBoard__title {
+  color: var(--text-dim);
+}
+
+.teamBoard__empty {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .scoreUndo {
   position: fixed;
   z-index: 150;

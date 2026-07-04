@@ -19,6 +19,7 @@ type Props = {
   onPrimaryAction?: () => void;
   onOpenAuth?: () => void;
   onAddPlayer: () => void;
+  onAddPlayerLabel?: string;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
   onEndGame?: () => void;
@@ -43,6 +44,7 @@ export function TopBar({
   onPrimaryAction,
   onOpenAuth,
   onAddPlayer,
+  onAddPlayerLabel = "Manage players",
   onOpenSettings,
   onOpenHistory,
   onEndGame,
@@ -186,7 +188,7 @@ export function TopBar({
                     onAddPlayer();
                   }}
                 >
-                  Manage players
+                  {onAddPlayerLabel}
                 </button>
                 <button
                   className="topbarMenu__item topbarMenu__item--danger"

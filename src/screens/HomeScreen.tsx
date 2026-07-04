@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   Game,
+  GameTeam,
   PlayerProfile,
   ScoreDirection,
+  TeamMember,
   WinCondition,
 } from "../types";
 import {
@@ -21,6 +23,7 @@ import "./HomeScreen.css";
 type QuickSetup = {
   key: string;
   label: string;
+  participantMode: "players" | "teams";
   scoreDirection: ScoreDirection;
   startingScore: number;
   targetScore: number;
@@ -31,12 +34,20 @@ type QuickSetup = {
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   suggestedPlayers: { name: string; avatarColor: string; profileId?: string }[];
+  suggestedTeams?: Array<{
+    id: string;
+    name: string;
+    members: Array<{ name: string; avatarColor: string; profileId?: string }>;
+  }>;
   uses: number;
 };
 
 type HomeScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
+  teams: GameTeam[];
+  teamMembers: TeamMember[];
+  canUseTeams: boolean;
   isAuthenticated: boolean;
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
@@ -62,6 +73,9 @@ type HomeScreenProps = {
 export function HomeScreen({
   games,
   profiles,
+  teams,
+  teamMembers,
+  canUseTeams,
   isAuthenticated,
   showLocalSessionsHint,
   pendingLocalSessionsCount,
@@ -179,6 +193,7 @@ export function HomeScreen({
       const label = getGameDisplayName(game.name).title;
       const key = [
         label,
+        game.participantMode ?? "players",
         game.scoreDirection,
         game.startingScore,
         game.targetScore,
@@ -198,6 +213,7 @@ export function HomeScreen({
       setups.set(key, {
         key,
         label,
+        participantMode: game.participantMode ?? "players",
         scoreDirection: game.scoreDirection,
         startingScore: game.startingScore,
         targetScore: game.targetScore,
@@ -217,6 +233,20 @@ export function HomeScreen({
             profileId: player.profileId,
           };
         }),
+        suggestedTeams:
+          game.participantMode === "teams"
+            ? game.teams.map((team) => ({
+                id: team.id,
+                name: team.name,
+                members: game.players
+                  .filter((player) => player.teamId === team.id)
+                  .map((player) => ({
+                    name: player.name,
+                    avatarColor: player.avatarColor,
+                    profileId: player.profileId,
+                  })),
+              }))
+            : undefined,
         uses: 1,
       });
     }
@@ -249,6 +279,7 @@ export function HomeScreen({
     void onStartQuickSetup(
       {
         name: nextSuggestionName(setup.label),
+        participantMode: setup.participantMode,
         scoreDirection: setup.scoreDirection,
         startingScore: setup.startingScore,
         targetScore: setup.targetScore,
@@ -259,6 +290,7 @@ export function HomeScreen({
         timerMode: setup.timerMode,
         timerSeconds: setup.timerSeconds,
         initialPlayers: setup.suggestedPlayers,
+        initialTeams: setup.suggestedTeams ?? [],
       },
       {
         label: setup.label,
@@ -383,6 +415,9 @@ export function HomeScreen({
           <NewGameCard
             open={showForm}
             profiles={profiles}
+            teams={teams}
+            teamMembers={teamMembers}
+            canUseTeams={canUseTeams}
             isAuthenticated={isAuthenticated}
             draft={presetDraft}
             draftToken={presetDraftToken}

@@ -57,6 +57,7 @@ function normalizeName(value: string) {
 export function getGameImportSignature(game: Game) {
   return JSON.stringify({
     name: game.name,
+    participantMode: game.participantMode ?? "players",
     scoreDirection: game.scoreDirection,
     startingScore: game.startingScore,
     targetScore: game.targetScore,
@@ -66,6 +67,11 @@ export function getGameImportSignature(game: Game) {
     timerEnabled: game.timerEnabled,
     timerMode: game.timerMode,
     timerSeconds: game.timerSeconds,
+    teams: game.teams.map((team) => ({
+      name: team.name,
+      createdAt: team.createdAt,
+      updatedAt: team.updatedAt ?? team.createdAt,
+    })),
     createdAt: game.createdAt,
     updatedAt: game.updatedAt,
     endedAt: game.endedAt ?? null,
@@ -81,6 +87,7 @@ export function getGameImportSignature(game: Game) {
       score: player.score,
       createdAt: player.createdAt,
       reachedAt: player.reachedAt,
+      teamId: player.teamId ?? null,
     })),
   });
 }
@@ -154,9 +161,18 @@ export function prepareBackupImport(
 
     if (!options.importGames) continue;
 
+    const clonedTeams = game.teams.map((team) => ({
+      ...team,
+      id: uid(),
+    }));
+    const teamIdMap = new Map(
+      game.teams.map((team, index) => [team.id, clonedTeams[index]?.id]),
+    );
+
     const clonedGame: Game = {
       ...game,
       id: uid(),
+      teams: clonedTeams,
       players: game.players.map((player) => {
         const originalProfileId = player.profileId;
         let profileId = originalProfileId;
@@ -175,6 +191,7 @@ export function prepareBackupImport(
           ...player,
           id: uid(),
           profileId,
+          teamId: player.teamId ? teamIdMap.get(player.teamId) : undefined,
         };
       }),
     };

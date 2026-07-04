@@ -83,7 +83,11 @@
   border: 1px solid rgba(216, 255, 79, 0.18);
   border-radius: 20px;
   background:
-    radial-gradient(circle at top right, rgba(216, 255, 79, 0.16), transparent 34%),
+    radial-gradient(
+      circle at top right,
+      rgba(216, 255, 79, 0.16),
+      transparent 34%
+    ),
     linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent 120%),
     rgba(255, 255, 255, 0.03);
 }
@@ -169,6 +173,51 @@
   gap: 10px;
 }
 
+.managePlayersDialog__modeNotice {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid rgba(216, 255, 79, 0.2);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.1), transparent 140%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.managePlayersDialog__modeNotice strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.managePlayersDialog__modeNotice span {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.managePlayersDialog__modeCta {
+  min-height: 38px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.managePlayersDialog__teamComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.managePlayersDialog__teamInput.input {
+  min-width: 0;
+  min-height: 40px;
+  font-size: 12px;
+}
+
+.managePlayersDialog__teamCreateBtn {
+  min-height: 40px;
+  padding-inline: 14px;
+}
+
 .managePlayersDialog__createBtn {
   min-height: 44px;
   padding-inline: 16px;
@@ -201,6 +250,16 @@
 .managePlayersDialog__sectionHeaderRow {
   display: grid;
   gap: 10px;
+}
+
+.managePlayersDialog__sectionHeaderRow--teams {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.managePlayersDialog__teamQuickAdd {
+  min-height: 34px;
+  padding-inline: 12px;
 }
 
 .managePlayersDialog__searchInline {
@@ -278,6 +337,112 @@
   gap: 8px;
 }
 
+.managePlayersDialog__teamList {
+  display: grid;
+  gap: 8px;
+}
+
+.managePlayersDialog__teamCard {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.managePlayersDialog__teamCardMain {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.managePlayersDialog__teamIdentity {
+  display: grid;
+  gap: 0;
+  align-content: center;
+  min-width: 0;
+}
+
+.managePlayersDialog__teamHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.managePlayersDialog__teamIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.16), rgba(216, 255, 79, 0.08)),
+    rgba(255, 255, 255, 0.03);
+  box-shadow:
+    inset 0 0 0 1px rgba(216, 255, 79, 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.managePlayersDialog__teamName {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.managePlayersDialog__teamMeta {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.managePlayersDialog__teamMembers {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+  min-width: 0;
+}
+
+.managePlayersDialog__teamMemberAvatar {
+  width: 22px;
+  height: 22px;
+  margin-left: -6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  border: 1px solid rgba(12, 16, 22, 0.82);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.managePlayersDialog__teamMemberAvatar:first-child {
+  margin-left: 0;
+}
+
+.managePlayersDialog__teamMemberOverflow {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  margin-left: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .managePlayersDialog__list--saved {
   max-height: 140px;
   overflow-y: auto;
@@ -343,7 +508,7 @@
 
 .managePlayersDialog__identity {
   display: grid;
-  gap: 1px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
@@ -371,12 +536,59 @@
   line-height: 1.25;
 }
 
+.managePlayersDialog__teamAssignment {
+  display: grid;
+  gap: 6px;
+}
+
+.managePlayersDialog__teamAssignmentLabel {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.managePlayersDialog__teamAssignmentChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.managePlayersDialog__teamChip {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.managePlayersDialog__teamChip--active {
+  border-color: rgba(216, 255, 79, 0.28);
+  background: rgba(216, 255, 79, 0.12);
+  color: var(--accent);
+}
+
+.managePlayersDialog__teamChip:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
 .managePlayersDialog__actionsRow {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
   justify-self: end;
+  align-self: stretch;
 }
 
 .managePlayersDialog__actionsRow--edit {
@@ -390,6 +602,64 @@
   min-width: 24px;
   min-height: 24px;
   font-size: 12px;
+}
+
+.managePlayersDialog__actionBtn--add {
+  box-shadow: 0 8px 20px rgba(191, 222, 97, 0.12);
+}
+
+.managePlayersDialog__inlineAction {
+  min-height: 32px;
+  align-self: center;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.managePlayersDialog__inlineAction:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.managePlayersDialog__inlineAction:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.managePlayersDialog__inlineAction--add {
+  border-color: rgba(191, 222, 97, 0.32);
+  background: rgba(191, 222, 97, 0.12);
+  color: var(--accent);
+  box-shadow: 0 8px 20px rgba(191, 222, 97, 0.12);
+}
+
+.managePlayersDialog__inlineAction--add:hover:not(:disabled) {
+  border-color: rgba(191, 222, 97, 0.48);
+  background: rgba(191, 222, 97, 0.18);
+}
+
+.managePlayersDialog__inlineAction--danger {
+  border-color: rgba(255, 140, 130, 0.24);
+  background: rgba(255, 140, 130, 0.1);
+  color: var(--neg);
+}
+
+.managePlayersDialog__inlineAction--danger:hover:not(:disabled) {
+  border-color: rgba(255, 140, 130, 0.4);
+  background: rgba(255, 140, 130, 0.16);
 }
 
 .managePlayersDialog__actionBtn--danger {
@@ -526,6 +796,10 @@
   .managePlayersDialog__toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .managePlayersDialog__teamComposer {
+    grid-template-columns: 1fr;
   }
 
   .managePlayersDialog__createBtn {
