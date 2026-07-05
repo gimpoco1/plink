@@ -175,30 +175,89 @@
 
 .managePlayersDialog__modeNotice {
   display: grid;
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid rgba(216, 255, 79, 0.2);
-  border-radius: 14px;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(122, 208, 255, 0.2);
+  border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.1), transparent 140%),
+    radial-gradient(
+      circle at top right,
+      rgba(122, 208, 255, 0.14),
+      transparent 38%
+    ),
+    linear-gradient(180deg, rgba(122, 208, 255, 0.1), transparent 135%),
     rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.managePlayersDialog__modeNotice strong {
+.managePlayersDialog__modeNoticeLead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.managePlayersDialog__modeNoticeIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(122, 208, 255, 0.14);
+  color: var(--ds-color-secondary);
+  box-shadow: inset 0 0 0 1px rgba(122, 208, 255, 0.18);
+}
+
+.managePlayersDialog__modeNoticeCopy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.managePlayersDialog__modeNoticeTag {
+  color: var(--ds-color-secondary);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.managePlayersDialog__modeNoticeCopy strong {
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 850;
+  line-height: 1.3;
 }
 
-.managePlayersDialog__modeNotice span {
+.managePlayersDialog__modeNoticeCopy > span:last-child {
   color: var(--text-dim);
   font-size: 12px;
+  line-height: 1.45;
 }
 
 .managePlayersDialog__modeCta {
-  min-height: 38px;
+  min-height: 40px;
   width: fit-content;
-  margin-top: 4px;
+  margin-top: 0;
+  padding-inline: 14px 16px;
+  border-color: rgba(122, 208, 255, 0.24);
+  background: rgba(122, 208, 255, 0.12);
+  color: var(--ds-color-secondary);
+  gap: 8px;
+  box-shadow: none;
+}
+
+.managePlayersDialog__modeCta:not(:disabled):hover {
+  border-color: rgba(122, 208, 255, 0.36);
+  background: rgba(122, 208, 255, 0.18);
+  color: #a7e1ff;
+}
+
+.managePlayersDialog__modeCta svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .managePlayersDialog__teamComposer {
@@ -379,12 +438,16 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: var(--accent);
+  color: var(--ds-color-on-secondary);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.16), rgba(216, 255, 79, 0.08)),
+    linear-gradient(
+      180deg,
+      var(--ds-color-secondary-fixed),
+      var(--ds-color-secondary)
+    ),
     rgba(255, 255, 255, 0.03);
   box-shadow:
-    inset 0 0 0 1px rgba(216, 255, 79, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
     0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
@@ -640,15 +703,15 @@
 }
 
 .managePlayersDialog__inlineAction--add {
-  border-color: rgba(191, 222, 97, 0.32);
-  background: rgba(191, 222, 97, 0.12);
-  color: var(--accent);
-  box-shadow: 0 8px 20px rgba(191, 222, 97, 0.12);
+  border-color: rgba(122, 208, 255, 0.28);
+  background: rgba(122, 208, 255, 0.12);
+  color: var(--ds-color-secondary);
+  box-shadow: 0 8px 20px rgba(122, 208, 255, 0.12);
 }
 
 .managePlayersDialog__inlineAction--add:hover:not(:disabled) {
-  border-color: rgba(191, 222, 97, 0.48);
-  background: rgba(191, 222, 97, 0.18);
+  border-color: rgba(122, 208, 255, 0.42);
+  background: rgba(122, 208, 255, 0.18);
 }
 
 .managePlayersDialog__inlineAction--danger {

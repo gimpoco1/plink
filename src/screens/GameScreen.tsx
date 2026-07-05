@@ -273,9 +273,10 @@ export function GameScreen({
   useEffect(() => setDismissedOutcomeKey(null), [game.id]);
 
   return (
-    <>
+    <div className={`gameScreen${isTeamsMode ? " gameScreen--teams" : ""}`}>
       {showWinSummary ? (
         <WinCelebration
+          isTeamGame={isTeamsMode}
           winnerName={winFxName}
           isDraw={!winner}
           gameName={gameDisplayName.title}
@@ -291,6 +292,7 @@ export function GameScreen({
               : capitalizeFirst(entry.name),
             initials: getInitials(entry.name),
             avatarColor: entry.avatarColor,
+            icon: "icon" in entry ? entry.icon : undefined,
             score: entry.score,
             rank,
             isWinner,
@@ -502,6 +504,6 @@ export function GameScreen({
         onStartGame={onStartGame}
         onOpenTeamsTab={onOpenTeamsTab}
       />
-    </>
+    </div>
   );
 }

@@ -3,6 +3,8 @@ import { Ellipsis, Plus, Undo2 } from "lucide-react";
 import "./TopBar.css";
 
 type Props = {
+  accentTone?: "default" | "team";
+  balancedLayout?: boolean;
   showReset?: boolean;
   title?: string;
   titleSuffix?: string;
@@ -28,6 +30,8 @@ type Props = {
 };
 
 export function TopBar({
+  accentTone = "default",
+  balancedLayout = false,
   showReset = true,
   title = "Plink",
   titleSuffix,
@@ -83,7 +87,11 @@ export function TopBar({
 
   const displayTitle = title.trim() ? title.trim().toUpperCase() : "";
   return (
-    <header className="topbar">
+    <header
+      className={`topbar${
+        accentTone === "team" ? " topbar--teamAccent" : ""
+      }${balancedLayout ? " topbar--balanced" : ""}`}
+    >
       <div className="topbar__left">
         {showBackButton ? (
           <button

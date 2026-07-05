@@ -10,8 +10,23 @@
 }
 
 .newSessionPlayers {
+  --participant-accent: var(--accent);
+  --participant-accent-soft: rgba(17, 24, 10, 0.1);
+  --participant-accent-strong: rgba(17, 24, 10, 0.92);
+  --participant-accent-border: rgba(17, 24, 10, 0.12);
   display: grid;
   gap: 10px;
+}
+
+.newSessionPlayers--teams {
+  --participant-accent: #40c4ff;
+  --participant-accent-soft: rgba(64, 196, 255, 0.18);
+  --participant-accent-strong: rgba(0, 53, 73, 0.92);
+  --participant-accent-border: rgba(64, 196, 255, 0.2);
+  border-color: rgba(64, 196, 255, 0.2);
+  background:
+    linear-gradient(180deg, rgba(64, 196, 255, 0.08), rgba(17, 24, 10, 0.06)),
+    rgba(17, 24, 10, 0.075);
 }
 
 .newSessionPlayers__head {
@@ -29,8 +44,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(17, 24, 10, 0.1);
-  color: rgba(17, 24, 10, 0.9);
+  background: var(--participant-accent-soft);
+  color: var(--participant-accent-strong);
   font-size: 11px;
   font-weight: 900;
 }
@@ -62,7 +77,7 @@
   width: min(760px, 100%);
   position: relative;
   border-radius: 30px;
-  background: var(--accent);
+  background: var(--ds-color-primary-fixed);
   overflow: visible;
   isolation: isolate;
   backface-visibility: hidden;
@@ -77,7 +92,7 @@
 .newGamePanel--open {
   border-color: rgba(17, 24, 10, 0.16);
   border-radius: calc(var(--floating-curve) - var(--card-tab-inset));
-  background: var(--accent);
+  background: var(--ds-color-primary-fixed);
   box-shadow:
     0 28px 68px rgba(0, 0, 0, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
@@ -89,7 +104,6 @@
   max-height: 56px;
   justify-content: flex-start;
   border-radius: 30px;
-  background: #d8ff4f;
   color: #11180f;
   box-shadow:
     0 12px 28px rgba(216, 255, 79, 0.14),
@@ -107,6 +121,18 @@
   overflow: hidden;
   transform-origin: top center;
   will-change: transform, opacity;
+}
+
+.newGamePanel__trigger.btn--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.newGamePanel__trigger.btn--primary:not(:disabled):hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .newGamePanel .newGamePanel__trigger--open {
@@ -960,6 +986,12 @@
   cursor: pointer;
 }
 
+.selectedPlayerChip__meta {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
 .selectedPlayerChip__avatar {
   width: 22px;
   height: 22px;
@@ -993,8 +1025,50 @@
   border: 2px solid rgba(216, 255, 79, 0.34);
 }
 
-.selectedPlayerChip__avatar--team > span:first-child {
+.selectedPlayerChip__avatar--teamStack > span {
+  width: 22px;
+  height: 22px;
+  margin-left: -6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  border: 2px solid rgba(64, 196, 255, 0.26);
+}
+
+.selectedPlayerChip__avatar--team > span:first-child,
+.selectedPlayerChip__avatar--teamStack > span:first-child {
   margin-left: 0;
+}
+
+.selectedPlayerChip__avatar--teamIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(64, 196, 255, 0.18);
+  color: #003549;
+  box-shadow: inset 0 0 0 1px rgba(64, 196, 255, 0.26);
+}
+
+.selectedPlayerChip__avatar--teamStack {
+  width: auto;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin-left: auto;
+}
+
+.selectedPlayerChip--team {
+  padding-right: 10px;
+}
+
+.newSessionPlayers--teams .selectedPlayerChip--team {
+  border-color: rgba(64, 196, 255, 0.18);
+  background: rgba(64, 196, 255, 0.08);
 }
 
 .selectedPlayerChip__name {
@@ -1004,6 +1078,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.selectedPlayerChip__hint {
+  color: rgba(17, 24, 10, 0.62);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .selectedPlayerChip__action {
@@ -1019,29 +1101,265 @@
   padding: 0;
 }
 
-.newSessionModeSwitch {
-  display: inline-flex;
-  gap: 6px;
+.participantPicker__group {
+  display: grid;
+  gap: 8px;
 }
 
-.newSessionModeSwitch__option {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid rgba(17, 24, 10, 0.1);
-  border-radius: 999px;
-  background: rgba(17, 24, 10, 0.06);
-  color: #11180f;
-  font-size: 12px;
+.participantPicker__label {
+  color: rgba(17, 24, 10, 0.66);
+  font-size: 10px;
   font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.participantPicker__search {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(17, 24, 10, 0.12);
+  border-radius: 14px;
+  background: rgba(17, 24, 10, 0.08);
+  color: #11180f;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.participantPicker__search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #11180f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.participantPicker__search input::placeholder {
+  color: rgba(17, 24, 10, 0.54);
+  font-size: 13px;
+}
+
+.participantPicker__clear {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.08);
+  color: rgba(17, 24, 10, 0.66);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-.newSessionModeSwitch__option--active {
+.participantPicker__listShell {
+  position: relative;
+  min-height: 0;
+}
+
+.participantPicker__list {
+  max-height: min(208px, 26vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  margin-right: -6px;
+  scrollbar-gutter: stable;
+}
+
+.participantPicker__list,
+.teamPicker__list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 24, 10, 0.24) transparent;
+}
+
+.participantPicker__list::-webkit-scrollbar,
+.teamPicker__list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.participantPicker__list::-webkit-scrollbar-track,
+.teamPicker__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.participantPicker__list::-webkit-scrollbar-thumb,
+.teamPicker__list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.24);
+}
+
+.participantPicker__listShell--fadeTop .participantPicker__list,
+.participantPicker__listShell--fadeTop .teamPicker__list {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 28px,
+    #000 100%
+  );
+  mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 100%);
+}
+
+.participantPicker__listShell--fadeBottom .participantPicker__list,
+.participantPicker__listShell--fadeBottom .teamPicker__list {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+.participantPicker__listShell--fadeTop.participantPicker__listShell--fadeBottom
+  .participantPicker__list,
+.participantPicker__listShell--fadeTop.participantPicker__listShell--fadeBottom
+  .teamPicker__list {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+.participantPicker__listContent {
+  display: grid;
+  gap: 8px;
+}
+
+.participantOption {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid rgba(17, 24, 10, 0.12);
+  border-radius: 14px;
+  background: rgba(17, 24, 10, 0.06);
+  color: #11180f;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.participantOption--active {
+  border-color: rgba(17, 24, 10, 0.88);
   background: rgba(17, 24, 10, 0.92);
   color: var(--accent);
 }
 
-.newSessionModeSwitch__option:disabled {
+.participantOption--active .participantOption__name,
+.participantOption--active .participantOption__hint {
+  color: var(--accent);
+}
+
+.participantOption__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.participantOption__copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.participantOption__name {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.participantOption__hint {
+  color: rgba(17, 24, 10, 0.62);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.participantOption__state {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(17, 24, 10, 0.72);
+  background: rgba(17, 24, 10, 0.08);
+  border: 1px solid rgba(17, 24, 10, 0.12);
+  flex: 0 0 auto;
+}
+
+.participantOption__state--selected {
+  color: #f6f8eb;
+  background: var(--participant-accent-strong);
+  border-color: var(--participant-accent-strong);
+}
+
+.participantModeSwitch {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 24, 10, 0.1);
+  background: rgba(17, 24, 10, 0.06);
+}
+
+.participantModeSwitch__option {
+  min-height: 34px;
+  min-width: 110px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(17, 24, 10, 0.62);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.participantModeSwitch__option--active {
+  background: rgba(17, 24, 10, 0.92);
+  color: var(--accent);
+}
+
+.participantModeSwitch__option--teamsActive {
+  background: rgba(64, 196, 255, 0.28);
+  color: #003549;
+}
+
+.participantModeSwitch__option:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -1052,55 +1370,115 @@
 }
 
 .teamPicker__list {
-  display: grid;
-  gap: 8px;
+  max-height: min(208px, 26vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  margin-right: -6px;
+  scrollbar-gutter: stable;
 }
 
 .teamPicker__option {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid rgba(17, 24, 10, 0.1);
-  border-radius: 16px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid rgba(17, 24, 10, 0.12);
+  border-radius: 14px;
   background: rgba(17, 24, 10, 0.06);
   color: #11180f;
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
   text-align: left;
   cursor: pointer;
 }
 
 .teamPicker__option--active {
-  border-color: rgba(17, 24, 10, 0.26);
-  background: rgba(17, 24, 10, 0.12);
+  border-color: rgba(64, 196, 255, 0.46);
+  background: rgba(64, 196, 255, 0.24);
+  color: #003549;
+}
+
+.teamPicker__option--active .teamPicker__optionCopy strong {
+  color: #003549;
+}
+
+.teamPicker__option--active .teamPicker__optionCopy span {
+  color: rgba(0, 53, 73, 0.78);
+}
+
+.teamPicker__option--active .teamPicker__icon {
+  background: rgba(255, 255, 255, 0.14);
+  color: #003549;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.teamPicker__option--active .teamPicker__avatar {
+  border-color: rgba(0, 53, 73, 0.18);
 }
 
 .teamPicker__optionHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-.teamPicker__optionHead strong {
+.teamPicker__optionIdentity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+}
+
+.teamPicker__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: rgba(64, 196, 255, 0.16);
+  color: #003549;
+  box-shadow: inset 0 0 0 1px rgba(64, 196, 255, 0.24);
+}
+
+.teamPicker__optionCopy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.teamPicker__optionCopy strong {
   font-size: 15px;
   font-weight: 900;
+  line-height: 1.1;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.teamPicker__optionHead span {
+.teamPicker__optionCopy span {
   color: rgba(17, 24, 10, 0.62);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
 .teamPicker__avatars {
   display: flex;
   align-items: center;
-  min-height: 26px;
+  min-height: 24px;
+  flex: 0 0 auto;
 }
 
 .teamPicker__avatar {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   margin-left: -7px;
   border-radius: 999px;
   display: inline-flex;
@@ -1109,21 +1487,62 @@
   color: white;
   font-size: 10px;
   font-weight: 900;
-  border: 2px solid rgba(216, 255, 79, 0.38);
+  border: 2px solid rgba(17, 24, 10, 0.12);
 }
 
 .teamPicker__avatar:first-child {
   margin-left: 0;
 }
 
+.teamPicker__avatarsWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
 .teamPicker__empty {
   padding: 12px;
   border-radius: 16px;
-  border: 1px dashed rgba(17, 24, 10, 0.14);
+  border: 1px dashed var(--participant-accent-border);
   color: rgba(17, 24, 10, 0.68);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.4;
+}
+
+.teamPicker__createBtn {
+  width: 100%;
+  min-height: 42px;
+  padding: 5px 9px;
+  border: 1px solid rgba(17, 24, 10, 0.12);
+  border-radius: 16px;
+  background: rgba(17, 24, 10, 0.08);
+  color: #11180f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.teamPicker__createBtn:hover {
+  border-color: rgba(17, 24, 10, 0.16);
+  background: rgba(17, 24, 10, 0.1);
+}
+
+.newSessionPlayers--teams .teamPicker__createBtn {
+  border-color: rgba(17, 24, 10, 0.12);
+  background: rgba(17, 24, 10, 0.08);
+}
+
+.newSessionPlayers--teams .teamPicker__createBtn svg {
+  color: #11180f;
 }
 
 .profilePicker__list > .newPlayerComposer {
@@ -1324,6 +1743,14 @@
     min-height: 48px;
     gap: 8px;
     padding: 8px 9px;
+  }
+  .participantModeSwitch {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .participantModeSwitch__option {
+    min-width: 0;
   }
   .modeCard__copy span {
     display: none;

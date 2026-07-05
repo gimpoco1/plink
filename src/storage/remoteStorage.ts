@@ -271,6 +271,18 @@ function rowToTeamMember(row: TeamMemberRow): TeamMember {
   };
 }
 
+function dedupeTeamMembers(members: TeamMember[]): TeamMember[] {
+  const unique = new Map<string, TeamMember>();
+  for (const member of members) {
+    const key = `${member.teamId}:${member.profileId}`;
+    const existing = unique.get(key);
+    if (!existing || member.createdAt < existing.createdAt) {
+      unique.set(key, member);
+    }
+  }
+  return [...unique.values()];
+}
+
 function isMissingAccountPlayerColumn(error: unknown) {
   if (!error || typeof error !== "object") return false;
   const value = error as { code?: unknown; message?: unknown };
@@ -545,15 +557,17 @@ export async function loadRemoteTeamMembers(userId: string): Promise<TeamMember[
     .select("team_id,profile_id,created_at,teams!inner(user_id)")
     .eq("teams.user_id", userId);
   if (error) throw error;
-  return (data ?? []).map((row) => {
-    const value = row as Record<string, unknown>;
-    return rowToTeamMember({
-      team_id: String(value.team_id),
-      profile_id: String(value.profile_id),
-      created_at:
-        typeof value.created_at === "number" ? value.created_at : Date.now(),
-    });
-  });
+  return dedupeTeamMembers(
+    (data ?? []).map((row) => {
+      const value = row as Record<string, unknown>;
+      return rowToTeamMember({
+        team_id: String(value.team_id),
+        profile_id: String(value.profile_id),
+        created_at:
+          typeof value.created_at === "number" ? value.created_at : Date.now(),
+      });
+    }),
+  );
 }
 
 export async function saveRemoteTeamMembers(
@@ -571,8 +585,8 @@ export async function saveRemoteTeamMembers(
   );
   if (validTeamIds.size === 0) return;
 
-  const scopedMembers = teamMembers.filter((member) =>
-    validTeamIds.has(member.teamId),
+  const scopedMembers = dedupeTeamMembers(
+    teamMembers.filter((member) => validTeamIds.has(member.teamId)),
   );
   const rows = scopedMembers.map((member) => teamMemberToRow(member));
 

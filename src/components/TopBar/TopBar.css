@@ -1,4 +1,6 @@
 .topbar {
+  --topbar-accent: var(--accent);
+  --topbar-accent-rgb: 191, 222, 97;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -11,6 +13,21 @@
   gap: 12px;
   padding: 10px 18px;
   min-height: 72px;
+}
+
+.topbar--teamAccent {
+  --topbar-accent: var(--ds-color-secondary);
+  --topbar-accent-rgb: 122, 208, 255;
+}
+
+.topbar--balanced .topbar__left,
+.topbar--balanced .topbar__actions {
+  flex: 0 0 64px;
+  min-width: 64px;
+}
+
+.topbar--balanced .topbar__actions {
+  justify-content: flex-end;
 }
 
 .topbar__left {
@@ -68,7 +85,7 @@
   min-height: 40px;
   padding: 0 16px;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--topbar-accent);
   color: var(--bg);
   border: 1px solid transparent;
   font-size: 14px;
@@ -79,7 +96,7 @@
 }
 
 .topbarAuth--text:hover {
-  background: var(--accent);
+  background: var(--topbar-accent);
   filter: brightness(1.05);
 }
 .topbarAuth svg {
@@ -88,9 +105,9 @@
 }
 
 .topbarAuth:hover {
-  border-color: rgba(216, 255, 79, 0.24);
-  background: rgba(216, 255, 79, 0.08);
-  color: var(--accent);
+  border-color: rgba(var(--topbar-accent-rgb), 0.24);
+  background: rgba(var(--topbar-accent-rgb), 0.08);
+  color: var(--topbar-accent);
 }
 
 .logo {
@@ -212,9 +229,9 @@
 }
 
 .metaChip--accent {
-  color: var(--accent);
-  background: rgba(216, 255, 79, 0.1);
-  border-color: rgba(216, 255, 79, 0.24);
+  color: var(--topbar-accent);
+  background: rgba(var(--topbar-accent-rgb), 0.1);
+  border-color: rgba(var(--topbar-accent-rgb), 0.24);
 }
 
 .topbarMenu {
@@ -239,6 +256,12 @@
 }
 
 @media (max-width: 480px) {
+  .topbar--balanced .topbar__left,
+  .topbar--balanced .topbar__actions {
+    flex-basis: 56px;
+    min-width: 56px;
+  }
+
   .topbar {
     padding: 10px 12px;
   }
@@ -304,9 +327,9 @@
   height: 42px;
   padding: 0 14px 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(216, 255, 79, 0.24);
-  background: rgba(216, 255, 79, 0.1);
-  color: var(--accent);
+  border: 1px solid rgba(var(--topbar-accent-rgb), 0.24);
+  background: rgba(var(--topbar-accent-rgb), 0.1);
+  color: var(--topbar-accent);
   display: inline-flex;
   align-items: center;
   gap: 8px;

@@ -63,7 +63,13 @@ export function HomeTabBar({
   }
 
   return (
-    <nav className="tabBar">
+    <nav
+      className={`tabBar${
+        activeTab === "players" && playersView === "teams"
+          ? " tabBar--teamsTheme"
+          : ""
+      }`}
+    >
       {tabs.map(({ id, label, Icon }) => {
         const isPlayersTab = id === "players";
         const visibleLabel = isPlayersTab

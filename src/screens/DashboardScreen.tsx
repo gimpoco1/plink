@@ -26,9 +26,11 @@ type DashboardScreenProps = {
   onOpenAuth: () => void;
   onOpenLocalImport: () => void;
   onOpenProPlan: () => void;
+  onStoreNewGameDraft: (draft: NewGameInput) => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
+  presetDraftIntent?: "edit" | "teams-detour" | null;
   onStartQuickSetup: (
     input: NewGameInput,
     details: {
@@ -58,6 +60,7 @@ type DashboardScreenProps = {
 export function DashboardScreen(props: DashboardScreenProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
+  const [openTeamBuilderToken, setOpenTeamBuilderToken] = useState(0);
   const [playersView, setPlayersView] = useState<"players" | "teams">(() => {
     try {
       return localStorage.getItem(PLAYERS_VIEW_STORAGE_KEY) === "teams"
@@ -97,10 +100,20 @@ export function DashboardScreen(props: DashboardScreenProps) {
   }, [props.onActiveTabChange]);
 
   useEffect(() => {
-    if (!props.presetDraft || props.presetDraftToken === undefined) return;
+    if (
+      !props.presetDraft ||
+      props.presetDraftToken === undefined ||
+      props.presetDraftIntent !== "edit"
+    )
+      return;
     props.onActiveTabChange("home");
     setIsCreating(true);
-  }, [props.onActiveTabChange, props.presetDraft, props.presetDraftToken]);
+  }, [
+    props.onActiveTabChange,
+    props.presetDraft,
+    props.presetDraftIntent,
+    props.presetDraftToken,
+  ]);
 
   function changeTab(tab: HomeTab) {
     props.onActiveTabChange(tab);
@@ -187,6 +200,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             addingPlayer={isAddingPlayer}
+            openTeamBuilderToken={openTeamBuilderToken}
             onActiveViewChange={setPlayersView}
             onAddingPlayerChange={setIsAddingPlayer}
             onOpenAuth={props.onOpenLocalImport}
@@ -218,6 +232,14 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onOpenAuth={props.onOpenAuth}
             onOpenLocalImport={props.onOpenLocalImport}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
+            onOpenTeamsTab={(draft) => {
+              props.onStoreNewGameDraft(draft);
+              props.onActiveTabChange("players");
+              setPlayersView("teams");
+              setIsAddingPlayer(false);
+              setIsCreating(false);
+              setOpenTeamBuilderToken((value) => value + 1);
+            }}
             onCreate={props.onCreate}
             onStartQuickSetup={props.onStartQuickSetup}
             onUpsertProfile={props.onUpsertProfile}

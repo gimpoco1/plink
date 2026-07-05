@@ -576,6 +576,25 @@ export function useGames(session: Session | null, authLoading = false) {
     );
   }
 
+  function reconcileGameCompletion(
+    game: Game,
+    players: Player[],
+    teams = game.teams,
+    now = Date.now(),
+  ) {
+    const stillEnded = hasGameEnded(players, {
+      ...game,
+      teams,
+      endedAt: undefined,
+    });
+
+    return {
+      teams,
+      players,
+      endedAt: stillEnded ? (game.endedAt ?? now) : undefined,
+    };
+  }
+
   function addPlayer(
     gameId: string,
     input: {
@@ -599,15 +618,23 @@ export function useGames(session: Session | null, authLoading = false) {
         profileId: input.profileId,
         teamId: input.teamId,
       };
-      return { ...g, players: [player, ...g.players] };
+      const players = [player, ...g.players];
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, players, g.teams, now),
+      };
     });
   }
 
   function removePlayer(gameId: string, playerId: string) {
-    updateGame(gameId, (g) => ({
-      ...g,
-      players: g.players.filter((p) => p.id !== playerId),
-    }));
+    const now = Date.now();
+    updateGame(gameId, (g) => {
+      const players = g.players.filter((p) => p.id !== playerId);
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, players, g.teams, now),
+      };
+    });
   }
 
   function updatePlayer(
@@ -617,23 +644,32 @@ export function useGames(session: Session | null, authLoading = false) {
       Pick<Player, "name" | "avatarColor" | "profileId" | "teamId">
     >,
   ) {
-    updateGame(gameId, (g) => ({
-      ...g,
-      players: g.players.map((p) => {
+    const now = Date.now();
+    updateGame(gameId, (g) => {
+      const players = g.players.map((p) => {
         if (p.id !== playerId) return p;
         return {
           ...p,
           ...updates,
           name: updates.name ? formatPlayerName(updates.name) : p.name,
         };
-      }),
-    }));
+      });
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, players, g.teams, now),
+      };
+    });
   }
 
   function addTeam(
     gameId: string,
     rawName: string,
     icon?: string,
+    members: Array<{
+      name: string;
+      avatarColor: string;
+      profileId?: string;
+    }> = [],
   ): GameTeam | null {
     const name = formatTeamName(rawName);
     if (!name) return null;
@@ -654,10 +690,26 @@ export function useGames(session: Session | null, authLoading = false) {
         icon,
         createdAt: now,
       };
-
+      const teams = [...g.teams, createdTeam];
+      const nextPlayers =
+        members.length > 0
+          ? [
+              ...members.map((member, index) => ({
+                id: uid(),
+                name: formatPlayerName(member.name),
+                score: g.startingScore,
+                createdAt: now + index,
+                reachedAt: now + index,
+                avatarColor: member.avatarColor,
+                profileId: member.profileId,
+                teamId: createdTeam!.id,
+              })),
+              ...g.players,
+            ].filter((player) => player.name)
+          : g.players;
       return {
         ...g,
-        teams: [...g.teams, createdTeam],
+        ...reconcileGameCompletion(g, nextPlayers, teams, now),
       };
     });
 
@@ -665,6 +717,7 @@ export function useGames(session: Session | null, authLoading = false) {
   }
 
   function removeTeam(gameId: string, teamId: string) {
+    const now = Date.now();
     updateGame(gameId, (g) => {
       const teams = g.teams.filter((team) => team.id !== teamId);
       const players =
@@ -678,8 +731,7 @@ export function useGames(session: Session | null, authLoading = false) {
 
       return {
         ...g,
-        teams,
-        players,
+        ...reconcileGameCompletion(g, players, teams, now),
       };
     });
   }

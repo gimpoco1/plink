@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { AVATAR_COLORS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
@@ -38,11 +39,9 @@ export function NewPlayerComposer({
 
   if (!isOpen) {
     return (
-      <button type="button" className="newPlayerTrigger" onClick={onOpen}>
-        <div className="newPlayerTrigger__icon">+</div>
-        <span className="newPlayerTrigger__copy">
-          <strong>Add player</strong>
-        </span>
+      <button type="button" className="teamPicker__createBtn" onClick={onOpen}>
+        <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
+        Add new player
       </button>
     );
   }

@@ -1,7 +1,18 @@
 import { useEffect } from "react";
+import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import type { ProfileStats } from "../../utils/profileStats";
 import type { WinCondition } from "../../types";
+import {
+  Dumbbell,
+  Flag,
+  Flame,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import "./WinCelebration.css";
 
 type Standing = {
@@ -9,12 +20,25 @@ type Standing = {
   name: string;
   initials: string;
   avatarColor: string;
+  icon?: string;
   score: number;
   rank: number;
   isWinner: boolean;
 };
 
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
+
 type Props = {
+  isTeamGame?: boolean;
   winnerName?: string | null;
   isDraw?: boolean;
   gameName: string;
@@ -30,6 +54,7 @@ type Props = {
 };
 
 export function WinCelebration({
+  isTeamGame = false,
   winnerName,
   isDraw = false,
   gameName,
@@ -54,7 +79,7 @@ export function WinCelebration({
 
   return (
     <div
-      className="winFx"
+      className={`winFx${isTeamGame ? " winFx--teams" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={isDraw ? `${gameName} ended in a draw` : `${winnerName} wins ${gameName}`}
@@ -159,13 +184,19 @@ export function WinCelebration({
               >
                 <div className="winFx__rowLeft">
                   <div className="winFx__rank">#{entry.rank}</div>
-                  <div
-                    className="winFx__avatar"
-                    style={avatarStyleFor(entry.avatarColor)}
-                    aria-hidden="true"
-                  >
-                    {entry.initials}
-                  </div>
+                  {isTeamGame && entry.icon ? (
+                    <div className="winFx__avatar winFx__avatar--team" aria-hidden="true">
+                      <TeamIconGlyph icon={entry.icon} />
+                    </div>
+                  ) : (
+                    <div
+                      className="winFx__avatar"
+                      style={avatarStyleFor(entry.avatarColor)}
+                      aria-hidden="true"
+                    >
+                      {entry.initials}
+                    </div>
+                  )}
                   <div className="winFx__player">
                     <strong>{entry.name}</strong>
                     {entry.isWinner ? <span>Champion</span> : null}
@@ -198,4 +229,12 @@ export function WinCelebration({
       </div>
     </div>
   );
+}
+
+function TeamIconGlyph({ icon }: { icon?: string }) {
+  const Icon =
+    TEAM_ICON_COMPONENTS[
+      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+    ] ?? Dumbbell;
+  return <Icon size={18} strokeWidth={2.25} aria-hidden="true" />;
 }

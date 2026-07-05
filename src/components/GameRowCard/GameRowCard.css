@@ -1,4 +1,7 @@
 .gameRowCard {
+  --gameRow-accent: var(--accent);
+  --gameRow-accent-ink: var(--accent-ink);
+  --gameRow-accent-rgb: 216, 255, 79;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -7,6 +10,12 @@
   transition: all 0.2s ease;
   overflow: hidden;
   position: relative;
+}
+
+.gameRowCard--teams {
+  --gameRow-accent: var(--ds-color-secondary);
+  --gameRow-accent-ink: var(--ds-color-on-secondary);
+  --gameRow-accent-rgb: 122, 208, 255;
 }
 
 .gameRowCard:hover {
@@ -43,7 +52,7 @@
   top: 0;
   bottom: 0;
   width: 5px;
-  background: var(--accent);
+  background: var(--gameRow-accent);
   border-radius: 0 3px 3px 0;
 }
 
@@ -57,6 +66,13 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   column-gap: 10px;
+}
+
+.gameRow__headMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
 }
 
 .gameRow__name {
@@ -90,8 +106,8 @@
   width: 22px;
   height: 22px;
   border-radius: 7px;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--gameRow-accent);
+  color: var(--gameRow-accent-ink);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -103,7 +119,7 @@
 }
 
 .gameRow__winnerDetail {
-  color: var(--accent);
+  color: var(--gameRow-accent);
 }
 
 .gameRow__winnerLabel {
@@ -115,15 +131,18 @@
   overflow: hidden;
   color: var(--text);
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gameRow__meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 10px 0;
+  gap: 0;
   margin-top: 18px;
   color: var(--muted);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .gameRow__detail {
@@ -131,10 +150,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   padding-right: 11px;
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
+  flex: 0 1 auto;
 }
 
 .gameRow__detail + .gameRow__detail {
@@ -152,8 +173,8 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(216, 255, 79, 0.1);
+  background: var(--gameRow-accent);
+  box-shadow: 0 0 0 3px rgba(var(--gameRow-accent-rgb), 0.1);
 }
 
 .gameRow__target {
@@ -175,10 +196,49 @@
   white-space: nowrap;
 }
 
+.gameRow__modeBadge {
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.gameRow__modeBadge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.gameRow__modeBadge--teams {
+  background: rgba(122, 208, 255, 0.14);
+  color: #7ad0ff;
+}
+
+@media (max-width: 560px) {
+  .gameRow__meta {
+    flex-wrap: wrap;
+    gap: 10px 0;
+    overflow: visible;
+  }
+}
+
 @media (max-width: 420px) {
   .gameRow__main,
   .gameRowCard .gameRow__main {
     padding: 20px 18px 18px 25px;
+  }
+
+  .gameRow__headMeta {
+    gap: 8px;
+  }
+
+  .gameRow__modeBadge {
+    padding: 0 8px;
   }
 
   .gameRow__name {

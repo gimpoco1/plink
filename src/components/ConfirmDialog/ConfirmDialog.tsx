@@ -1,6 +1,28 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
+import {
+  Dumbbell,
+  Flag,
+  Flame,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Zap,
+} from "lucide-react";
+
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
 
 type ConfirmPlayer = {
   name: string;
@@ -10,6 +32,13 @@ type ConfirmPlayer = {
 type ConfirmDetail = {
   label: string;
   value: string;
+};
+
+type ConfirmTeam = {
+  id: string;
+  name: string;
+  icon?: string;
+  members: ConfirmPlayer[];
 };
 
 type ConfirmResult = "confirm" | "cancel" | "extra";
@@ -27,6 +56,7 @@ type ConfirmOptions = {
   highlights?: string[];
   details?: ConfirmDetail[];
   players?: ConfirmPlayer[];
+  teams?: ConfirmTeam[];
   layout?: "default" | "feature";
 };
 
@@ -84,6 +114,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       highlights: [],
       details: [],
       players: [],
+      teams: [],
       layout: "default",
     });
     const [promptOptions, setPromptOptions] = useState<PromptOptions | null>(
@@ -124,6 +155,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             highlights: next.highlights ?? [],
             details: next.details ?? [],
             players: next.players ?? [],
+            teams: next.teams ?? [],
             layout: next.layout ?? "default",
           });
           dialogRef.current?.showModal();
@@ -146,6 +178,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             highlights: next.highlights ?? [],
             details: next.details ?? [],
             players: next.players ?? [],
+            teams: next.teams ?? [],
             layout: next.layout ?? "default",
           });
           dialogRef.current?.showModal();
@@ -170,6 +203,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             highlights: [],
             details: [],
             players: [],
+            teams: [],
             layout: "default",
           });
           dialogRef.current?.showModal();
@@ -246,8 +280,43 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 ))}
               </div>
             ) : null}
-            {options.message && options.players?.length ? (
+            {options.message &&
+            (options.players?.length || options.teams?.length) ? (
               <p className="dialog__message">{options.message}</p>
+            ) : null}
+            {options.teams?.length ? (
+              <div className="dialog__teamList" aria-label="Teams">
+                {options.teams.map((team) => (
+                  <div
+                    key={`${team.id}-${team.name}`}
+                    className="dialog__teamItem"
+                  >
+                    <span className="dialog__teamIcon" aria-hidden="true">
+                      <TeamIconGlyph icon={team.icon} size={18} />
+                    </span>
+                    <span className="dialog__teamCopy">
+                      <span className="dialog__teamName">{team.name}</span>
+                      <span className="dialog__teamMeta">
+                        {team.members.length}{" "}
+                        {team.members.length === 1 ? "player" : "players"}
+                      </span>
+                    </span>
+                    {team.members.length ? (
+                      <span className="dialog__teamMembers" aria-hidden="true">
+                        {team.members.slice(0, 4).map((player) => (
+                          <span
+                            key={`${team.id}-${player.name}-${player.avatarColor}`}
+                            className="dialog__teamMemberAvatar"
+                            style={avatarStyleFor(player.avatarColor)}
+                          >
+                            {getInitials(player.name)}
+                          </span>
+                        ))}
+                      </span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
             ) : null}
             {options.players?.length ? (
               <div className="dialog__playerList" aria-label="Players">
@@ -268,7 +337,9 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 ))}
               </div>
             ) : null}
-            {options.message && !options.players?.length ? (
+            {options.message &&
+            !options.players?.length &&
+            !options.teams?.length ? (
               <p className="dialog__message">{options.message}</p>
             ) : null}
             {isPrompt ? (
@@ -322,3 +393,19 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
     );
   },
 );
+
+function TeamIconGlyph({
+  icon,
+  size = 18,
+  strokeWidth = 2.35,
+}: {
+  icon?: string;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const Icon =
+    TEAM_ICON_COMPONENTS[
+      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+    ] ?? Dumbbell;
+  return <Icon size={size} strokeWidth={strokeWidth} aria-hidden="true" />;
+}

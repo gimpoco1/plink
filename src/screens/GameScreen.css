@@ -1,3 +1,55 @@
+.gameScreen {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gameScreen > .content {
+  flex: 1;
+  min-height: 0;
+}
+
+.gameScreen--teams {
+  --accent: var(--ds-color-secondary);
+  --accent-ink: var(--ds-color-on-secondary);
+  --primary: var(--ds-color-secondary-container);
+  --primaryInk: var(--ds-color-on-secondary-container);
+  --brand: var(--ds-color-secondary);
+  --pos: var(--ds-color-secondary-fixed-dim);
+  --accent-soft: rgba(122, 208, 255, 0.12);
+  --accent-border: rgba(122, 208, 255, 0.32);
+  --accent-glow: rgba(122, 208, 255, 0.26);
+  --focus: 0 0 0 4px rgba(122, 208, 255, 0.28);
+}
+
+.gameScreen--teams .teamScoreCard__teamIcon {
+  background: linear-gradient(
+    180deg,
+    var(--ds-color-secondary-fixed),
+    var(--accent)
+  );
+}
+
+.gameScreen--teams .card--leader {
+  border-color: rgba(122, 208, 255, 0.5);
+  background: rgba(122, 208, 255, 0.05);
+}
+
+.gameScreen--teams .card--winner {
+  background: rgba(122, 208, 255, 0.05);
+}
+
+.gameScreen--teams .scoreUndo {
+  border-color: var(--accent-border);
+}
+
+.gameScreen--teams .manualEndPrompt {
+  border-color: rgba(122, 208, 255, 0.2);
+}
+
 .teamBoard {
   display: grid;
   gap: 18px;

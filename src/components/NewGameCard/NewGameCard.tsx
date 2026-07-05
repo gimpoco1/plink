@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AVATAR_COLORS } from "../../constants";
+import { AVATAR_COLORS, DEFAULT_TEAM_ICON } from "../../constants";
 import type {
   GameTeam,
   PlayerProfile,
@@ -17,20 +17,37 @@ import {
   ArrowDownUp,
   Check,
   Dices,
+  Dumbbell,
   Flag,
+  Flame,
   Info,
   Library,
+  Plus,
   Search,
+  Shield,
+  Star,
   Timer,
   Target,
   Trophy,
   Users,
   X,
+  Zap,
 } from "lucide-react";
 type StagedPlayer = {
   name: string;
   avatarColor: string;
 };
+
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
 
 export type NewGameInput = {
   name: string;
@@ -64,12 +81,53 @@ type NewGameCardProps = {
   draftToken?: number;
   onOpenChange: (open: boolean) => void;
   onOpenAuth: () => void;
+  onOpenTeamsTab: (draft: NewGameInput) => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
 };
 
 function normalizePlayerName(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+function useScrollableListFade(dependencies: ReadonlyArray<unknown>) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [fadeState, setFadeState] = useState({ top: false, bottom: false });
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) {
+      setFadeState({ top: false, bottom: false });
+      return;
+    }
+
+    const updateFade = () => {
+      const top = node.scrollTop > 6;
+      const remainingScroll =
+        node.scrollHeight - node.clientHeight - node.scrollTop;
+      const bottom = remainingScroll > 6;
+      setFadeState({ top, bottom });
+    };
+
+    updateFade();
+
+    node.addEventListener("scroll", updateFade, { passive: true });
+    window.addEventListener("resize", updateFade);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => updateFade())
+        : null;
+    resizeObserver?.observe(node);
+
+    return () => {
+      node.removeEventListener("scroll", updateFade);
+      window.removeEventListener("resize", updateFade);
+      resizeObserver?.disconnect();
+    };
+  }, dependencies);
+
+  return { ref, fadeState };
 }
 
 export function NewGameCard({
@@ -83,6 +141,7 @@ export function NewGameCard({
   draftToken,
   onOpenChange,
   onOpenAuth,
+  onOpenTeamsTab,
   onCreate,
   onUpsertProfile,
 }: NewGameCardProps) {
@@ -111,7 +170,7 @@ export function NewGameCard({
   );
   const [stagedPlayers, setStagedPlayers] = useState<StagedPlayer[]>([]);
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
-  const [isSavedPickerOpen, setIsSavedPickerOpen] = useState(false);
+  const [participantSearch, setParticipantSearch] = useState("");
   const [isPresetBrowserOpen, setIsPresetBrowserOpen] = useState(false);
   const [presetSearch, setPresetSearch] = useState("");
   const [selectedPresetInfoId, setSelectedPresetInfoId] = useState<
@@ -145,7 +204,7 @@ export function NewGameCard({
     setSelectedTeamIds(new Set());
     setStagedPlayers([]);
     setIsAddingPlayer(false);
-    setIsSavedPickerOpen(false);
+    setParticipantSearch("");
     setIsPresetBrowserOpen(false);
     setPresetSearch("");
     setSelectedPresetInfoId(null);
@@ -230,11 +289,6 @@ export function NewGameCard({
     (participantMode !== "teams" || (isAuthenticated && canUseTeams)) &&
     !ruleNeedsMorePlayers;
 
-  const availableProfiles = useMemo(
-    () => profiles.filter((profile) => !selectedProfileIds.has(profile.id)),
-    [profiles, selectedProfileIds],
-  );
-
   const newPlayerValidationMessage = useMemo(() => {
     const normalizedName = normalizePlayerName(newPlayerName);
     if (!normalizedName) return undefined;
@@ -245,6 +299,41 @@ export function NewGameCard({
       ? "This game already has a player with that name."
       : undefined;
   }, [newPlayerName, selectedPlayers]);
+
+  const filteredProfiles = useMemo(() => {
+    const query = participantSearch.trim().toLocaleLowerCase();
+    if (!query) return profiles;
+    return profiles.filter((profile) =>
+      profile.name.toLocaleLowerCase().includes(query),
+    );
+  }, [participantSearch, profiles]);
+
+  const filteredTeams = useMemo(() => {
+    const query = participantSearch.trim().toLocaleLowerCase();
+    if (!query) return availableTeams;
+    return availableTeams.filter((team) => {
+      if (team.name.toLocaleLowerCase().includes(query)) return true;
+      return team.members.some((member) =>
+        member.name.toLocaleLowerCase().includes(query),
+      );
+    });
+  }, [availableTeams, participantSearch]);
+
+  const playerListFade = useScrollableListFade([
+    participantMode,
+    participantSearch,
+    filteredProfiles.length,
+    profiles.length,
+    selectedProfileIds.size,
+    isAddingPlayer,
+  ]);
+  const teamListFade = useScrollableListFade([
+    participantMode,
+    participantSearch,
+    filteredTeams.length,
+    availableTeams.length,
+    selectedTeamIds.size,
+  ]);
 
   useEffect(() => {
     if (!draft) return;
@@ -302,7 +391,7 @@ export function NewGameCard({
         })),
     );
     setIsAddingPlayer(false);
-    setIsSavedPickerOpen(false);
+    setParticipantSearch("");
     setIsPresetBrowserOpen(false);
     setPresetSearch("");
     setSelectedPresetInfoId(null);
@@ -437,8 +526,47 @@ export function NewGameCard({
 
   function switchParticipantMode(nextMode: "players" | "teams") {
     setParticipantMode(nextMode);
-    setIsSavedPickerOpen(false);
     setIsAddingPlayer(false);
+  }
+
+  function buildDraftState(): NewGameInput {
+    const savedPlayers = profiles
+      .filter((profile) => selectedProfileIds.has(profile.id))
+      .map((profile) => ({
+        name: profile.name,
+        avatarColor: profile.avatarColor,
+        profileId: profile.id,
+      }));
+
+    return {
+      name,
+      participantMode,
+      scoreDirection,
+      startingScore: scoreDirection === "down" ? parsedTarget || 0 : 0,
+      targetScore: winCondition === "reach_zero" ? 0 : parsedTarget || 0,
+      winCondition,
+      winByTwo,
+      manualEndOnly,
+      timerEnabled,
+      timerMode,
+      timerSeconds:
+        timerMode === "countdown" ? Math.max(1, timerTotalSeconds || 0) : 300,
+      initialPlayers: [...savedPlayers, ...stagedPlayers],
+      initialTeams: selectedTeams.map((team) => ({
+        id: team.id,
+        name: team.name,
+        icon: team.icon,
+        members: team.members.map((member) => ({
+          name: member.name,
+          avatarColor: member.avatarColor,
+          profileId: member.id,
+        })),
+      })),
+    };
+  }
+
+  function openTeamsWorkspace() {
+    onOpenTeamsTab(buildDraftState());
   }
 
   async function startGame() {
@@ -913,7 +1041,9 @@ export function NewGameCard({
               </motion.div>
 
               <motion.section
-                className="newSessionPlayers"
+                className={`newSessionPlayers${
+                  participantMode === "teams" ? " newSessionPlayers--teams" : ""
+                }`}
                 variants={sectionVariants}
                 transition={sectionTransition}
               >
@@ -926,29 +1056,32 @@ export function NewGameCard({
                   </span>
                 </div>
                 <div
-                  className="newSessionModeSwitch"
+                  className="participantModeSwitch"
+                  role="tablist"
                   aria-label="Participant mode"
                 >
                   <button
                     type="button"
-                    className={`newSessionModeSwitch__option${
+                    role="tab"
+                    aria-selected={participantMode === "players"}
+                    className={`participantModeSwitch__option${
                       participantMode === "players"
-                        ? " newSessionModeSwitch__option--active"
+                        ? " participantModeSwitch__option--active"
                         : ""
                     }`}
-                    aria-pressed={participantMode === "players"}
                     onClick={() => switchParticipantMode("players")}
                   >
                     Players
                   </button>
                   <button
                     type="button"
-                    className={`newSessionModeSwitch__option${
+                    role="tab"
+                    aria-selected={participantMode === "teams"}
+                    className={`participantModeSwitch__option${
                       participantMode === "teams"
-                        ? " newSessionModeSwitch__option--active"
+                        ? " participantModeSwitch__option--active participantModeSwitch__option--teamsActive"
                         : ""
                     }`}
-                    aria-pressed={participantMode === "teams"}
                     disabled={!isAuthenticated || !canUseTeams}
                     onClick={() => switchParticipantMode("teams")}
                   >
@@ -957,99 +1090,128 @@ export function NewGameCard({
                 </div>
                 {participantMode === "players" ? (
                   <>
-                    {selectedPlayers.length > 0 ? (
-                      <div className="selectedPlayers" aria-live="polite">
-                        <div className="selectedPlayers__list">
-                          {selectedPlayers.map((player) => (
-                            <button
-                              key={player.id}
-                              type="button"
-                              className="selectedPlayerChip"
-                              onClick={() => {
-                                if (player.stagedIndex === null)
-                                  toggleProfile(player.id);
-                                else
+                    <div className="profilePicker__list">
+                      {stagedPlayers.length > 0 ? (
+                        <div className="participantPicker__group">
+                          <div className="participantPicker__label">
+                            Added for this game
+                          </div>
+                          <div className="participantPicker__list">
+                            {stagedPlayers.map((player, index) => (
+                              <button
+                                key={`staged-${index}`}
+                                type="button"
+                                className="participantOption participantOption--active"
+                                onClick={() =>
                                   setStagedPlayers((current) =>
                                     current.filter(
-                                      (_, index) =>
-                                        index !== player.stagedIndex,
+                                      (_, stagedIndex) => stagedIndex !== index,
                                     ),
-                                  );
-                              }}
-                            >
-                              <span
-                                className="selectedPlayerChip__avatar"
-                                style={avatarStyleFor(player.avatarColor)}
+                                  )
+                                }
                               >
-                                {getInitials(player.name)}
-                              </span>
-                              <span className="selectedPlayerChip__name">
-                                {profiles.some(
-                                  (profile) =>
-                                    profile.id === player.id &&
-                                    profile.isAccountPlayer,
-                                )
-                                  ? formatAccountPlayerName(player.name)
-                                  : player.name}
-                              </span>
-                              <span className="selectedPlayerChip__action">
-                                ×
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                    <div className="profilePicker__list">
-                      {availableProfiles.length > 0 ? (
-                        <div className="savedPlayerPicker">
-                          <button
-                            type="button"
-                            className="savedPlayerPicker__toggle"
-                            aria-expanded={isSavedPickerOpen}
-                            onClick={() =>
-                              setIsSavedPickerOpen((value) => !value)
-                            }
-                          >
-                            <span className="savedPlayerPicker__copy">
-                              <strong>Saved players</strong>
-                              <span>
-                                Select existing players to add to this game
-                              </span>
-                            </span>
-                            <span className="savedPlayerPicker__count">
-                              {availableProfiles.length}
-                            </span>
-                          </button>
-                          {isSavedPickerOpen ? (
-                            <div className="savedPlayerPicker__options">
-                              {availableProfiles.map((profile) => (
-                                <button
-                                  key={profile.id}
-                                  type="button"
-                                  className="profileOption"
-                                  onClick={() => toggleProfile(profile.id)}
+                                <span
+                                  className="participantOption__avatar"
+                                  style={avatarStyleFor(player.avatarColor)}
                                 >
-                                  <span
-                                    className="profileOption__avatar"
-                                    style={avatarStyleFor(profile.avatarColor)}
+                                  {getInitials(player.name)}
+                                </span>
+                                <span className="participantOption__copy">
+                                  <span className="participantOption__name">
+                                    {player.name}
+                                  </span>
+                                  <span className="participantOption__hint">
+                                    Game only
+                                  </span>
+                                </span>
+                                <SelectionStateIcon selected />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {profiles.length > 0 ? (
+                        <div className="participantPicker__group">
+                          <label className="participantPicker__search">
+                            <Search size={16} strokeWidth={2.4} aria-hidden="true" />
+                            <input
+                              type="text"
+                              value={participantSearch}
+                              onChange={(event) =>
+                                setParticipantSearch(event.target.value)
+                              }
+                              placeholder="Search players"
+                              aria-label="Search saved players"
+                            />
+                            {participantSearch ? (
+                              <button
+                                type="button"
+                                className="participantPicker__clear"
+                                aria-label="Clear player search"
+                                onClick={() => setParticipantSearch("")}
+                              >
+                                <X size={15} strokeWidth={2.6} aria-hidden="true" />
+                              </button>
+                            ) : null}
+                          </label>
+                          <div
+                            className={`participantPicker__listShell${
+                              playerListFade.fadeState.top
+                                ? " participantPicker__listShell--fadeTop"
+                                : ""
+                            }${
+                              playerListFade.fadeState.bottom
+                                ? " participantPicker__listShell--fadeBottom"
+                                : ""
+                            }`}
+                          >
+                            <div
+                              ref={playerListFade.ref}
+                              className="participantPicker__list"
+                            >
+                              <div className="participantPicker__listContent">
+                                {filteredProfiles.map((profile) => (
+                                  <button
+                                    key={profile.id}
+                                    type="button"
+                                    className={`participantOption${
+                                      selectedProfileIds.has(profile.id)
+                                        ? " participantOption--active"
+                                        : ""
+                                    }`}
+                                    onClick={() => toggleProfile(profile.id)}
                                   >
-                                    {getInitials(profile.name)}
-                                  </span>
-                                  <span className="profileOption__copy">
-                                    <span className="profileOption__name">
-                                      {profile.isAccountPlayer
-                                        ? formatAccountPlayerName(profile.name)
-                                        : profile.name}
+                                    <span
+                                      className="participantOption__avatar"
+                                      style={avatarStyleFor(profile.avatarColor)}
+                                    >
+                                      {getInitials(profile.name)}
                                     </span>
-                                    <span className="profileOption__hint">
-                                      Tap to add
+                                    <span className="participantOption__copy">
+                                      <span className="participantOption__name">
+                                        {profile.isAccountPlayer
+                                          ? formatAccountPlayerName(profile.name)
+                                          : profile.name}
+                                      </span>
                                     </span>
-                                  </span>
-                                </button>
-                              ))}
+                                    <SelectionStateIcon
+                                      selected={selectedProfileIds.has(profile.id)}
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          {filteredProfiles.length === 0 ? (
+                            <div className="teamPicker__empty">
+                              No saved players match that search.
                             </div>
                           ) : null}
+                        </div>
+                      ) : null}
+                      {selectedPlayers.length === 0 && profiles.length === 0 ? (
+                        <div className="teamPicker__empty">
+                          No saved players yet. Create one below.
                         </div>
                       ) : null}
                       <NewPlayerComposer
@@ -1071,40 +1233,6 @@ export function NewGameCard({
                   </>
                 ) : (
                   <div className="teamPicker">
-                    {selectedTeams.length > 0 ? (
-                      <div className="selectedPlayers" aria-live="polite">
-                        <div className="selectedPlayers__list">
-                          {selectedTeams.map((team) => (
-                            <button
-                              key={team.id}
-                              type="button"
-                              className="selectedPlayerChip"
-                              onClick={() => toggleTeam(team.id)}
-                            >
-                              <span
-                                className="selectedPlayerChip__avatar selectedPlayerChip__avatar--team"
-                                aria-hidden="true"
-                              >
-                                {team.members.slice(0, 2).map((member) => (
-                                  <span
-                                    key={`${team.id}-${member.id}`}
-                                    style={avatarStyleFor(member.avatarColor)}
-                                  >
-                                    {getInitials(member.name)}
-                                  </span>
-                                ))}
-                              </span>
-                              <span className="selectedPlayerChip__name">
-                                {team.name}
-                              </span>
-                              <span className="selectedPlayerChip__action">
-                                ×
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
                     {!isAuthenticated ? (
                       <div className="teamPicker__empty">
                         Sign in to build games from saved teams.
@@ -1114,44 +1242,124 @@ export function NewGameCard({
                         Team games are a Pro feature.
                       </div>
                     ) : availableTeams.length > 0 ? (
-                      <div className="teamPicker__list">
-                        {availableTeams.map((team) => (
-                          <button
-                            key={team.id}
-                            type="button"
-                            className={`teamPicker__option${
-                              selectedTeamIds.has(team.id)
-                                ? " teamPicker__option--active"
-                                : ""
-                            }`}
-                            onClick={() => toggleTeam(team.id)}
-                          >
-                            <span className="teamPicker__optionHead">
-                              <strong>{team.name}</strong>
-                              <span>{team.members.length} players</span>
-                            </span>
-                            <span
-                              className="teamPicker__avatars"
-                              aria-hidden="true"
+                      <>
+                        <label className="participantPicker__search participantPicker__search--teams">
+                          <Search size={16} strokeWidth={2.4} aria-hidden="true" />
+                          <input
+                            type="text"
+                            value={participantSearch}
+                            onChange={(event) =>
+                              setParticipantSearch(event.target.value)
+                            }
+                            placeholder="Search teams"
+                            aria-label="Search saved teams"
+                          />
+                          {participantSearch ? (
+                            <button
+                              type="button"
+                              className="participantPicker__clear"
+                              aria-label="Clear team search"
+                              onClick={() => setParticipantSearch("")}
                             >
-                              {team.members.slice(0, 4).map((member) => (
-                                <span
-                                  key={`${team.id}-${member.id}`}
-                                  className="teamPicker__avatar"
-                                  style={avatarStyleFor(member.avatarColor)}
+                              <X size={15} strokeWidth={2.6} aria-hidden="true" />
+                            </button>
+                          ) : null}
+                        </label>
+                        <div
+                          className={`participantPicker__listShell${
+                            teamListFade.fadeState.top
+                              ? " participantPicker__listShell--fadeTop"
+                              : ""
+                          }${
+                            teamListFade.fadeState.bottom
+                              ? " participantPicker__listShell--fadeBottom"
+                              : ""
+                          }`}
+                        >
+                          <div ref={teamListFade.ref} className="teamPicker__list">
+                            <div className="participantPicker__listContent">
+                              {filteredTeams.map((team) => (
+                                <button
+                                  key={team.id}
+                                  type="button"
+                                  className={`teamPicker__option${
+                                    selectedTeamIds.has(team.id)
+                                      ? " teamPicker__option--active"
+                                      : ""
+                                  }`}
+                                  onClick={() => toggleTeam(team.id)}
                                 >
-                                  {getInitials(member.name)}
-                                </span>
+                                  <span className="teamPicker__optionHead">
+                                    <span className="teamPicker__optionIdentity">
+                                      <span
+                                        className="teamPicker__icon"
+                                        aria-hidden="true"
+                                      >
+                                        <TeamIconGlyph
+                                          icon={team.icon}
+                                          size={19}
+                                          strokeWidth={2.3}
+                                        />
+                                      </span>
+                                      <span className="teamPicker__optionCopy">
+                                        <strong>{team.name}</strong>
+                                        <span>{team.members.length} players</span>
+                                      </span>
+                                    </span>
+                                  </span>
+                                  <span
+                                    className="teamPicker__avatarsWrap"
+                                    aria-hidden="true"
+                                  >
+                                    <span className="teamPicker__avatars">
+                                      {team.members.map((member) => (
+                                        <span
+                                          key={`${team.id}-${member.id}`}
+                                          className="teamPicker__avatar"
+                                          style={avatarStyleFor(member.avatarColor)}
+                                        >
+                                          {getInitials(member.name)}
+                                        </span>
+                                      ))}
+                                    </span>
+                                    <SelectionStateIcon
+                                      selected={selectedTeamIds.has(team.id)}
+                                    />
+                                  </span>
+                                </button>
                               ))}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
+                            </div>
+                          </div>
+                        </div>
+                        {filteredTeams.length === 0 ? (
+                          <div className="teamPicker__empty">
+                            No saved teams match that search.
+                          </div>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="teamPicker__createBtn"
+                          onClick={openTeamsWorkspace}
+                        >
+                          <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
+                          Add new team
+                        </button>
+                      </>
                     ) : (
-                      <div className="teamPicker__empty">
-                        No saved teams yet. Create teams from the Players tab
-                        first.
-                      </div>
+                      <>
+                        <div className="teamPicker__empty">
+                          No saved teams yet. Create your first roster from the
+                          Teams tab.
+                        </div>
+                        <button
+                          type="button"
+                          className="teamPicker__createBtn"
+                          onClick={openTeamsWorkspace}
+                        >
+                          <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
+                          Add new team
+                        </button>
+                      </>
                     )}
                   </div>
                 )}
@@ -1348,6 +1556,39 @@ function ModeButton({
         <span>{description}</span>
       </span>
     </button>
+  );
+}
+
+function TeamIconGlyph({
+  icon,
+  size = 18,
+  strokeWidth = 2.5,
+}: {
+  icon?: string;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const Icon =
+    TEAM_ICON_COMPONENTS[
+      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+    ] ?? Dumbbell;
+  return <Icon size={size} strokeWidth={strokeWidth} aria-hidden="true" />;
+}
+
+function SelectionStateIcon({ selected }: { selected: boolean }) {
+  return (
+    <span
+      className={`participantOption__state${
+        selected ? " participantOption__state--selected" : ""
+      }`}
+      aria-hidden="true"
+    >
+      {selected ? (
+        <Check size={15} strokeWidth={2.8} />
+      ) : (
+        <Plus size={15} strokeWidth={2.8} />
+      )}
+    </span>
   );
 }
 

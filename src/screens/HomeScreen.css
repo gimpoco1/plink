@@ -221,6 +221,39 @@
   flex-wrap: wrap;
 }
 
+.quickSetupCard__teams {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.quickSetupCard__teamIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(122, 208, 255, 0.22);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(122, 208, 255, 0.2),
+      rgba(122, 208, 255, 0.12)
+    ),
+    rgba(255, 255, 255, 0.04);
+  color: var(--ds-color-secondary-fixed);
+  display: inline-grid;
+  place-items: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+}
+
+.quickSetupCard__versus {
+  color: rgba(217, 228, 235, 0.7);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .quickSetupCard__playerAvatar,
 .quickSetupCard__playerMore {
   width: 26px;
@@ -328,7 +361,8 @@
     font-size: 10px;
   }
   .quickSetupCard__playerAvatar,
-  .quickSetupCard__playerMore {
+  .quickSetupCard__playerMore,
+  .quickSetupCard__teamIcon {
     width: 24px;
     height: 24px;
     border-radius: 8px;

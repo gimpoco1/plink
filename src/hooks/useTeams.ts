@@ -33,6 +33,18 @@ function getSyncErrorMessage(error: unknown) {
   return "Unknown sync error";
 }
 
+function dedupeTeamMembers(members: TeamMember[]) {
+  const unique = new Map<string, TeamMember>();
+  for (const member of members) {
+    const key = `${member.teamId}:${member.profileId}`;
+    const existing = unique.get(key);
+    if (!existing || member.createdAt < existing.createdAt) {
+      unique.set(key, member);
+    }
+  }
+  return [...unique.values()];
+}
+
 export function useTeams(session: Session | null) {
   const userId = session?.user.id ?? null;
   const [teams, setTeams] = useState<GameTeam[]>([]);
@@ -67,11 +79,12 @@ export function useTeams(session: Session | null) {
     Promise.all([loadRemoteTeams(userId), loadRemoteTeamMembers(userId)])
       .then(([remoteTeams, remoteMembers]) => {
         if (!alive) return;
+        const nextMembers = dedupeTeamMembers(remoteMembers);
         setTeams(remoteTeams);
-        setTeamMembers(remoteMembers);
+        setTeamMembers(nextMembers);
         remoteSignatureRef.current = getTeamSyncSignature(
           remoteTeams,
-          remoteMembers,
+          nextMembers,
         );
         setRemoteUserId(userId);
         setRemoteReady(true);
@@ -106,8 +119,9 @@ export function useTeams(session: Session | null) {
           loadRemoteTeamMembers(activeUserId),
         ]);
         if (!alive) return;
+        const nextMembers = dedupeTeamMembers(remoteMembers);
 
-        const incomingSignature = getTeamSyncSignature(remoteTeams, remoteMembers);
+        const incomingSignature = getTeamSyncSignature(remoteTeams, nextMembers);
         const currentSignature = getTeamSyncSignature(teams, teamMembers);
         if (
           remoteSignatureRef.current &&
@@ -122,7 +136,7 @@ export function useTeams(session: Session | null) {
         }
         remoteSignatureRef.current = incomingSignature;
         setTeams(remoteTeams);
-        setTeamMembers(remoteMembers);
+        setTeamMembers(nextMembers);
       } catch {
         // Keep in-memory state if refresh fails.
       }
@@ -310,7 +324,10 @@ export function useTeams(session: Session | null) {
             !(member.teamId === teamId && member.profileId === profileId),
         );
       }
-      return [...current, { teamId, profileId, createdAt: Date.now() }];
+      return dedupeTeamMembers([
+        ...current,
+        { teamId, profileId, createdAt: Date.now() },
+      ]);
     });
     setTeams((current) =>
       current.map((team) =>

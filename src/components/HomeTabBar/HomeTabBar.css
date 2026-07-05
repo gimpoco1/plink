@@ -1,4 +1,6 @@
 .tabBar {
+  --tabBar-accent: var(--accent);
+  --tabBar-accent-bg: rgba(216, 255, 79, 0.12);
   position: fixed;
   bottom: max(18px, env(safe-area-inset-bottom));
   left: 50%;
@@ -16,6 +18,11 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   z-index: 1000;
   overflow: visible;
+}
+
+.tabBar--teamsTheme {
+  --tabBar-accent: var(--ds-color-secondary);
+  --tabBar-accent-bg: rgba(122, 208, 255, 0.12);
 }
 
 .tabItemWrap {
@@ -71,8 +78,8 @@
 }
 
 .tabSwitcher__item[aria-checked="true"] {
-  background: rgba(216, 255, 79, 0.12);
-  color: var(--accent);
+  background: var(--tabBar-accent-bg);
+  color: var(--tabBar-accent);
 }
 
 .tabItem svg {
@@ -92,7 +99,7 @@
 }
 
 .tabItem[data-active="true"] {
-  color: var(--accent);
+  color: var(--tabBar-accent);
 }
 
 @media (max-width: 560px) {

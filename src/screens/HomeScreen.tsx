@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type {
   Game,
   GameTeam,
@@ -7,6 +7,7 @@ import type {
   TeamMember,
   WinCondition,
 } from "../types";
+import { DEFAULT_TEAM_ICON } from "../constants";
 import {
   NewGameCard,
   type NewGameInput,
@@ -19,6 +20,16 @@ import { getGameDisplayName } from "../utils/text";
 import { getInitials } from "../utils/text";
 import { findWinner } from "../utils/ranking";
 import "./HomeScreen.css";
+import {
+  Dumbbell,
+  Flag,
+  Flame,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Zap,
+} from "lucide-react";
 
 type QuickSetup = {
   key: string;
@@ -37,10 +48,22 @@ type QuickSetup = {
   suggestedTeams?: Array<{
     id: string;
     name: string;
+    icon?: string;
     members: Array<{ name: string; avatarColor: string; profileId?: string }>;
   }>;
   uses: number;
 };
+
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
 
 type HomeScreenProps = {
   games: Game[];
@@ -58,12 +81,19 @@ type HomeScreenProps = {
   onOpenAuth: () => void;
   onOpenLocalImport: () => void;
   onDismissLocalSessionsHint: () => void;
+  onOpenTeamsTab: (draft: NewGameInput) => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   onStartQuickSetup: (
     input: NewGameInput,
     details: {
       label: string;
       players: { name: string; avatarColor: string }[];
+      teams?: Array<{
+        id: string;
+        name: string;
+        icon?: string;
+        members: { name: string; avatarColor: string }[];
+      }>;
     },
   ) => void | Promise<void>;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
@@ -86,6 +116,7 @@ export function HomeScreen({
   onOpenAuth,
   onOpenLocalImport,
   onDismissLocalSessionsHint,
+  onOpenTeamsTab,
   onCreate,
   onStartQuickSetup,
   onUpsertProfile,
@@ -238,6 +269,7 @@ export function HomeScreen({
             ? game.teams.map((team) => ({
                 id: team.id,
                 name: team.name,
+                icon: team.icon,
                 members: game.players
                   .filter((player) => player.teamId === team.id)
                   .map((player) => ({
@@ -297,6 +329,15 @@ export function HomeScreen({
         players: setup.suggestedPlayers.map((player) => ({
           name: player.name,
           avatarColor: player.avatarColor,
+        })),
+        teams: setup.suggestedTeams?.map((team) => ({
+          id: team.id,
+          name: team.name,
+          icon: team.icon,
+          members: team.members.map((member) => ({
+            name: member.name,
+            avatarColor: member.avatarColor,
+          })),
         })),
       },
     );
@@ -423,6 +464,7 @@ export function HomeScreen({
             draftToken={presetDraftToken}
             onOpenChange={handleOpenChange}
             onOpenAuth={onOpenAuth}
+            onOpenTeamsTab={onOpenTeamsTab}
             onCreate={onCreate}
             onUpsertProfile={onUpsertProfile}
           />
@@ -435,9 +477,9 @@ export function HomeScreen({
             <div className="homeList__title">Games you play often</div>
           </div>
           <div className="quickSetups__grid">
-            {quickSetups.map((setup) => (
+            {quickSetups.map((setup, index) => (
               <button
-                key={setup.key}
+                key={`${setup.key}-${index}`}
                 type="button"
                 className="quickSetupCard"
                 onClick={() => startSuggestion(setup)}
@@ -455,14 +497,40 @@ export function HomeScreen({
                         </span>
                       ))}
                     </div>
-                    {setup.suggestedPlayers.length > 0 ? (
+                    {setup.participantMode === "teams" &&
+                    setup.suggestedTeams &&
+                    setup.suggestedTeams.length > 0 ? (
+                      <div
+                        className="quickSetupCard__teams"
+                        aria-label="Preset teams"
+                      >
+                        {setup.suggestedTeams.slice(0, 4).map((team, index) => (
+                          <Fragment
+                            key={`${setup.key}-${team.id}-${team.name}-${index}`}
+                          >
+                            {index > 0 ? (
+                              <span className="quickSetupCard__versus">vs</span>
+                            ) : null}
+                            <span
+                              className="quickSetupCard__teamIcon"
+                              title={team.name}
+                              aria-hidden="true"
+                            >
+                              <QuickSetupTeamIcon icon={team.icon} />
+                            </span>
+                          </Fragment>
+                        ))}
+                      </div>
+                    ) : setup.suggestedPlayers.length > 0 ? (
                       <div
                         className="quickSetupCard__players"
                         aria-label="Preset players"
                       >
-                        {setup.suggestedPlayers.slice(0, 4).map((player) => (
+                        {setup.suggestedPlayers
+                          .slice(0, 4)
+                          .map((player, index) => (
                           <span
-                            key={`${setup.key}-${player.profileId ?? player.name}`}
+                            key={`${setup.key}-${player.profileId ?? player.name}-${index}`}
                             className="quickSetupCard__playerAvatar"
                             style={avatarStyleFor(player.avatarColor)}
                             title={player.name}
@@ -495,4 +563,12 @@ export function HomeScreen({
       ) : null}
     </div>
   );
+}
+
+function QuickSetupTeamIcon({ icon }: { icon?: string }) {
+  const Icon =
+    TEAM_ICON_COMPONENTS[
+      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+    ] ?? Dumbbell;
+  return <Icon size={16} strokeWidth={2.35} aria-hidden="true" />;
 }

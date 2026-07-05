@@ -16,6 +16,7 @@ import {
 } from "../../utils/text";
 import { DEFAULT_TEAM_ICON } from "../../constants";
 import {
+  ArrowUpRight,
   Dumbbell,
   Flag,
   Flame,
@@ -23,6 +24,7 @@ import {
   Star,
   Target,
   Trophy,
+  Users,
   Zap,
 } from "lucide-react";
 import "./ManagePlayersDialog.css";
@@ -662,19 +664,36 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                     )}
 
                     <div className="managePlayersDialog__modeNotice">
-                      <strong>Create or edit teams in the Teams tab.</strong>
-                      <span>
-                        Single players cannot be added directly to a teams game.
-                      </span>
+                      <div className="managePlayersDialog__modeNoticeLead">
+                        <div
+                          className="managePlayersDialog__modeNoticeIcon"
+                          aria-hidden="true"
+                        >
+                          <Users size={18} strokeWidth={2.3} />
+                        </div>
+                        <div className="managePlayersDialog__modeNoticeCopy">
+                          <span className="managePlayersDialog__modeNoticeTag">
+                            Teams only
+                          </span>
+                          <strong>
+                            Create or edit teams from the Teams tab.
+                          </strong>
+                          <span>
+                            Team games only accept saved teams. Individual
+                            players need to be grouped into a team first.
+                          </span>
+                        </div>
+                      </div>
                       <button
-                        className="btn btn--primary managePlayersDialog__modeCta"
+                        className="btn managePlayersDialog__modeCta"
                         type="button"
                         onClick={() => {
                           close();
                           onOpenTeamsTab();
                         }}
                       >
-                        Go to Teams tab
+                        <span>Open Teams tab</span>
+                        <ArrowUpRight size={15} strokeWidth={2.3} aria-hidden="true" />
                       </button>
                     </div>
                   </section>

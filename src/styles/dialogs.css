@@ -143,6 +143,87 @@
   gap: 8px;
 }
 
+.dialog__teamList {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog__teamItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dialog__teamIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(122, 208, 255, 0.24);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(122, 208, 255, 0.2),
+      rgba(122, 208, 255, 0.12)
+    ),
+    rgba(255, 255, 255, 0.04);
+  color: var(--ds-color-secondary-fixed);
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.dialog__teamCopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  flex: 1 1 auto;
+}
+
+.dialog__teamName {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dialog__teamMeta {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.dialog__teamMembers {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+}
+
+.dialog__teamMemberAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 2px solid #0f121c;
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-left: -6px;
+}
+
+.dialog__teamMemberAvatar:first-child {
+  margin-left: 0;
+}
+
 .dialog__playerItem {
   display: flex;
   align-items: center;
@@ -209,6 +290,29 @@
 .dialog--confirmFeature .dialog__playerList {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
+}
+
+.dialog--confirmFeature .dialog__teamList {
+  gap: 8px;
+}
+
+.dialog--confirmFeature .dialog__teamItem {
+  padding: 8px 9px;
+  border-radius: 12px;
+}
+
+.dialog--confirmFeature .dialog__teamIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+.dialog--confirmFeature .dialog__teamName {
+  font-size: 14px;
+}
+
+.dialog--confirmFeature .dialog__teamMeta {
+  font-size: 10px;
 }
 
 .dialog--confirmFeature .dialog__playerItem {

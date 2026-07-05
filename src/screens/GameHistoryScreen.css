@@ -3,6 +3,12 @@
   padding-bottom: 40px;
 }
 
+.historyContent--teams {
+  --history-accent: var(--ds-color-secondary);
+  --history-accent-soft: rgba(122, 208, 255, 0.1);
+  --history-accent-border: rgba(122, 208, 255, 0.24);
+}
+
 .historyList {
   display: grid;
   gap: 10px;
@@ -56,11 +62,33 @@
   color: var(--text);
 }
 
+.historyContent--teams .historyFilter__chip--active {
+  border-color: var(--history-accent-border);
+  background: var(--history-accent-soft);
+}
+
 .historyFilter__swatch {
   width: 14px;
   height: 14px;
   border-radius: 5px;
   flex: 0 0 auto;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+.historyFilter__teamIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: linear-gradient(
+    180deg,
+    var(--ds-color-secondary-fixed),
+    var(--ds-color-secondary)
+  );
+  color: var(--ds-color-on-secondary);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
 }
 
@@ -107,6 +135,15 @@
   box-shadow:
     0 6px 12px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.historyAvatar--team {
+  background: linear-gradient(
+    180deg,
+    var(--ds-color-secondary-fixed),
+    var(--ds-color-secondary)
+  );
+  color: var(--ds-color-on-secondary);
 }
 
 .historyInfo {
@@ -166,6 +203,11 @@
   background: rgba(216, 255, 79, 0.08);
 }
 
+.historyContent--teams .historyTurnStep--pos {
+  color: var(--ds-color-secondary);
+  background: rgba(122, 208, 255, 0.08);
+}
+
 .historyTurnStep--neg {
   color: var(--neg);
   background: rgba(255, 140, 130, 0.08);
@@ -189,6 +231,12 @@
   border: 1px solid var(--accent-border);
   background: rgba(216, 255, 79, 0.1);
   color: var(--pos);
+}
+
+.historyContent--teams .historyDelta--pos {
+  border-color: var(--history-accent-border);
+  background: var(--history-accent-soft);
+  color: var(--ds-color-secondary);
 }
 
 .historyDelta--neg {

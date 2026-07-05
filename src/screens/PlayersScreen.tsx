@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AVATAR_COLORS, DEFAULT_TEAM_ICON, TEAM_ICONS } from "../constants";
 import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
@@ -51,6 +51,7 @@ type PlayersScreenProps = {
   onDismissLocalSessionsHint: () => void;
   onActiveViewChange: (view: "players" | "teams") => void;
   addingPlayer: boolean;
+  openTeamBuilderToken?: number;
   onAddingPlayerChange: (adding: boolean) => void;
   onOpenAuth: () => void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
@@ -99,6 +100,46 @@ function areSetsEqual<T>(left: Set<T>, right: Set<T>) {
   return true;
 }
 
+function useScrollableListFade(dependencies: ReadonlyArray<unknown>) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [fadeState, setFadeState] = useState({ top: false, bottom: false });
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) {
+      setFadeState({ top: false, bottom: false });
+      return;
+    }
+
+    const updateFade = () => {
+      const top = node.scrollTop > 6;
+      const remainingScroll =
+        node.scrollHeight - node.clientHeight - node.scrollTop;
+      const bottom = remainingScroll > 6;
+      setFadeState({ top, bottom });
+    };
+
+    updateFade();
+
+    node.addEventListener("scroll", updateFade, { passive: true });
+    window.addEventListener("resize", updateFade);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => updateFade())
+        : null;
+    resizeObserver?.observe(node);
+
+    return () => {
+      node.removeEventListener("scroll", updateFade);
+      window.removeEventListener("resize", updateFade);
+      resizeObserver?.disconnect();
+    };
+  }, dependencies);
+
+  return { ref, fadeState };
+}
+
 export function PlayersScreen({
   games,
   profiles,
@@ -112,6 +153,7 @@ export function PlayersScreen({
   onDismissLocalSessionsHint,
   onActiveViewChange,
   addingPlayer,
+  openTeamBuilderToken,
   onAddingPlayerChange,
   onOpenAuth,
   onUpsertProfile,
@@ -122,6 +164,8 @@ export function PlayersScreen({
   onDeleteTeam,
   onToggleTeamMember,
 }: PlayersScreenProps) {
+  const teamBuilderSlotRef = useRef<HTMLDivElement | null>(null);
+  const handledOpenTeamBuilderTokenRef = useRef(0);
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState<
     (typeof AVATAR_COLORS)[number]["value"]
@@ -196,7 +240,6 @@ export function PlayersScreen({
   const filteredNewTeamProfiles = useMemo(() => {
     const query = newTeamSearch.trim().toLowerCase();
     return profiles.filter((profile) => {
-      if (newTeamMemberIds.has(profile.id)) return false;
       if (!query) return true;
       return profile.name.toLowerCase().includes(query);
     });
@@ -233,6 +276,29 @@ export function PlayersScreen({
       }) as CSSProperties,
     [summaryTokenOverlap, summaryTokenSize],
   );
+  const newTeamPlayerListFade = useScrollableListFade([
+    newTeamSearch,
+    filteredNewTeamProfiles.length,
+    profiles.length,
+    newTeamMemberIds.size,
+    creatingTeamPlayer,
+  ]);
+  const editingTeamProfiles = useMemo(() => {
+    const query = editingTeamSearch.trim().toLowerCase();
+    return profiles.filter((profile) => {
+      if (!query) return true;
+      return profile.name.toLowerCase().includes(query);
+    });
+  }, [editingTeamSearch, profiles]);
+  const editingTeamPlayerListFade = useScrollableListFade([
+    editingTeamId,
+    editingTeamSearch,
+    editingTeamProfiles.length,
+    profiles.length,
+    editingTeamMemberIds.size,
+    creatingTeamPlayer,
+    expandedTeamAddPlayers.size,
+  ]);
 
   function createProfile() {
     if (!newName.trim()) return;
@@ -306,6 +372,49 @@ export function PlayersScreen({
     resetTeamBuilder();
     setAddingTeam(true);
   }
+
+  function scrollTeamBuilderIntoView() {
+    const slot = teamBuilderSlotRef.current;
+    if (!slot) return;
+
+    const scrollHost = slot.closest(".tabWindow") as HTMLElement | null;
+    if (!scrollHost) {
+      slot.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    const hostRect = scrollHost.getBoundingClientRect();
+    const slotRect = slot.getBoundingClientRect();
+    const slotOffsetInHost = slotRect.top - hostRect.top;
+    const targetTop = Math.max(0, scrollHost.scrollTop + slotOffsetInHost - 18);
+    scrollHost.scrollTo({ top: targetTop, behavior: "smooth" });
+  }
+
+  useEffect(() => {
+    if (
+      !openTeamBuilderToken ||
+      openTeamBuilderToken === handledOpenTeamBuilderTokenRef.current ||
+      activeView !== "teams"
+    )
+      return;
+    handledOpenTeamBuilderTokenRef.current = openTeamBuilderToken;
+    openTeamBuilder();
+  }, [activeView, openTeamBuilderToken]);
+
+  useEffect(() => {
+    if (activeView !== "teams" || !addingTeam) return;
+
+    let timeoutId = 0;
+    const rafId = window.requestAnimationFrame(() => {
+      scrollTeamBuilderIntoView();
+      timeoutId = window.setTimeout(scrollTeamBuilderIntoView, 140);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [activeView, addingTeam, newTeamStep]);
 
   function finishTeamEdit(teamId: string) {
     const name = formatTeamName(editingTeamName);
@@ -527,97 +636,92 @@ export function PlayersScreen({
 
           <section className="teamBuilderCard">
             <div className="teamBuilderCard__head">
-              <div className="teamBuilderCard__label">Players in this team</div>
+              <div className="teamBuilderCard__label">Choose players</div>
               <div className="teamBuilderCard__badge">
                 {newTeamSelectedProfiles.length} member
                 {newTeamSelectedProfiles.length === 1 ? "" : "s"}
               </div>
             </div>
-            {newTeamSelectedProfiles.length > 0 ? (
-              <div className="teamBuilderRosterPreview teamBuilderRosterPreview--compact">
-                {newTeamSelectedProfiles.map((profile) => (
-                  <button
-                    key={`builder-team-member-${profile.id}`}
-                    type="button"
-                    className="teamBuilderRosterChip teamBuilderRosterChip--compact"
-                    onClick={() => toggleNewTeamMember(profile.id)}
-                  >
-                    <span
-                      className="teamBuilderRosterChip__avatar"
-                      style={avatarStyleFor(profile.avatarColor)}
-                      aria-hidden="true"
-                    >
-                      {getInitials(profile.name)}
-                    </span>
-                    <span className="teamBuilderRosterChip__name">
-                      {profile.isAccountPlayer
-                        ? formatAccountPlayerName(profile.name)
-                        : profile.name}
-                    </span>
-                    <span className="teamBuilderRosterChip__action">×</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="teamBuilder__emptyState">
-                Start by adding saved players or creating a new recruit.
-              </div>
-            )}
-          </section>
-
-          <section className="teamBuilderCard">
-            <div className="teamBuilderCard__head">
-              <div className="teamBuilderCard__label">Add from players</div>
-            </div>
             <label className="teamBuilderSearch">
               <Search size={18} strokeWidth={2.4} aria-hidden="true" />
               <input
                 className="teamBuilderSearch__input"
-                placeholder="Search roster..."
+                placeholder="Search players..."
                 value={newTeamSearch}
                 onChange={(event) => setNewTeamSearch(event.target.value)}
               />
             </label>
             {profiles.length > 0 ? (
-              <div className="teamBuilderPlayerList">
-                {filteredNewTeamProfiles.length > 0 ? (
-                  filteredNewTeamProfiles.map((profile) => (
-                    <div
-                      key={`builder-available-${profile.id}`}
-                      className="teamBuilderPlayerRow"
-                    >
-                      <div className="teamBuilderPlayerRow__identity">
-                        <span
-                          className="teamBuilderPlayerRow__avatar"
-                          style={avatarStyleFor(profile.avatarColor)}
-                          aria-hidden="true"
-                        >
-                          {getInitials(profile.name)}
-                        </span>
-                        <div className="teamBuilderPlayerRow__copy">
-                          <strong>
-                            {profile.isAccountPlayer
-                              ? formatAccountPlayerName(profile.name)
-                              : profile.name}
-                          </strong>
-                        </div>
+              <div
+                className={`participantPicker__listShell teamBuilderListShell${
+                  newTeamPlayerListFade.fadeState.top
+                    ? " participantPicker__listShell--fadeTop teamBuilderListShell--fadeTop"
+                    : ""
+                }${
+                  newTeamPlayerListFade.fadeState.bottom
+                    ? " participantPicker__listShell--fadeBottom teamBuilderListShell--fadeBottom"
+                    : ""
+                }`}
+              >
+                <div
+                  ref={newTeamPlayerListFade.ref}
+                  className="participantPicker__list teamBuilderPlayerList"
+                >
+                  <div className="participantPicker__listContent">
+                    {filteredNewTeamProfiles.length > 0 ? (
+                      filteredNewTeamProfiles.map((profile) => {
+                        const selected = newTeamMemberIds.has(profile.id);
+                        return (
+                          <button
+                            key={`builder-player-${profile.id}`}
+                            type="button"
+                            className={`teamBuilderPlayerOption${
+                              selected ? " teamBuilderPlayerOption--selected" : ""
+                            }`}
+                            disabled={!canUseTeams}
+                            onClick={() => toggleNewTeamMember(profile.id)}
+                            aria-pressed={selected}
+                          >
+                            <span className="teamBuilderPlayerOption__identity">
+                              <span
+                                className="teamBuilderPlayerOption__avatar"
+                                style={avatarStyleFor(profile.avatarColor)}
+                                aria-hidden="true"
+                              >
+                                {getInitials(profile.name)}
+                              </span>
+                              <span className="teamBuilderPlayerOption__copy">
+                                <strong>
+                                  {profile.isAccountPlayer
+                                    ? formatAccountPlayerName(profile.name)
+                                    : profile.name}
+                                </strong>
+                              </span>
+                            </span>
+                            <span
+                              className={`teamBuilderPlayerOption__state${
+                                selected
+                                  ? " teamBuilderPlayerOption__state--selected"
+                                  : ""
+                              }`}
+                              aria-hidden="true"
+                            >
+                              {selected ? (
+                                <Check size={17} strokeWidth={2.8} />
+                              ) : (
+                                <Plus size={17} strokeWidth={2.8} />
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="teamBuilder__emptyState">
+                        No matching saved players.
                       </div>
-                      <button
-                        type="button"
-                        className="teamBuilderPlayerRow__action"
-                        disabled={!canUseTeams}
-                        onClick={() => toggleNewTeamMember(profile.id)}
-                        aria-label={`Add ${profile.name} to team`}
-                      >
-                        <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <div className="teamBuilder__emptyState">
-                    No matching saved players.
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             ) : (
               <div className="teamBuilder__emptyState">
@@ -646,7 +750,7 @@ export function PlayersScreen({
                 <div className="newPlayerComposer__top">
                   <label className="field newPlayerComposer__field">
                     <div className="newPlayerComposer__inputShell">
-                      <div
+                      <span
                         className="newPlayerComposer__preview"
                         style={avatarStyleFor(newTeamPlayerColor)}
                         aria-hidden="true"
@@ -654,7 +758,7 @@ export function PlayersScreen({
                         {newTeamPlayerName.trim()
                           ? getInitials(newTeamPlayerName)
                           : "+"}
-                      </div>
+                      </span>
                       <input
                         id="team-builder-player-name"
                         className="input input--sm newPlayerComposer__input"
@@ -735,6 +839,11 @@ export function PlayersScreen({
                     {getInitials(profile.name)}
                   </span>
                 ))}
+                {newTeamSelectedProfiles.length === 0 ? (
+                  <span className="teamBuilderSummary__token teamBuilderSummary__token--ghost">
+                    +
+                  </span>
+                ) : null}
               </div>
             </div>
           </section>
@@ -784,7 +893,11 @@ export function PlayersScreen({
   );
 
   return (
-    <div className="tabContent tabContent--players">
+    <div
+      className={`tabContent tabContent--players${
+        activeView === "teams" ? " tabContent--teamsTheme" : ""
+      }`}
+    >
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="profilesHint"
@@ -885,7 +998,9 @@ export function PlayersScreen({
             <div className="playersCreateSlot">{newPlayerForm}</div>
           ) : null}
           {activeView === "teams" && addingTeam ? (
-            <div className="playersCreateSlot">{newTeamForm}</div>
+            <div ref={teamBuilderSlotRef} className="playersCreateSlot">
+              {newTeamForm}
+            </div>
           ) : null}
           {activeView === "players" ? (
             <div className="profilesGrid">
@@ -1137,21 +1252,6 @@ export function PlayersScreen({
                       .filter(Boolean) as PlayerProfile[];
                     const persistedTeamMemberIds = new Set(
                       persistedTeamMemberProfiles.map((profile) => profile.id),
-                    );
-                    const availableProfiles = profiles.filter(
-                      (profile) =>
-                        !(
-                          editingTeamId === team.id
-                            ? editingTeamMemberIds
-                            : persistedTeamMemberIds
-                        ).has(profile.id),
-                    );
-                    const filteredAvailableProfiles = availableProfiles.filter(
-                      (profile) => {
-                        const query = editingTeamSearch.trim().toLowerCase();
-                        if (!query) return true;
-                        return profile.name.toLowerCase().includes(query);
-                      },
                     );
                     const isEditingTeam = editingTeamId === team.id;
                     const isAddingPlayers = expandedTeamAddPlayers.has(team.id);
@@ -1413,7 +1513,13 @@ export function PlayersScreen({
                                     <div className="teamEditor__addPanel teamEditor__addPanel--builder">
                                       <div className="teamBuilderCard__head">
                                         <div className="teamBuilderCard__label">
-                                          Add from players
+                                          Choose players
+                                        </div>
+                                        <div className="teamBuilderCard__badge">
+                                          {editingTeamMemberIds.size} member
+                                          {editingTeamMemberIds.size === 1
+                                            ? ""
+                                            : "s"}
                                         </div>
                                       </div>
                                       <label className="teamBuilderSearch">
@@ -1424,7 +1530,7 @@ export function PlayersScreen({
                                         />
                                         <input
                                           className="teamBuilderSearch__input"
-                                          placeholder="Search roster..."
+                                          placeholder="Search players..."
                                           value={editingTeamSearch}
                                           onChange={(event) =>
                                             setEditingTeamSearch(
@@ -1433,73 +1539,128 @@ export function PlayersScreen({
                                           }
                                         />
                                       </label>
-                                      <div className="teamBuilderPlayerList">
-                                        {availableProfiles.length > 0 ? (
-                                          filteredAvailableProfiles.length >
-                                          0 ? (
-                                            filteredAvailableProfiles.map(
-                                              (profile) => (
-                                                <div
-                                                  key={`${team.id}:${profile.id}`}
-                                                  className="teamBuilderPlayerRow"
-                                                >
-                                                  <div className="teamBuilderPlayerRow__identity">
-                                                    <span
-                                                      className="teamBuilderPlayerRow__avatar"
-                                                      style={avatarStyleFor(
-                                                        profile.avatarColor,
-                                                      )}
-                                                      aria-hidden="true"
-                                                    >
-                                                      {getInitials(
-                                                        profile.name,
-                                                      )}
-                                                    </span>
-                                                    <div className="teamBuilderPlayerRow__copy">
-                                                      <strong>
-                                                        {profile.isAccountPlayer
-                                                          ? formatAccountPlayerName(
+                                      {profiles.length > 0 ? (
+                                        <div
+                                          className={`participantPicker__listShell teamBuilderListShell${
+                                            editingTeamPlayerListFade.fadeState.top
+                                              ? " participantPicker__listShell--fadeTop teamBuilderListShell--fadeTop"
+                                              : ""
+                                          }${
+                                            editingTeamPlayerListFade.fadeState
+                                              .bottom
+                                              ? " participantPicker__listShell--fadeBottom teamBuilderListShell--fadeBottom"
+                                              : ""
+                                          }`}
+                                        >
+                                          <div
+                                            ref={
+                                              editingTeamPlayerListFade.ref
+                                            }
+                                            className="participantPicker__list teamBuilderPlayerList"
+                                          >
+                                            <div className="participantPicker__listContent">
+                                              {editingTeamProfiles.length > 0 ? (
+                                                editingTeamProfiles.map(
+                                                  (profile) => {
+                                                    const selected =
+                                                      editingTeamMemberIds.has(
+                                                        profile.id,
+                                                      );
+                                                    return (
+                                                      <button
+                                                        key={`${team.id}:${profile.id}`}
+                                                        type="button"
+                                                        className={`teamBuilderPlayerOption${
+                                                          selected
+                                                            ? " teamBuilderPlayerOption--selected"
+                                                            : ""
+                                                        }`}
+                                                        disabled={!canUseTeams}
+                                                        onClick={() =>
+                                                          setEditingTeamMemberIds(
+                                                            (current) => {
+                                                              const next =
+                                                                new Set(
+                                                                  current,
+                                                                );
+                                                              if (
+                                                                next.has(
+                                                                  profile.id,
+                                                                )
+                                                              ) {
+                                                                next.delete(
+                                                                  profile.id,
+                                                                );
+                                                              } else {
+                                                                next.add(
+                                                                  profile.id,
+                                                                );
+                                                              }
+                                                              return next;
+                                                            },
+                                                          )
+                                                        }
+                                                        aria-pressed={selected}
+                                                      >
+                                                        <span className="teamBuilderPlayerOption__identity">
+                                                          <span
+                                                            className="teamBuilderPlayerOption__avatar"
+                                                            style={avatarStyleFor(
+                                                              profile.avatarColor,
+                                                            )}
+                                                            aria-hidden="true"
+                                                          >
+                                                            {getInitials(
                                                               profile.name,
-                                                            )
-                                                          : profile.name}
-                                                      </strong>
-                                                    </div>
-                                                  </div>
-                                                  <button
-                                                    type="button"
-                                                    className="teamBuilderPlayerRow__action"
-                                                    disabled={!canUseTeams}
-                                                    onClick={() =>
-                                                      setEditingTeamMemberIds(
-                                                        (current) =>
-                                                          new Set(current).add(
-                                                            profile.id,
-                                                          ),
-                                                      )
-                                                    }
-                                                    aria-label={`Add ${profile.name} to ${team.name}`}
-                                                  >
-                                                    <Plus
-                                                      size={18}
-                                                      strokeWidth={2.5}
-                                                      aria-hidden="true"
-                                                    />
-                                                  </button>
+                                                            )}
+                                                          </span>
+                                                          <span className="teamBuilderPlayerOption__copy">
+                                                            <strong>
+                                                              {profile.isAccountPlayer
+                                                                ? formatAccountPlayerName(
+                                                                    profile.name,
+                                                                  )
+                                                                : profile.name}
+                                                            </strong>
+                                                          </span>
+                                                        </span>
+                                                        <span
+                                                          className={`teamBuilderPlayerOption__state${
+                                                            selected
+                                                              ? " teamBuilderPlayerOption__state--selected"
+                                                              : ""
+                                                          }`}
+                                                          aria-hidden="true"
+                                                        >
+                                                          {selected ? (
+                                                            <Check
+                                                              size={17}
+                                                              strokeWidth={2.8}
+                                                            />
+                                                          ) : (
+                                                            <Plus
+                                                              size={17}
+                                                              strokeWidth={2.8}
+                                                            />
+                                                          )}
+                                                        </span>
+                                                      </button>
+                                                    );
+                                                  },
+                                                )
+                                              ) : (
+                                                <div className="teamBuilder__emptyState">
+                                                  No matching saved players.
                                                 </div>
-                                              ),
-                                            )
-                                          ) : (
-                                            <div className="teamBuilder__emptyState">
-                                              No matching saved players.
+                                              )}
                                             </div>
-                                          )
-                                        ) : (
-                                          <div className="teamBuilder__emptyState">
-                                            All saved players are already in
-                                            this team.
                                           </div>
-                                        )}
-                                      </div>
+                                        </div>
+                                      ) : (
+                                        <div className="teamBuilder__emptyState">
+                                          No saved players yet.
+                                        </div>
+                                      )}
 
                                       <div className="teamBuilderCreatePlayer">
                                         {creatingTeamPlayer &&
@@ -1615,7 +1776,7 @@ export function PlayersScreen({
                                         ) : (
                                           <button
                                             type="button"
-                                            className="teamEditor__newPlayer teamEditor__newPlayer--wide"
+                                            className="btn btn--ghost teamEditor__newPlayer teamEditor__newPlayer--wide"
                                             disabled={!canUseTeams}
                                             onClick={() => {
                                               setCreatingTeamPlayer(true);

@@ -35,6 +35,7 @@ import {
   getGameDisplayName,
 } from "./utils/text";
 import { findWinner } from "./utils/ranking";
+import { getGameParticipants } from "./utils/gameParticipants";
 import {
   computeProfileStats,
   createEmptyProfileStats,
@@ -56,6 +57,8 @@ import {
   PLAYERS_VIEW_STORAGE_KEY,
 } from "./constants";
 import { CircleUser } from "lucide-react";
+
+type PresetDraftIntent = "edit" | "teams-detour" | null;
 
 export default function App() {
   const reduceMotion = useReducedMotion();
@@ -153,6 +156,8 @@ export default function App() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<NewGameInput | null>(null);
   const [presetDraftToken, setPresetDraftToken] = useState(0);
+  const [presetDraftIntent, setPresetDraftIntent] =
+    useState<PresetDraftIntent>(null);
   const [
     dismissedLocalSessionsHintSignature,
     setDismissedLocalSessionsHintSignature,
@@ -327,9 +332,20 @@ export default function App() {
 
     const items: Array<{ label: string; tone?: "accent" | "muted" }> = [];
     const winner = findWinner(currentGame.players, currentGame);
+    const isTeamsGame =
+      currentGame.participantMode === "teams" && currentGame.teams.length > 0;
+    const winningTeamName =
+      winner && isTeamsGame
+        ? getGameParticipants(currentGame).find((participant) =>
+            participant.members.some((member) => member.id === winner.id),
+          )?.name
+        : null;
 
     if (winner) {
-      items.push({ label: `Winner ${winner.name}`, tone: "accent" });
+      items.push({
+        label: `Winner ${winningTeamName ?? capitalizeFirst(winner.name)}`,
+        tone: "accent",
+      });
     }
 
     items.push({
@@ -542,6 +558,7 @@ export default function App() {
     const created = createGame(input);
     if (created) {
       setPresetDraft(null);
+      setPresetDraftIntent(null);
       setGameReturnTab(homeTab);
       setView("game");
       return true;
@@ -554,6 +571,12 @@ export default function App() {
     details: {
       label: string;
       players: { name: string; avatarColor: string }[];
+      teams?: Array<{
+        id: string;
+        name: string;
+        icon?: string;
+        members: { name: string; avatarColor: string }[];
+      }>;
     },
   ) {
     const timerValue = !input.timerEnabled
@@ -596,8 +619,16 @@ export default function App() {
         },
         { label: "Timer", value: timerValue },
       ],
-      players: details.players,
-      message: details.players.length ? "Players" : "",
+      players: input.participantMode === "teams" ? [] : details.players,
+      teams: details.teams,
+      message:
+        input.participantMode === "teams"
+          ? details.teams?.length
+            ? "Teams"
+            : ""
+          : details.players.length
+            ? "Players"
+            : "",
       hideCancelAction: true,
       extraActionText: "Edit",
       confirmText: "Start new game",
@@ -607,12 +638,19 @@ export default function App() {
     if (result === "extra") {
       setPresetDraft(input);
       setPresetDraftToken((value) => value + 1);
+      setPresetDraftIntent("edit");
       setHomeTab("home");
       setView("home");
       return;
     }
     if (result !== "confirm") return;
     await handleCreateGame(input);
+  }
+
+  function handleStoreNewGameDraft(draft: NewGameInput) {
+    setPresetDraft(draft);
+    setPresetDraftToken((value) => value + 1);
+    setPresetDraftIntent("teams-detour");
   }
 
   function formatDialogTimer(totalSeconds: number | undefined) {
@@ -888,6 +926,14 @@ export default function App() {
           transition={{ duration: reduceMotion ? 0 : 0.24, ease: "easeOut" }}
         >
           <TopBar
+            accentTone={
+              view === "game" &&
+              !!currentGame &&
+              currentGame.participantMode === "teams"
+                ? "team"
+                : "default"
+            }
+            balancedLayout={view === "history"}
             title={
               view === "history" && currentGame
                 ? "History"
@@ -1120,19 +1166,16 @@ export default function App() {
                   updatePlayer(currentGame.id, playerId, updates);
                 }}
                 onCreateTeam={(name, icon, members = []) => {
-                  const createdTeam = addTeam(currentGame.id, name, icon);
-                  if (!createdTeam) return null;
-
-                  members.forEach((member) => {
-                    addPlayer(currentGame.id, {
+                  return addTeam(
+                    currentGame.id,
+                    name,
+                    icon,
+                    members.map((member) => ({
                       name: member.name,
                       avatarColor: member.avatarColor,
                       profileId: member.id,
-                      teamId: createdTeam.id,
-                    });
-                  });
-
-                  return createdTeam;
+                    })),
+                  );
                 }}
                 onDeleteTeam={async (teamId, teamName) => {
                   const ok = await confirmRef.current?.confirm({
@@ -1186,6 +1229,7 @@ export default function App() {
                 onDismissLocalSessionsHint={dismissLocalSessionsHint}
                 presetDraft={presetDraft}
                 presetDraftToken={presetDraftToken}
+                presetDraftIntent={presetDraftIntent}
                 onOpenAuth={() => {
                   setShouldSaveGamePlayersOnSignIn(false);
                   authDialogRef.current?.open();
@@ -1200,6 +1244,7 @@ export default function App() {
                 }}
                 activeTab={homeTab}
                 onActiveTabChange={setHomeTab}
+                onStoreNewGameDraft={handleStoreNewGameDraft}
                 onCreate={handleCreateGame}
                 onStartQuickSetup={handleStartQuickSetup}
                 onUpsertProfile={upsertProfile}
@@ -1229,7 +1274,7 @@ export default function App() {
                   const team = teams.find((item) => item.id === teamId);
                   const ok = await confirmRef.current?.confirm({
                     title: "Delete team",
-                    message: `Delete "${team?.name ?? "this team"}"?`,
+                    message: `Delete "${team?.name ?? "this team"}"? This removes the team only. Saved players will stay in your roster.`,
                     confirmText: "Delete",
                     tone: "danger",
                   });

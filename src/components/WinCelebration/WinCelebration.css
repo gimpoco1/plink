@@ -1,4 +1,5 @@
 .winFx {
+  --win-accent-rgb: 216, 255, 79;
   position: fixed;
   inset: 0;
   z-index: 180;
@@ -9,12 +10,16 @@
   padding: 14px;
 }
 
+.winFx--teams {
+  --win-accent-rgb: 122, 208, 255;
+}
+
 .winFx__veil {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(1200px 700px at 50% 12%, rgba(216, 255, 79, 0.28), transparent 60%),
-    radial-gradient(900px 560px at 50% 82%, rgba(216, 255, 79, 0.08), transparent 72%),
+    radial-gradient(1200px 700px at 50% 12%, rgba(var(--win-accent-rgb), 0.28), transparent 60%),
+    radial-gradient(900px 560px at 50% 82%, rgba(var(--win-accent-rgb), 0.08), transparent 72%),
     rgba(3, 8, 15, 0.8);
   backdrop-filter: blur(12px) saturate(1.05);
   animation: winVeil 420ms ease-out both;
@@ -38,8 +43,8 @@
   border-radius: 999px;
   transform-origin: 50% 100%;
   transform: translate(-50%, -100%) rotate(calc(var(--i) * 30deg));
-  background: linear-gradient(to top, rgba(216, 255, 79, 0), rgba(216, 255, 79, 0.95));
-  filter: drop-shadow(0 0 12px rgba(216, 255, 79, 0.5));
+  background: linear-gradient(to top, rgba(var(--win-accent-rgb), 0), rgba(var(--win-accent-rgb), 0.95));
+  filter: drop-shadow(0 0 12px rgba(var(--win-accent-rgb), 0.5));
   opacity: 0;
   animation: rayPulse 1200ms ease-out forwards;
   animation-delay: calc(var(--i) * 22ms + 90ms);
@@ -64,7 +69,7 @@
   left: calc(8% + (var(--i) * 14%));
   top: calc(12% + ((var(--i) * 11%) % 56%));
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(216, 255, 79, 0.14), rgba(216, 255, 79, 0));
+  background: radial-gradient(circle, rgba(var(--win-accent-rgb), 0.14), rgba(var(--win-accent-rgb), 0));
   filter: blur(10px);
   opacity: 0;
   animation:
@@ -95,15 +100,15 @@
   width: min(560px, 100%);
   max-height: calc(100dvh - 28px);
   overflow-y: auto;
-  border: 1px solid rgba(216, 255, 79, 0.32);
+  border: 1px solid rgba(var(--win-accent-rgb), 0.32);
   border-radius: 28px;
   background:
     linear-gradient(180deg, rgba(25, 34, 42, 0.98), rgba(13, 19, 24, 0.98)),
-    radial-gradient(900px 280px at 50% 0%, rgba(216, 255, 79, 0.12), transparent 68%);
+    radial-gradient(900px 280px at 50% 0%, rgba(var(--win-accent-rgb), 0.12), transparent 68%);
   box-shadow:
-    0 0 0 1px rgba(216, 255, 79, 0.16),
+    0 0 0 1px rgba(var(--win-accent-rgb), 0.16),
     0 30px 90px rgba(0, 0, 0, 0.52),
-    0 0 90px rgba(216, 255, 79, 0.12);
+    0 0 90px rgba(var(--win-accent-rgb), 0.12);
   padding: 14px;
   margin: auto 0;
   animation:
@@ -126,7 +131,7 @@
   border-radius: 999px;
   transform: translateX(-50%);
   background:
-    radial-gradient(circle, rgba(216, 255, 79, 0.22), rgba(216, 255, 79, 0.02) 55%, rgba(216, 255, 79, 0) 72%);
+    radial-gradient(circle, rgba(var(--win-accent-rgb), 0.22), rgba(var(--win-accent-rgb), 0.02) 55%, rgba(var(--win-accent-rgb), 0) 72%);
   filter: blur(2px);
   opacity: 0;
   animation:
@@ -144,7 +149,7 @@
   color: var(--accent);
   background: var(--accent);
   box-shadow:
-    0 14px 30px rgba(216, 255, 79, 0.24),
+    0 14px 30px rgba(var(--win-accent-rgb), 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
   animation:
     medalBounce 850ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both,
@@ -191,9 +196,9 @@
   gap: 8px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(216, 255, 79, 0.1);
-  border: 1px solid rgba(216, 255, 79, 0.24);
-  box-shadow: 0 0 24px rgba(216, 255, 79, 0.08);
+  background: rgba(var(--win-accent-rgb), 0.1);
+  border: 1px solid rgba(var(--win-accent-rgb), 0.24);
+  box-shadow: 0 0 24px rgba(var(--win-accent-rgb), 0.08);
   animation:
     streakHeroIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both,
     streakHeroPulse 1800ms ease-in-out 900ms infinite;
@@ -233,9 +238,9 @@
 .winFx__playerStats {
   margin-bottom: 10px;
   border-radius: 18px;
-  border: 1px solid rgba(216, 255, 79, 0.12);
+  border: 1px solid rgba(var(--win-accent-rgb), 0.12);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.08), rgba(216, 255, 79, 0.02)),
+    linear-gradient(180deg, rgba(var(--win-accent-rgb), 0.08), rgba(var(--win-accent-rgb), 0.02)),
     rgba(255, 255, 255, 0.03);
   padding: 12px;
   animation: sectionLift 560ms ease-out 220ms both;
@@ -327,8 +332,8 @@
 .winFx__row:nth-child(5) { animation-delay: 500ms; }
 
 .winFx__row--winner {
-  background: rgba(216, 255, 79, 0.1);
-  border-color: rgba(216, 255, 79, 0.2);
+  background: rgba(var(--win-accent-rgb), 0.1);
+  border-color: rgba(var(--win-accent-rgb), 0.2);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   animation:
     rowIn 480ms ease-out forwards,
@@ -368,6 +373,18 @@
   color: white;
   font-size: 14px;
   font-weight: 850;
+}
+
+.winFx__avatar--team {
+  background: linear-gradient(
+    180deg,
+    var(--ds-color-secondary-fixed),
+    var(--ds-color-secondary)
+  );
+  color: var(--ds-color-on-secondary);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset;
 }
 
 .winFx__player {
@@ -420,10 +437,10 @@
 }
 
 .winFx__btn--primary {
-  border-color: rgba(216, 255, 79, 0.3);
+  border-color: rgba(var(--win-accent-rgb), 0.3);
   background: var(--accent);
   color: var(--accent-ink);
-  box-shadow: 0 10px 30px rgba(216, 255, 79, 0.16);
+  box-shadow: 0 10px 30px rgba(var(--win-accent-rgb), 0.16);
 }
 
 .confetti {
@@ -463,15 +480,15 @@
 @keyframes cardGlow {
   0% {
     box-shadow:
-      0 0 0 1px rgba(216, 255, 79, 0.16),
+      0 0 0 1px rgba(var(--win-accent-rgb), 0.16),
       0 30px 90px rgba(0, 0, 0, 0.5),
-      0 0 10px rgba(216, 255, 79, 0.06);
+      0 0 10px rgba(var(--win-accent-rgb), 0.06);
   }
   100% {
     box-shadow:
-      0 0 0 1px rgba(216, 255, 79, 0.24),
+      0 0 0 1px rgba(var(--win-accent-rgb), 0.24),
       0 34px 100px rgba(0, 0, 0, 0.54),
-      0 0 90px rgba(216, 255, 79, 0.18);
+      0 0 90px rgba(var(--win-accent-rgb), 0.18);
   }
 }
 
@@ -548,11 +565,11 @@
 
 @keyframes streakHeroPulse {
   0%, 100% {
-    box-shadow: 0 0 18px rgba(216, 255, 79, 0.06);
+    box-shadow: 0 0 18px rgba(var(--win-accent-rgb), 0.06);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 30px rgba(216, 255, 79, 0.14);
+    box-shadow: 0 0 30px rgba(var(--win-accent-rgb), 0.14);
     transform: scale(1.02);
   }
 }
@@ -613,12 +630,12 @@
   0%, 100% {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 0 0 rgba(216, 255, 79, 0);
+      0 0 0 rgba(var(--win-accent-rgb), 0);
   }
   50% {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 0 24px rgba(216, 255, 79, 0.08);
+      0 0 24px rgba(var(--win-accent-rgb), 0.08);
   }
 }
 
