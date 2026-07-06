@@ -61,6 +61,8 @@ type PlayersScreenProps = {
   openTeamBuilderToken?: number;
   onAddingPlayerChange: (adding: boolean) => void;
   onOpenAuth: () => void;
+  onOpenProFeatureAuth: () => void;
+  onOpenProPlan: () => void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
   onUpdateProfile: (
     id: string,
@@ -180,6 +182,8 @@ export function PlayersScreen({
   openTeamBuilderToken,
   onAddingPlayerChange,
   onOpenAuth,
+  onOpenProFeatureAuth,
+  onOpenProPlan,
   onUpsertProfile,
   onUpdateProfile,
   onDeleteProfile,
@@ -255,6 +259,7 @@ export function PlayersScreen({
     return map;
   }, [teamMembers]);
   const activeCount = activeView === "teams" ? teams.length : profiles.length;
+  const canAccessTeamsView = isAuthenticated && canUseTeams;
   const activeCountLabel =
     activeView === "teams"
       ? `${activeCount} team${activeCount === 1 ? "" : "s"}`
@@ -409,6 +414,21 @@ export function PlayersScreen({
     setAddingTeam(true);
   }
 
+  function handleTeamsViewPress() {
+    if (canAccessTeamsView) {
+      onActiveViewChange("teams");
+      onAddingPlayerChange(false);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      onOpenProFeatureAuth();
+      return;
+    }
+
+    onOpenProPlan();
+  }
+
   function scrollTeamBuilderIntoView() {
     const slot = teamBuilderSlotRef.current;
     if (!slot) return;
@@ -436,6 +456,13 @@ export function PlayersScreen({
     handledOpenTeamBuilderTokenRef.current = openTeamBuilderToken;
     openTeamBuilder();
   }, [activeView, openTeamBuilderToken]);
+
+  useEffect(() => {
+    if (activeView === "teams" && !canAccessTeamsView) {
+      onActiveViewChange("players");
+      setAddingTeam(false);
+    }
+  }, [activeView, canAccessTeamsView, onActiveViewChange]);
 
   useEffect(() => {
     if (activeView !== "teams" || !addingTeam) return;
@@ -990,24 +1017,29 @@ export function PlayersScreen({
               type="button"
               role="tab"
               aria-selected={activeView === "teams"}
+              aria-disabled={!canAccessTeamsView}
               className={`playersHeaderSwitch__option${
                 activeView === "teams"
                   ? " playersHeaderSwitch__option--active"
                   : ""
+              }${
+                !canAccessTeamsView
+                  ? " playersHeaderSwitch__option--locked"
+                  : ""
               }`}
-              onClick={() => {
-                onActiveViewChange("teams");
-                onAddingPlayerChange(false);
-              }}
+              onClick={handleTeamsViewPress}
             >
               Teams
+              {!canAccessTeamsView ? (
+                <span className="playersHeaderSwitch__badge">Pro</span>
+              ) : null}
             </button>
           </div>
         </div>
       </div>
       {!isAuthenticated ? (
         <LockedFrame
-          title="Sign in to see saved players."
+          title="Sign in to save players."
           onSignIn={onOpenAuth}
         >
           <PlayersSkeleton />

@@ -137,11 +137,35 @@
   font-weight: 900;
   letter-spacing: 0.04em;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .playersHeaderSwitch__option--active {
   background: rgba(216, 255, 79, 0.14);
   color: var(--accent);
+}
+
+.playersHeaderSwitch__option--locked {
+  opacity: 0.72;
+}
+
+.playersHeaderSwitch__badge {
+  min-width: 28px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .playersScreenCount {

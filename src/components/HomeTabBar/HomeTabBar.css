@@ -75,11 +75,36 @@
   font-weight: 900;
   text-align: left;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .tabSwitcher__item[aria-checked="true"] {
   background: var(--tabBar-accent-bg);
   color: var(--tabBar-accent);
+}
+
+.tabSwitcher__item--locked {
+  opacity: 0.76;
+}
+
+.tabSwitcher__badge {
+  min-width: 28px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex: 0 0 auto;
 }
 
 .tabItem svg {

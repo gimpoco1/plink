@@ -33,7 +33,7 @@
 }
 
 .rosterPicker__search {
-  min-height: 44px;
+  min-height: 32px;
   padding: 0 14px;
   border: 1px solid var(--roster-picker-border);
   border-radius: 16px;
@@ -156,6 +156,7 @@
   color: var(--roster-picker-empty);
   font-size: 12px;
   line-height: 1.45;
+  justify-self: center;
 }
 
 .rosterPicker__createBtn {

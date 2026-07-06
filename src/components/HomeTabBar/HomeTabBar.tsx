@@ -6,8 +6,12 @@ import "./HomeTabBar.css";
 type HomeTabBarProps = {
   activeTab: HomeTab;
   playersView: "players" | "teams";
+  canUseTeams: boolean;
+  isAuthenticated: boolean;
   onChange: (tab: HomeTab) => void;
   onPlayersViewChange: (view: "players" | "teams") => void;
+  onOpenProFeatureAuth: () => void;
+  onOpenProPlan: () => void;
 };
 
 const tabs: Array<{
@@ -40,11 +44,16 @@ const tabs: Array<{
 export function HomeTabBar({
   activeTab,
   playersView,
+  canUseTeams,
+  isAuthenticated,
   onChange,
   onPlayersViewChange,
+  onOpenProFeatureAuth,
+  onOpenProPlan,
 }: HomeTabBarProps) {
   const [showPlayersMenu, setShowPlayersMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const canAccessTeamsView = isAuthenticated && canUseTeams;
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -57,6 +66,16 @@ export function HomeTabBar({
   }, []);
 
   function choosePlayersView(view: "players" | "teams") {
+    if (view === "teams" && !canAccessTeamsView) {
+      setShowPlayersMenu(false);
+      if (!isAuthenticated) {
+        onOpenProFeatureAuth();
+        return;
+      }
+      onOpenProPlan();
+      return;
+    }
+
     onPlayersViewChange(view);
     onChange("players");
     setShowPlayersMenu(false);
@@ -98,10 +117,16 @@ export function HomeTabBar({
                   type="button"
                   role="menuitemradio"
                   aria-checked={playersView === "teams"}
-                  className="tabSwitcher__item"
+                  aria-disabled={!canAccessTeamsView}
+                  className={`tabSwitcher__item${
+                    !canAccessTeamsView ? " tabSwitcher__item--locked" : ""
+                  }`}
                   onClick={() => choosePlayersView("teams")}
                 >
                   Teams
+                  {!canAccessTeamsView ? (
+                    <span className="tabSwitcher__badge">Pro</span>
+                  ) : null}
                 </button>
               </div>
             ) : null}

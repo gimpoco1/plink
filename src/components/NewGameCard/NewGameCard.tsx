@@ -82,6 +82,8 @@ type NewGameCardProps = {
   draftToken?: number;
   onOpenChange: (open: boolean) => void;
   onOpenAuth: () => void;
+  onOpenProFeatureAuth: () => void;
+  onOpenProPlan: () => void;
   onOpenTeamsTab: (draft: NewGameInput) => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
@@ -142,6 +144,8 @@ export function NewGameCard({
   draftToken,
   onOpenChange,
   onOpenAuth,
+  onOpenProFeatureAuth,
+  onOpenProPlan,
   onOpenTeamsTab,
   onCreate,
   onUpsertProfile,
@@ -291,6 +295,7 @@ export function NewGameCard({
   );
   const participantCount =
     participantMode === "teams" ? selectedTeams.length : selectedPlayers.length;
+  const canAccessTeamsMode = isAuthenticated && canUseTeams;
 
   const lowScoreNeedsMorePlayers =
     winCondition === "lowest" && participantCount < 2;
@@ -306,6 +311,12 @@ export function NewGameCard({
     participantCount > 0 &&
     (participantMode !== "teams" || (isAuthenticated && canUseTeams)) &&
     !ruleNeedsMorePlayers;
+
+  useEffect(() => {
+    if (participantMode === "teams" && !canAccessTeamsMode) {
+      setParticipantMode("players");
+    }
+  }, [canAccessTeamsMode, participantMode]);
 
   const newPlayerValidationMessage = useMemo(() => {
     const normalizedName = normalizePlayerName(newPlayerName);
@@ -537,6 +548,21 @@ export function NewGameCard({
   function switchParticipantMode(nextMode: "players" | "teams") {
     setParticipantMode(nextMode);
     setIsAddingPlayer(false);
+  }
+
+  function handleTeamsModePress() {
+    if (canAccessTeamsMode) {
+      switchParticipantMode("teams");
+      return;
+    }
+
+    setIsAddingPlayer(false);
+    if (!isAuthenticated) {
+      onOpenProFeatureAuth();
+      return;
+    }
+
+    onOpenProPlan();
   }
 
   function buildDraftState(): NewGameInput {
@@ -1087,15 +1113,22 @@ export function NewGameCard({
                     type="button"
                     role="tab"
                     aria-selected={participantMode === "teams"}
+                    aria-disabled={!canAccessTeamsMode}
                     className={`participantModeSwitch__option${
                       participantMode === "teams"
                         ? " participantModeSwitch__option--active participantModeSwitch__option--teamsActive"
                         : ""
+                    }${
+                      !canAccessTeamsMode
+                        ? " participantModeSwitch__option--locked"
+                        : ""
                     }`}
-                    disabled={!isAuthenticated || !canUseTeams}
-                    onClick={() => switchParticipantMode("teams")}
+                    onClick={handleTeamsModePress}
                   >
                     Teams
+                    {!canAccessTeamsMode ? (
+                      <span className="participantModeSwitch__badge">Pro</span>
+                    ) : null}
                   </button>
                 </div>
                 {participantMode === "players" ? (

@@ -1347,6 +1347,10 @@
   font-weight: 900;
   letter-spacing: 0.04em;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .participantModeSwitch__option--active {
@@ -1359,9 +1363,24 @@
   color: #003549;
 }
 
-.participantModeSwitch__option:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.participantModeSwitch__option--locked {
+  opacity: 0.72;
+}
+
+.participantModeSwitch__badge {
+  min-width: 28px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 10, 0.12);
+  color: rgba(17, 24, 10, 0.72);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .teamPicker {

@@ -10,6 +10,10 @@ import {
   AuthDialog,
   type AuthDialogHandle,
 } from "./components/AuthDialog/AuthDialog";
+import {
+  ProFeatureGateDialog,
+  type ProFeatureGateDialogHandle,
+} from "./components/ProFeatureGateDialog/ProFeatureGateDialog";
 import { TopBar } from "./components/TopBar/TopBar";
 import { useProfiles } from "./hooks/useProfiles";
 import { useTeams } from "./hooks/useTeams";
@@ -125,6 +129,7 @@ export default function App() {
   const handledManageTeamsDialogOpenTokenRef = useRef(0);
   const settingsDialogRef = useRef<GameSettingsDialogHandle>(null!);
   const authDialogRef = useRef<AuthDialogHandle>(null!);
+  const proFeatureGateDialogRef = useRef<ProFeatureGateDialogHandle>(null!);
   const wantsRestoredGameView = useMemo(() => {
     try {
       return localStorage.getItem(APP_VIEW_STORAGE_KEY) === "game";
@@ -351,6 +356,10 @@ export default function App() {
     } catch {
       // Ignore storage failures.
     }
+  }
+
+  async function openProFeatureAuthPrompt() {
+    await proFeatureGateDialogRef.current?.open();
   }
 
   function updateProfileEverywhere(
@@ -1317,6 +1326,7 @@ export default function App() {
                   setShouldSaveGamePlayersOnSignIn(false);
                   authDialogRef.current?.open();
                 }}
+                onOpenProFeatureAuth={openProFeatureAuthPrompt}
                 onOpenLocalImport={() => {
                   setShouldSaveGamePlayersOnSignIn(false);
                   authDialogRef.current?.openLocalImport();
@@ -1459,6 +1469,13 @@ export default function App() {
           onImportLocalData={handleImportLocalData}
           onImportBackupFile={handleImportBackupFile}
           onDownloadBackupFile={handleDownloadBackupFile}
+        />
+        <ProFeatureGateDialog
+          ref={proFeatureGateDialogRef}
+          onContinue={() => {
+            setShouldSaveGamePlayersOnSignIn(false);
+            authDialogRef.current?.open();
+          }}
         />
         <ConfirmDialog ref={confirmRef} />
         <AnimatePresence>

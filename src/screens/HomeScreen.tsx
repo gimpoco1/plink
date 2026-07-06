@@ -80,7 +80,9 @@ type HomeScreenProps = {
   presetDraftToken?: number;
   onCreatingChange: (creating: boolean) => void;
   onOpenAuth: () => void;
+  onOpenProFeatureAuth: () => void;
   onOpenLocalImport: () => void;
+  onOpenProPlan: () => void;
   onDismissLocalSessionsHint: () => void;
   onOpenTeamsTab: (draft: NewGameInput) => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
@@ -115,7 +117,9 @@ export function HomeScreen({
   presetDraftToken,
   onCreatingChange,
   onOpenAuth,
+  onOpenProFeatureAuth,
   onOpenLocalImport,
+  onOpenProPlan,
   onDismissLocalSessionsHint,
   onOpenTeamsTab,
   onCreate,
@@ -462,6 +466,8 @@ export function HomeScreen({
             draftToken={presetDraftToken}
             onOpenChange={handleOpenChange}
             onOpenAuth={onOpenAuth}
+            onOpenProFeatureAuth={onOpenProFeatureAuth}
+            onOpenProPlan={onOpenProPlan}
             onOpenTeamsTab={onOpenTeamsTab}
             onCreate={onCreate}
             onUpsertProfile={onUpsertProfile}

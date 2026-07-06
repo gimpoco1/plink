@@ -24,6 +24,7 @@ type DashboardScreenProps = {
   activeTab: HomeTab;
   onActiveTabChange: (tab: HomeTab) => void;
   onOpenAuth: () => void;
+  onOpenProFeatureAuth: () => void;
   onOpenLocalImport: () => void;
   onOpenProPlan: () => void;
   onStoreNewGameDraft: (draft: NewGameInput) => void;
@@ -84,6 +85,12 @@ export function DashboardScreen(props: DashboardScreenProps) {
       // Ignore storage failures; the in-memory selection still works.
     }
   }, [playersView]);
+
+  useEffect(() => {
+    if (playersView === "teams" && (!props.isAuthenticated || !props.canUseTeams)) {
+      setPlayersView("players");
+    }
+  }, [playersView, props.canUseTeams, props.isAuthenticated]);
 
   useEffect(() => {
     function handleNewGame() {
@@ -220,7 +227,9 @@ export function DashboardScreen(props: DashboardScreenProps) {
             openTeamBuilderToken={openTeamBuilderToken}
             onActiveViewChange={setPlayersView}
             onAddingPlayerChange={setIsAddingPlayer}
-            onOpenAuth={props.onOpenLocalImport}
+            onOpenAuth={props.onOpenAuth}
+            onOpenProFeatureAuth={props.onOpenProFeatureAuth}
+            onOpenProPlan={props.onOpenProPlan}
             onUpsertProfile={props.onUpsertProfile}
             onUpdateProfile={props.onUpdateProfile}
             onDeleteProfile={props.onDeleteProfile}
@@ -248,7 +257,9 @@ export function DashboardScreen(props: DashboardScreenProps) {
             presetDraftToken={props.presetDraftToken}
             onCreatingChange={setIsCreating}
             onOpenAuth={props.onOpenAuth}
+            onOpenProFeatureAuth={props.onOpenProFeatureAuth}
             onOpenLocalImport={props.onOpenLocalImport}
+            onOpenProPlan={props.onOpenProPlan}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             onOpenTeamsTab={(draft) => {
               props.onStoreNewGameDraft(draft);
@@ -285,8 +296,12 @@ export function DashboardScreen(props: DashboardScreenProps) {
       <HomeTabBar
         activeTab={props.activeTab}
         playersView={playersView}
+        canUseTeams={props.canUseTeams}
+        isAuthenticated={props.isAuthenticated}
         onChange={changeTab}
         onPlayersViewChange={setPlayersView}
+        onOpenProFeatureAuth={props.onOpenProFeatureAuth}
+        onOpenProPlan={props.onOpenProPlan}
       />
     </div>
   );
