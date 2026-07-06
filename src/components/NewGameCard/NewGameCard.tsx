@@ -12,6 +12,7 @@ import { avatarStyleFor } from "../../utils/color";
 import { formatAccountPlayerName, getInitials } from "../../utils/text";
 import { GAME_PRESETS, type GamePreset } from "./gamePresets";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
+import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRosterPicker";
 import "./NewGameCard.css";
 import {
   ArrowDownUp,
@@ -319,14 +320,6 @@ export function NewGameCard({
     });
   }, [availableTeams, participantSearch]);
 
-  const playerListFade = useScrollableListFade([
-    participantMode,
-    participantSearch,
-    filteredProfiles.length,
-    profiles.length,
-    selectedProfileIds.size,
-    isAddingPlayer,
-  ]);
   const teamListFade = useScrollableListFade([
     participantMode,
     participantSearch,
@@ -1130,92 +1123,58 @@ export function NewGameCard({
                           </div>
                         </div>
                       ) : null}
-                      {profiles.length > 0 ? (
-                        <div className="participantPicker__group">
-                          <label className="participantPicker__search">
-                            <Search size={16} strokeWidth={2.4} aria-hidden="true" />
-                            <input
-                              type="text"
-                              value={participantSearch}
-                              onChange={(event) =>
-                                setParticipantSearch(event.target.value)
-                              }
-                              placeholder="Search players"
-                              aria-label="Search saved players"
-                            />
-                            {participantSearch ? (
-                              <button
-                                type="button"
-                                className="participantPicker__clear"
-                                aria-label="Clear player search"
-                                onClick={() => setParticipantSearch("")}
-                              >
-                                <X size={15} strokeWidth={2.6} aria-hidden="true" />
-                              </button>
-                            ) : null}
-                          </label>
-                          <div
-                            className={`participantPicker__listShell${
-                              playerListFade.fadeState.top
-                                ? " participantPicker__listShell--fadeTop"
-                                : ""
-                            }${
-                              playerListFade.fadeState.bottom
-                                ? " participantPicker__listShell--fadeBottom"
+                      <SearchableRosterPicker
+                        variant="light"
+                        className="participantPicker__group"
+                        searchValue={participantSearch}
+                        onSearchChange={setParticipantSearch}
+                        searchPlaceholder="Search players"
+                        searchAriaLabel="Search saved players"
+                        clearAriaLabel="Clear player search"
+                        showSearch={profiles.length > 0 || !!participantSearch}
+                        emptyState={
+                          participantSearch
+                            ? "No saved players match that search."
+                            : selectedPlayers.length === 0 && profiles.length === 0
+                              ? "No saved players yet. Create one below."
+                              : undefined
+                        }
+                        createButtonLabel="Add new player"
+                        onCreateButtonClick={() => setIsAddingPlayer(true)}
+                      >
+                        {filteredProfiles.map((profile) => (
+                          <button
+                            key={profile.id}
+                            type="button"
+                            className={`participantOption${
+                              selectedProfileIds.has(profile.id)
+                                ? " participantOption--active"
                                 : ""
                             }`}
+                            onClick={() => toggleProfile(profile.id)}
                           >
-                            <div
-                              ref={playerListFade.ref}
-                              className="participantPicker__list"
+                            <span
+                              className="participantOption__avatar"
+                              style={avatarStyleFor(profile.avatarColor)}
                             >
-                              <div className="participantPicker__listContent">
-                                {filteredProfiles.map((profile) => (
-                                  <button
-                                    key={profile.id}
-                                    type="button"
-                                    className={`participantOption${
-                                      selectedProfileIds.has(profile.id)
-                                        ? " participantOption--active"
-                                        : ""
-                                    }`}
-                                    onClick={() => toggleProfile(profile.id)}
-                                  >
-                                    <span
-                                      className="participantOption__avatar"
-                                      style={avatarStyleFor(profile.avatarColor)}
-                                    >
-                                      {getInitials(profile.name)}
-                                    </span>
-                                    <span className="participantOption__copy">
-                                      <span className="participantOption__name">
-                                        {profile.isAccountPlayer
-                                          ? formatAccountPlayerName(profile.name)
-                                          : profile.name}
-                                      </span>
-                                    </span>
-                                    <SelectionStateIcon
-                                      selected={selectedProfileIds.has(profile.id)}
-                                    />
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          {filteredProfiles.length === 0 ? (
-                            <div className="teamPicker__empty">
-                              No saved players match that search.
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                      {selectedPlayers.length === 0 && profiles.length === 0 ? (
-                        <div className="teamPicker__empty">
-                          No saved players yet. Create one below.
-                        </div>
-                      ) : null}
+                              {getInitials(profile.name)}
+                            </span>
+                            <span className="participantOption__copy">
+                              <span className="participantOption__name">
+                                {profile.isAccountPlayer
+                                  ? formatAccountPlayerName(profile.name)
+                                  : profile.name}
+                              </span>
+                            </span>
+                            <SelectionStateIcon
+                              selected={selectedProfileIds.has(profile.id)}
+                            />
+                          </button>
+                        ))}
+                      </SearchableRosterPicker>
                       <NewPlayerComposer
                         isOpen={isAddingPlayer}
+                        showTrigger={false}
                         isAuthenticated={isAuthenticated}
                         name={newPlayerName}
                         color={newPlayerColor}

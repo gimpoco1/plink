@@ -6,11 +6,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.managePlayersDialog__form {
-  padding: 20px;
-  min-height: 0;
-}
-
 .managePlayersDialog__head {
   margin-bottom: 14px;
   padding-bottom: 14px;
@@ -526,7 +521,8 @@
 }
 
 .managePlayersDialog__card--editing {
-  align-items: flex-start;
+  align-items: stretch;
+  padding: 12px;
 }
 
 .managePlayersDialog__cardMain {
@@ -535,6 +531,11 @@
   gap: 8px;
   min-width: 0;
   flex: 1;
+}
+
+.managePlayersDialog__card--editing .managePlayersDialog__cardMain {
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .managePlayersDialog__avatar {
@@ -549,6 +550,13 @@
   font-size: 12px;
   font-weight: 900;
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
+}
+
+.managePlayersDialog__card--editing .managePlayersDialog__avatar {
+  width: 34px;
+  height: 34px;
+  margin-top: 0;
+  border-radius: 10px;
 }
 
 .managePlayersDialog__avatar--preview {
@@ -588,7 +596,7 @@
 .managePlayersDialog__name {
   color: var(--text);
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.2;
   min-width: 0;
 }
@@ -657,6 +665,7 @@
 .managePlayersDialog__actionsRow--edit {
   margin-left: 0;
   justify-self: auto;
+  align-self: center;
 }
 
 .managePlayersDialog__actionBtn {
@@ -668,7 +677,64 @@
 }
 
 .managePlayersDialog__actionBtn--add {
-  box-shadow: 0 8px 20px rgba(191, 222, 97, 0.12);
+  border-color: rgba(122, 208, 255, 0.28);
+  background: rgba(122, 208, 255, 0.12);
+  color: var(--ds-color-secondary);
+}
+
+.managePlayersDialog__actionBtn--add:hover:not(:disabled) {
+  border-color: rgba(122, 208, 255, 0.42);
+  background: rgba(122, 208, 255, 0.18);
+}
+
+.managePlayersDialog__actionBtn--edit {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+}
+
+.managePlayersDialog__actionBtn--edit:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.managePlayersDialog__actionBtn--save {
+  border-color: rgba(216, 255, 79, 0.46);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.managePlayersDialog__actionBtn--save:hover:not(:disabled) {
+  border-color: rgba(216, 255, 79, 0.72);
+  background: #e2ff78;
+}
+
+.managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(17, 24, 10, 0.12),
+    0 0 0 2px rgba(216, 255, 79, 0.2);
+}
+
+.managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued:hover:not(:disabled),
+.managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued:active {
+  border-color: rgba(216, 255, 79, 0.86);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.managePlayersDialog__actionBtn--cancel {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-dim);
+}
+
+.managePlayersDialog__actionBtn--cancel:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
 }
 
 .managePlayersDialog__inlineAction {
@@ -726,35 +792,45 @@
 }
 
 .managePlayersDialog__actionBtn--danger {
+  border-color: rgba(255, 140, 130, 0.26);
+  background: rgba(255, 140, 130, 0.12);
   color: var(--neg);
+}
+
+.managePlayersDialog__actionBtn--danger:hover:not(:disabled) {
+  border-color: rgba(255, 140, 130, 0.44);
+  background: rgba(255, 140, 130, 0.18);
 }
 
 .managePlayersDialog__editStack {
   display: grid;
-  gap: 6px;
+  gap: 12px;
   width: 100%;
   min-width: 0;
 }
 
 .managePlayersDialog__editTop {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
-.managePlayersDialog__editInput {
-  flex: 1;
+.managePlayersDialog__editInput.input {
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
   min-width: 0;
-  min-height: 40px;
-  padding: 8px 10px;
+  padding: 0 10px;
   font-size: 12px;
+  line-height: 1;
 }
 
 .managePlayersDialog__swatches {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 6px;
+  gap: 7px;
   width: 100%;
 }
 
@@ -777,9 +853,9 @@
 .managePlayersDialog__swatch--selected {
   border-color: rgba(255, 255, 255, 0.9);
   box-shadow:
-    0 0 0 2px rgba(216, 255, 79, 0.28),
-    0 8px 20px rgba(0, 0, 0, 0.25);
-  transform: scale(1.04);
+    0 0 0 2px rgba(246, 248, 235, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
 }
 
 .managePlayersDialog__toggle {
@@ -852,10 +928,6 @@
     max-height: calc(100dvh - 16px);
   }
 
-  .managePlayersDialog__form {
-    padding: 18px;
-  }
-
   .managePlayersDialog__toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -902,6 +974,6 @@
   }
 
   .managePlayersDialog__editTop {
-    align-items: flex-start;
+    align-items: center;
   }
 }

@@ -6,6 +6,7 @@ import "./NewPlayerComposer.css";
 
 type Props = {
   isOpen: boolean;
+  showTrigger?: boolean;
   isAuthenticated: boolean;
   name: string;
   color: (typeof AVATAR_COLORS)[number]["value"];
@@ -22,6 +23,7 @@ type Props = {
 
 export function NewPlayerComposer({
   isOpen,
+  showTrigger = true,
   isAuthenticated,
   name,
   color,
@@ -37,7 +39,7 @@ export function NewPlayerComposer({
 }: Props) {
   const canAdd = name.trim().length > 0 && !validationMessage;
 
-  if (!isOpen) {
+  if (!isOpen && showTrigger) {
     return (
       <button type="button" className="teamPicker__createBtn" onClick={onOpen}>
         <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
@@ -45,6 +47,8 @@ export function NewPlayerComposer({
       </button>
     );
   }
+
+  if (!isOpen) return null;
 
   return (
     <div className="newPlayerComposer">

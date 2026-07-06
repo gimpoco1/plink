@@ -20,7 +20,7 @@
 }
 
 .dialog__form {
-  padding: 24px;
+  padding: 16px;
 }
 
 .dialog--confirm .dialog__form {
@@ -35,8 +35,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: -24px -24px 20px;
-  padding: 24px 24px 20px;
+  margin: -16px -16px 16px;
+  padding: 20px 16px 16px;
   background: #0f121c;
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);

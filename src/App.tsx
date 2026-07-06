@@ -1145,6 +1145,9 @@ export default function App() {
                   if (!ok) return;
                   removePlayer(currentGame.id, playerId);
                 }}
+                onUpdateProfile={(profileId, updates) => {
+                  updateProfileEverywhere(profileId, updates);
+                }}
                 onUpdatePlayer={(playerId, updates) => {
                   const player = currentGame.players.find(
                     (item) => item.id === playerId,

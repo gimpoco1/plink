@@ -136,7 +136,7 @@
 .iconbtn:focus-visible,
 .input:focus-visible {
   outline: none;
-  box-shadow: var(--focus);
+
 }
 
 .iconbtn {
