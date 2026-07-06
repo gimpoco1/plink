@@ -53,7 +53,15 @@ export function useTeams(session: Session | null) {
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
   const remoteSignatureRef = useRef<string | null>(null);
+  const localChangeVersionRef = useRef(0);
+  const savedChangeVersionRef = useRef(0);
+  const isSavingRemoteRef = useRef(false);
+  const [saveRetryTick, setSaveRetryTick] = useState(0);
   const canPersistTeams = Boolean(userId && remoteReady && remoteUserId === userId);
+
+  function markLocalChange() {
+    localChangeVersionRef.current += 1;
+  }
 
   useEffect(() => {
     let alive = true;
@@ -64,6 +72,9 @@ export function useTeams(session: Session | null) {
       setRemoteReady(true);
       setRemoteUserId(null);
       remoteSignatureRef.current = null;
+      localChangeVersionRef.current = 0;
+      savedChangeVersionRef.current = 0;
+      isSavingRemoteRef.current = false;
       setSyncNotice(null);
       return () => {
         alive = false;
@@ -73,6 +84,9 @@ export function useTeams(session: Session | null) {
     setRemoteReady(false);
     setRemoteUserId(null);
     remoteSignatureRef.current = null;
+    localChangeVersionRef.current = 0;
+    savedChangeVersionRef.current = 0;
+    isSavingRemoteRef.current = false;
     setTeams([]);
     setTeamMembers([]);
 
@@ -205,11 +219,18 @@ export function useTeams(session: Session | null) {
   useEffect(() => {
     if (!userId) return;
     if (!remoteReady || remoteUserId !== userId) return;
+    const saveVersion = localChangeVersionRef.current;
+    if (saveVersion === savedChangeVersionRef.current) return;
+    if (isSavingRemoteRef.current) return;
 
+    isSavingRemoteRef.current = true;
     saveRemoteTeams(userId, teams)
       .then(() => saveRemoteTeamMembers(userId, teamMembers))
       .then(() => {
         remoteSignatureRef.current = getTeamSyncSignature(teams, teamMembers);
+        if (localChangeVersionRef.current === saveVersion) {
+          savedChangeVersionRef.current = saveVersion;
+        }
       })
       .catch((error) => {
         console.error("Failed to save teams to Supabase", error);
@@ -217,8 +238,14 @@ export function useTeams(session: Session | null) {
           message: `Could not save teams: ${getSyncErrorMessage(error)}`,
           tone: "error",
         });
+      })
+      .finally(() => {
+        isSavingRemoteRef.current = false;
+        if (localChangeVersionRef.current !== savedChangeVersionRef.current) {
+          setSaveRetryTick((value) => value + 1);
+        }
       });
-  }, [remoteReady, remoteUserId, teamMembers, teams, userId]);
+  }, [remoteReady, remoteUserId, saveRetryTick, teamMembers, teams, userId]);
 
   const teamMembersByTeamId = useMemo(() => {
     const map = new Map<string, TeamMember[]>();
@@ -252,6 +279,7 @@ export function useTeams(session: Session | null) {
       createdAt: now,
       updatedAt: now,
     };
+    markLocalChange();
     setTeams((current) => [...current, createdTeam]);
     return createdTeam;
   }
@@ -264,6 +292,7 @@ export function useTeams(session: Session | null) {
       });
       return;
     }
+    markLocalChange();
     setTeams((current) => current.filter((team) => team.id !== teamId));
     setTeamMembers((current) =>
       current.filter((member) => member.teamId !== teamId),
@@ -284,6 +313,7 @@ export function useTeams(session: Session | null) {
     const name =
       typeof updates.name === "string" ? formatTeamName(updates.name) : undefined;
     if (updates.name !== undefined && !name) return;
+    markLocalChange();
     setTeams((current) =>
       current.map((team) => {
         if (team.id !== teamId) return team;
@@ -314,6 +344,7 @@ export function useTeams(session: Session | null) {
       });
       return;
     }
+    markLocalChange();
     setTeamMembers((current) => {
       const existing = current.find(
         (member) => member.teamId === teamId && member.profileId === profileId,
@@ -337,6 +368,14 @@ export function useTeams(session: Session | null) {
   }
 
   function removeProfileMemberships(profileId: string) {
+    if (!canPersistTeams) {
+      setSyncNotice({
+        message: "Teams are still loading. Try again in a moment.",
+        tone: "error",
+      });
+      return;
+    }
+    markLocalChange();
     setTeamMembers((current) =>
       current.filter((member) => member.profileId !== profileId),
     );

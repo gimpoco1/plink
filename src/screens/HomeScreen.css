@@ -168,12 +168,23 @@
   z-index: 1;
 }
 
+.quickSetupCard__titleRow {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .quickSetupCard__title {
+  min-width: 0;
+  overflow: hidden;
   color: var(--text);
   font-size: 20px;
   font-weight: 820;
   letter-spacing: -0.04em;
   line-height: 0.98;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .quickSetupCard__metaRow {
@@ -212,6 +223,28 @@
   background: rgba(216, 255, 79, 0.1);
   border-color: rgba(216, 255, 79, 0.16);
   color: var(--accent);
+}
+
+.quickSetupCard__teamsChip {
+  flex: 0 0 auto;
+  min-height: 19px;
+  padding: 0 7px;
+  border: 1px solid rgba(122, 208, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(122, 208, 255, 0.12);
+  color: var(--ds-color-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.quickSetupCard__teamsChip svg {
+  flex: 0 0 auto;
 }
 
 .quickSetupCard__players {

@@ -28,6 +28,7 @@ import {
   Star,
   Target,
   Trophy,
+  Users,
   Zap,
 } from "lucide-react";
 
@@ -201,10 +202,7 @@ export function HomeScreen({
   const resumableGame = useMemo(() => {
     return (
       [...games]
-        .filter(
-          (game) =>
-            !findWinner(game.players, game),
-        )
+        .filter((game) => !findWinner(game.players, game))
         .sort((a, b) => b.updatedAt - a.updatedAt)[0] ?? null
     );
   }, [games]);
@@ -485,7 +483,15 @@ export function HomeScreen({
                 onClick={() => startSuggestion(setup)}
               >
                 <div className="quickSetupCard__main">
-                  <div className="quickSetupCard__title">{setup.label}</div>
+                  <div className="quickSetupCard__titleRow">
+                    <div className="quickSetupCard__title">{setup.label}</div>
+                    {setup.participantMode === "teams" ? (
+                      <span className="quickSetupCard__teamsChip">
+                        <Users size={10} strokeWidth={2.5} aria-hidden="true" />
+                        Teams
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="quickSetupCard__metaRow">
                     <div className="quickSetupCard__facts" aria-hidden="true">
                       {getSuggestionFacts(setup).map((fact) => (
@@ -529,15 +535,15 @@ export function HomeScreen({
                         {setup.suggestedPlayers
                           .slice(0, 4)
                           .map((player, index) => (
-                          <span
-                            key={`${setup.key}-${player.profileId ?? player.name}-${index}`}
-                            className="quickSetupCard__playerAvatar"
-                            style={avatarStyleFor(player.avatarColor)}
-                            title={player.name}
-                          >
-                            {getInitials(player.name)}
-                          </span>
-                        ))}
+                            <span
+                              key={`${setup.key}-${player.profileId ?? player.name}-${index}`}
+                              className="quickSetupCard__playerAvatar"
+                              style={avatarStyleFor(player.avatarColor)}
+                              title={player.name}
+                            >
+                              {getInitials(player.name)}
+                            </span>
+                          ))}
                         {setup.suggestedPlayers.length > 4 ? (
                           <span className="quickSetupCard__playerMore">
                             +{setup.suggestedPlayers.length - 4}

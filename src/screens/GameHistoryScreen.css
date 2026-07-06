@@ -168,20 +168,61 @@
 }
 
 .historyInfo__meta {
-  margin-top: 1px;
+  margin-top: 3px;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 5px;
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
 }
 
-.historyTurnSteps {
-  display: flex;
-  flex-wrap: wrap;
+.historyTurnLabel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  color: rgba(235, 247, 246, 0.68);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.historyTurnLabel strong {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+.historyTimeChip {
+  min-height: 18px;
+  padding: 2px 7px 2px 6px;
+  border: 1px solid rgba(235, 247, 246, 0.16);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
-  margin-top: 5px;
+  background: rgba(3, 8, 12, 0.38);
+  color: rgba(235, 247, 246, 0.72);
+  font-size: 10px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.historyTimeChip svg {
+  flex: 0 0 auto;
+  opacity: 0.82;
+}
+
+.historyContent--teams .historyTimeChip {
+  border-color: rgba(122, 208, 255, 0.22);
+  background: rgba(3, 10, 14, 0.4);
+  color: rgba(202, 239, 255, 0.8);
 }
 
 .historyTurnStep {
@@ -251,21 +292,21 @@
   justify-content: flex-end;
   gap: 4px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 22px;
   font-weight: 850;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .historyScore svg {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   color: var(--text-dim);
 }
 
 .historyScore strong {
   color: #ffffff;
-  font-size: 15px;
+  font-size: 22px;
 }
 
 .historyEmpty {

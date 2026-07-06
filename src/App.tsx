@@ -21,7 +21,13 @@ import { supabase } from "./lib/supabase";
 import { DashboardScreen } from "./screens/DashboardScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { GameHistoryScreen } from "./screens/GameHistoryScreen";
-import type { Game, PlayerProfile, ToastState, ToastTone } from "./types";
+import type {
+  Game,
+  GameTeam,
+  PlayerProfile,
+  ToastState,
+  ToastTone,
+} from "./types";
 import {
   GameSettingsDialog,
   GameSettingsDialogHandle,
@@ -116,6 +122,7 @@ export default function App() {
   const { pulseById, triggerPulse } = useScorePulse();
   const confirmRef = useRef<ConfirmDialogHandle>(null!);
   const managePlayersDialogRef = useRef<ManagePlayersDialogHandle>(null!);
+  const handledManageTeamsDialogOpenTokenRef = useRef(0);
   const settingsDialogRef = useRef<GameSettingsDialogHandle>(null!);
   const authDialogRef = useRef<AuthDialogHandle>(null!);
   const wantsRestoredGameView = useMemo(() => {
@@ -158,6 +165,14 @@ export default function App() {
   const [presetDraftToken, setPresetDraftToken] = useState(0);
   const [presetDraftIntent, setPresetDraftIntent] =
     useState<PresetDraftIntent>(null);
+  const [openTeamBuilderRequestToken, setOpenTeamBuilderRequestToken] =
+    useState(0);
+  const [returnToManageTeamsAfterCreate, setReturnToManageTeamsAfterCreate] =
+    useState(false);
+  const [
+    pendingManageTeamsDialogOpenToken,
+    setPendingManageTeamsDialogOpenToken,
+  ] = useState(0);
   const [
     dismissedLocalSessionsHintSignature,
     setDismissedLocalSessionsHintSignature,
@@ -288,9 +303,42 @@ export default function App() {
     } catch {
       // Ignore storage failures; fallback tab navigation still works.
     }
+    setReturnToManageTeamsAfterCreate(true);
+    setOpenTeamBuilderRequestToken((value) => value + 1);
     setGameReturnTab("players");
     setHomeTab("players");
     setView("home");
+  }
+
+  function handleTeamCreatedFromDashboard(team: GameTeam) {
+    if (presetDraftIntent === "teams-detour" && presetDraft) {
+      setPresetDraft({
+        ...presetDraft,
+        participantMode: "teams",
+        initialTeams: [
+          {
+            id: team.id,
+            name: team.name,
+            icon: team.icon,
+            members: [],
+          },
+          ...(presetDraft.initialTeams ?? []).filter(
+            (draftTeam) => draftTeam.id !== team.id,
+          ),
+        ],
+      });
+      setPresetDraftToken((value) => value + 1);
+      setPresetDraftIntent("edit");
+      setHomeTab("home");
+      setView("home");
+      return;
+    }
+
+    if (!returnToManageTeamsAfterCreate) return;
+    setReturnToManageTeamsAfterCreate(false);
+    setGameReturnTab("players");
+    setView("game");
+    setPendingManageTeamsDialogOpenToken((value) => value + 1);
   }
 
   function dismissLocalSessionsHint() {
@@ -436,6 +484,25 @@ export default function App() {
       setView("home");
     }
   }, [currentGameId, gamesReady, hasCompletedInitialViewRestore, view]);
+
+  useEffect(() => {
+    if (
+      !pendingManageTeamsDialogOpenToken ||
+      pendingManageTeamsDialogOpenToken ===
+        handledManageTeamsDialogOpenTokenRef.current ||
+      view !== "game" ||
+      !currentGame
+    ) {
+      return;
+    }
+
+    handledManageTeamsDialogOpenTokenRef.current =
+      pendingManageTeamsDialogOpenToken;
+    const frame = window.requestAnimationFrame(() => {
+      managePlayersDialogRef.current?.open();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentGame, pendingManageTeamsDialogOpenToken, view]);
 
   useEffect(() => {
     if (
@@ -1193,6 +1260,15 @@ export default function App() {
                   if (!ok) return;
                   removeTeam(currentGame.id, teamId);
                 }}
+                onDeleteSavedTeam={async (teamId, teamName) => {
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Delete team",
+                    message: `Delete "${teamName}"? This removes the team only. Saved players will stay in your roster.`,
+                    confirmText: "Delete",
+                    tone: "danger",
+                  });
+                  if (ok) deleteSavedTeam(teamId);
+                }}
                 onOpenTeamsTab={openTeamsTabFromGame}
                 winnerStats={currentWinnerStats}
                 onReplayGame={() => {
@@ -1233,6 +1309,10 @@ export default function App() {
                 presetDraft={presetDraft}
                 presetDraftToken={presetDraftToken}
                 presetDraftIntent={presetDraftIntent}
+                openTeamBuilderRequestToken={openTeamBuilderRequestToken}
+                onOpenTeamBuilderRequestHandled={() =>
+                  setOpenTeamBuilderRequestToken(0)
+                }
                 onOpenAuth={() => {
                   setShouldSaveGamePlayersOnSignIn(false);
                   authDialogRef.current?.open();
@@ -1272,6 +1352,7 @@ export default function App() {
                   }
                 }}
                 onCreateTeam={(name, icon) => createTeam(name, icon)}
+                onTeamCreated={handleTeamCreatedFromDashboard}
                 onUpdateTeam={updateTeam}
                 onDeleteTeam={async (teamId) => {
                   const team = teams.find((item) => item.id === teamId);

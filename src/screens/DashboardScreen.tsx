@@ -31,6 +31,8 @@ type DashboardScreenProps = {
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
   presetDraftIntent?: "edit" | "teams-detour" | null;
+  openTeamBuilderRequestToken?: number;
+  onOpenTeamBuilderRequestHandled?: () => void;
   onStartQuickSetup: (
     input: NewGameInput,
     details: {
@@ -45,6 +47,7 @@ type DashboardScreenProps = {
   ) => void;
   onDeleteProfile: (id: string) => void;
   onCreateTeam: (name: string, icon?: string) => GameTeam | null;
+  onTeamCreated?: (team: GameTeam) => void;
   onUpdateTeam: (
     id: string,
     updates: Partial<Pick<GameTeam, "name" | "icon">>,
@@ -113,6 +116,20 @@ export function DashboardScreen(props: DashboardScreenProps) {
     props.presetDraft,
     props.presetDraftIntent,
     props.presetDraftToken,
+  ]);
+
+  useEffect(() => {
+    if (!props.openTeamBuilderRequestToken) return;
+    props.onActiveTabChange("players");
+    setPlayersView("teams");
+    setIsAddingPlayer(false);
+    setIsCreating(false);
+    setOpenTeamBuilderToken((value) => value + 1);
+    props.onOpenTeamBuilderRequestHandled?.();
+  }, [
+    props.openTeamBuilderRequestToken,
+    props.onActiveTabChange,
+    props.onOpenTeamBuilderRequestHandled,
   ]);
 
   function changeTab(tab: HomeTab) {
@@ -208,6 +225,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onUpdateProfile={props.onUpdateProfile}
             onDeleteProfile={props.onDeleteProfile}
             onCreateTeam={props.onCreateTeam}
+            onTeamCreated={props.onTeamCreated}
             onUpdateTeam={props.onUpdateTeam}
             onDeleteTeam={props.onDeleteTeam}
             onToggleTeamMember={props.onToggleTeamMember}

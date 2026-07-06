@@ -12,6 +12,7 @@ import { getGameParticipants } from "../utils/gameParticipants";
 import { avatarStyleFor } from "../utils/color";
 import { capitalizeFirst, getInitials } from "../utils/text";
 import {
+  Clock3,
   Dumbbell,
   Flag,
   Flame,
@@ -19,7 +20,6 @@ import {
   Star,
   Target,
   Trophy,
-  Users,
   Zap,
 } from "lucide-react";
 import "./GameHistoryScreen.css";
@@ -62,7 +62,8 @@ type HistoryTurn = {
   actions: HistoryAction[];
 };
 
-const TURN_GROUP_WINDOW_MS = 15_000;
+const ACTION_MERGE_WINDOW_MS = 15_000;
+const TURN_BOUNDARY_WINDOW_MS = 60_000;
 
 const TEAM_ICON_COMPONENTS = {
   dumbbell: Dumbbell,
@@ -126,11 +127,13 @@ export function GameHistoryScreen({ game }: Props) {
       new Intl.DateTimeFormat(undefined, {
         hour: "2-digit",
         minute: "2-digit",
+        second: "2-digit",
       }),
     [],
   );
   const dateFormat = useMemo(
-    () => new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }),
+    () =>
+      new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }),
     [],
   );
   const dateWithYearFormat = useMemo(
@@ -226,16 +229,28 @@ export function GameHistoryScreen({ game }: Props) {
   const visibleActions =
     selectedPlayerId === "all" || !hasSelectedPlayer
       ? historyActions
-      : historyActions.filter((action) => action.subjectId === selectedPlayerId);
+      : historyActions.filter(
+          (action) => action.subjectId === selectedPlayerId,
+        );
   const visibleTurns = useMemo(() => {
     const turns: HistoryTurn[] = [];
+    let currentTurnNumber = 0;
+    let previousActionAt: number | null = null;
 
     for (const action of visibleActions) {
+      if (
+        previousActionAt === null ||
+        action.createdAt - previousActionAt >= TURN_BOUNDARY_WINDOW_MS
+      ) {
+        currentTurnNumber += 1;
+      }
+      previousActionAt = action.createdAt;
+
       const currentTurn = turns[turns.length - 1];
       const shouldAppendToTurn =
         currentTurn &&
         currentTurn.subjectId === action.subjectId &&
-        action.createdAt - currentTurn.createdAt <= TURN_GROUP_WINDOW_MS;
+        action.createdAt - currentTurn.createdAt <= ACTION_MERGE_WINDOW_MS;
 
       if (shouldAppendToTurn) {
         currentTurn.actions.push(action);
@@ -247,7 +262,7 @@ export function GameHistoryScreen({ game }: Props) {
 
       turns.push({
         key: action.key,
-        turnNumber: turns.length + 1,
+        turnNumber: currentTurnNumber,
         subjectId: action.subjectId,
         subjectName: action.subjectName,
         avatarColor: action.avatarColor,
@@ -372,7 +387,10 @@ export function GameHistoryScreen({ game }: Props) {
                   onClick={() => setSelectedPlayerId(player.id)}
                 >
                   {player.icon ? (
-                    <span className="historyFilter__teamIcon" aria-hidden="true">
+                    <span
+                      className="historyFilter__teamIcon"
+                      aria-hidden="true"
+                    >
                       <TeamIconGlyph icon={player.icon} size={13} />
                     </span>
                   ) : (
@@ -449,24 +467,17 @@ function HistoryTurnRow({
           <div className={deltaClass}>{getDeltaLabel(turn.totalDelta)}</div>
         </div>
         <div className="historyInfo__meta">
-          <span>Turn {turn.turnNumber}</span>
-          {isTeamsGame && turn.icon ? <span>Team score</span> : null}
-          <span>{timeLabel}</span>
+          <span className="historyTurnLabel">
+            Turn <strong>{turn.turnNumber}</strong>
+          </span>
+          <span
+            className="historyTimeChip"
+            aria-label={`Scored at ${timeLabel}`}
+          >
+            <Clock3 size={11} strokeWidth={2.5} aria-hidden="true" />
+            {timeLabel}
+          </span>
         </div>
-        {turn.actions.length > 1 ? (
-          <div className="historyTurnSteps" aria-label="Score changes in this turn">
-            {turn.actions.map((action) => (
-              <span
-                key={action.key}
-                className={`historyTurnStep${
-                  action.delta >= 0 ? " historyTurnStep--pos" : " historyTurnStep--neg"
-                }`}
-              >
-                {getDeltaLabel(action.delta)}
-              </span>
-            ))}
-          </div>
-        ) : null}
       </div>
       <div className="historyScore">
         <span>{turn.scoreBefore}</span>
@@ -485,13 +496,7 @@ function HistoryTurnRow({
   );
 }
 
-function TeamIconGlyph({
-  icon,
-  size,
-}: {
-  icon?: string;
-  size: number;
-}) {
+function TeamIconGlyph({ icon, size }: { icon?: string; size: number }) {
   const Icon =
     TEAM_ICON_COMPONENTS[
       (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS

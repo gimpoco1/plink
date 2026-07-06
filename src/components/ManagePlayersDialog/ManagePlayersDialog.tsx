@@ -87,6 +87,7 @@ type Props = {
     members?: PlayerProfile[],
   ) => GameTeam | null;
   onDeleteTeam: (teamId: string, teamName: string) => Promise<void> | void;
+  onDeleteSavedTeam: (teamId: string, teamName: string) => Promise<void> | void;
   onStartGame: (profileIds: string[], newPlayers: StagedCustomPlayer[]) => void;
   onOpenTeamsTab: () => void;
 };
@@ -110,6 +111,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
       onUpdatePlayer,
       onCreateTeam,
       onDeleteTeam,
+      onDeleteSavedTeam,
       onStartGame,
       onOpenTeamsTab,
     },
@@ -284,6 +286,11 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
         if (currentTeamNames.has(name.toLowerCase())) return false;
         if (!query) return true;
         return name.toLowerCase().includes(query);
+      }).sort((a, b) => {
+        const bTime = b.updatedAt ?? b.createdAt;
+        const aTime = a.updatedAt ?? a.createdAt;
+        if (bTime !== aTime) return bTime - aTime;
+        return a.name.localeCompare(b.name);
       });
     }, [currentTeams, savedTeams, search]);
     const submitLabel =
@@ -527,18 +534,19 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                                     </div>
                                   </div>
                                 </div>
-                                <button
-                                  className="managePlayersDialog__inlineAction managePlayersDialog__inlineAction--danger"
-                                  type="button"
-                                  onClick={() =>
-                                    void onDeleteTeam(team.id, team.name)
-                                  }
-                                  aria-label={`Remove ${team.name}`}
-                                  title="Remove"
-                                >
-                                  <span aria-hidden="true">×</span>
-                                  <span>Remove</span>
-                                </button>
+                                <div className="managePlayersDialog__actionsRow">
+                                  <button
+                                    className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
+                                    type="button"
+                                    onClick={() =>
+                                      void onDeleteTeam(team.id, team.name)
+                                    }
+                                    aria-label={`Remove ${team.name}`}
+                                    title="Remove"
+                                  >
+                                    <X size={15} strokeWidth={2.7} aria-hidden="true" />
+                                  </button>
+                                </div>
                               </div>
                             </article>
                           );
@@ -554,128 +562,114 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                       <div className="managePlayersDialog__simpleTitle">
                         Saved teams
                       </div>
-                      <label className="managePlayersDialog__searchInline">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden="true"
-                          className="managePlayersDialog__searchIcon"
-                        >
-                          <circle
-                            cx="11"
-                            cy="11"
-                            r="6"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          />
-                          <path
-                            d="m20 20-4.2-4.2"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <input
-                          className="input input--compact managePlayersDialog__searchInput"
-                          placeholder="Search saved teams"
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                          aria-label="Search saved teams"
-                        />
-                      </label>
                     </div>
 
-                    {availableSavedTeams.length > 0 ? (
-                      <div className="managePlayersDialog__list managePlayersDialog__list--saved">
-                        {availableSavedTeams.map((team) => {
-                          const members =
-                            savedTeamProfilesByTeamId.get(team.id) ?? [];
-                          const overflowCount = Math.max(0, members.length - 5);
-                          const TeamIcon =
-                            TEAM_ICON_COMPONENTS[
-                              (team.icon ??
-                                DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
-                            ] ?? Dumbbell;
+                    <SearchableRosterPicker
+                      variant="dark"
+                      listMaxHeight="150px"
+                      searchValue={search}
+                      onSearchChange={setSearch}
+                      searchPlaceholder="Search saved teams"
+                      searchAriaLabel="Search saved teams"
+                      clearAriaLabel="Clear team search"
+                      emptyState={
+                        search
+                          ? "No saved teams match that search."
+                          : savedTeams.length > 0
+                            ? "All saved teams are already in this game."
+                            : "No saved teams yet. Create one from the Teams tab."
+                      }
+                    >
+                      {availableSavedTeams.map((team) => {
+                        const members =
+                          savedTeamProfilesByTeamId.get(team.id) ?? [];
+                        const overflowCount = Math.max(0, members.length - 5);
+                        const TeamIcon =
+                          TEAM_ICON_COMPONENTS[
+                            (team.icon ??
+                              DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+                          ] ?? Dumbbell;
 
-                          return (
-                            <article
-                              className="managePlayersDialog__teamCard"
-                              key={`saved-team-${team.id}`}
-                            >
-                              <div className="managePlayersDialog__teamCardMain">
-                                <div className="managePlayersDialog__teamIdentity">
-                                  <div className="managePlayersDialog__teamHeading">
-                                    <span
-                                      className="managePlayersDialog__teamIcon"
-                                      aria-hidden="true"
+                        return (
+                          <article
+                            className="managePlayersDialog__teamCard"
+                            key={`saved-team-${team.id}`}
+                          >
+                            <div className="managePlayersDialog__teamCardMain">
+                              <div className="managePlayersDialog__teamIdentity">
+                                <div className="managePlayersDialog__teamHeading">
+                                  <span
+                                    className="managePlayersDialog__teamIcon"
+                                    aria-hidden="true"
+                                  >
+                                    <TeamIcon size={15} strokeWidth={2.2} />
+                                  </span>
+                                  <span className="managePlayersDialog__teamName">
+                                    {team.name}
+                                  </span>
+                                  {members.length > 0 ? (
+                                    <div
+                                      className="managePlayersDialog__teamMembers"
+                                      aria-label={`${team.name} saved members`}
                                     >
-                                      <TeamIcon size={15} strokeWidth={2.2} />
-                                    </span>
-                                    <span className="managePlayersDialog__teamName">
-                                      {team.name}
-                                    </span>
-                                    {members.length > 0 ? (
-                                      <div
-                                        className="managePlayersDialog__teamMembers"
-                                        aria-label={`${team.name} saved members`}
-                                      >
-                                        {members.slice(0, 5).map((member) => (
-                                          <span
-                                            key={`${team.id}:saved:${member.id}`}
-                                            className="managePlayersDialog__teamMemberAvatar"
-                                            style={avatarStyleFor(
-                                              member.avatarColor,
-                                            )}
-                                            title={member.name}
-                                            aria-label={member.name}
-                                          >
-                                            {getInitials(member.name)}
-                                          </span>
-                                        ))}
-                                        {overflowCount > 0 ? (
-                                          <span
-                                            className="managePlayersDialog__teamMemberOverflow"
-                                            aria-label={`${overflowCount} more saved players`}
-                                          >
-                                            +{overflowCount}
-                                          </span>
-                                        ) : null}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                  {members.length === 0 ? (
-                                    <span className="managePlayersDialog__meta">
-                                      Saved team
-                                    </span>
+                                      {members.slice(0, 5).map((member) => (
+                                        <span
+                                          key={`${team.id}:saved:${member.id}`}
+                                          className="managePlayersDialog__teamMemberAvatar"
+                                          style={avatarStyleFor(
+                                            member.avatarColor,
+                                          )}
+                                          title={member.name}
+                                          aria-label={member.name}
+                                        >
+                                          {getInitials(member.name)}
+                                        </span>
+                                      ))}
+                                      {overflowCount > 0 ? (
+                                        <span
+                                          className="managePlayersDialog__teamMemberOverflow"
+                                          aria-label={`${overflowCount} more saved players`}
+                                        >
+                                          +{overflowCount}
+                                        </span>
+                                      ) : null}
+                                    </div>
                                   ) : null}
                                 </div>
+                                {members.length === 0 ? (
+                                  <span className="managePlayersDialog__meta">
+                                    Saved team
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="managePlayersDialog__actionsRow">
                                 <button
-                                  className="managePlayersDialog__inlineAction managePlayersDialog__inlineAction--add"
+                                  className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--add"
                                   type="button"
-                                  onClick={() =>
-                                    addSavedTeamToCurrentGame(team)
-                                  }
+                                  onClick={() => addSavedTeamToCurrentGame(team)}
                                   aria-label={`Add ${team.name}`}
                                   title="Add"
                                   disabled={!canUseTeams}
                                 >
-                                  <span aria-hidden="true">+</span>
-                                  <span>Add</span>
+                                  <Plus size={16} strokeWidth={2.8} aria-hidden="true" />
+                                </button>
+                                <button
+                                  className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
+                                  type="button"
+                                  onClick={() =>
+                                    void onDeleteSavedTeam(team.id, team.name)
+                                  }
+                                  aria-label={`Delete saved team ${team.name}`}
+                                  title="Delete saved team"
+                                >
+                                  <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
                                 </button>
                               </div>
-                            </article>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="managePlayersDialog__empty">
-                        {search
-                          ? "No saved teams match that search."
-                          : savedTeams.length > 0
-                            ? "All saved teams are already in this game."
-                            : "No saved teams yet. Create one from the Teams tab."}
-                      </div>
-                    )}
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </SearchableRosterPicker>
 
                     <div className="managePlayersDialog__modeNotice">
                       <div className="managePlayersDialog__modeNoticeLead">
@@ -689,12 +683,8 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                           <span className="managePlayersDialog__modeNoticeTag">
                             Teams only
                           </span>
-                          <strong>
-                            Create or edit teams from the Teams tab.
-                          </strong>
                           <span>
-                            Team games only accept saved teams. Individual
-                            players need to be grouped into a team first.
+                            To add more teams, create them in the Teams tab first.
                           </span>
                         </div>
                       </div>
@@ -706,7 +696,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                           onOpenTeamsTab();
                         }}
                       >
-                        <span>Open Teams tab</span>
+                        <span>Add teams</span>
                         <ArrowUpRight size={15} strokeWidth={2.3} aria-hidden="true" />
                       </button>
                     </div>

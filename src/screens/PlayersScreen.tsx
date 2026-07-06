@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { AVATAR_COLORS, DEFAULT_TEAM_ICON, TEAM_ICONS } from "../constants";
 import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
@@ -37,6 +43,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { SearchableRosterPicker } from "../components/SearchableRosterPicker/SearchableRosterPicker";
 
 type PlayersScreenProps = {
   games: Game[];
@@ -61,6 +68,7 @@ type PlayersScreenProps = {
   ) => void;
   onDeleteProfile: (id: string) => void;
   onCreateTeam: (name: string, icon?: string) => GameTeam | null;
+  onTeamCreated?: (team: GameTeam) => void;
   onUpdateTeam: (
     id: string,
     updates: Partial<Pick<GameTeam, "name" | "icon">>,
@@ -98,6 +106,22 @@ function areSetsEqual<T>(left: Set<T>, right: Set<T>) {
     if (!right.has(value)) return false;
   }
   return true;
+}
+
+function prioritizeProfiles(
+  profileList: PlayerProfile[],
+  profileIds: string[],
+) {
+  if (!profileIds.length) return profileList;
+
+  const priority = new Map(
+    profileIds.map((profileId, index) => [profileId, index]),
+  );
+  return [...profileList].sort((left, right) => {
+    const leftPriority = priority.get(left.id) ?? Number.POSITIVE_INFINITY;
+    const rightPriority = priority.get(right.id) ?? Number.POSITIVE_INFINITY;
+    return leftPriority - rightPriority;
+  });
 }
 
 function useScrollableListFade(dependencies: ReadonlyArray<unknown>) {
@@ -160,6 +184,7 @@ export function PlayersScreen({
   onUpdateProfile,
   onDeleteProfile,
   onCreateTeam,
+  onTeamCreated,
   onUpdateTeam,
   onDeleteTeam,
   onToggleTeamMember,
@@ -210,6 +235,7 @@ export function PlayersScreen({
   const [newTeamPlayerColor, setNewTeamPlayerColor] = useState<
     (typeof AVATAR_COLORS)[number]["value"]
   >(AVATAR_COLORS[1]?.value ?? AVATAR_COLORS[0].value);
+  const [recentTeamPlayerIds, setRecentTeamPlayerIds] = useState<string[]>([]);
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const profileStats = useMemo(() => computeProfileStats(games), [games]);
   const teamMembersByTeamId = useMemo(() => {
@@ -239,14 +265,15 @@ export function PlayersScreen({
   );
   const filteredNewTeamProfiles = useMemo(() => {
     const query = newTeamSearch.trim().toLowerCase();
-    return profiles.filter((profile) => {
+    const filteredProfiles = profiles.filter((profile) => {
       if (!query) return true;
       return profile.name.toLowerCase().includes(query);
     });
-  }, [newTeamMemberIds, newTeamSearch, profiles]);
+    return prioritizeProfiles(filteredProfiles, recentTeamPlayerIds);
+  }, [newTeamSearch, profiles, recentTeamPlayerIds]);
   const newTeamSummary = useMemo(
-    () => buildTeamSummary(newTeamName, newTeamSelectedProfiles),
-    [newTeamName, newTeamSelectedProfiles],
+    () => buildTeamSummary(newTeamSelectedProfiles),
+    [newTeamSelectedProfiles],
   );
   const summaryTokenSize = useMemo(() => {
     const count = Math.max(newTeamSelectedProfiles.length, 1);
@@ -276,20 +303,14 @@ export function PlayersScreen({
       }) as CSSProperties,
     [summaryTokenOverlap, summaryTokenSize],
   );
-  const newTeamPlayerListFade = useScrollableListFade([
-    newTeamSearch,
-    filteredNewTeamProfiles.length,
-    profiles.length,
-    newTeamMemberIds.size,
-    creatingTeamPlayer,
-  ]);
   const editingTeamProfiles = useMemo(() => {
     const query = editingTeamSearch.trim().toLowerCase();
-    return profiles.filter((profile) => {
+    const filteredProfiles = profiles.filter((profile) => {
       if (!query) return true;
       return profile.name.toLowerCase().includes(query);
     });
-  }, [editingTeamSearch, profiles]);
+    return prioritizeProfiles(filteredProfiles, recentTeamPlayerIds);
+  }, [editingTeamSearch, profiles, recentTeamPlayerIds]);
   const editingTeamPlayerListFade = useScrollableListFade([
     editingTeamId,
     editingTeamSearch,
@@ -299,6 +320,19 @@ export function PlayersScreen({
     creatingTeamPlayer,
     expandedTeamAddPlayers.size,
   ]);
+
+  useEffect(() => {
+    if (!recentTeamPlayerIds.length) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      editingTeamPlayerListFade.ref.current?.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [editingTeamPlayerListFade.ref, recentTeamPlayerIds]);
 
   function createProfile() {
     if (!newName.trim()) return;
@@ -344,6 +378,7 @@ export function PlayersScreen({
     setEditingTeamOriginalMemberIds(new Set());
     setEditingTeamSearch("");
     setEditingTeamIconPickerOpen(false);
+    setRecentTeamPlayerIds([]);
     cancelTeamPlayerCreation();
   }
 
@@ -360,6 +395,7 @@ export function PlayersScreen({
     setNewTeamMemberIds(new Set());
     setNewTeamSearch("");
     setNewTeamPlayerColor(AVATAR_COLORS[1]?.value ?? AVATAR_COLORS[0].value);
+    setRecentTeamPlayerIds([]);
     cancelTeamPlayerCreation();
   }
 
@@ -447,6 +483,7 @@ export function PlayersScreen({
       setEditingTeamOriginalName("");
       setNewTeamIcon(pickNextTeamIcon([...teams, created]));
       closeTeamBuilder();
+      onTeamCreated?.(created);
     }
   }
 
@@ -467,11 +504,18 @@ export function PlayersScreen({
       newTeamPlayerColor,
     );
     if (created) {
+      setRecentTeamPlayerIds((current) => [
+        created.id,
+        ...current.filter((profileId) => profileId !== created.id),
+      ]);
       if (teamId && editingTeamId === teamId) {
+        setEditingTeamSearch("");
         setEditingTeamMemberIds((current) => new Set(current).add(created.id));
       } else if (teamId) {
+        setEditingTeamSearch("");
         onToggleTeamMember(teamId, created.id);
       } else {
+        setNewTeamSearch("");
         setNewTeamMemberIds((current) => new Set(current).add(created.id));
       }
       setNewTeamPlayerName("");
@@ -629,7 +673,7 @@ export function PlayersScreen({
         <>
           <div className="teamBuilder__intro">
             <p className="teamBuilder__lede">
-              Assemble your squad from saved profiles or create new recruits on
+              Assemble your team from saved profiles or create new recruits on
               the fly.
             </p>
           </div>
@@ -642,106 +686,82 @@ export function PlayersScreen({
                 {newTeamSelectedProfiles.length === 1 ? "" : "s"}
               </div>
             </div>
-            <label className="teamBuilderSearch">
-              <Search size={18} strokeWidth={2.4} aria-hidden="true" />
-              <input
-                className="teamBuilderSearch__input"
-                placeholder="Search players..."
-                value={newTeamSearch}
-                onChange={(event) => setNewTeamSearch(event.target.value)}
-              />
-            </label>
-            {profiles.length > 0 ? (
-              <div
-                className={`participantPicker__listShell teamBuilderListShell${
-                  newTeamPlayerListFade.fadeState.top
-                    ? " participantPicker__listShell--fadeTop teamBuilderListShell--fadeTop"
-                    : ""
-                }${
-                  newTeamPlayerListFade.fadeState.bottom
-                    ? " participantPicker__listShell--fadeBottom teamBuilderListShell--fadeBottom"
-                    : ""
-                }`}
-              >
-                <div
-                  ref={newTeamPlayerListFade.ref}
-                  className="participantPicker__list teamBuilderPlayerList"
-                >
-                  <div className="participantPicker__listContent">
-                    {filteredNewTeamProfiles.length > 0 ? (
-                      filteredNewTeamProfiles.map((profile) => {
-                        const selected = newTeamMemberIds.has(profile.id);
-                        return (
-                          <button
-                            key={`builder-player-${profile.id}`}
-                            type="button"
-                            className={`teamBuilderPlayerOption${
-                              selected ? " teamBuilderPlayerOption--selected" : ""
-                            }`}
-                            disabled={!canUseTeams}
-                            onClick={() => toggleNewTeamMember(profile.id)}
-                            aria-pressed={selected}
-                          >
-                            <span className="teamBuilderPlayerOption__identity">
-                              <span
-                                className="teamBuilderPlayerOption__avatar"
-                                style={avatarStyleFor(profile.avatarColor)}
-                                aria-hidden="true"
-                              >
-                                {getInitials(profile.name)}
-                              </span>
-                              <span className="teamBuilderPlayerOption__copy">
-                                <strong>
-                                  {profile.isAccountPlayer
-                                    ? formatAccountPlayerName(profile.name)
-                                    : profile.name}
-                                </strong>
-                              </span>
-                            </span>
-                            <span
-                              className={`teamBuilderPlayerOption__state${
-                                selected
-                                  ? " teamBuilderPlayerOption__state--selected"
-                                  : ""
-                              }`}
-                              aria-hidden="true"
-                            >
-                              {selected ? (
-                                <Check size={17} strokeWidth={2.8} />
-                              ) : (
-                                <Plus size={17} strokeWidth={2.8} />
-                              )}
-                            </span>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="teamBuilder__emptyState">
-                        No matching saved players.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="teamBuilder__emptyState">
-                No saved players yet.
-              </div>
-            )}
-            {creatingTeamPlayer &&
-            creatingTeamPlayerForTeamId === null ? null : (
-              <button
-                type="button"
-                className="btn btn--ghost teamEditor__newPlayer teamEditor__newPlayer--wide"
-                disabled={!canUseTeams}
-                onClick={() => {
-                  setCreatingTeamPlayer(true);
-                  setCreatingTeamPlayerForTeamId(null);
-                }}
-              >
-                + Add new player
-              </button>
-            )}
+            <SearchableRosterPicker
+              key={`new-team-roster-${recentTeamPlayerIds.join(":") || "default"}`}
+              variant="dark"
+              className="teamBuilderRosterPicker"
+              listMaxHeight="184px"
+              searchValue={newTeamSearch}
+              onSearchChange={setNewTeamSearch}
+              searchPlaceholder="Search players..."
+              searchAriaLabel="Search saved players"
+              clearAriaLabel="Clear player search"
+              emptyState={
+                profiles.length > 0
+                  ? "No matching saved players."
+                  : "No saved players yet."
+              }
+              createButtonLabel={
+                creatingTeamPlayer && creatingTeamPlayerForTeamId === null
+                  ? undefined
+                  : "Add new player"
+              }
+              onCreateButtonClick={
+                creatingTeamPlayer && creatingTeamPlayerForTeamId === null
+                  ? undefined
+                  : () => {
+                      setCreatingTeamPlayer(true);
+                      setCreatingTeamPlayerForTeamId(null);
+                    }
+              }
+            >
+              {filteredNewTeamProfiles.map((profile) => {
+                const selected = newTeamMemberIds.has(profile.id);
+                return (
+                  <button
+                    key={`builder-player-${profile.id}`}
+                    type="button"
+                    className={`teamBuilderPlayerOption${
+                      selected ? " teamBuilderPlayerOption--selected" : ""
+                    }`}
+                    disabled={!canUseTeams}
+                    onClick={() => toggleNewTeamMember(profile.id)}
+                    aria-pressed={selected}
+                  >
+                    <span className="teamBuilderPlayerOption__identity">
+                      <span
+                        className="teamBuilderPlayerOption__avatar"
+                        style={avatarStyleFor(profile.avatarColor)}
+                        aria-hidden="true"
+                      >
+                        {getInitials(profile.name)}
+                      </span>
+                      <span className="teamBuilderPlayerOption__copy">
+                        <strong>
+                          {profile.isAccountPlayer
+                            ? formatAccountPlayerName(profile.name)
+                            : profile.name}
+                        </strong>
+                      </span>
+                    </span>
+                    <span
+                      className={`teamBuilderPlayerOption__state${
+                        selected
+                          ? " teamBuilderPlayerOption__state--selected"
+                          : ""
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {selected ? (
+                        <Check size={17} strokeWidth={2.8} />
+                      ) : (
+                        <Plus size={17} strokeWidth={2.8} />
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </SearchableRosterPicker>
             {creatingTeamPlayer && creatingTeamPlayerForTeamId === null ? (
               <div className="newPlayerComposer teamBuilderCreatePlayer teamBuilderCreatePlayer--inline teamBuilderCreatePlayer--composer">
                 <div className="newPlayerComposer__header">
@@ -1542,7 +1562,8 @@ export function PlayersScreen({
                                       {profiles.length > 0 ? (
                                         <div
                                           className={`participantPicker__listShell teamBuilderListShell${
-                                            editingTeamPlayerListFade.fadeState.top
+                                            editingTeamPlayerListFade.fadeState
+                                              .top
                                               ? " participantPicker__listShell--fadeTop teamBuilderListShell--fadeTop"
                                               : ""
                                           }${
@@ -1553,13 +1574,12 @@ export function PlayersScreen({
                                           }`}
                                         >
                                           <div
-                                            ref={
-                                              editingTeamPlayerListFade.ref
-                                            }
+                                            ref={editingTeamPlayerListFade.ref}
                                             className="participantPicker__list teamBuilderPlayerList"
                                           >
                                             <div className="participantPicker__listContent">
-                                              {editingTeamProfiles.length > 0 ? (
+                                              {editingTeamProfiles.length >
+                                              0 ? (
                                                 editingTeamProfiles.map(
                                                   (profile) => {
                                                     const selected =
@@ -2029,17 +2049,17 @@ function TeamIconPicker({
   );
 }
 
-function buildTeamSummary(name: string, profiles: PlayerProfile[]) {
+function buildTeamSummary(profiles: PlayerProfile[]) {
   if (!profiles.length) {
-    return "This squad is ready for recruitment. Add at least one player to complete the roster and unlock the final save step.";
+    return "This team is ready for recruitment. Add at least one player to complete the roster and unlock the final save step.";
   }
   if (profiles.length === 1) {
-    return `${formatTeamName(name) || "This squad"} is in solo setup mode. Add more players to balance coverage before deployment.`;
+    return `Solo setup mode. Add more players to balance coverage before deployment.`;
   }
   if (profiles.length < 4) {
-    return `${formatTeamName(name) || "This squad"} has a strong core forming. One or two more recruits will create a more flexible rotation.`;
+    return `Solid core. Add one or two more players to give the team more lineup options.`;
   }
-  return `${formatTeamName(name) || "This squad"} has a well-rounded roster with enough depth for rotation, tempo, and matchup flexibility.`;
+  return `Well-rounded roster. Enough depth for rotation, tempo, and matchup flexibility.`;
 }
 
 function ColorPicker({

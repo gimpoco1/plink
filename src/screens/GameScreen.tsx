@@ -65,6 +65,10 @@ type Props = {
     members?: PlayerProfile[],
   ) => GameTeam | null;
   onDeleteTeam: (teamId: string, teamName: string) => Promise<void> | void;
+  onDeleteSavedTeam: (
+    teamId: string,
+    teamName: string,
+  ) => Promise<void> | void;
   onOpenTeamsTab: () => void;
   winnerStats: ProfileStats | null;
   onReplayGame: () => void;
@@ -91,6 +95,7 @@ export function GameScreen({
   onUpdatePlayer,
   onCreateTeam,
   onDeleteTeam,
+  onDeleteSavedTeam,
   onOpenTeamsTab,
   winnerStats,
   onReplayGame,
@@ -507,6 +512,7 @@ export function GameScreen({
         onUpdatePlayer={onUpdatePlayer}
         onCreateTeam={onCreateTeam}
         onDeleteTeam={onDeleteTeam}
+        onDeleteSavedTeam={onDeleteSavedTeam}
         onStartGame={onStartGame}
         onOpenTeamsTab={onOpenTeamsTab}
       />

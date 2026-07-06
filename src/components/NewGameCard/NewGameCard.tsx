@@ -242,6 +242,13 @@ export function NewGameCard({
     }));
     return [...saved, ...staged];
   }, [profiles, selectedProfileIds, stagedPlayers]);
+  const draftTeamPriorityIds = useMemo(
+    () =>
+      draft?.participantMode === "teams"
+        ? (draft.initialTeams ?? []).map((team) => team.id)
+        : [],
+    [draft],
+  );
   const membersByTeamId = useMemo(() => {
     const map = new Map<string, PlayerProfile[]>();
     const profilesById = new Map(
@@ -256,18 +263,28 @@ export function NewGameCard({
     });
     return map;
   }, [profiles, teamMembers]);
-  const availableTeams = useMemo(
-    () =>
-      teams
-        .map((team) => ({
-          ...team,
-          members: (membersByTeamId.get(team.id) ?? []).sort((a, b) =>
-            a.name.localeCompare(b.name),
-          ),
-        }))
-        .filter((team) => team.members.length > 0),
-    [membersByTeamId, teams],
-  );
+  const availableTeams = useMemo(() => {
+    const priority = new Map(
+      draftTeamPriorityIds.map((teamId, index) => [teamId, index]),
+    );
+
+    return teams
+      .map((team, index) => ({
+        ...team,
+        listIndex: index,
+        members: (membersByTeamId.get(team.id) ?? []).sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      }))
+      .filter((team) => team.members.length > 0)
+      .sort((left, right) => {
+        const leftPriority = priority.get(left.id) ?? Number.POSITIVE_INFINITY;
+        const rightPriority =
+          priority.get(right.id) ?? Number.POSITIVE_INFINITY;
+        if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+        return left.listIndex - right.listIndex;
+      });
+  }, [draftTeamPriorityIds, membersByTeamId, teams]);
   const selectedTeams = useMemo(
     () => availableTeams.filter((team) => selectedTeamIds.has(team.id)),
     [availableTeams, selectedTeamIds],
@@ -1064,7 +1081,7 @@ export function NewGameCard({
                     }`}
                     onClick={() => switchParticipantMode("players")}
                   >
-                    Players
+                    Individuals
                   </button>
                   <button
                     type="button"
@@ -1135,7 +1152,8 @@ export function NewGameCard({
                         emptyState={
                           participantSearch
                             ? "No saved players match that search."
-                            : selectedPlayers.length === 0 && profiles.length === 0
+                            : selectedPlayers.length === 0 &&
+                                profiles.length === 0
                               ? "No saved players yet. Create one below."
                               : undefined
                         }
@@ -1203,7 +1221,11 @@ export function NewGameCard({
                     ) : availableTeams.length > 0 ? (
                       <>
                         <label className="participantPicker__search participantPicker__search--teams">
-                          <Search size={16} strokeWidth={2.4} aria-hidden="true" />
+                          <Search
+                            size={16}
+                            strokeWidth={2.4}
+                            aria-hidden="true"
+                          />
                           <input
                             type="text"
                             value={participantSearch}
@@ -1220,7 +1242,11 @@ export function NewGameCard({
                               aria-label="Clear team search"
                               onClick={() => setParticipantSearch("")}
                             >
-                              <X size={15} strokeWidth={2.6} aria-hidden="true" />
+                              <X
+                                size={15}
+                                strokeWidth={2.6}
+                                aria-hidden="true"
+                              />
                             </button>
                           ) : null}
                         </label>
@@ -1235,7 +1261,10 @@ export function NewGameCard({
                               : ""
                           }`}
                         >
-                          <div ref={teamListFade.ref} className="teamPicker__list">
+                          <div
+                            ref={teamListFade.ref}
+                            className="teamPicker__list"
+                          >
                             <div className="participantPicker__listContent">
                               {filteredTeams.map((team) => (
                                 <button
@@ -1262,7 +1291,9 @@ export function NewGameCard({
                                       </span>
                                       <span className="teamPicker__optionCopy">
                                         <strong>{team.name}</strong>
-                                        <span>{team.members.length} players</span>
+                                        <span>
+                                          {team.members.length} players
+                                        </span>
                                       </span>
                                     </span>
                                   </span>
@@ -1275,7 +1306,9 @@ export function NewGameCard({
                                         <span
                                           key={`${team.id}-${member.id}`}
                                           className="teamPicker__avatar"
-                                          style={avatarStyleFor(member.avatarColor)}
+                                          style={avatarStyleFor(
+                                            member.avatarColor,
+                                          )}
                                         >
                                           {getInitials(member.name)}
                                         </span>
@@ -1300,7 +1333,11 @@ export function NewGameCard({
                           className="teamPicker__createBtn"
                           onClick={openTeamsWorkspace}
                         >
-                          <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
+                          <Plus
+                            size={17}
+                            strokeWidth={2.7}
+                            aria-hidden="true"
+                          />
                           Add new team
                         </button>
                       </>
@@ -1315,7 +1352,11 @@ export function NewGameCard({
                           className="teamPicker__createBtn"
                           onClick={openTeamsWorkspace}
                         >
-                          <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
+                          <Plus
+                            size={17}
+                            strokeWidth={2.7}
+                            aria-hidden="true"
+                          />
                           Add new team
                         </button>
                       </>
