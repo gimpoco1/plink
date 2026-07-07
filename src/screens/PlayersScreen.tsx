@@ -24,6 +24,7 @@ import {
   getInitials,
 } from "../utils/text";
 import { SwipeableCard } from "../components/SwipeableCard/SwipeableCard";
+import { NewPlayerComposer } from "../components/NewPlayerComposer/NewPlayerComposer";
 import "./PlayersScreen.css";
 import {
   ArrowLeft,
@@ -787,78 +788,30 @@ export function PlayersScreen({
                 );
               })}
             </SearchableRosterPicker>
-            {creatingTeamPlayer && creatingTeamPlayerForTeamId === null ? (
-              <div className="newPlayerComposer teamBuilderCreatePlayer teamBuilderCreatePlayer--inline teamBuilderCreatePlayer--composer">
-                <div className="newPlayerComposer__header">
-                  <span>Player name</span>
-                </div>
-                <div className="newPlayerComposer__top">
-                  <label className="field newPlayerComposer__field">
-                    <div className="newPlayerComposer__inputShell">
-                      <span
-                        className="newPlayerComposer__preview"
-                        style={avatarStyleFor(newTeamPlayerColor)}
-                        aria-hidden="true"
-                      >
-                        {newTeamPlayerName.trim()
-                          ? getInitials(newTeamPlayerName)
-                          : "+"}
-                      </span>
-                      <input
-                        id="team-builder-player-name"
-                        className="input input--sm newPlayerComposer__input"
-                        placeholder="e.g. John"
-                        value={newTeamPlayerName}
-                        disabled={!canUseTeams}
-                        onChange={(event) =>
-                          setNewTeamPlayerName(event.target.value)
-                        }
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") createTeamPlayer();
-                          if (event.key === "Escape")
-                            cancelTeamPlayerCreation();
-                        }}
-                      />
-                    </div>
-                  </label>
-                  <button
-                    type="button"
-                    className="btn btn--primary btn--sm newPlayerComposer__submit"
-                    disabled={!canUseTeams || !newTeamPlayerName.trim()}
-                    onClick={() => createTeamPlayer()}
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="newPlayerComposer__colors">
-                  <div className="newPlayerComposer__label">Player color</div>
-                  <div className="newPlayerComposer__swatches">
-                    {AVATAR_COLORS.map((entry) => (
-                      <button
-                        key={`team-builder-color-${entry.id}`}
-                        type="button"
-                        className="colorDisc colorDisc--large"
-                        style={{ background: entry.value }}
-                        data-active={newTeamPlayerColor === entry.value}
-                        onClick={() => setNewTeamPlayerColor(entry.value)}
-                        aria-label={`Use ${entry.id} color`}
-                        aria-pressed={newTeamPlayerColor === entry.value}
-                        disabled={!canUseTeams}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div className="newPlayerComposer__actions">
-                  <button
-                    type="button"
-                    className="newPlayerComposer__close"
-                    onClick={cancelTeamPlayerCreation}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : null}
+            <NewPlayerComposer
+              className="teamBuilderCreatePlayer teamBuilderCreatePlayer--inline teamBuilderCreatePlayer--composer"
+              isOpen={
+                creatingTeamPlayer && creatingTeamPlayerForTeamId === null
+              }
+              showTrigger={false}
+              isAuthenticated={isAuthenticated}
+              disabled={!canUseTeams}
+              inputId="team-builder-player-name"
+              name={newTeamPlayerName}
+              color={newTeamPlayerColor}
+              saveAsProfile
+              showPersistenceControls={false}
+              onOpen={() => {
+                setCreatingTeamPlayer(true);
+                setCreatingTeamPlayerForTeamId(null);
+              }}
+              onOpenAuth={onOpenAuth}
+              onCancel={cancelTeamPlayerCreation}
+              onAdd={() => createTeamPlayer()}
+              onNameChange={setNewTeamPlayerName}
+              onColorChange={setNewTeamPlayerColor}
+              onSaveAsProfileChange={() => {}}
+            />
           </section>
 
           <section className="teamBuilderCard teamBuilderCard--summary">
@@ -957,82 +910,92 @@ export function PlayersScreen({
       />
       <div className="tabHeader playersScreenHeader">
         <div className="playersScreenHeader__content">
-          <div className="playersScreenHeader__titleRow">
-            <div className="playersScreenHeader__titleGroup">
-              <h2 className="tabTitle">
-                {activeView === "teams" ? "Teams" : "Players"}
-              </h2>
-              <span className="playersScreenCount">{activeCountLabel}</span>
-            </div>
-            <button
-              type="button"
-              className="playersScreenHeader__action"
-              disabled={
-                !isAuthenticated || (activeView === "teams" && !canUseTeams)
-              }
-              aria-expanded={
-                activeView === "players" ? addingPlayer : addingTeam
-              }
-              onClick={() => {
-                if (activeView === "players") {
-                  onAddingPlayerChange(true);
-                  return;
+          {isAuthenticated ? (
+            <div className="playersScreenHeader__titleRow">
+              <div className="playersScreenHeader__titleGroup">
+                <h2 className="tabTitle">
+                  {activeView === "teams" ? "Teams" : "Players"}
+                </h2>
+                <span className="playersScreenCount">{activeCountLabel}</span>
+              </div>
+              <button
+                type="button"
+                className="playersScreenHeader__action"
+                disabled={
+                  !isAuthenticated || (activeView === "teams" && !canUseTeams)
                 }
-                if (!addingTeam) openTeamBuilder();
-              }}
-            >
-              <Plus size={18} strokeWidth={2.8} aria-hidden="true" />
-              {titleActionLabel}
-            </button>
-          </div>
+                aria-expanded={
+                  activeView === "players" ? addingPlayer : addingTeam
+                }
+                onClick={() => {
+                  if (activeView === "players") {
+                    onAddingPlayerChange(true);
+                    return;
+                  }
+                  if (!addingTeam) openTeamBuilder();
+                }}
+              >
+                <Plus size={18} strokeWidth={2.8} aria-hidden="true" />
+                {titleActionLabel}
+              </button>
+            </div>
+          ) : (
+            <div className="playersScreenHeader__titleRow">
+              <div className="playersScreenHeader__titleGroup">
+                <h2 className="tabTitle">Players</h2>
+              </div>
+            </div>
+          )}
           <p className="tabSubtitle">
-            {activeView === "players"
+            {!isAuthenticated || activeView === "players"
               ? "Reuse profiles and track cumulative results across sessions."
               : "Build reusable groups for team-based games."}
           </p>
-          <div
-            className="playersHeaderSwitch"
-            role="tablist"
-            aria-label="Players view"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeView === "players"}
-              className={`playersHeaderSwitch__option${
-                activeView === "players"
-                  ? " playersHeaderSwitch__option--active"
-                  : ""
-              }`}
-              onClick={() => {
-                onActiveViewChange("players");
-                closeTeamBuilder();
-              }}
+          {isAuthenticated ? (
+            <div
+              className="playersHeaderSwitch"
+              role="tablist"
+              aria-label="Players view"
             >
-              Players
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeView === "teams"}
-              aria-disabled={!canAccessTeamsView}
-              className={`playersHeaderSwitch__option${
-                activeView === "teams"
-                  ? " playersHeaderSwitch__option--active"
-                  : ""
-              }${
-                !canAccessTeamsView
-                  ? " playersHeaderSwitch__option--locked"
-                  : ""
-              }`}
-              onClick={handleTeamsViewPress}
-            >
-              Teams
-              {!canAccessTeamsView ? (
-                <span className="playersHeaderSwitch__badge">Pro</span>
-              ) : null}
-            </button>
-          </div>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeView === "players"}
+                className={`playersHeaderSwitch__option${
+                  activeView === "players"
+                    ? " playersHeaderSwitch__option--active"
+                    : ""
+                }`}
+                onClick={() => {
+                  onActiveViewChange("players");
+                  closeTeamBuilder();
+                }}
+              >
+                Players
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeView === "teams"}
+                aria-disabled={!canAccessTeamsView}
+                className={`playersHeaderSwitch__option${
+                  activeView === "teams"
+                    ? " playersHeaderSwitch__option--active"
+                    : ""
+                }${
+                  !canAccessTeamsView
+                    ? " playersHeaderSwitch__option--locked"
+                    : ""
+                }`}
+                onClick={handleTeamsViewPress}
+              >
+                Teams
+                {!canAccessTeamsView ? (
+                  <span className="playersHeaderSwitch__badge">Pro</span>
+                ) : null}
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
       {!isAuthenticated ? (
@@ -1384,100 +1347,98 @@ export function PlayersScreen({
                                     </div>
                                   </div>
 
-                                  {teamMemberProfiles.length > 0 ? (
-                                    <div className="teamBuilderRosterPreview teamBuilderRosterPreview--compact">
-                                      {teamMemberProfiles.map((member) => {
-                                        const canRemoveMember =
-                                          teamMemberProfiles.length > 1;
-                                        return (
-                                          <button
-                                            key={`${team.id}-${member.id}`}
-                                            type="button"
-                                            className={`teamBuilderRosterChip${" teamBuilderRosterChip--compact"}${
-                                              canRemoveMember
-                                                ? " teamBuilderRosterChip--removable"
-                                                : ""
-                                            }`}
-                                            disabled={
-                                              !canUseTeams || !canRemoveMember
-                                            }
-                                            onClick={() => {
-                                              if (canRemoveMember) {
-                                                setEditingTeamMemberIds(
-                                                  (current) => {
-                                                    const next = new Set(
-                                                      current,
-                                                    );
-                                                    next.delete(member.id);
-                                                    return next;
-                                                  },
-                                                );
-                                              }
-                                            }}
-                                          >
-                                            <span
-                                              className="teamBuilderRosterChip__avatar"
-                                              style={avatarStyleFor(
-                                                member.avatarColor,
-                                              )}
-                                              aria-hidden="true"
-                                            >
-                                              {getInitials(member.name)}
-                                            </span>
-                                            <span className="teamBuilderRosterChip__name">
-                                              {member.isAccountPlayer
-                                                ? formatAccountPlayerName(
-                                                    member.name,
-                                                  )
-                                                : member.name}
-                                            </span>
-                                            {canRemoveMember ? (
-                                              <span className="teamBuilderRosterChip__action">
-                                                ×
-                                              </span>
-                                            ) : null}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
+                                  {teamMemberProfiles.length === 0 ? (
                                     <div className="teamBuilder__emptyState">
                                       No players in this team yet.
                                     </div>
-                                  )}
+                                  ) : null}
 
-                                  <div className="teamCard__rosterAction">
+                                  <div className="teamBuilderRosterPreview teamBuilderRosterPreview--compact">
+                                    {teamMemberProfiles.map((member) => {
+                                      const canRemoveMember =
+                                        teamMemberProfiles.length > 1;
+                                      return (
+                                        <button
+                                          key={`${team.id}-${member.id}`}
+                                          type="button"
+                                          className={`teamBuilderRosterChip${" teamBuilderRosterChip--compact"}${
+                                            canRemoveMember
+                                              ? " teamBuilderRosterChip--removable"
+                                              : ""
+                                          }`}
+                                          disabled={
+                                            !canUseTeams || !canRemoveMember
+                                          }
+                                          onClick={() => {
+                                            if (canRemoveMember) {
+                                              setEditingTeamMemberIds(
+                                                (current) => {
+                                                  const next = new Set(
+                                                    current,
+                                                  );
+                                                  next.delete(member.id);
+                                                  return next;
+                                                },
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          <span
+                                            className="teamBuilderRosterChip__avatar"
+                                            style={avatarStyleFor(
+                                              member.avatarColor,
+                                            )}
+                                            aria-hidden="true"
+                                          >
+                                            {getInitials(member.name)}
+                                          </span>
+                                          <span className="teamBuilderRosterChip__name">
+                                            {member.isAccountPlayer
+                                              ? formatAccountPlayerName(
+                                                  member.name,
+                                                )
+                                              : member.name}
+                                          </span>
+                                          {canRemoveMember ? (
+                                            <span className="teamBuilderRosterChip__action">
+                                              ×
+                                            </span>
+                                          ) : null}
+                                        </button>
+                                      );
+                                    })}
                                     <button
                                       type="button"
-                                      className={`btn teamCard__rosterBtn${
+                                      className={`teamBuilderRosterChip teamBuilderRosterChip--compact teamBuilderRosterChip--add${
                                         isAddingPlayers
-                                          ? " teamCard__rosterBtn--active"
+                                          ? " teamBuilderRosterChip--addActive"
                                           : ""
                                       }`}
+                                      disabled={!canUseTeams}
                                       onClick={() =>
                                         toggleTeamAddPlayers(team.id)
                                       }
                                       aria-expanded={isAddingPlayers}
+                                      aria-label={
+                                        isAddingPlayers
+                                          ? "Hide player picker"
+                                          : "Add players"
+                                      }
                                     >
-                                      {isAddingPlayers ? (
-                                        <>
-                                          <X
-                                            size={16}
-                                            strokeWidth={2.5}
-                                            aria-hidden="true"
-                                          />
-                                          Hide players
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Plus
-                                            size={16}
-                                            strokeWidth={2.5}
-                                            aria-hidden="true"
-                                          />
-                                          Add players
-                                        </>
-                                      )}
+                                      <span
+                                        className={`teamBuilderRosterChip__addIcon${
+                                          isAddingPlayers
+                                            ? " teamBuilderRosterChip__addIcon--active"
+                                            : ""
+                                        }`}
+                                        aria-hidden="true"
+                                      >
+                                        <Plus
+                                          size={18}
+                                          strokeWidth={2.6}
+                                          aria-hidden="true"
+                                        />
+                                      </span>
                                     </button>
                                   </div>
 
@@ -1638,117 +1599,44 @@ export function PlayersScreen({
                                         {creatingTeamPlayer &&
                                         creatingTeamPlayerForTeamId ===
                                           team.id ? (
-                                          <div className="newPlayerComposer teamBuilderCreatePlayer teamBuilderCreatePlayer--composer">
-                                            <div className="newPlayerComposer__header">
-                                              <span>Player name</span>
-                                            </div>
-                                            <div className="newPlayerComposer__top">
-                                              <label className="field newPlayerComposer__field">
-                                                <div className="newPlayerComposer__inputShell">
-                                                  <div
-                                                    className="newPlayerComposer__preview"
-                                                    style={avatarStyleFor(
-                                                      newTeamPlayerColor,
-                                                    )}
-                                                    aria-hidden="true"
-                                                  >
-                                                    {newTeamPlayerName.trim()
-                                                      ? getInitials(
-                                                          newTeamPlayerName,
-                                                        )
-                                                      : "+"}
-                                                  </div>
-                                                  <input
-                                                    id={`team-edit-player-${team.id}`}
-                                                    autoFocus
-                                                    className="input input--sm newPlayerComposer__input"
-                                                    placeholder="e.g. John"
-                                                    value={newTeamPlayerName}
-                                                    disabled={!canUseTeams}
-                                                    onChange={(event) =>
-                                                      setNewTeamPlayerName(
-                                                        event.target.value,
-                                                      )
-                                                    }
-                                                    onKeyDown={(event) => {
-                                                      if (
-                                                        event.key === "Enter"
-                                                      ) {
-                                                        createTeamPlayer(
-                                                          team.id,
-                                                        );
-                                                      }
-                                                      if (
-                                                        event.key === "Escape"
-                                                      ) {
-                                                        cancelTeamPlayerCreation();
-                                                      }
-                                                    }}
-                                                  />
-                                                </div>
-                                              </label>
-                                              <button
-                                                type="button"
-                                                className="btn btn--primary btn--sm newPlayerComposer__submit"
-                                                disabled={
-                                                  !canUseTeams ||
-                                                  !newTeamPlayerName.trim()
-                                                }
-                                                onClick={() =>
-                                                  createTeamPlayer(team.id)
-                                                }
-                                              >
-                                                Add
-                                              </button>
-                                            </div>
-                                            <div className="newPlayerComposer__colors">
-                                              <div className="newPlayerComposer__label">
-                                                Player color
-                                              </div>
-                                              <div className="newPlayerComposer__swatches">
-                                                {AVATAR_COLORS.map((entry) => (
-                                                  <button
-                                                    key={`team-edit-color-${team.id}-${entry.id}`}
-                                                    type="button"
-                                                    className="colorDisc colorDisc--large"
-                                                    style={{
-                                                      background: entry.value,
-                                                    }}
-                                                    data-active={
-                                                      newTeamPlayerColor ===
-                                                      entry.value
-                                                    }
-                                                    onClick={() =>
-                                                      setNewTeamPlayerColor(
-                                                        entry.value,
-                                                      )
-                                                    }
-                                                    aria-label={`Use ${entry.id} color`}
-                                                    aria-pressed={
-                                                      newTeamPlayerColor ===
-                                                      entry.value
-                                                    }
-                                                    disabled={!canUseTeams}
-                                                  />
-                                                ))}
-                                              </div>
-                                            </div>
-                                            <div className="newPlayerComposer__actions">
-                                              <button
-                                                type="button"
-                                                className="newPlayerComposer__close"
-                                                onClick={
-                                                  cancelTeamPlayerCreation
-                                                }
-                                              >
-                                                Cancel
-                                              </button>
-                                            </div>
-                                          </div>
+                                          <NewPlayerComposer
+                                            className="teamBuilderCreatePlayer teamBuilderCreatePlayer--composer"
+                                            isOpen
+                                            showTrigger={false}
+                                            isAuthenticated={
+                                              isAuthenticated
+                                            }
+                                            disabled={!canUseTeams}
+                                            inputId={`team-edit-player-${team.id}`}
+                                            name={newTeamPlayerName}
+                                            color={newTeamPlayerColor}
+                                            saveAsProfile
+                                            showPersistenceControls={false}
+                                            onOpen={() => {
+                                              setCreatingTeamPlayer(true);
+                                              setCreatingTeamPlayerForTeamId(
+                                                team.id,
+                                              );
+                                            }}
+                                            onOpenAuth={onOpenAuth}
+                                            onCancel={
+                                              cancelTeamPlayerCreation
+                                            }
+                                            onAdd={() =>
+                                              createTeamPlayer(team.id)
+                                            }
+                                            onNameChange={
+                                              setNewTeamPlayerName
+                                            }
+                                            onColorChange={
+                                              setNewTeamPlayerColor
+                                            }
+                                            onSaveAsProfileChange={() => {}}
+                                          />
                                         ) : (
                                           <button
                                             type="button"
-                                            className="btn btn--ghost teamEditor__newPlayer teamEditor__newPlayer--wide"
+                                            className="rosterPicker__createBtn rosterPicker__createBtn--dark teamBuilderCreatePlayer__trigger"
                                             disabled={!canUseTeams}
                                             onClick={() => {
                                               setCreatingTeamPlayer(true);
@@ -1757,7 +1645,12 @@ export function PlayersScreen({
                                               );
                                             }}
                                           >
-                                            + Add new player
+                                            <Plus
+                                              size={17}
+                                              strokeWidth={2.7}
+                                              aria-hidden="true"
+                                            />
+                                            <span>Add new player</span>
                                           </button>
                                         )}
                                       </div>

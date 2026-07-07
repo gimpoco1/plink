@@ -379,6 +379,11 @@
   border-top: 0;
 }
 
+.newPlayerComposer__footer--actionsOnly {
+  grid-template-columns: auto;
+  justify-content: end;
+}
+
 .newPlayerComposer__footer::before {
   content: "";
   position: absolute;
