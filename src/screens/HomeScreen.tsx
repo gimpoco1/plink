@@ -18,7 +18,7 @@ import { HOME_NEW_GAME_OPEN_KEY } from "../constants";
 import { avatarStyleFor } from "../utils/color";
 import { getGameDisplayName } from "../utils/text";
 import { getInitials } from "../utils/text";
-import { findWinner } from "../utils/ranking";
+import { isGameComplete } from "../utils/ranking";
 import "./HomeScreen.css";
 import {
   Dumbbell,
@@ -206,7 +206,7 @@ export function HomeScreen({
   const resumableGame = useMemo(() => {
     return (
       [...games]
-        .filter((game) => !findWinner(game.players, game))
+        .filter((game) => !isGameComplete(game))
         .sort((a, b) => b.updatedAt - a.updatedAt)[0] ?? null
     );
   }, [games]);

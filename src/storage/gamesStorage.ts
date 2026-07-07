@@ -91,6 +91,8 @@ function sanitizeTeams(input: unknown): Game["teams"] {
         id: obj.id,
         name: obj.name,
         icon: typeof obj.icon === "string" ? obj.icon : undefined,
+        sourceTeamId:
+          typeof obj.sourceTeamId === "string" ? obj.sourceTeamId : undefined,
         createdAt: obj.createdAt,
         updatedAt:
           typeof obj.updatedAt === "number" ? obj.updatedAt : obj.createdAt,
@@ -142,6 +144,12 @@ export function sanitizeGames(input: unknown): Game[] {
         timerMode,
         timerSeconds,
         teams: sanitizeTeams(obj.teams),
+        completionMode:
+          obj.completionMode === "winner" ||
+          obj.completionMode === "no_winner" ||
+          obj.completionMode === "draw"
+            ? obj.completionMode
+            : undefined,
         createdAt: obj.createdAt,
         updatedAt: obj.updatedAt,
         endedAt: typeof obj.endedAt === "number" ? obj.endedAt : undefined,

@@ -1,5 +1,5 @@
 ---
-name: Cyber-Squad Tactical
+name: Plink Design System
 colors:
   surface: '#0b1519'
   surface-dim: '#0b1519'

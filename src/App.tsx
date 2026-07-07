@@ -44,12 +44,13 @@ import {
   formatPlayerName,
   getGameDisplayName,
 } from "./utils/text";
-import { findWinner } from "./utils/ranking";
+import { findWinner, sortPlayers } from "./utils/ranking";
 import { getGameParticipants } from "./utils/gameParticipants";
 import {
   computeProfileStats,
   createEmptyProfileStats,
 } from "./utils/profileStats";
+import { shouldSortLowToHigh } from "./utils/scoring";
 import {
   createBackupPayload,
   getGameImportSignature,
@@ -450,14 +451,41 @@ export default function App() {
 
   async function handleEndCurrentGame() {
     if (!currentGame) return;
-    const ok = await confirmRef.current?.confirm({
+    const participants = [...getGameParticipants(currentGame)].sort((a, b) =>
+      sortPlayers(a, b, shouldSortLowToHigh(currentGame)),
+    );
+    const leader = participants[0] ?? null;
+    const runnerUp = participants[1] ?? null;
+    const isDraw = Boolean(leader && runnerUp && leader.score === runnerUp.score);
+    const canDeclareWinner = Boolean(
+      leader && (!runnerUp || leader.score !== runnerUp.score),
+    );
+
+    const result = await confirmRef.current?.choose({
       title: "End game",
-      message: "Mark this game as finished using the current standings?",
-      confirmText: "End game",
+      message: isDraw
+        ? "Current standings are tied. End this game as a draw or finish it without a winner?"
+        : canDeclareWinner
+          ? "Finish this game using the current standings, or end it without a winner?"
+          : "Mark this game as finished without a winner?",
+      confirmText: isDraw
+        ? "End as draw"
+        : canDeclareWinner
+          ? "End with winner"
+          : "End game",
+      extraActionText: isDraw || canDeclareWinner ? "End without winner" : "",
       tone: "default",
     });
-    if (!ok) return;
-    finishGame(currentGame.id);
+    if (!result || result === "cancel") return;
+    if (result === "extra") {
+      finishGame(currentGame.id, "no_winner");
+      return;
+    }
+    if (isDraw) {
+      finishGame(currentGame.id, "draw");
+      return;
+    }
+    finishGame(currentGame.id, canDeclareWinner ? "winner" : "no_winner");
   }
 
   useEffect(() => {

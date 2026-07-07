@@ -48,3 +48,9 @@ export function getGameDisplayName(name: string): {
     replayNumber,
   };
 }
+
+export function getGameSessionLabel(name: string): string {
+  const parsed = getGameDisplayName(name);
+  if (parsed.replayNumber) return `${parsed.title} #${parsed.replayNumber}`;
+  return parsed.title;
+}

@@ -7,7 +7,7 @@ const PROFILES_TABLE = "player_profiles";
 const TEAMS_TABLE = "teams";
 const TEAM_MEMBERS_TABLE = "team_members";
 const GAME_SELECT_COLUMNS =
-  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,timer_mode,timer_seconds,teams,players,score_history,created_at,updated_at,ended_at";
+  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
   "id,user_id,name,score_direction,starting_score,target_score,win_condition,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
 const PROFILE_SELECT_COLUMNS =
@@ -26,6 +26,7 @@ type GameRow = {
   win_condition: Game["winCondition"];
   win_by_two?: boolean | null;
   manual_end_only?: boolean | null;
+  completion_mode?: Game["completionMode"] | null;
   target_points?: number;
   is_low_score_wins?: boolean;
   timer_enabled: boolean;
@@ -81,6 +82,7 @@ function gameToRow(userId: string, game: Game): GameRow {
     win_condition: game.winCondition,
     win_by_two: game.winByTwo,
     manual_end_only: game.manualEndOnly,
+    completion_mode: game.completionMode ?? null,
     timer_enabled: game.timerEnabled,
     timer_mode: game.timerMode,
     timer_seconds: game.timerSeconds,
@@ -130,16 +132,26 @@ function sanitizeRemotePlayers(
     : [];
 }
 
-function sanitizeRemoteTeams(teams: Game["teams"] | null | undefined): Game["teams"] {
+function sanitizeRemoteTeams(
+  teams: Game["teams"] | null | undefined,
+): Game["teams"] {
   return Array.isArray(teams)
-    ? teams.filter(
-        (team): team is Game["teams"][number] =>
+    ? teams
+        .filter(
+          (team): team is Game["teams"][number] =>
           !!team &&
           typeof team === "object" &&
           typeof team.id === "string" &&
           typeof team.name === "string" &&
           typeof team.createdAt === "number",
-      )
+        )
+        .map((team) => ({
+          ...team,
+          sourceTeamId:
+            typeof team.sourceTeamId === "string"
+              ? team.sourceTeamId
+              : undefined,
+        }))
     : [];
 }
 
@@ -164,6 +176,12 @@ function rowToGame(row: GameRow): Game {
     winCondition,
     winByTwo: row.win_by_two === true,
     manualEndOnly: row.manual_end_only === true,
+    completionMode:
+      row.completion_mode === "winner" ||
+      row.completion_mode === "no_winner" ||
+      row.completion_mode === "draw"
+        ? row.completion_mode
+        : undefined,
     timerEnabled: row.timer_enabled,
     timerMode: row.timer_mode,
     timerSeconds: row.timer_seconds,
@@ -184,7 +202,11 @@ function isMissingScoreHistoryColumn(error: unknown) {
 
 function isMissingGameRuleColumn(error: unknown) {
   const message = getErrorMessage(error);
-  return message.includes("win_by_two") || message.includes("manual_end_only");
+  return (
+    message.includes("win_by_two") ||
+    message.includes("manual_end_only") ||
+    message.includes("completion_mode")
+  );
 }
 
 function isMissingTeamsColumn(error: unknown) {
@@ -376,7 +398,13 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
             throw legacyConstraintError;
           }
           const legacyFallbackRows = legacyRows.map(
-            ({ score_history, win_by_two, manual_end_only, ...row }) => row,
+            ({
+              score_history,
+              win_by_two,
+              manual_end_only,
+              completion_mode,
+              ...row
+            }) => row,
           );
           const { error: legacyFallbackError } = await supabase
             .from(GAMES_TABLE)
@@ -393,6 +421,7 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
             score_history,
             win_by_two,
             manual_end_only,
+            completion_mode,
             ...row
           } = gameToLegacyCompatibleRow(userId, game);
           return row;

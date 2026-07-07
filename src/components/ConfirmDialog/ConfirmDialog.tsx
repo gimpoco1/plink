@@ -355,10 +355,18 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             ) : null}
           </div>
 
-          <div className="dialog__actions">
+          <div
+            className={`dialog__actions${
+              options.extraActionText ? " dialog__actions--decision" : ""
+            }`}
+          >
             {!options.hideCancelAction ? (
               <button
-                className="btn btn--ghost"
+                className={`btn btn--ghost${
+                  options.extraActionText
+                    ? " dialog__actionBtn dialog__actionBtn--cancel"
+                    : ""
+                }`}
                 type="button"
                 onClick={() =>
                   isPrompt ? closePrompt(null) : closeWith("cancel")
@@ -369,7 +377,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             ) : null}
             {options.extraActionText ? (
               <button
-                className="btn btn--ghost"
+                className="btn btn--ghost dialog__actionBtn dialog__actionBtn--choice dialog__actionBtn--extra"
                 type="button"
                 onClick={() => closeWith("extra")}
               >
@@ -378,9 +386,15 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             ) : null}
             <button
               className={
-                options.tone === "danger"
-                  ? "btn btn--dangerSolid"
-                  : "btn btn--primary"
+                `${
+                  options.tone === "danger"
+                    ? "btn btn--dangerSolid"
+                    : "btn btn--primary"
+                }${
+                  options.extraActionText
+                    ? " dialog__actionBtn dialog__actionBtn--choice"
+                    : ""
+                }`
               }
               type="submit"
               disabled={isPrompt && !promptValue.trim()}

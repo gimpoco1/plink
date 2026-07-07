@@ -258,6 +258,50 @@
   gap: 10px;
 }
 
+.dialog__actions--decision {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.dialog__actionBtn {
+  width: 100%;
+  min-width: 0;
+}
+
+.dialog__actionBtn--cancel {
+  grid-column: 1 / -1;
+  min-height: 42px;
+  border-radius: 14px;
+  opacity: 0.9;
+}
+
+.dialog__actionBtn--choice {
+  min-height: 54px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  white-space: normal;
+  text-wrap: balance;
+  line-height: 1.2;
+}
+
+.dialog__actionBtn--extra {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
+    rgba(255, 255, 255, 0.03);
+  color: rgba(217, 228, 235, 0.96);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.dialog__actionBtn--extra:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent),
+    rgba(255, 255, 255, 0.04);
+}
+
 .dialog--confirmFeature {
   width: min(560px, calc(100% - 32px));
 }
@@ -342,5 +386,13 @@
   .dialog__playerList,
   .dialog--confirmFeature .dialog__playerList {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .dialog__actions--decision {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog__actionBtn--cancel {
+    grid-column: auto;
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type {
+  CompletionMode,
   Game,
   GameTeam,
   Player,
@@ -430,6 +431,7 @@ export function useGames(session: Session | null, authLoading = false) {
               id: gameTeamId,
               name: formatTeamName(team.name),
               icon: team.icon ?? DEFAULT_TEAM_ICON,
+              sourceTeamId: team.id,
               createdAt: now,
               updatedAt: now,
             };
@@ -549,6 +551,7 @@ export function useGames(session: Session | null, authLoading = false) {
       teams: original.teams.map((team) => ({ ...team })),
       players: duplicatedPlayers,
       scoreHistory: [],
+      completionMode: undefined,
       createdAt: now,
       updatedAt: now,
       endedAt: undefined,
@@ -591,6 +594,7 @@ export function useGames(session: Session | null, authLoading = false) {
     return {
       teams,
       players,
+      completionMode: undefined,
       endedAt: stillEnded ? (game.endedAt ?? now) : undefined,
     };
   }
@@ -740,6 +744,7 @@ export function useGames(session: Session | null, authLoading = false) {
     const now = Date.now();
     updateGame(gameId, (g) => ({
       ...g,
+      completionMode: undefined,
       endedAt: undefined,
       scoreHistory: [],
       players: g.players.map((p) => ({
@@ -800,6 +805,7 @@ export function useGames(session: Session | null, authLoading = false) {
         ...g,
         players,
         scoreHistory,
+        completionMode: undefined,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });
@@ -859,16 +865,21 @@ export function useGames(session: Session | null, authLoading = false) {
         timerEnabled: input.timerEnabled,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
+        completionMode: undefined,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });
     return true;
   }
 
-  function finishGame(gameId: string) {
+  function finishGame(gameId: string, completionMode?: CompletionMode) {
     updateGame(gameId, (g) => {
       if (!g.players.length || g.endedAt) return g;
-      return { ...g, endedAt: Date.now() };
+      return {
+        ...g,
+        completionMode,
+        endedAt: Date.now(),
+      };
     });
   }
 

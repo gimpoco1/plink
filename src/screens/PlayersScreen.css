@@ -479,11 +479,113 @@
   font-weight: 600;
 }
 
-.profileCard__gameResult strong {
+.profileCard__gameResultMain {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profileCard__gameResultName {
+  min-width: 0;
+}
+
+.profileCard__gameResultBadge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(203, 211, 215, 0.16);
+  background: rgba(203, 211, 215, 0.08);
+  color: rgba(217, 228, 235, 0.82);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.profileCard__gameResultStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.profileCard__statusBadge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.profileCard__statusBadge--in_progress {
+  border-color: rgba(122, 208, 255, 0.24);
+  background: rgba(122, 208, 255, 0.08);
+  color: var(--teams-accent, #7ad0ff);
+}
+
+.profileCard__statusBadge--won {
+  border-color: rgba(216, 255, 79, 0.24);
+  background: rgba(216, 255, 79, 0.08);
+  color: var(--accent);
+}
+
+.profileCard__statusBadge--lost {
+  border-color: rgba(243, 111, 133, 0.22);
+  background: rgba(243, 111, 133, 0.08);
+  color: #f7a0b0;
+}
+
+.profileCard__statusBadge--draw {
+  border-color: rgba(182, 146, 255, 0.24);
+  background: rgba(182, 146, 255, 0.08);
+  color: #d8c9ff;
+}
+
+.profileCard__statusBadge--completed {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.profileCard__gameResultTeamContext {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text);
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.profileCard__gameResultTeamIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(122, 208, 255, 0.22);
+  background:
+    linear-gradient(
+      180deg,
+      var(--ds-color-secondary-fixed),
+      var(--ds-color-secondary)
+    ),
+    rgba(255, 255, 255, 0.03);
+  color: var(--ds-color-on-secondary);
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.profileCard__gameResultTeamName {
+  color: var(--text);
 }
 
 .profileStatsRow {
@@ -539,7 +641,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
+}
+
+.profileGamesDropdown__titleBlock {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profileGamesDropdown__title {
+  color: var(--text);
+}
+
+.profileGamesDropdown__note {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .profileGamesDropdown__topGame {

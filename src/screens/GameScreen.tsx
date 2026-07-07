@@ -11,6 +11,7 @@ import {
   computeRanks,
   findWinner,
   isGameComplete,
+  isGameDraw,
   sortPlayers,
 } from "../utils/ranking";
 import { getGameParticipants } from "../utils/gameParticipants";
@@ -180,10 +181,18 @@ export function GameScreen({
     );
   }, [orderedParticipants, winner]);
   const gameComplete = useMemo(() => isGameComplete(game), [game]);
+  const gameDraw = useMemo(() => isGameDraw(game), [game]);
+  const completionKind = gameComplete
+    ? winner
+      ? "winner"
+      : gameDraw
+        ? "draw"
+        : "completed"
+    : null;
   const outcomeKey = gameComplete
     ? winner
       ? `winner:${winner.id}:${game.endedAt ?? game.updatedAt}`
-      : `draw:${game.endedAt ?? game.updatedAt}`
+      : `${completionKind}:${game.endedAt ?? game.updatedAt}`
     : null;
 
   const gameDisplayName = useMemo(
@@ -288,7 +297,7 @@ export function GameScreen({
         <WinCelebration
           isTeamGame={isTeamsMode}
           winnerName={winFxName}
-          isDraw={!winner}
+          resultKind={completionKind ?? "winner"}
           gameName={gameDisplayName.title}
           targetScore={game.targetScore}
           startingScore={game.startingScore}

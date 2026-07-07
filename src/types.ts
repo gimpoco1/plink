@@ -13,6 +13,7 @@ export type GameTeam = {
   id: string;
   name: string;
   icon?: string;
+  sourceTeamId?: string;
   createdAt: number;
   updatedAt?: number;
 };
@@ -45,6 +46,7 @@ export type ScoreHistoryEntry = {
 
 export type ScoreDirection = "up" | "down";
 export type WinCondition = "reach_target" | "reach_zero" | "lowest";
+export type CompletionMode = "winner" | "no_winner" | "draw";
 
 export type Game = {
   id: string;
@@ -62,6 +64,7 @@ export type Game = {
   teams: GameTeam[];
   players: Player[];
   scoreHistory: ScoreHistoryEntry[];
+  completionMode?: CompletionMode;
   createdAt: number;
   updatedAt: number;
   endedAt?: number;

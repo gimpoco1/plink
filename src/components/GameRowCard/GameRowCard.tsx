@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Game } from "../../types";
-import { findWinner, isGameComplete } from "../../utils/ranking";
+import { findWinner, isGameComplete, isGameDraw } from "../../utils/ranking";
 import { getGameParticipants } from "../../utils/gameParticipants";
 import { capitalizeFirst, getGameDisplayName } from "../../utils/text";
 import "./GameRowCard.css";
@@ -115,6 +115,7 @@ export function GameRowCard({
   }, [game]);
   const participants = useMemo(() => getGameParticipants(game), [game]);
   const complete = useMemo(() => isGameComplete(game), [game]);
+  const draw = useMemo(() => isGameDraw(game), [game]);
   const isTeamsGame = game.participantMode === "teams" && game.teams.length > 0;
 
   const parsedName = getGameDisplayName(game.name);
@@ -251,10 +252,16 @@ export function GameRowCard({
                 <strong>{winnerName}</strong>
               </span>
             ) : null}
-            {complete && !winner ? (
+            {complete && draw ? (
               <span className="gameRow__detail">
                 <span className="gameRow__statusDot" aria-hidden="true" />
                 Draw
+              </span>
+            ) : null}
+            {complete && !winner && !draw ? (
+              <span className="gameRow__detail">
+                <span className="gameRow__statusDot" aria-hidden="true" />
+                Completed
               </span>
             ) : null}
             {!complete ? (

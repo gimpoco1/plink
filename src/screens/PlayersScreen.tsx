@@ -14,7 +14,8 @@ import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessions
 import { avatarStyleFor } from "../utils/color";
 import {
   computeProfileStats,
-  createEmptyProfileStats,
+  computeTeamStats,
+  type SessionResultSummary,
 } from "../utils/profileStats";
 import {
   formatAccountPlayerName,
@@ -242,19 +243,16 @@ export function PlayersScreen({
   const [recentTeamPlayerIds, setRecentTeamPlayerIds] = useState<string[]>([]);
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const profileStats = useMemo(() => computeProfileStats(games), [games]);
+  const teamStats = useMemo(
+    () => computeTeamStats(games, teams, teamMembers),
+    [games, teamMembers, teams],
+  );
   const teamMembersByTeamId = useMemo(() => {
     const map = new Map<string, TeamMember[]>();
     teamMembers.forEach((member) => {
       const next = map.get(member.teamId) ?? [];
       next.push(member);
       map.set(member.teamId, next);
-    });
-    return map;
-  }, [teamMembers]);
-  const profileMembershipCount = useMemo(() => {
-    const map = new Map<string, number>();
-    teamMembers.forEach((member) => {
-      map.set(member.profileId, (map.get(member.profileId) ?? 0) + 1);
     });
     return map;
   }, [teamMembers]);
@@ -1038,10 +1036,7 @@ export function PlayersScreen({
         </div>
       </div>
       {!isAuthenticated ? (
-        <LockedFrame
-          title="Sign in to save players."
-          onSignIn={onOpenAuth}
-        >
+        <LockedFrame title="Sign in to save players." onSignIn={onOpenAuth}>
           <PlayersSkeleton />
         </LockedFrame>
       ) : (
@@ -1060,8 +1055,7 @@ export function PlayersScreen({
                 <div className="emptyMsg">No saved players yet.</div>
               ) : (
                 profiles.map((profile) => {
-                  const stats =
-                    profileStats.get(profile.id) ?? createEmptyProfileStats();
+                  const stats = profileStats.get(profile.id);
                   const isEditing = editingId === profile.id;
                   return (
                     <SwipeableCard
@@ -1194,86 +1188,11 @@ export function PlayersScreen({
                             </div>
                           ) : null}
 
-                          <div
-                            className="profileStatsRow"
-                            aria-label={`${profile.name} cumulative stats`}
-                          >
-                            <Stat label="Wins" value={stats.wins} />
-                            <Stat
-                              label="Teams"
-                              value={
-                                profileMembershipCount.get(profile.id) ?? 0
-                              }
+                          {stats?.sessionResults.length ? (
+                            <GamesDropdown
+                              title="Sessions"
+                              sessionResults={stats.sessionResults}
                             />
-                            <Stat
-                              label="Rate"
-                              value={
-                                stats.completedGames ? `${stats.winRate}%` : "—"
-                              }
-                            />
-                            <Stat label="Done" value={stats.completedGames} />
-                            <Stat
-                              label="Streak"
-                              value={
-                                stats.currentWinStreak
-                                  ? `${stats.currentWinStreak}x`
-                                  : "—"
-                              }
-                            />
-                          </div>
-
-                          {stats.gameResults.length ? (
-                            <details className="profileGamesDropdown">
-                              <summary className="profileGamesDropdown__summary">
-                                <div className="profileGamesDropdown__summaryLeft">
-                                  <span>Games</span>
-                                  {stats.topWonGame ? (
-                                    <span className="profileGamesDropdown__topGame">
-                                      <span className="profileGamesDropdown__topGameLabel">
-                                        Top game
-                                      </span>
-                                      <strong>{stats.topWonGame.name}</strong>
-                                      <span>
-                                        {stats.topWonGame.wins}{" "}
-                                        {stats.topWonGame.teamWins > 0 &&
-                                        stats.topWonGame.teamWins ===
-                                          stats.topWonGame.wins
-                                          ? stats.topWonGame.wins === 1
-                                            ? "team win"
-                                            : "team wins"
-                                          : stats.topWonGame.wins === 1
-                                            ? "win"
-                                            : "wins"}
-                                      </span>
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <span className="profileGamesDropdown__count">
-                                  {stats.gameResults.length}
-                                </span>
-                              </summary>
-                              <div className="profileCard__gameResults">
-                                {stats.gameResults.map((result) => (
-                                  <div
-                                    key={result.name}
-                                    className="profileCard__gameResult"
-                                  >
-                                    <span>{result.name}</span>
-                                    <strong>
-                                      {result.wins}{" "}
-                                      {result.teamWins > 0 &&
-                                      result.teamWins === result.wins
-                                        ? result.wins === 1
-                                          ? "team win"
-                                          : "team wins"
-                                        : result.wins === 1
-                                          ? "win"
-                                          : "wins"}
-                                    </strong>
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
                           ) : null}
                         </>
                       )}
@@ -1308,6 +1227,7 @@ export function PlayersScreen({
                     const isEditingTeam = editingTeamId === team.id;
                     const isAddingPlayers = expandedTeamAddPlayers.has(team.id);
                     const teamIcon = team.icon ?? DEFAULT_TEAM_ICON;
+                    const teamGameStats = teamStats.get(team.id);
                     const activeTeamMemberIds = isEditingTeam
                       ? editingTeamMemberIds
                       : persistedTeamMemberIds;
@@ -1405,7 +1325,7 @@ export function PlayersScreen({
                                         className="teamBuilder__sectionEyebrow"
                                         htmlFor={`team-edit-name-${team.id}`}
                                       >
-                                        Squad name
+                                        Team name
                                       </label>
                                       <div className="teamBuilderIdentity__nameRow">
                                         <input
@@ -1434,7 +1354,7 @@ export function PlayersScreen({
                                 </div>
 
                                 {editingTeamIconPickerOpen ? (
-                                  <section className="teamBuilderCard teamCard__builderSection">
+                                  <section className="teamCard__builderSection">
                                     <div className="teamBuilderCard__group">
                                       <div className="teamBuilderCard__label">
                                         Choose your insignia
@@ -1993,6 +1913,15 @@ export function PlayersScreen({
                                     </div>
                                   )}
                                 </div>
+
+                                {teamGameStats?.sessionResults.length ? (
+                                  <GamesDropdown
+                                    title="Sessions"
+                                    sessionResults={
+                                      teamGameStats.sessionResults
+                                    }
+                                  />
+                                ) : null}
                               </>
                             )}
                           </>
@@ -2010,12 +1939,70 @@ export function PlayersScreen({
   );
 }
 
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+function GamesDropdown({
+  title,
+  sessionResults,
+}: {
+  title: string;
+  sessionResults: SessionResultSummary[];
+}) {
+  function getStatusLabel(statusKind: SessionResultSummary["statusKind"]) {
+    if (statusKind === "won") return "Won";
+    if (statusKind === "lost") return "Lost";
+    if (statusKind === "draw") return "Draw";
+    if (statusKind === "in_progress") return "In Progress";
+    return "Completed";
+  }
+
   return (
-    <div className="profileStatPill">
-      <span className="profileStatPill__label">{label}</span>
-      <strong className="profileStatPill__value">{value}</strong>
-    </div>
+    <details className="profileGamesDropdown">
+      <summary className="profileGamesDropdown__summary">
+        <div className="profileGamesDropdown__summaryLeft">
+          <span className="profileGamesDropdown__title">{title}</span>
+        </div>
+        <span className="profileGamesDropdown__count">
+          {sessionResults.length}
+        </span>
+      </summary>
+      <div className="profileCard__gameResults">
+        {sessionResults.map((result) => (
+          <div key={result.id} className="profileCard__gameResult">
+            <span className="profileCard__gameResultMain">
+              <span className="profileCard__gameResultName">{result.name}</span>
+              {result.isTeamGame ? (
+                <span className="profileCard__gameResultBadge">Teams</span>
+              ) : null}
+            </span>
+            <span className="profileCard__gameResultStatus">
+              {result.teamName ? (
+                <span className="profileCard__gameResultTeamContext">
+                  {result.teamIcon ? (
+                    <span
+                      className="profileCard__gameResultTeamIcon"
+                      aria-hidden="true"
+                    >
+                      <TeamIcon
+                        icon={result.teamIcon}
+                        size={14}
+                        strokeWidth={2.3}
+                      />
+                    </span>
+                  ) : null}
+                  <span className="profileCard__gameResultTeamName">
+                    {result.teamName}
+                  </span>
+                </span>
+              ) : null}
+              <strong
+                className={`profileCard__statusBadge profileCard__statusBadge--${result.statusKind}`}
+              >
+                {getStatusLabel(result.statusKind)}
+              </strong>
+            </span>
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 

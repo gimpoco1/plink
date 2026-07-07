@@ -67,6 +67,7 @@ export function getGameImportSignature(game: Game) {
     timerEnabled: game.timerEnabled,
     timerMode: game.timerMode,
     timerSeconds: game.timerSeconds,
+    completionMode: game.completionMode ?? null,
     teams: game.teams.map((team) => ({
       name: team.name,
       createdAt: team.createdAt,
@@ -173,6 +174,12 @@ export function prepareBackupImport(
       ...game,
       id: uid(),
       teams: clonedTeams,
+      completionMode:
+        game.completionMode === "winner" ||
+        game.completionMode === "no_winner" ||
+        game.completionMode === "draw"
+          ? game.completionMode
+          : undefined,
       players: game.players.map((player) => {
         const originalProfileId = player.profileId;
         let profileId = originalProfileId;
