@@ -242,6 +242,147 @@ export function formatPlacement(value: number | null, total: number) {
   return `#${value}/${Math.max(total, value)}`;
 }
 
+export type StreakSubjectSummary = {
+  name: string;
+  current: number;
+  best: number;
+  completed: number;
+  form: ReportStatusKind[];
+};
+
+export type StreakHistorySummary = {
+  primary: StreakSubjectSummary;
+  secondary: StreakSubjectSummary | null;
+};
+
+export function buildStreakHistorySummary(
+  primary: SubjectReport | null,
+  secondary: SubjectReport | null,
+): StreakHistorySummary | null {
+  if (!primary) return null;
+
+  return {
+    primary: buildStreakSubjectSummary(primary),
+    secondary: secondary ? buildStreakSubjectSummary(secondary) : null,
+  };
+}
+
+function buildStreakSubjectSummary(report: SubjectReport): StreakSubjectSummary {
+  const completedSessions = report.sessions
+    .filter((session) => session.resultKind !== "in_progress")
+    .sort((a, b) => a.createdAt - b.createdAt);
+
+  let running = 0;
+  let best = 0;
+  completedSessions.forEach((session) => {
+    if (session.resultKind === "won") {
+      running += 1;
+      best = Math.max(best, running);
+    } else {
+      running = 0;
+    }
+  });
+
+  return {
+    name: getDisplayName(report),
+    current: report.currentWinStreak,
+    best,
+    completed: completedSessions.length,
+    form: report.sessions
+      .filter((session) => session.resultKind !== "in_progress")
+      .slice(0, 6)
+      .map((session) => session.resultKind),
+  };
+}
+
+export type HeadToHeadSummary = {
+  primaryName: string;
+  secondaryName: string;
+  sharedCompleted: number;
+  inProgress: number;
+  primaryWins: number;
+  secondaryWins: number;
+  draws: number;
+  sharedWins: number;
+  completedWithoutWinner: number;
+};
+
+export function buildHeadToHeadSummary(
+  primary: SubjectReport | null,
+  secondary: SubjectReport | null,
+): HeadToHeadSummary | null {
+  if (!primary || !secondary) return null;
+
+  const primaryByGame = buildSessionBySourceGame(primary);
+  const secondaryByGame = buildSessionBySourceGame(secondary);
+  const summary: HeadToHeadSummary = {
+    primaryName: getDisplayName(primary),
+    secondaryName: getDisplayName(secondary),
+    sharedCompleted: 0,
+    inProgress: 0,
+    primaryWins: 0,
+    secondaryWins: 0,
+    draws: 0,
+    sharedWins: 0,
+    completedWithoutWinner: 0,
+  };
+
+  primaryByGame.forEach((primarySession, gameId) => {
+    const secondarySession = secondaryByGame.get(gameId);
+    if (!secondarySession) return;
+
+    if (
+      primarySession.resultKind === "in_progress" ||
+      secondarySession.resultKind === "in_progress"
+    ) {
+      summary.inProgress += 1;
+      return;
+    }
+
+    summary.sharedCompleted += 1;
+
+    if (
+      primarySession.resultKind === "draw" ||
+      secondarySession.resultKind === "draw"
+    ) {
+      summary.draws += 1;
+      return;
+    }
+
+    if (
+      primarySession.resultKind === "won" &&
+      secondarySession.resultKind === "won"
+    ) {
+      summary.sharedWins += 1;
+      return;
+    }
+
+    if (primarySession.resultKind === "won") {
+      summary.primaryWins += 1;
+      return;
+    }
+
+    if (secondarySession.resultKind === "won") {
+      summary.secondaryWins += 1;
+      return;
+    }
+
+    summary.completedWithoutWinner += 1;
+  });
+
+  return summary;
+}
+
+function buildSessionBySourceGame(report: SubjectReport) {
+  const sessions = [...report.sessions].sort((a, b) => b.createdAt - a.createdAt);
+  const byGame = new Map<string, (typeof sessions)[number]>();
+  sessions.forEach((session) => {
+    const sourceGameId = getTrendGroupKey(session.id);
+    if (!byGame.has(sourceGameId)) byGame.set(sourceGameId, session);
+  });
+  return byGame;
+}
+
 export function filterGamesForChart(games: Game[], gameName: string) {
   if (gameName === ALL_CHART_GAMES) return games;
   return games.filter(

@@ -1,7 +1,10 @@
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
   Line,
   LineChart as RechartsLineChart,
   ResponsiveContainer,
@@ -21,6 +24,21 @@ import type {
 } from "./statsTypes";
 import type { ChartAxis } from "./statsUtils";
 
+type OutcomeBreakdownPoint = {
+  label: string;
+  primaryValue: number;
+  secondaryValue?: number;
+  outcomeFill: string;
+};
+
+type GameWinRateBreakdownPoint = {
+  label: string;
+  primaryValue: number;
+  secondaryValue?: number;
+  primarySessions: number;
+  secondarySessions?: number;
+};
+
 type StatsChartsProps = {
   activeKind: "players" | "teams";
   primaryName: string;
@@ -33,6 +51,8 @@ type StatsChartsProps = {
   rateComparisonTrend: CompareChartPoint[];
   winsChartAxis: ChartAxis;
   rateChartAxis: ChartAxis;
+  outcomeBreakdown: OutcomeBreakdownPoint[];
+  gameWinRateBreakdown: GameWinRateBreakdownPoint[];
   onToggleChartGamePicker: (picker: Exclude<OpenChartGamePicker, null>) => void;
   onSelectWinsChartGame: (value: string) => void;
   onSelectRateChartGame: (value: string) => void;
@@ -50,6 +70,8 @@ export function StatsCharts({
   rateComparisonTrend,
   winsChartAxis,
   rateChartAxis,
+  outcomeBreakdown,
+  gameWinRateBreakdown,
   onToggleChartGamePicker,
   onSelectWinsChartGame,
   onSelectRateChartGame,
@@ -221,6 +243,206 @@ export function StatsCharts({
           <div className="emptyMsg">No trend yet.</div>
         )}
       </section>
+
+      <section className="statsPanel statsPanel--chart">
+        <PanelHeader title="Outcomes by result" count={outcomeBreakdown.length} />
+        {outcomeBreakdown.length ? (
+          <div className="statsChartShell statsChartShell--bar">
+            {secondaryName ? (
+              <ChartLegend
+                primaryLabel={primaryName}
+                secondaryLabel={secondaryName}
+                primaryColor="#d9ff4f"
+                secondaryColor="#8f7cf6"
+              />
+            ) : null}
+            <ResponsiveContainer width="100%" height={170}>
+              <BarChart
+                data={outcomeBreakdown}
+                margin={{ top: 12, right: 4, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "rgba(217, 228, 235, 0.62)", fontSize: 10 }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  width={34}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 10 }}
+                />
+                <Tooltip
+                  content={
+                    <CompareBarTooltip
+                      primaryLabel={primaryName}
+                      secondaryLabel={secondaryName}
+                      suffix=""
+                    />
+                  }
+                  cursor={false}
+                />
+                <Bar
+                  dataKey="primaryValue"
+                  name={primaryName}
+                  radius={[10, 10, 4, 4]}
+                  barSize={secondaryName ? 16 : 34}
+                >
+                  {outcomeBreakdown.map((entry) => (
+                    <Cell
+                      key={entry.label}
+                      fill={secondaryName ? "#d9ff4f" : entry.outcomeFill}
+                    />
+                  ))}
+                </Bar>
+                {secondaryName ? (
+                  <Bar
+                    dataKey="secondaryValue"
+                    name={secondaryName}
+                    fill="#8f7cf6"
+                    radius={[10, 10, 4, 4]}
+                    barSize={16}
+                  />
+                ) : null}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="emptyMsg">No completed results yet.</div>
+        )}
+      </section>
+
+      <section className="statsPanel statsPanel--chart">
+        <PanelHeader title="Win rate by game" count={gameWinRateBreakdown.length} />
+        {gameWinRateBreakdown.length ? (
+          <div className="statsChartShell statsChartShell--bar">
+            {secondaryName ? (
+              <ChartLegend
+                primaryLabel={primaryName}
+                secondaryLabel={secondaryName}
+                primaryColor="#7ad0ff"
+                secondaryColor="#8f7cf6"
+              />
+            ) : null}
+            <ResponsiveContainer width="100%" height={170}>
+              <BarChart
+                data={gameWinRateBreakdown}
+                layout="vertical"
+                margin={{ top: 4, right: 10, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                <XAxis
+                  type="number"
+                  domain={[0, 100]}
+                  hide
+                />
+                <YAxis
+                  dataKey="label"
+                  type="category"
+                  width={86}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "rgba(217, 228, 235, 0.62)", fontSize: 10 }}
+                />
+                <Tooltip
+                  content={
+                    <CompareBarTooltip
+                      primaryLabel={primaryName}
+                      secondaryLabel={secondaryName}
+                      suffix="%"
+                    />
+                  }
+                  cursor={false}
+                />
+                <Bar
+                  dataKey="primaryValue"
+                  name={primaryName}
+                  fill="#7ad0ff"
+                  radius={[0, 10, 10, 0]}
+                  barSize={secondaryName ? 10 : 18}
+                  background={{ fill: "rgba(255,255,255,0.035)", radius: 10 }}
+                />
+                {secondaryName ? (
+                  <Bar
+                    dataKey="secondaryValue"
+                    name={secondaryName}
+                    fill="#8f7cf6"
+                    radius={[0, 10, 10, 0]}
+                    barSize={10}
+                  />
+                ) : null}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="emptyMsg">No game rates yet.</div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function CompareBarTooltip({
+  active,
+  payload,
+  suffix,
+  primaryLabel,
+  secondaryLabel,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    dataKey?: string;
+    value: unknown;
+    payload?: {
+      label?: string;
+      primarySessions?: number;
+      secondarySessions?: number;
+    };
+  }>;
+  suffix: string;
+  primaryLabel: string;
+  secondaryLabel: string | null;
+}) {
+  if (!active || !payload?.length) return null;
+  const first = payload[0];
+  const label = first.payload?.label ?? "Value";
+  const primaryEntry = payload.find((entry) => entry.dataKey === "primaryValue");
+  const secondaryEntry = payload.find((entry) => entry.dataKey === "secondaryValue");
+  const formatValue = (value: unknown) =>
+    typeof value === "number" ? `${value}${suffix}` : "—";
+
+  return (
+    <div className="statsTooltip">
+      <strong>{label}</strong>
+      <span
+        className="statsTooltip__metric"
+        style={{ "--metric-color": suffix === "%" ? "#7ad0ff" : "#d9ff4f" } as React.CSSProperties}
+      >
+        <span>
+          {primaryLabel}
+          {first.payload?.primarySessions
+            ? ` · ${first.payload.primarySessions} sessions`
+            : ""}
+        </span>
+        <b>{formatValue(primaryEntry?.value)}</b>
+      </span>
+      {secondaryLabel ? (
+        <span
+          className="statsTooltip__metric"
+          style={{ "--metric-color": "#8f7cf6" } as React.CSSProperties}
+        >
+          <span>
+            {secondaryLabel}
+            {first.payload?.secondarySessions
+              ? ` · ${first.payload.secondarySessions} sessions`
+              : ""}
+          </span>
+          <b>{formatValue(secondaryEntry?.value)}</b>
+        </span>
+      ) : null}
     </div>
   );
 }

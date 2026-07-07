@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Flame,
-  Medal,
-  Target,
-  TrendingUp,
-  Trophy,
-  Users,
-} from "lucide-react";
+import { Flame, Lock, Medal, Target, Trophy } from "lucide-react";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
 import { StatsSkeleton } from "../components/HomeLockedState/StatsSkeleton";
 import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
@@ -18,6 +11,7 @@ import {
 } from "../utils/advancedStats";
 import { avatarStyleFor } from "../utils/color";
 import { formatAccountPlayerName, getGameDisplayName, getInitials } from "../utils/text";
+import { StatsAdvancedCards } from "./StatsScreen/StatsAdvancedCards";
 import { StatsCharts } from "./StatsScreen/StatsCharts";
 import {
   ComparisonMetricCard,
@@ -31,6 +25,7 @@ import {
 import {
   ALL_CHART_GAMES,
   STATUS_LABELS,
+  type CompareChartPoint,
   type OpenChartGamePicker,
   type OpenPicker,
   type SelectableEntity,
@@ -45,6 +40,8 @@ import {
   getDefaultComparePlayerId,
   getDefaultPrimaryPlayerId,
   getDisplayName,
+  buildHeadToHeadSummary,
+  buildStreakHistorySummary,
   getStatusTone,
   mergeCompareTrend,
 } from "./StatsScreen/statsUtils";
@@ -81,6 +78,75 @@ const DEFAULT_STATS_VIEW_STATE: StatsViewState = {
   winsChartGame: ALL_CHART_GAMES,
   rateChartGame: ALL_CHART_GAMES,
 };
+
+const LOCKED_CHART_OPTIONS = ["BRISCOLA", "SCOPA", "VOLLEYBALL"];
+const LOCKED_CHART_TREND: CompareChartPoint[] = [
+  buildMockChartPoint(1, "BRISCOLA #1", 0, 0, 0, 0, "12 Jan 2026, 20:12"),
+  buildMockChartPoint(2, "SCOPA #1", 1, 0, 50, 0, "02 Feb 2026, 19:48"),
+  buildMockChartPoint(3, "VOLLEYBALL #1", 2, 1, 67, 33, "22 Mar 2026, 21:04"),
+  buildMockChartPoint(4, "BRISCOLA #2", 3, 1, 75, 25, "17 Apr 2026, 18:35"),
+  buildMockChartPoint(5, "SCOPA #2", 3, 2, 60, 40, "06 May 2026, 20:27"),
+  buildMockChartPoint(6, "VOLLEYBALL #2", 5, 3, 71, 43, "19 Jun 2026, 21:16"),
+];
+const LOCKED_RATE_TREND: CompareChartPoint[] = LOCKED_CHART_TREND.map((point) => ({
+  ...point,
+  primaryWins: null,
+  secondaryWins: null,
+}));
+const LOCKED_OUTCOME_BREAKDOWN = [
+  { label: "Wins", primaryValue: 8, secondaryValue: 5, outcomeFill: "#d9ff4f" },
+  { label: "Losses", primaryValue: 3, secondaryValue: 6, outcomeFill: "#ff8ea2" },
+  { label: "Draws", primaryValue: 2, secondaryValue: 2, outcomeFill: "#c3b1ff" },
+];
+const LOCKED_GAME_RATE_BREAKDOWN = [
+  {
+    label: "BRISCOLA",
+    primaryValue: 78,
+    secondaryValue: 44,
+    primarySessions: 9,
+    secondarySessions: 9,
+  },
+  {
+    label: "SCOPA",
+    primaryValue: 56,
+    secondaryValue: 42,
+    primarySessions: 7,
+    secondarySessions: 7,
+  },
+  {
+    label: "VOLLEYBALL",
+    primaryValue: 71,
+    secondaryValue: 50,
+    primarySessions: 5,
+    secondarySessions: 5,
+  },
+];
+const LOCKED_WINS_AXIS = buildChartAxis(LOCKED_CHART_TREND);
+const LOCKED_RATE_AXIS = buildChartAxis(LOCKED_RATE_TREND);
+
+function buildMockChartPoint(
+  x: number,
+  sessionName: string,
+  primaryWins: number,
+  secondaryWins: number,
+  primaryRate: number,
+  secondaryRate: number,
+  fullDateTimeLabel: string,
+): CompareChartPoint {
+  return {
+    id: `locked-preview-${x}`,
+    x,
+    timestamp: Date.UTC(2026, x, 7, 18, 30),
+    label: fullDateTimeLabel.slice(0, 11),
+    fullDateLabel: fullDateTimeLabel.slice(0, 11),
+    fullDateTimeLabel,
+    sessionName,
+    primaryWins,
+    secondaryWins,
+    primaryRate,
+    secondaryRate,
+  };
+}
 
 function readStatsViewState(): StatsViewState {
   if (typeof window === "undefined") return DEFAULT_STATS_VIEW_STATE;
@@ -167,12 +233,6 @@ export function StatsScreen({
   const pickerPanelRef = useRef<HTMLDivElement | null>(null);
   const chartPickerRef = useRef<HTMLDivElement | null>(null);
 
-  const chartGameOptions = useMemo(
-    () =>
-      [...new Set(games.map((game) => getGameDisplayName(game.name).title))]
-        .sort((a, b) => a.localeCompare(b)),
-    [games],
-  );
   const winsChartGames = useMemo(
     () => filterGamesForChart(games, winsChartGame),
     [games, winsChartGame],
@@ -364,21 +424,6 @@ export function StatsScreen({
   }, [activeKind, compareEnabled]);
 
   useEffect(() => {
-    if (
-      winsChartGame !== ALL_CHART_GAMES &&
-      !chartGameOptions.includes(winsChartGame)
-    ) {
-      setWinsChartGame(ALL_CHART_GAMES);
-    }
-    if (
-      rateChartGame !== ALL_CHART_GAMES &&
-      !chartGameOptions.includes(rateChartGame)
-    ) {
-      setRateChartGame(ALL_CHART_GAMES);
-    }
-  }, [chartGameOptions, rateChartGame, winsChartGame]);
-
-  useEffect(() => {
     writeStatsViewState({
       activeKind,
       selectedPlayerId,
@@ -454,6 +499,34 @@ export function StatsScreen({
   );
   const primaryReport =
     activeKind === "players" ? primaryPlayerReport : selectedTeamReport;
+  const chartGameOptions = useMemo(
+    () => {
+      const gameNames = new Set<string>();
+      primaryReport?.gameBreakdown.forEach((game) => {
+        if (game.sessions > 0) gameNames.add(game.name);
+      });
+      compareReport?.gameBreakdown.forEach((game) => {
+        if (game.sessions > 0) gameNames.add(game.name);
+      });
+      return [...gameNames].sort((a, b) => a.localeCompare(b));
+    },
+    [compareReport, primaryReport],
+  );
+
+  useEffect(() => {
+    if (
+      winsChartGame !== ALL_CHART_GAMES &&
+      !chartGameOptions.includes(winsChartGame)
+    ) {
+      setWinsChartGame(ALL_CHART_GAMES);
+    }
+    if (
+      rateChartGame !== ALL_CHART_GAMES &&
+      !chartGameOptions.includes(rateChartGame)
+    ) {
+      setRateChartGame(ALL_CHART_GAMES);
+    }
+  }, [chartGameOptions, rateChartGame, winsChartGame]);
 
   const selectedMemberProfiles = useMemo(() => {
     if (!selectedTeamReport) return [];
@@ -518,6 +591,92 @@ export function StatsScreen({
     () => buildChartAxis(rateComparisonTrend),
     [rateComparisonTrend],
   );
+  const outcomeBreakdown = useMemo(
+    () =>
+      primaryReport
+        ? [
+            {
+              label: "Wins",
+              primaryValue: primaryReport.wins,
+              secondaryValue: compareReport?.wins,
+              outcomeFill: "#d9ff4f",
+            },
+            {
+              label: "Losses",
+              primaryValue: primaryReport.losses,
+              secondaryValue: compareReport?.losses,
+              outcomeFill: "#ff8ea2",
+            },
+            {
+              label: "Draws",
+              primaryValue: primaryReport.draws,
+              secondaryValue: compareReport?.draws,
+              outcomeFill: "#c3b1ff",
+            },
+            {
+              label: "Done",
+              primaryValue: primaryReport.completedWithoutWinner,
+              secondaryValue: compareReport?.completedWithoutWinner,
+              outcomeFill: "#d9e4eb",
+            },
+          ].filter(
+            (item) =>
+              item.primaryValue > 0 || (item.secondaryValue ?? 0) > 0,
+          )
+        : [],
+    [compareReport, primaryReport],
+  );
+  const gameWinRateBreakdown = useMemo(
+    () => {
+      if (!primaryReport) return [];
+
+      const compareGames = new Map(
+        (compareReport?.gameBreakdown ?? []).map((game) => [game.name, game]),
+      );
+      const gameNames = new Set([
+        ...primaryReport.gameBreakdown.map((game) => game.name),
+        ...compareGames.keys(),
+      ]);
+
+      return [...gameNames]
+        .map((name) => {
+          const primaryGame = primaryReport.gameBreakdown.find(
+            (game) => game.name === name,
+          );
+          const compareGame = compareGames.get(name);
+          return {
+            label: name,
+            primaryValue: primaryGame?.winRate ?? 0,
+            secondaryValue: compareGame?.winRate,
+            primarySessions: primaryGame?.sessions ?? 0,
+            secondarySessions: compareGame?.sessions,
+          };
+        })
+        .filter(
+          (game) =>
+            game.primarySessions > 0 || (game.secondarySessions ?? 0) > 0,
+        )
+        .sort(
+          (a, b) =>
+            Math.max(b.primaryValue, b.secondaryValue ?? 0) -
+              Math.max(a.primaryValue, a.secondaryValue ?? 0) ||
+            a.label.localeCompare(b.label),
+        )
+        .slice(0, 5);
+    },
+    [compareReport, primaryReport],
+  );
+  const streakHistorySummary = useMemo(
+    () => buildStreakHistorySummary(primaryReport, compareReport),
+    [compareReport, primaryReport],
+  );
+  const headToHeadSummary = useMemo(
+    () =>
+      activeKind === "players"
+        ? buildHeadToHeadSummary(primaryPlayerReport, compareReport)
+        : null,
+    [activeKind, compareReport, primaryPlayerReport],
+  );
 
   return (
     <div className="tabContent tabContent--stats">
@@ -535,14 +694,6 @@ export function StatsScreen({
       </div>
       {!isAuthenticated ? (
         <LockedFrame title="Sign in to unlock stats." onSignIn={onOpenAuth}>
-          <StatsSkeleton />
-        </LockedFrame>
-      ) : !canSeeAdvancedStats ? (
-        <LockedFrame
-          title="Upgrade to unlock advanced stats."
-          ctaLabel="Upgrade"
-          onSignIn={onOpenProPlan}
-        >
           <StatsSkeleton />
         </LockedFrame>
       ) : (
@@ -736,20 +887,6 @@ export function StatsScreen({
                       </p>
                     </div>
                   </div>
-                  <div className="statsFocusCard__pills">
-                    <span className="statsHeroPill">
-                      <Trophy size={15} strokeWidth={2.3} aria-hidden="true" />
-                      {primaryReport.wins} wins
-                    </span>
-                    <span className="statsHeroPill">
-                      <TrendingUp size={15} strokeWidth={2.3} aria-hidden="true" />
-                      {primaryReport.winRate}% rate
-                    </span>
-                    <span className="statsHeroPill">
-                      <Users size={15} strokeWidth={2.3} aria-hidden="true" />
-                      {selectedMemberProfiles.length} members
-                    </span>
-                  </div>
                   {selectedMemberProfiles.length ? (
                     <div className="statsFocusMembers">
                       {selectedMemberProfiles.map((profile) => (
@@ -885,34 +1022,84 @@ export function StatsScreen({
                 </div>
               )}
 
-              <div ref={chartPickerRef}>
-                <StatsCharts
-                  activeKind={activeKind}
-                  primaryName={primaryName}
-                  secondaryName={compareReport ? compareName : null}
-                  chartGameOptions={chartGameOptions}
-                  openChartGamePicker={openChartGamePicker}
-                  winsChartGame={winsChartGame}
-                  rateChartGame={rateChartGame}
-                  winsComparisonTrend={winsComparisonTrend}
-                  rateComparisonTrend={rateComparisonTrend}
-                  winsChartAxis={winsChartAxis}
-                  rateChartAxis={rateChartAxis}
-                  onToggleChartGamePicker={(picker) =>
-                    setOpenChartGamePicker((current) =>
-                      current === picker ? null : picker,
-                    )
+              <div
+                ref={canSeeAdvancedStats ? chartPickerRef : undefined}
+                className={!canSeeAdvancedStats ? "statsLockedPreview" : undefined}
+              >
+                <div
+                  className={
+                    !canSeeAdvancedStats ? "statsLockedPreview__content" : undefined
                   }
-                  onSelectWinsChartGame={(value) => {
-                    setWinsChartGame(value);
-                    setOpenChartGamePicker(null);
-                  }}
-                  onSelectRateChartGame={(value) => {
-                    setRateChartGame(value);
-                    setOpenChartGamePicker(null);
-                  }}
-                />
+                >
+                  {canSeeAdvancedStats ? (
+                    <StatsCharts
+                      activeKind={activeKind}
+                      primaryName={primaryName}
+                      secondaryName={compareReport ? compareName : null}
+                      chartGameOptions={chartGameOptions}
+                      openChartGamePicker={openChartGamePicker}
+                      winsChartGame={winsChartGame}
+                      rateChartGame={rateChartGame}
+                      winsComparisonTrend={winsComparisonTrend}
+                      rateComparisonTrend={rateComparisonTrend}
+                      winsChartAxis={winsChartAxis}
+                      rateChartAxis={rateChartAxis}
+                      outcomeBreakdown={outcomeBreakdown}
+                      gameWinRateBreakdown={gameWinRateBreakdown}
+                      onToggleChartGamePicker={(picker) =>
+                        setOpenChartGamePicker((current) =>
+                          current === picker ? null : picker,
+                        )
+                      }
+                      onSelectWinsChartGame={(value) => {
+                        setWinsChartGame(value);
+                        setOpenChartGamePicker(null);
+                      }}
+                      onSelectRateChartGame={(value) => {
+                        setRateChartGame(value);
+                        setOpenChartGamePicker(null);
+                      }}
+                    />
+                  ) : (
+                    <StatsCharts
+                      activeKind={activeKind}
+                      primaryName="You"
+                      secondaryName="Rival"
+                      chartGameOptions={LOCKED_CHART_OPTIONS}
+                      openChartGamePicker={null}
+                      winsChartGame={ALL_CHART_GAMES}
+                      rateChartGame={ALL_CHART_GAMES}
+                      winsComparisonTrend={LOCKED_CHART_TREND}
+                      rateComparisonTrend={LOCKED_RATE_TREND}
+                      winsChartAxis={LOCKED_WINS_AXIS}
+                      rateChartAxis={LOCKED_RATE_AXIS}
+                      outcomeBreakdown={LOCKED_OUTCOME_BREAKDOWN}
+                      gameWinRateBreakdown={LOCKED_GAME_RATE_BREAKDOWN}
+                      onToggleChartGamePicker={() => undefined}
+                      onSelectWinsChartGame={() => undefined}
+                      onSelectRateChartGame={() => undefined}
+                    />
+                  )}
+                </div>
+                {!canSeeAdvancedStats ? (
+                  <div className="statsAdvancedLock statsAdvancedLock--preview">
+                    <span>
+                      <Lock size={13} strokeWidth={2.4} aria-hidden="true" />
+                      Pro charts
+                    </span>
+                    <button type="button" onClick={onOpenProPlan}>
+                      Unlock charts
+                    </button>
+                  </div>
+                ) : null}
               </div>
+
+              <StatsAdvancedCards
+                streakSummary={streakHistorySummary}
+                headToHeadSummary={headToHeadSummary}
+                isLocked={!canSeeAdvancedStats}
+                onUpgrade={onOpenProPlan}
+              />
 
               <div className="statsMetaGrid">
                 <section className="statsPanel">

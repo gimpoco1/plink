@@ -1,6 +1,11 @@
+.tabContent--stats {
+  touch-action: pan-y;
+}
+
 .statsExperience {
   display: grid;
   gap: 8px;
+  touch-action: pan-y;
 }
 
 .statsSelectorPanel,
@@ -110,10 +115,7 @@
 .statsCompareToggle {
   justify-self: start;
   min-height: 28px;
-  padding: 0 9px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
+  padding: 0 4px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -155,12 +157,6 @@
   border-bottom: 2px solid #13210b;
   opacity: 0;
   transform: rotate(42deg) translateY(-1px);
-}
-
-.statsCompareToggle--active {
-  border-color: rgba(216, 255, 79, 0.28);
-  background: rgba(216, 255, 79, 0.12);
-  color: var(--accent);
 }
 
 .statsCompareToggle--active .statsCompareToggle__box {
@@ -407,14 +403,25 @@
   border-radius: 16px;
   font-size: 22px;
   font-weight: 900;
+  svg {
+    width: 36px;
+    height: 36px;
+    stroke-width: 2px;
+  }
 }
 
 .statsEntityAvatar--sm {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   font-size: 11px;
   font-weight: 850;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 3px;
+  }
 }
 
 .statsEntityAvatar--team {
@@ -424,7 +431,7 @@
 
 .statsFocusCard {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .statsFocusCard__identity {
@@ -433,9 +440,20 @@
   gap: 10px;
 }
 
+.statsFocusCard .statsEntityAvatar--lg {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+}
+
+.statsFocusCard .statsEntityAvatar--lg svg {
+  width: 30px;
+  height: 30px;
+}
+
 .statsFocusCard__copy h3 {
   margin: 0;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
   letter-spacing: 0;
   line-height: 0.96;
@@ -443,18 +461,16 @@
 
 .statsFocusCard__copy p {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
-.statsFocusCard__pills,
 .statsFocusMembers {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 7px;
 }
 
-.statsHeroPill,
 .statsFocusMember,
 .statsSessionPlacement,
 .statsStatus {
@@ -469,24 +485,22 @@
   font-weight: 800;
 }
 
-.statsHeroPill {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-}
-
 .statsFocusMember {
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
+  min-height: 30px;
+  padding: 0 8px;
+  gap: 7px;
 }
 
 .statsFocusMember__avatar {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   display: grid;
   place-items: center;
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 850;
 }
 
@@ -643,6 +657,10 @@
 .statsChartShell {
   height: 190px;
   -webkit-tap-highlight-color: transparent;
+}
+
+.statsChartShell--bar {
+  height: 170px;
 }
 
 .statsChartGamePicker {
@@ -952,6 +970,269 @@
   line-height: 1.55;
 }
 
+.statsAdvancedGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.statsLockedPreview {
+  position: relative;
+  touch-action: pan-y;
+}
+
+.statsLockedPreview__content {
+  filter: blur(3px);
+  opacity: 0.52;
+  pointer-events: none;
+  user-select: none;
+}
+
+.statsAdvancedCard {
+  position: relative;
+  overflow: hidden;
+  min-height: 164px;
+}
+
+.statsAdvancedCard__content {
+  display: grid;
+  gap: 8px;
+  transition:
+    filter 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.statsAdvancedCard--locked .statsAdvancedCard__content {
+  filter: blur(3px);
+  opacity: 0.44;
+  pointer-events: none;
+  user-select: none;
+}
+
+.statsStreakRows {
+  display: grid;
+  gap: 7px;
+}
+
+.statsStreakRow {
+  padding: 9px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.032);
+  display: grid;
+  gap: 8px;
+}
+
+.statsStreakRow__name,
+.statsStreakRow__metrics,
+.statsHeadToHead__score,
+.statsHeadToHead__names,
+.statsHeadToHead__chips {
+  display: flex;
+  align-items: center;
+}
+
+.statsStreakRow__name {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statsStreakRow__name strong,
+.statsHeadToHead__names span {
+  min-width: 0;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statsStreakRow__name span,
+.statsStreakRow__metrics span,
+.statsHeadToHead__chips span {
+  color: var(--text-dim);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.statsStreakRow__metrics {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statsStreakRow__metrics b {
+  margin-left: 4px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.statsStreakForm {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+}
+
+.statsStreakFormWrap {
+  display: grid;
+  gap: 5px;
+}
+
+.statsStreakFormWrap__label {
+  color: var(--text-dim);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.statsStreakForm__chip {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.statsStreakForm__chip--won {
+  background: rgba(216, 255, 79, 0.16);
+  color: #d9ff4f;
+}
+
+.statsStreakForm__chip--lost {
+  background: rgba(255, 142, 162, 0.14);
+  color: #ff8ea2;
+}
+
+.statsStreakForm__chip--draw {
+  background: rgba(195, 177, 255, 0.14);
+  color: #c3b1ff;
+}
+
+.statsStreakForm__chip--completed {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.statsStreakForm__empty {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.statsHeadToHead {
+  display: grid;
+  gap: 8px;
+}
+
+.statsHeadToHead__score {
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.statsHeadToHead__score strong {
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.statsHeadToHead__score span {
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.statsHeadToHead__names {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.statsHeadToHead__names span:last-child {
+  text-align: right;
+}
+
+.statsHeadToHead__chips {
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.statsHeadToHead__chips span {
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  display: inline-flex;
+  align-items: center;
+}
+
+.statsAdvancedLock {
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(216, 255, 79, 0.1),
+      transparent 46%
+    ),
+    rgba(7, 11, 14, 0.28);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+  pointer-events: none;
+  touch-action: pan-y;
+}
+
+.statsAdvancedLock span,
+.statsAdvancedLock button {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+.statsAdvancedLock span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.statsAdvancedLock button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #16210b;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.statsAdvancedLock--preview {
+  position: absolute;
+  inset: 0;
+}
+
 .emptyMsg {
   color: var(--text-dim);
   font-size: 13px;
@@ -960,7 +1241,8 @@
 
 @media (max-width: 720px) {
   .statsChartGrid,
-  .statsMetaGrid {
+  .statsMetaGrid,
+  .statsAdvancedGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -991,6 +1273,10 @@
     font-size: 20px;
   }
 
+  .statsPanel__head h3 {
+    font-size: 14px;
+  }
+
   .statsComparisonCard__row {
     gap: 6px;
   }
@@ -1002,10 +1288,13 @@
     padding: 10px 10px 18px 10px;
   }
 
-  .statsSelectorPanel__head,
-  .statsFocusCard__identity {
+  .statsSelectorPanel__head {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .statsFocusCard__identity {
+    align-items: center;
   }
 
   .statsSelectorControls {
@@ -1018,9 +1307,16 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .statsFocusCard__copy h3,
   .statsPickerButton__copy strong {
     font-size: 13px;
+  }
+
+  .statsFocusCard__copy h3 {
+    font-size: 16px;
+  }
+
+  .statsFocusCard__copy p {
+    font-size: 10px;
   }
 
   .statsSessionRow,
