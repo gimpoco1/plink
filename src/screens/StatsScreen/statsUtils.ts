@@ -288,9 +288,8 @@ function buildStreakSubjectSummary(report: SubjectReport): StreakSubjectSummary 
     current: report.currentWinStreak,
     best,
     completed: completedSessions.length,
-    form: report.sessions
-      .filter((session) => session.resultKind !== "in_progress")
-      .slice(0, 6)
+    form: completedSessions
+      .slice(-10)
       .map((session) => session.resultKind),
   };
 }

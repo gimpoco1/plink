@@ -26,7 +26,9 @@ export function StatsAdvancedCards({
 
   return (
     <div className="statsAdvancedGrid">
-      <article className={`statsPanel statsAdvancedCard${isLocked ? " statsAdvancedCard--locked" : ""}`}>
+      <article
+        className={`statsPanel statsAdvancedCard${isLocked ? " statsAdvancedCard--locked" : ""}`}
+      >
         <div className="statsAdvancedCard__content">
           <div className="statsPanel__head">
             <h3>Streak history</h3>
@@ -40,13 +42,19 @@ export function StatsAdvancedCards({
               ) : null}
             </div>
           ) : (
-            <p className="emptyMsg">Play completed sessions to build streak history.</p>
+            <p className="emptyMsg">
+              Play completed sessions to build streak history.
+            </p>
           )}
         </div>
-        {isLocked ? <ProOverlay onUpgrade={onUpgrade} label="Unlock streak history" /> : null}
+        {isLocked ? (
+          <ProOverlay onUpgrade={onUpgrade} label="Unlock streak history" />
+        ) : null}
       </article>
 
-      <article className={`statsPanel statsAdvancedCard${isLocked ? " statsAdvancedCard--locked" : ""}`}>
+      <article
+        className={`statsPanel statsAdvancedCard${isLocked ? " statsAdvancedCard--locked" : ""}`}
+      >
         <div className="statsAdvancedCard__content">
           <div className="statsPanel__head">
             <h3>Head-to-head</h3>
@@ -69,7 +77,9 @@ export function StatsAdvancedCards({
               <div className="statsHeadToHead__chips">
                 <span>{visibleHeadToHeadSummary.draws} draws</span>
                 <span>{visibleHeadToHeadSummary.sharedWins} together</span>
-                <span>{visibleHeadToHeadSummary.completedWithoutWinner} no winner</span>
+                <span>
+                  {visibleHeadToHeadSummary.completedWithoutWinner} no winner
+                </span>
                 <span>{visibleHeadToHeadSummary.inProgress} live</span>
               </div>
             </div>
@@ -79,7 +89,9 @@ export function StatsAdvancedCards({
             </p>
           )}
         </div>
-        {isLocked ? <ProOverlay onUpgrade={onUpgrade} label="Unlock head-to-head" /> : null}
+        {isLocked ? (
+          <ProOverlay onUpgrade={onUpgrade} label="Unlock head-to-head" />
+        ) : null}
       </article>
     </div>
   );
@@ -90,7 +102,10 @@ function StreakRow({ summary }: { summary: StreakSubjectSummary }) {
     <div className="statsStreakRow">
       <div className="statsStreakRow__name">
         <strong>{summary.name}</strong>
-        <span>{summary.completed} completed</span>
+        <span>
+          {summary.completed} completed session
+          {summary.completed === 1 ? "" : "s"}
+        </span>
       </div>
       <div className="statsStreakRow__metrics">
         <span>
@@ -101,13 +116,15 @@ function StreakRow({ summary }: { summary: StreakSubjectSummary }) {
         </span>
       </div>
       <div className="statsStreakFormWrap">
-        <span className="statsStreakFormWrap__label">
-          Recent form
-          {summary.form.length && summary.completed > summary.form.length
-            ? ` · last ${summary.form.length}`
-            : ""}
-        </span>
-        <div className="statsStreakForm" aria-label={`${summary.name} recent form`}>
+        {summary.form.length ? (
+          <span className="statsStreakFormWrap__label">
+            Last {summary.form.length} completed · newest right
+          </span>
+        ) : null}
+        <div
+          className="statsStreakForm"
+          aria-label={`${summary.name} recent form`}
+        >
           {summary.form.length ? (
             summary.form.map((status, index) => (
               <span
@@ -138,7 +155,7 @@ function ProOverlay({
     <div className="statsAdvancedLock">
       <span>
         <Lock size={13} strokeWidth={2.4} aria-hidden="true" />
-        Pro report
+        Pro charts
       </span>
       <button type="button" onClick={onUpgrade}>
         {label}

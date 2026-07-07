@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Lock } from "lucide-react";
 import {
   ChartGamePicker,
   ChartLegend,
@@ -56,6 +57,8 @@ type StatsChartsProps = {
   onToggleChartGamePicker: (picker: Exclude<OpenChartGamePicker, null>) => void;
   onSelectWinsChartGame: (value: string) => void;
   onSelectRateChartGame: (value: string) => void;
+  isLocked?: boolean;
+  onUnlock?: () => void;
 };
 
 export function StatsCharts({
@@ -75,10 +78,12 @@ export function StatsCharts({
   onToggleChartGamePicker,
   onSelectWinsChartGame,
   onSelectRateChartGame,
+  isLocked = false,
+  onUnlock,
 }: StatsChartsProps) {
   return (
     <div className="statsChartGrid">
-      <section className="statsPanel statsPanel--chart">
+      <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader
           title={activeKind === "players" ? "Wins over time" : "Team wins over time"}
           count={winsComparisonTrend.length}
@@ -163,9 +168,9 @@ export function StatsCharts({
         ) : (
           <div className="emptyMsg">No sessions tracked yet.</div>
         )}
-      </section>
+      </LockedChartCard>
 
-      <section className="statsPanel statsPanel--chart">
+      <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader title="Running win rate" count={rateComparisonTrend.length} />
         <ChartGamePicker
           value={rateChartGame}
@@ -242,9 +247,9 @@ export function StatsCharts({
         ) : (
           <div className="emptyMsg">No trend yet.</div>
         )}
-      </section>
+      </LockedChartCard>
 
-      <section className="statsPanel statsPanel--chart">
+      <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader title="Outcomes by result" count={outcomeBreakdown.length} />
         {outcomeBreakdown.length ? (
           <div className="statsChartShell statsChartShell--bar">
@@ -313,9 +318,9 @@ export function StatsCharts({
         ) : (
           <div className="emptyMsg">No completed results yet.</div>
         )}
-      </section>
+      </LockedChartCard>
 
-      <section className="statsPanel statsPanel--chart">
+      <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader title="Win rate by game" count={gameWinRateBreakdown.length} />
         {gameWinRateBreakdown.length ? (
           <div className="statsChartShell statsChartShell--bar">
@@ -380,8 +385,37 @@ export function StatsCharts({
         ) : (
           <div className="emptyMsg">No game rates yet.</div>
         )}
-      </section>
+      </LockedChartCard>
     </div>
+  );
+}
+
+function LockedChartCard({
+  children,
+  isLocked,
+  onUnlock,
+}: {
+  children: React.ReactNode;
+  isLocked: boolean;
+  onUnlock?: () => void;
+}) {
+  return (
+    <section className={`statsPanel statsPanel--chart${isLocked ? " statsLockedChartCard" : ""}`}>
+      <div className={isLocked ? "statsLockedChartCard__content" : undefined}>
+        {children}
+      </div>
+      {isLocked ? (
+        <div className="statsAdvancedLock">
+          <span>
+            <Lock size={13} strokeWidth={2.4} aria-hidden="true" />
+            Pro charts
+          </span>
+          <button type="button" onClick={onUnlock}>
+            Unlock charts
+          </button>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

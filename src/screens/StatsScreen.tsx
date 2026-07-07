@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Flame, Lock, Medal, Target, Trophy } from "lucide-react";
+import { Flame, Medal, Target, Trophy } from "lucide-react";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
 import { StatsSkeleton } from "../components/HomeLockedState/StatsSkeleton";
 import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
@@ -13,6 +13,7 @@ import { avatarStyleFor } from "../utils/color";
 import { formatAccountPlayerName, getGameDisplayName, getInitials } from "../utils/text";
 import { StatsAdvancedCards } from "./StatsScreen/StatsAdvancedCards";
 import { StatsCharts } from "./StatsScreen/StatsCharts";
+import { StatsProPreview } from "./StatsScreen/StatsProPreview";
 import {
   ComparisonMetricCard,
   EntitySwatch,
@@ -25,7 +26,6 @@ import {
 import {
   ALL_CHART_GAMES,
   STATUS_LABELS,
-  type CompareChartPoint,
   type OpenChartGamePicker,
   type OpenPicker,
   type SelectableEntity,
@@ -78,75 +78,6 @@ const DEFAULT_STATS_VIEW_STATE: StatsViewState = {
   winsChartGame: ALL_CHART_GAMES,
   rateChartGame: ALL_CHART_GAMES,
 };
-
-const LOCKED_CHART_OPTIONS = ["BRISCOLA", "SCOPA", "VOLLEYBALL"];
-const LOCKED_CHART_TREND: CompareChartPoint[] = [
-  buildMockChartPoint(1, "BRISCOLA #1", 0, 0, 0, 0, "12 Jan 2026, 20:12"),
-  buildMockChartPoint(2, "SCOPA #1", 1, 0, 50, 0, "02 Feb 2026, 19:48"),
-  buildMockChartPoint(3, "VOLLEYBALL #1", 2, 1, 67, 33, "22 Mar 2026, 21:04"),
-  buildMockChartPoint(4, "BRISCOLA #2", 3, 1, 75, 25, "17 Apr 2026, 18:35"),
-  buildMockChartPoint(5, "SCOPA #2", 3, 2, 60, 40, "06 May 2026, 20:27"),
-  buildMockChartPoint(6, "VOLLEYBALL #2", 5, 3, 71, 43, "19 Jun 2026, 21:16"),
-];
-const LOCKED_RATE_TREND: CompareChartPoint[] = LOCKED_CHART_TREND.map((point) => ({
-  ...point,
-  primaryWins: null,
-  secondaryWins: null,
-}));
-const LOCKED_OUTCOME_BREAKDOWN = [
-  { label: "Wins", primaryValue: 8, secondaryValue: 5, outcomeFill: "#d9ff4f" },
-  { label: "Losses", primaryValue: 3, secondaryValue: 6, outcomeFill: "#ff8ea2" },
-  { label: "Draws", primaryValue: 2, secondaryValue: 2, outcomeFill: "#c3b1ff" },
-];
-const LOCKED_GAME_RATE_BREAKDOWN = [
-  {
-    label: "BRISCOLA",
-    primaryValue: 78,
-    secondaryValue: 44,
-    primarySessions: 9,
-    secondarySessions: 9,
-  },
-  {
-    label: "SCOPA",
-    primaryValue: 56,
-    secondaryValue: 42,
-    primarySessions: 7,
-    secondarySessions: 7,
-  },
-  {
-    label: "VOLLEYBALL",
-    primaryValue: 71,
-    secondaryValue: 50,
-    primarySessions: 5,
-    secondarySessions: 5,
-  },
-];
-const LOCKED_WINS_AXIS = buildChartAxis(LOCKED_CHART_TREND);
-const LOCKED_RATE_AXIS = buildChartAxis(LOCKED_RATE_TREND);
-
-function buildMockChartPoint(
-  x: number,
-  sessionName: string,
-  primaryWins: number,
-  secondaryWins: number,
-  primaryRate: number,
-  secondaryRate: number,
-  fullDateTimeLabel: string,
-): CompareChartPoint {
-  return {
-    id: `locked-preview-${x}`,
-    x,
-    timestamp: Date.UTC(2026, x, 7, 18, 30),
-    label: fullDateTimeLabel.slice(0, 11),
-    fullDateLabel: fullDateTimeLabel.slice(0, 11),
-    fullDateTimeLabel,
-    sessionName,
-    primaryWins,
-    secondaryWins,
-    primaryRate,
-    secondaryRate,
-  };
-}
 
 function readStatsViewState(): StatsViewState {
   if (typeof window === "undefined") return DEFAULT_STATS_VIEW_STATE;
@@ -232,6 +163,8 @@ export function StatsScreen({
   const [pickerSearch, setPickerSearch] = useState("");
   const pickerPanelRef = useRef<HTMLDivElement | null>(null);
   const chartPickerRef = useRef<HTMLDivElement | null>(null);
+  const isCompareLocked = !canSeeAdvancedStats;
+  const areTeamReportsLocked = !canSeeAdvancedStats || !canUseTeams;
 
   const winsChartGames = useMemo(
     () => filterGamesForChart(games, winsChartGame),
@@ -360,10 +293,10 @@ export function StatsScreen({
   }, [openChartGamePicker]);
 
   useEffect(() => {
-    if (activeKind === "teams" && (!canUseTeams || !teamOptions.length)) {
+    if (activeKind === "teams" && (areTeamReportsLocked || !teamOptions.length)) {
       setActiveKind("players");
     }
-  }, [activeKind, canUseTeams, teamOptions.length]);
+  }, [activeKind, areTeamReportsLocked, teamOptions.length]);
 
   useEffect(() => {
     if (!playerOptions.length) {
@@ -418,10 +351,10 @@ export function StatsScreen({
   }, [activeKind]);
 
   useEffect(() => {
-    if (activeKind !== "players" && compareEnabled) {
+    if ((activeKind !== "players" || isCompareLocked) && compareEnabled) {
       setCompareEnabled(false);
     }
-  }, [activeKind, compareEnabled]);
+  }, [activeKind, compareEnabled, isCompareLocked]);
 
   useEffect(() => {
     writeStatsViewState({
@@ -729,11 +662,18 @@ export function StatsScreen({
                         : ""
                     }`}
                     onClick={() => {
-                      if (canUseTeams) setActiveKind("teams");
+                      if (areTeamReportsLocked) {
+                        onOpenProPlan();
+                        return;
+                      }
+                      if (!areTeamReportsLocked) setActiveKind("teams");
                     }}
-                    disabled={!canUseTeams}
+                    aria-disabled={areTeamReportsLocked}
                   >
-                    Teams
+                    <span>Teams</span>
+                    {!canSeeAdvancedStats ? (
+                      <span className="statsControlProBadge">PRO</span>
+                    ) : null}
                   </button>
                 </div>
               </div>
@@ -838,12 +778,18 @@ export function StatsScreen({
               <label
                 className={`statsCompareToggle${
                   compareEnabled ? " statsCompareToggle--active" : ""
-                }`}
+                }${isCompareLocked ? " statsCompareToggle--locked" : ""}`}
+                onClick={(event) => {
+                  if (!isCompareLocked) return;
+                  event.preventDefault();
+                  onOpenProPlan();
+                }}
               >
                 <input
                   type="checkbox"
                   checked={compareEnabled}
                   onChange={(event) => {
+                    if (isCompareLocked) return;
                     const next = event.target.checked;
                     setCompareEnabled(next);
                     if (!next) {
@@ -853,6 +799,9 @@ export function StatsScreen({
                 />
                 <span className="statsCompareToggle__box" aria-hidden="true" />
                 <span>Compare with another player</span>
+                {isCompareLocked ? (
+                  <span className="statsControlProBadge">PRO</span>
+                ) : null}
               </label>
             ) : null}
           </section>
@@ -1022,16 +971,9 @@ export function StatsScreen({
                 </div>
               )}
 
-              <div
-                ref={canSeeAdvancedStats ? chartPickerRef : undefined}
-                className={!canSeeAdvancedStats ? "statsLockedPreview" : undefined}
-              >
-                <div
-                  className={
-                    !canSeeAdvancedStats ? "statsLockedPreview__content" : undefined
-                  }
-                >
-                  {canSeeAdvancedStats ? (
+              {canSeeAdvancedStats ? (
+                <>
+                  <div ref={chartPickerRef}>
                     <StatsCharts
                       activeKind={activeKind}
                       primaryName={primaryName}
@@ -1060,46 +1002,18 @@ export function StatsScreen({
                         setOpenChartGamePicker(null);
                       }}
                     />
-                  ) : (
-                    <StatsCharts
-                      activeKind={activeKind}
-                      primaryName="You"
-                      secondaryName="Rival"
-                      chartGameOptions={LOCKED_CHART_OPTIONS}
-                      openChartGamePicker={null}
-                      winsChartGame={ALL_CHART_GAMES}
-                      rateChartGame={ALL_CHART_GAMES}
-                      winsComparisonTrend={LOCKED_CHART_TREND}
-                      rateComparisonTrend={LOCKED_RATE_TREND}
-                      winsChartAxis={LOCKED_WINS_AXIS}
-                      rateChartAxis={LOCKED_RATE_AXIS}
-                      outcomeBreakdown={LOCKED_OUTCOME_BREAKDOWN}
-                      gameWinRateBreakdown={LOCKED_GAME_RATE_BREAKDOWN}
-                      onToggleChartGamePicker={() => undefined}
-                      onSelectWinsChartGame={() => undefined}
-                      onSelectRateChartGame={() => undefined}
-                    />
-                  )}
-                </div>
-                {!canSeeAdvancedStats ? (
-                  <div className="statsAdvancedLock statsAdvancedLock--preview">
-                    <span>
-                      <Lock size={13} strokeWidth={2.4} aria-hidden="true" />
-                      Pro charts
-                    </span>
-                    <button type="button" onClick={onOpenProPlan}>
-                      Unlock charts
-                    </button>
                   </div>
-                ) : null}
-              </div>
 
-              <StatsAdvancedCards
-                streakSummary={streakHistorySummary}
-                headToHeadSummary={headToHeadSummary}
-                isLocked={!canSeeAdvancedStats}
-                onUpgrade={onOpenProPlan}
-              />
+                  <StatsAdvancedCards
+                    streakSummary={streakHistorySummary}
+                    headToHeadSummary={headToHeadSummary}
+                    isLocked={false}
+                    onUpgrade={onOpenProPlan}
+                  />
+                </>
+              ) : (
+                <StatsProPreview onUpgrade={onOpenProPlan} />
+              )}
 
               <div className="statsMetaGrid">
                 <section className="statsPanel">
