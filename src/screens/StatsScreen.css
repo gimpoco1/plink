@@ -1,66 +1,613 @@
-.statsHeroGrid {
+.statsExperience {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
 }
 
-.statsHeroCard {
-  padding: 16px;
-  border-radius: 22px;
+.statsSelectorPanel,
+.statsFocusCard,
+.statsMetricCard,
+.statsComparisonCard,
+.statsPanel,
+.statsEmptyPanel {
   border: 1px solid var(--border);
+  border-radius: 18px;
   background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.06),
-      rgba(255, 255, 255, 0.03)
+    radial-gradient(
+      circle at top left,
+      rgba(216, 255, 79, 0.08),
+      transparent 34%
     ),
-    var(--surface);
+    rgba(10, 20, 24, 0.9);
   box-shadow: var(--shadow);
+}
+
+.statsSelectorPanel,
+.statsFocusCard,
+.statsPanel,
+.statsEmptyPanel {
+  padding: 10px;
+}
+
+.statsSelectorPanel {
+  display: grid;
+  gap: 8px;
+  position: relative;
+  z-index: 20;
+}
+
+.statsSelectorPanel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.statsSelectorPanel__copy {
+  display: grid;
+  gap: 2px;
+}
+
+.statsSelectorControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.statsEyebrow {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.statsSelectorPanel__head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.statsScopeSwitch {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.statsScopeSwitch__option {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.statsScopeSwitch__option:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.statsScopeSwitch__option--active {
+  background: rgba(216, 255, 79, 0.12);
+  color: var(--accent);
+}
+
+.statsCompareToggle {
+  justify-self: start;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+  position: relative;
+  margin-top: -2px;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.statsCompareToggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.statsCompareToggle__box {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  border: 2px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.statsCompareToggle__box::after {
+  content: "";
+  width: 5px;
+  height: 8px;
+  border-right: 2px solid #13210b;
+  border-bottom: 2px solid #13210b;
+  opacity: 0;
+  transform: rotate(42deg) translateY(-1px);
+}
+
+.statsCompareToggle--active {
+  border-color: rgba(216, 255, 79, 0.28);
+  background: rgba(216, 255, 79, 0.12);
+  color: var(--accent);
+}
+
+.statsCompareToggle--active .statsCompareToggle__box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.statsCompareToggle--active .statsCompareToggle__box::after {
+  opacity: 1;
+}
+
+.statsCompareToggle input:focus-visible + .statsCompareToggle__box {
+  outline: 2px solid rgba(122, 208, 255, 0.7);
+  outline-offset: 3px;
+}
+
+.statsPickerDock {
+  display: grid;
+  gap: 8px;
+  position: relative;
+}
+
+.statsPickerDock--compare {
+  grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 5px;
+}
+
+.statsPickerDock__vs {
+  align-self: stretch;
+  min-height: 42px;
+  padding: 0;
+  border-radius: 12px;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.statsPickerSlot {
+  position: relative;
+  min-width: 0;
+}
+
+.statsPickerButton {
+  width: 100%;
+  min-height: 42px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.032);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.statsPickerButton:hover,
+.statsPickerButton--open {
+  border-color: rgba(122, 208, 255, 0.26);
+  background: rgba(122, 208, 255, 0.07);
+  transform: translateY(-1px);
+}
+
+.statsPickerButton__value {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.statsPickerButton__copy,
+.statsFocusCard__copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.statsPickerButton__copy strong,
+.statsPickerButton__copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statsPickerButton__copy strong,
+.statsFocusCard__copy h3,
+.statsSessionRow__left strong,
+.statsBreakdownRow__left strong,
+.statsEmptyPanel strong {
+  color: var(--text);
+}
+
+.statsPickerButton__copy strong {
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.statsPickerButton__copy span,
+.statsFocusCard__copy p,
+.statsEmptyPanel p,
+.statsSessionRow__left span,
+.statsBreakdownRow__left span {
+  color: var(--text-dim);
+}
+
+.statsPickerButton__copy span {
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.statsPickerButton__chevron {
+  color: rgba(217, 228, 235, 0.56);
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.statsPickerPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 40;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: #070b0e;
+  box-shadow: 0 28px 48px rgba(0, 0, 0, 0.36);
+  display: grid;
+  gap: 10px;
+}
+
+.statsPickerDock--compare .statsPickerSlot--primary .statsPickerPopover {
+  width: calc(200% + 35px);
+}
+
+.statsPickerDock--compare .statsPickerSlot--compare .statsPickerPopover {
+  left: auto;
+  right: 0;
+  width: calc(200% + 35px);
+}
+
+.statsPickerPopover__search {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(217, 228, 235, 0.5);
+}
+
+.statsPickerPopover__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.statsPickerPopover__list {
+  max-height: 210px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+}
+
+.statsPickerPopover__option {
+  width: 100%;
+  min-height: 50px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.statsPickerPopover__option--active {
+  border-color: rgba(122, 208, 255, 0.26);
+  background: rgba(122, 208, 255, 0.08);
+}
+
+.statsPickerPopover__copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.statsPickerPopover__copy strong {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.statsPickerPopover__copy span,
+.statsPickerPopover__empty {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.statsPickerPopover__emptyMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.statsEntityAvatar {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.statsEntityAvatar--lg {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.statsEntityAvatar--sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.statsEntityAvatar--team {
+  background: linear-gradient(180deg, #b9dffd, #6cc4ff);
+  color: #0c4f72;
+}
+
+.statsFocusCard {
+  display: grid;
+  gap: 10px;
+}
+
+.statsFocusCard__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.statsFocusCard__copy h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.96;
+}
+
+.statsFocusCard__copy p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.statsFocusCard__pills,
+.statsFocusMembers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.statsHeroPill,
+.statsFocusMember,
+.statsSessionPlacement,
+.statsStatus {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.statsHeroPill {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.statsFocusMember {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+
+.statsFocusMember__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.statsKpiGrid,
+.statsCompareMetricGrid,
+.statsChartGrid,
+.statsMetaGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.statsKpiGrid,
+.statsCompareMetricGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.statsMetricCard,
+.statsComparisonCard {
+  padding: 10px;
+}
+
+.statsMetricCard__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statsMetricCard--accent {
+  border-color: rgba(216, 255, 79, 0.18);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.12), rgba(216, 255, 79, 0.02)),
+    rgba(10, 20, 24, 0.88);
+}
+
+.statsMetricCard__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.statsMetricCard strong {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.statsMetricCard p {
+  margin: 8px 0 0;
+  color: var(--text-dim);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.statsComparisonCard {
+  display: grid;
+  gap: 7px;
+}
+
+.statsComparisonCard__rows {
   display: grid;
   gap: 6px;
 }
 
-.statsHeroCard--accent {
-  border-color: rgba(216, 255, 79, 0.18);
-  background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.12), rgba(216, 255, 79, 0.02)),
-    var(--surface);
+.statsComparisonCard__row {
+  min-height: 34px;
+  padding: 7px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.statsHeroCard__label {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.statsComparisonCard__row--winner {
+  border-color: rgba(216, 255, 79, 0.2);
+  background: rgba(216, 255, 79, 0.08);
 }
 
-.statsHeroCard strong {
-  color: var(--text);
-  font-size: 30px;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-}
-
-.statsHeroCard p {
-  margin: 0;
+.statsComparisonCard__row span {
   color: var(--text-dim);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.statsPanels {
-  display: grid;
-  gap: 14px;
+.statsComparisonCard__row strong,
+.statsTooltip strong,
+.statsBreakdownRow__right span,
+.statsSessionPlacement {
+  color: var(--text);
+}
+
+.statsComparisonCard__row strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.statsChartGrid,
+.statsMetaGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .statsPanel {
-  border-radius: 24px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 12px;
 }
 
 .statsPanel__head {
@@ -68,21 +615,21 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .statsPanel__head h3 {
   margin: 0;
   color: var(--text);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 850;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .statsPanel__head span {
-  min-width: 26px;
-  height: 26px;
-  padding: 0 8px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   color: var(--muted);
@@ -93,81 +640,401 @@
   font-weight: 850;
 }
 
-.statsList {
-  display: grid;
-  gap: 8px;
+.statsChartShell {
+  height: 190px;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.statsRow {
+.statsChartGamePicker {
+  position: relative;
+  z-index: 5;
+  margin: -2px 0 8px;
+}
+
+.statsChartGamePicker__button {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+  font: inherit;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.statsChartGamePicker__button--open {
+  border-color: rgba(122, 208, 255, 0.24);
+  background: rgba(122, 208, 255, 0.07);
+}
+
+.statsChartGamePicker__button span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.statsChartGamePicker__button strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.statsChartGamePicker__button svg {
+  color: rgba(217, 228, 235, 0.62);
+}
+
+.statsChartGamePicker__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 220px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 15px;
+  background: #070b0e;
+  box-shadow: 0 24px 46px rgba(0, 0, 0, 0.42);
+  display: grid;
+  gap: 5px;
+}
+
+.statsChartGamePicker__option {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.statsChartGamePicker__option--active {
+  border-color: rgba(216, 255, 79, 0.22);
+  background: rgba(216, 255, 79, 0.11);
+  color: var(--accent);
+}
+
+.statsChartLegend {
+  min-height: 18px;
+  margin: -2px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.statsChartLegend::-webkit-scrollbar {
+  display: none;
+}
+
+.statsChartLegend span {
+  min-width: 0;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.statsChartLegend span::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--legend-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--legend-color), transparent 44%);
+  flex: 0 0 auto;
+}
+
+.statsChartShell .recharts-wrapper,
+.statsChartShell .recharts-surface,
+.statsChartShell svg {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.statsChartShell .recharts-wrapper:focus,
+.statsChartShell .recharts-surface:focus,
+.statsChartShell svg:focus {
+  outline: none;
+}
+
+.statsTooltip {
+  min-width: 140px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 11, 14, 0.96);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
+  display: grid;
+  gap: 4px;
+}
+
+.statsTooltip span {
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.statsTooltip__metric {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 12px;
 }
 
-.statsRow__left {
+.statsTooltip__metric span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statsTooltip__metric span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--metric-color);
+  flex: 0 0 auto;
+}
+
+.statsTooltip__metric b {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.statsSessionList,
+.statsBreakdownList {
+  display: grid;
+  gap: 5px;
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.statsSessionRow,
+.statsBreakdownRow {
+  min-height: 44px;
+  padding: 7px 9px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statsSessionRow__left,
+.statsSessionRow__right,
+.statsBreakdownRow__left,
+.statsBreakdownRow__right {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.statsSessionRow__left,
+.statsBreakdownRow__left {
   min-width: 0;
+  flex: 1;
+  gap: 8px;
 }
 
-.statsRow__rank {
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--muted);
-  display: grid;
-  place-items: center;
-  font-size: 11px;
-  font-weight: 850;
+.statsSessionRow__right,
+.statsBreakdownRow__right {
   flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
-.statsRow__avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  display: grid;
-  place-items: center;
-  color: white;
-  font-size: 14px;
-  font-weight: 850;
-  flex: 0 0 auto;
-}
-
-.statsRow__meta {
+.statsSessionRow__left strong,
+.statsBreakdownRow__left strong {
   min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.statsRow__meta strong {
-  color: var(--text);
-  font-size: 14px;
+  max-width: 54%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0;
 }
 
-.statsRow__meta span {
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 600;
+.statsSessionRow__left span,
+.statsBreakdownRow__left span,
+.statsBreakdownRow__right span {
+  font-size: 10px;
+  font-weight: 650;
 }
 
-.statsRow__value {
+.statsSessionRow__left span,
+.statsBreakdownRow__left span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statsSessionPlacement {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.statsStatus {
   color: var(--text);
-  font-size: 20px;
+}
+
+.statsStatus--won {
+  border-color: rgba(216, 255, 79, 0.24);
+  background: rgba(216, 255, 79, 0.12);
+  color: #d9ff4f;
+}
+
+.statsStatus--lost {
+  border-color: rgba(243, 111, 133, 0.2);
+  background: rgba(243, 111, 133, 0.12);
+  color: #ff8ea2;
+}
+
+.statsStatus--draw {
+  border-color: rgba(180, 153, 255, 0.2);
+  background: rgba(180, 153, 255, 0.12);
+  color: #c3b1ff;
+}
+
+.statsStatus--completed {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #d9e4eb;
+}
+
+.statsStatus--progress {
+  border-color: rgba(122, 208, 255, 0.24);
+  background: rgba(122, 208, 255, 0.12);
+  color: #7ad0ff;
+}
+
+.statsEmptyPanel {
+  display: grid;
+  gap: 6px;
+}
+
+.statsEmptyPanel strong {
+  font-size: 18px;
   font-weight: 900;
-  letter-spacing: -0.04em;
-  flex: 0 0 auto;
+  letter-spacing: 0;
+}
+
+.statsEmptyPanel p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.emptyMsg {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .statsChartGrid,
+  .statsMetaGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 560px) {
-  .statsHeroGrid { grid-template-columns: 1fr; }
-}
+  .statsKpiGrid,
+  .statsCompareMetricGrid {
+    gap: 8px;
+  }
 
+  .statsMetricCard,
+  .statsComparisonCard {
+    padding: 9px;
+  }
+
+  .statsMetricCard__eyebrow {
+    gap: 5px;
+    letter-spacing: 0.08em;
+  }
+
+  .statsMetricCard__eyebrow svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+  }
+
+  .statsMetricCard strong {
+    font-size: 20px;
+  }
+
+  .statsComparisonCard__row {
+    gap: 6px;
+  }
+
+  .statsSelectorPanel,
+  .statsFocusCard,
+  .statsPanel,
+  .statsEmptyPanel {
+    padding: 10px 10px 18px 10px;
+  }
+
+  .statsSelectorPanel__head,
+  .statsFocusCard__identity {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .statsSelectorControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .statsScopeSwitch {
+    flex: 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statsFocusCard__copy h3,
+  .statsPickerButton__copy strong {
+    font-size: 13px;
+  }
+
+  .statsSessionRow,
+  .statsBreakdownRow {
+    gap: 8px;
+  }
+
+  .statsSessionRow__left,
+  .statsBreakdownRow__left {
+    gap: 7px;
+  }
+
+  .statsSessionRow__left strong,
+  .statsBreakdownRow__left strong {
+    max-width: 48%;
+  }
+}

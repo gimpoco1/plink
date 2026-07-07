@@ -206,8 +206,11 @@ export function DashboardScreen(props: DashboardScreenProps) {
           <StatsScreen
             games={props.games}
             profiles={props.profiles}
+            teams={props.teams}
+            teamMembers={props.teamMembers}
             isAuthenticated={props.isAuthenticated}
             onOpenAuth={props.onOpenAuth}
+            onOpenProPlan={props.onOpenProPlan}
           />
         );
       case "players":
