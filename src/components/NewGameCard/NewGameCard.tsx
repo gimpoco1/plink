@@ -671,15 +671,6 @@ export function NewGameCard({
         mass: 0.72,
       };
 
-  const panelTransition = reduceMotion
-    ? { duration: 0 }
-    : {
-        type: "spring" as const,
-        stiffness: 220,
-        damping: 24,
-        mass: 0.9,
-      };
-
   const bodyTransition = reduceMotion
     ? { duration: 0 }
     : {
@@ -718,13 +709,8 @@ export function NewGameCard({
   };
 
   return (
-    <motion.div
-      layout={hasMounted}
-      transition={hasMounted ? panelTransition : { duration: 0 }}
-      className={`newGamePanel${open ? " newGamePanel--open" : ""}`}
-    >
+    <motion.div className={`newGamePanel${open ? " newGamePanel--open" : ""}`}>
       <motion.button
-        layout={hasMounted}
         className={`btn btn--primary btn--xl homeHero__action newGamePanel__trigger${open ? " newGamePanel__trigger--open" : ""}`}
         type="button"
         aria-expanded={open}
