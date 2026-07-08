@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Flame, Medal, Target, Trophy } from "lucide-react";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
 import { StatsSkeleton } from "../components/HomeLockedState/StatsSkeleton";
@@ -261,36 +267,22 @@ export function StatsScreen({
     [selectedTeamId, teamOptions],
   );
 
-  useEffect(() => {
+  function handleStatsPointerDown(
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) {
+    const target = event.target as Node;
+
+    if (openPicker && !pickerPanelRef.current?.contains(target)) {
+      setOpenPicker(null);
+    }
+
     if (
-      openPicker &&
-      !pickerPanelRef.current
+      openChartGamePicker &&
+      !chartPickerRef.current?.contains(target)
     ) {
-      return;
+      setOpenChartGamePicker(null);
     }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!pickerPanelRef.current?.contains(event.target as Node)) {
-        setOpenPicker(null);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [openPicker]);
-
-  useEffect(() => {
-    if (!openChartGamePicker) return;
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!chartPickerRef.current?.contains(event.target as Node)) {
-        setOpenChartGamePicker(null);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [openChartGamePicker]);
+  }
 
   useEffect(() => {
     if (activeKind === "teams" && (areTeamReportsLocked || !teamOptions.length)) {
@@ -612,7 +604,10 @@ export function StatsScreen({
   );
 
   return (
-    <div className="tabContent tabContent--stats">
+    <div
+      className="tabContent tabContent--stats"
+      onPointerDown={handleStatsPointerDown}
+    >
       <AdBannerSlot
         placement="Stats"
         slotId={import.meta.env.VITE_ADSENSE_STATS_SLOT_ID}
