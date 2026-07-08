@@ -3,10 +3,16 @@ import "./HomeLockedState.css";
 type LockedFrameProps = {
   title: string;
   onSignIn: () => void;
+  ctaLabel?: string;
   children: React.ReactNode;
 };
 
-export function LockedFrame({ title, onSignIn, children }: LockedFrameProps) {
+export function LockedFrame({
+  title,
+  onSignIn,
+  ctaLabel = "Sign in",
+  children,
+}: LockedFrameProps) {
   return (
     <div className="lockedFrame">
       <div className="lockedFrame__content" aria-hidden="true">
@@ -17,7 +23,7 @@ export function LockedFrame({ title, onSignIn, children }: LockedFrameProps) {
           <span className="lockedFrame__eyebrow">Locked</span>
           <strong style={{ whiteSpace: "nowrap" }}>{title}</strong>
           <span className="lockedFrame__action">
-            <span>Sign in</span>
+            <span>{ctaLabel}</span>
             <span className="lockedFrame__actionIcon" aria-hidden="true">
               →
             </span>

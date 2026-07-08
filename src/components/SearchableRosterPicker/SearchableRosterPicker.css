@@ -75,6 +75,65 @@
   cursor: pointer;
 }
 
+.rosterPicker__listTrigger {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--roster-picker-border);
+  border-radius: 16px;
+  background: var(--roster-picker-surface-strong);
+  color: var(--roster-picker-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.rosterPicker__listTrigger:hover {
+  transform: translateY(-1px);
+}
+
+.rosterPicker__openHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rosterPicker__openTitle {
+  min-width: 0;
+  color: var(--roster-picker-ink);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rosterPicker__collapseBtn {
+  width: auto;
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--roster-picker-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--roster-picker-empty);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
 .rosterPicker__listShell {
   position: relative;
   min-height: 0;

@@ -1182,6 +1182,7 @@ export function NewGameCard({
                         searchAriaLabel="Search saved players"
                         clearAriaLabel="Clear player search"
                         showSearch={profiles.length > 0 || !!participantSearch}
+                        showListImmediately
                         emptyState={
                           participantSearch
                             ? "No saved players match that search."

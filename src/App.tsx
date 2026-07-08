@@ -160,8 +160,7 @@ export default function App() {
     }
   });
   const [gameReturnTab, setGameReturnTab] = useState<HomeTab>(homeTab);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const appTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [visibleToast, setVisibleToast] = useState<ToastState | null>(null);
   const [localDataVersion, setLocalDataVersion] = useState(0);
   const [shouldSaveGamePlayersOnSignIn, setShouldSaveGamePlayersOnSignIn] =
@@ -773,15 +772,19 @@ export default function App() {
   }
 
   function handleTouchStart(event: TouchEvent<HTMLElement>) {
-    setTouchStartX(event.touches[0]?.clientX ?? null);
-    setTouchStartY(event.touches[0]?.clientY ?? null);
+    const touch = event.touches[0];
+    appTouchStartRef.current = touch
+      ? { x: touch.clientX, y: touch.clientY }
+      : null;
   }
 
   function handleTouchEnd(event: TouchEvent<HTMLElement>) {
-    if (touchStartX === null || touchStartY === null) return;
+    const touchStart = appTouchStartRef.current;
+    appTouchStartRef.current = null;
+    if (!touchStart) return;
 
-    const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStartX;
-    const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStartY;
+    const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStart.x;
+    const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStart.y;
     if (
       view === "history" &&
       deltaX > 60 &&
@@ -796,8 +799,6 @@ export default function App() {
       returnToGameSource();
     }
 
-    setTouchStartX(null);
-    setTouchStartY(null);
   }
 
   function prepareImportedData(

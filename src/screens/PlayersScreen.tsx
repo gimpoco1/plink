@@ -971,7 +971,7 @@ export function PlayersScreen({
                   closeTeamBuilder();
                 }}
               >
-                Players
+                Individuals
               </button>
               <button
                 type="button"

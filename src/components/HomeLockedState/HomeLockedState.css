@@ -359,6 +359,11 @@
 .sessionsToolbar--skeleton,
 .statsHeroCard--skeleton,
 .statsRow--skeleton,
+.statsSelectorPanel--skeleton,
+.statsSelectorCard--skeleton,
+.statsFocusCard--skeleton,
+.statsMetricCard--skeleton,
+.statsPanel--skeleton,
 .profileCard--skeleton {
   pointer-events: none;
 }
@@ -369,6 +374,10 @@
 
 .statsHeroCard--skeleton {
   min-height: 118px;
+}
+
+.statsFocusCard--skeleton {
+  min-height: 132px;
 }
 
 .profileCard--skeleton {

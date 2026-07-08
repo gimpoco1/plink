@@ -25,6 +25,12 @@ type SearchableRosterPickerProps = {
   createButtonLabel?: string;
   createButtonAriaLabel?: string;
   onCreateButtonClick?: () => void;
+  showListImmediately?: boolean;
+  listTriggerLabel?: string;
+  listTriggerAriaLabel?: string;
+  listTitle?: string;
+  collapseLabel?: string;
+  onListOpenChange?: (isOpen: boolean) => void;
   footerContent?: ReactNode;
   children?: ReactNode;
 };
@@ -45,17 +51,33 @@ export function SearchableRosterPicker({
   createButtonLabel,
   createButtonAriaLabel,
   onCreateButtonClick,
+  showListImmediately = false,
+  listTriggerLabel = "Add players",
+  listTriggerAriaLabel,
+  listTitle,
+  collapseLabel = "Hide list",
+  onListOpenChange,
   footerContent,
   children,
 }: SearchableRosterPickerProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
+  const [isListOpen, setIsListOpen] = useState(showListImmediately);
   const [fadeState, setFadeState] = useState({ top: false, bottom: false });
   const itemCount = Children.count(children);
   const hasItems = itemCount > 0;
+  const shouldShowList = showListImmediately || isListOpen;
+
+  useEffect(() => {
+    if (showListImmediately) setIsListOpen(true);
+  }, [showListImmediately]);
+
+  useEffect(() => {
+    onListOpenChange?.(shouldShowList);
+  }, [onListOpenChange, shouldShowList]);
 
   useEffect(() => {
     const node = listRef.current;
-    if (!node || !hasItems) {
+    if (!node || !hasItems || !shouldShowList) {
       setFadeState({ top: false, bottom: false });
       return;
     }
@@ -84,7 +106,7 @@ export function SearchableRosterPicker({
       window.removeEventListener("resize", updateFade);
       resizeObserver?.disconnect();
     };
-  }, [children, hasItems]);
+  }, [children, hasItems, shouldShowList]);
 
   const style = listMaxHeight
     ? ({ "--roster-picker-max-height": listMaxHeight } as CSSProperties)
@@ -97,7 +119,37 @@ export function SearchableRosterPicker({
       }`}
       style={style}
     >
-      {showSearch ? (
+      {!shouldShowList ? (
+        <button
+          type="button"
+          className="rosterPicker__listTrigger"
+          onClick={() => setIsListOpen(true)}
+          aria-label={listTriggerAriaLabel ?? listTriggerLabel}
+        >
+          <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
+          <span>{listTriggerLabel}</span>
+        </button>
+      ) : null}
+
+      {shouldShowList && !showListImmediately ? (
+        <div className="rosterPicker__openHeader">
+          {listTitle ? (
+            <div className="rosterPicker__openTitle">{listTitle}</div>
+          ) : null}
+          <button
+            type="button"
+            className="rosterPicker__collapseBtn"
+            onClick={() => {
+              setIsListOpen(false);
+              onSearchChange("");
+            }}
+          >
+            {collapseLabel}
+          </button>
+        </div>
+      ) : null}
+
+      {shouldShowList && showSearch ? (
         <label className="rosterPicker__search">
           <Search size={16} strokeWidth={2.4} aria-hidden="true" />
           <input
@@ -120,7 +172,7 @@ export function SearchableRosterPicker({
         </label>
       ) : null}
 
-      {hasItems ? (
+      {shouldShowList && hasItems ? (
         <div
           className={`rosterPicker__listShell${
             fadeState.top ? " rosterPicker__listShell--fadeTop" : ""
@@ -138,11 +190,11 @@ export function SearchableRosterPicker({
         </div>
       ) : null}
 
-      {!hasItems && emptyState ? (
+      {shouldShowList && !hasItems && emptyState ? (
         <div className="rosterPicker__empty">{emptyState}</div>
       ) : null}
 
-      {createButtonLabel && onCreateButtonClick ? (
+      {shouldShowList && createButtonLabel && onCreateButtonClick ? (
         <button
           type="button"
           className={`rosterPicker__createBtn${
@@ -158,7 +210,7 @@ export function SearchableRosterPicker({
         </button>
       ) : null}
 
-      {footerContent}
+      {shouldShowList ? footerContent : null}
     </div>
   );
 }

@@ -50,6 +50,13 @@
   border-color: rgba(122, 208, 255, 0.2);
 }
 
+.gameScreen--teams .gameScreen__emptyCta.btn--primary:not(:disabled):hover {
+  border-color: var(--ds-color-secondary);
+  background: var(--ds-color-secondary);
+  color: var(--ds-color-on-secondary);
+  box-shadow: 0 16px 34px rgba(122, 208, 255, 0.2);
+}
+
 .teamBoard {
   display: grid;
   gap: 18px;

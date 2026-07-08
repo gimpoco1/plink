@@ -116,7 +116,7 @@ export function GameRowCard({
   const participants = useMemo(() => getGameParticipants(game), [game]);
   const complete = useMemo(() => isGameComplete(game), [game]);
   const draw = useMemo(() => isGameDraw(game), [game]);
-  const isTeamsGame = game.participantMode === "teams" && game.teams.length > 0;
+  const isTeamsGame = game.participantMode === "teams";
 
   const parsedName = getGameDisplayName(game.name);
   const displayName = parsedName.title

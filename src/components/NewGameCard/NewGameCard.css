@@ -1389,7 +1389,7 @@
 }
 
 .teamPicker__list {
-  max-height: min(208px, 26vh);
+  max-height: min(214px, 26vh);
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 6px;
@@ -1541,9 +1541,9 @@
   color: #11180f;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.02em;
   cursor: pointer;
