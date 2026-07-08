@@ -343,7 +343,7 @@ export function GameScreen({
                 : "Manage players to start."}
             </h1>
             <button
-              className="btn btn--primary btn--xl"
+              className="btn btn--primary btn--xl gameScreen__emptyCta"
               type="button"
               onClick={() => managePlayersDialogRef.current?.open()}
             >

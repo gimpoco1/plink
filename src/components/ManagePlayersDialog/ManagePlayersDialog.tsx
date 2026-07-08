@@ -122,15 +122,14 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
     const [pendingName, setPendingName] = useState("");
     const [selectedColor, setSelectedColor] = useState<
       (typeof AVATAR_COLORS)[number]["value"]
-    >(
-      AVATAR_COLORS[0]?.value ?? "#64748b",
-    );
+    >(AVATAR_COLORS[0]?.value ?? "#64748b");
     const [search, setSearch] = useState("");
     const [saveForLater, setSaveForLater] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [stagedProfileIds, setStagedProfileIds] = useState<Set<string>>(
       new Set(),
     );
+    const [stagedTeamIds, setStagedTeamIds] = useState<Set<string>>(new Set());
     const [stagedCustomPlayers, setStagedCustomPlayers] = useState<
       StagedCustomPlayer[]
     >([]);
@@ -141,9 +140,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
     const [editingName, setEditingName] = useState("");
     const [editingColor, setEditingColor] = useState<
       (typeof AVATAR_COLORS)[number]["value"]
-    >(
-      AVATAR_COLORS[0]?.value ?? "#64748b",
-    );
+    >(AVATAR_COLORS[0]?.value ?? "#64748b");
 
     const currentGamePlayers = useMemo(() => {
       return currentPlayers.filter((player) => player.name.trim().length > 0);
@@ -234,6 +231,11 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
       () => profiles.filter((profile) => stagedProfileIds.has(profile.id)),
       [profiles, stagedProfileIds],
     );
+    const stagedTeams = useMemo(
+      () => savedTeams.filter((team) => stagedTeamIds.has(team.id)),
+      [savedTeams, stagedTeamIds],
+    );
+    const stagedTeamCount = stagedTeamIds.size;
     const teamMembersByTeamId = useMemo(() => {
       const grouped = new Map<string, Player[]>();
       currentTeams.forEach((team) => grouped.set(team.id, []));
@@ -280,23 +282,165 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
         currentTeams.map((team) => team.name.trim().toLowerCase()),
       );
       const query = search.trim().toLowerCase();
-      return savedTeams.filter((team) => {
-        const name = team.name.trim();
-        if (!name) return false;
-        if (currentTeamNames.has(name.toLowerCase())) return false;
-        if (!query) return true;
-        return name.toLowerCase().includes(query);
-      }).sort((a, b) => {
-        const bTime = b.updatedAt ?? b.createdAt;
-        const aTime = a.updatedAt ?? a.createdAt;
-        if (bTime !== aTime) return bTime - aTime;
-        return a.name.localeCompare(b.name);
-      });
+      return savedTeams
+        .filter((team) => {
+          const name = team.name.trim();
+          if (!name) return false;
+          if (currentTeamNames.has(name.toLowerCase())) return false;
+          if (!query) return true;
+          return name.toLowerCase().includes(query);
+        })
+        .sort((a, b) => {
+          const bTime = b.updatedAt ?? b.createdAt;
+          const aTime = a.updatedAt ?? a.createdAt;
+          if (bTime !== aTime) return bTime - aTime;
+          return a.name.localeCompare(b.name);
+        });
     }, [currentTeams, savedTeams, search]);
     const submitLabel =
       stagedCount === 0
         ? "Add to game"
         : `Add ${stagedCount} player${stagedCount === 1 ? "" : "s"} to game`;
+    const teamSubmitLabel =
+      stagedTeamCount === 0
+        ? "Add teams to game"
+        : `Add ${stagedTeamCount} team${stagedTeamCount === 1 ? "" : "s"} to game`;
+
+    const readyToAddSection =
+      isPlayersGame && stagedCount > 0 ? (
+        <section className="managePlayersDialog__queue">
+          <div className="managePlayersDialog__titleRow">
+            <div className="managePlayersDialog__simpleTitle">Ready to add</div>
+            <span
+              className="managePlayersDialog__countChip"
+              aria-label={`${stagedCount} players ready to add`}
+            >
+              {stagedCount}
+            </span>
+          </div>
+          <div className="managePlayersDialog__queueList">
+            {stagedProfiles.map((profile) => {
+              const displayName = profile.isAccountPlayer
+                ? formatAccountPlayerName(profile.name)
+                : capitalizeFirst(profile.name);
+              return (
+                <button
+                  key={`queued-profile-${profile.id}`}
+                  className="managePlayersDialog__queueChip"
+                  type="button"
+                  onClick={() => toggleProfile(profile.id)}
+                  aria-label={`Remove ${displayName}`}
+                >
+                  <span
+                    className="managePlayersDialog__queueAvatar"
+                    style={avatarStyleFor(profile.avatarColor)}
+                    aria-hidden="true"
+                  >
+                    {getInitials(profile.name)}
+                  </span>
+                  <span>{displayName}</span>
+                  <span className="managePlayersDialog__queueRemove">×</span>
+                </button>
+              );
+            })}
+            {stagedCustomPlayers.map((player, idx) => (
+              <button
+                key={`queued-custom-${idx}`}
+                className="managePlayersDialog__queueChip"
+                type="button"
+                onClick={() =>
+                  setStagedCustomPlayers((prev) =>
+                    prev.filter((_, i) => i !== idx),
+                  )
+                }
+                aria-label={`Remove ${capitalizeFirst(player.name)}`}
+              >
+                <span
+                  className="managePlayersDialog__queueAvatar"
+                  style={avatarStyleFor(player.avatarColor)}
+                  aria-hidden="true"
+                >
+                  {getInitials(player.name)}
+                </span>
+                <span>{capitalizeFirst(player.name)}</span>
+                <span className="managePlayersDialog__queueRemove">×</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null;
+
+    const readyToAddTeamsSection =
+      isTeamsGame && stagedTeamCount > 0 ? (
+        <section className="managePlayersDialog__queue">
+          <div className="managePlayersDialog__titleRow">
+            <div className="managePlayersDialog__simpleTitle">Ready to add</div>
+            <span
+              className="managePlayersDialog__countChip managePlayersDialog__countChip--teams"
+              aria-label={`${stagedTeamCount} teams ready to add`}
+            >
+              {stagedTeamCount}
+            </span>
+          </div>
+          <div className="managePlayersDialog__queueList">
+            {stagedTeams.map((team) => {
+              const TeamIcon =
+                TEAM_ICON_COMPONENTS[
+                  (team.icon ??
+                    DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+                ] ?? Dumbbell;
+              return (
+                <button
+                  key={`queued-team-${team.id}`}
+                  className="managePlayersDialog__queueChip"
+                  type="button"
+                  onClick={() => toggleTeam(team.id)}
+                  aria-label={`Remove ${team.name}`}
+                >
+                  <span
+                    className="managePlayersDialog__queueTeamIcon"
+                    aria-hidden="true"
+                  >
+                    <TeamIcon size={13} strokeWidth={2.4} />
+                  </span>
+                  <span>{team.name}</span>
+                  <span className="managePlayersDialog__queueRemove">×</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null;
+
+    const teamsModeNotice = (
+      <div className="managePlayersDialog__modeNotice">
+        <div className="managePlayersDialog__modeNoticeLead">
+          <div
+            className="managePlayersDialog__modeNoticeIcon"
+            aria-hidden="true"
+          >
+            <Users size={18} strokeWidth={2.3} />
+          </div>
+          <div className="managePlayersDialog__modeNoticeCopy">
+            <span className="managePlayersDialog__modeNoticeTag">
+              Teams only
+            </span>
+            <span>To add more teams, create them in the Teams tab first.</span>
+          </div>
+        </div>
+        <button
+          className="btn managePlayersDialog__modeCta"
+          type="button"
+          onClick={() => {
+            close();
+            onOpenTeamsTab();
+          }}
+        >
+          <span>Add new teams</span>
+          <ArrowUpRight size={15} strokeWidth={2.3} aria-hidden="true" />
+        </button>
+      </div>
+    );
 
     function addSavedTeamToCurrentGame(team: GameTeam) {
       const members = savedTeamProfilesByTeamId.get(team.id) ?? [];
@@ -313,6 +457,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
       setEditingName("");
       setEditingColor(AVATAR_COLORS[0]?.value ?? "#64748b");
       setStagedProfileIds(new Set());
+      setStagedTeamIds(new Set());
       setStagedCustomPlayers([]);
     }
 
@@ -337,6 +482,24 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
         }
         return next;
       });
+    }
+
+    function toggleTeam(teamId: string) {
+      setStagedTeamIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(teamId)) {
+          next.delete(teamId);
+        } else {
+          next.add(teamId);
+        }
+        return next;
+      });
+    }
+
+    function submitTeams() {
+      if (stagedTeamIds.size === 0) return;
+      stagedTeams.forEach(addSavedTeamToCurrentGame);
+      close();
     }
 
     function submit() {
@@ -388,212 +551,37 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
           </div>
 
           <div className="dialog__body managePlayersDialog__body">
-              {isPlayersGame ? (
-                <div className="managePlayersDialog__summary">
-                  <div className="managePlayersDialog__summaryStats">
-                    <div className="managePlayersDialog__summaryStat">
-                      <span>Playing</span>
-                      <strong>{currentGamePlayers.length}</strong>
-                    </div>
-                    <div className="managePlayersDialog__summaryStat">
-                      <span>To be added</span>
-                      <strong>{stagedCount}</strong>
-                    </div>
-                  </div>
-                  <span>
-                    {isAuthenticated
-                      ? "Build your lineup: pick saved players or create a new challenger."
-                      : "Create temporary players for this game."}
-                  </span>
-                </div>
-              ) : null}
-
-              {isPlayersGame && stagedCount > 0 ? (
-                <section className="managePlayersDialog__queue">
-                  <div className="managePlayersDialog__simpleTitle">
-                    Ready to add
-                  </div>
-                  <div className="managePlayersDialog__queueList">
-                    {stagedProfiles.map((profile) => {
-                      const displayName = profile.isAccountPlayer
-                        ? formatAccountPlayerName(profile.name)
-                        : capitalizeFirst(profile.name);
-                      return (
-                        <button
-                          key={`queued-profile-${profile.id}`}
-                          className="managePlayersDialog__queueChip"
-                          type="button"
-                          onClick={() => toggleProfile(profile.id)}
-                          aria-label={`Remove ${displayName}`}
-                        >
-                          <span
-                            className="managePlayersDialog__queueAvatar"
-                            style={avatarStyleFor(profile.avatarColor)}
-                            aria-hidden="true"
-                          >
-                            {getInitials(profile.name)}
-                          </span>
-                          <span>{displayName}</span>
-                          <span className="managePlayersDialog__queueRemove">
-                            ×
-                          </span>
-                        </button>
-                      );
-                    })}
-                    {stagedCustomPlayers.map((player, idx) => (
-                      <button
-                        key={`queued-custom-${idx}`}
-                        className="managePlayersDialog__queueChip"
-                        type="button"
-                        onClick={() =>
-                          setStagedCustomPlayers((prev) =>
-                            prev.filter((_, i) => i !== idx),
-                          )
-                        }
-                        aria-label={`Remove ${capitalizeFirst(player.name)}`}
-                      >
-                        <span
-                          className="managePlayersDialog__queueAvatar"
-                          style={avatarStyleFor(player.avatarColor)}
-                          aria-hidden="true"
-                        >
-                          {getInitials(player.name)}
-                        </span>
-                        <span>{capitalizeFirst(player.name)}</span>
-                        <span className="managePlayersDialog__queueRemove">
-                          ×
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
               <div className="managePlayersDialog__sections">
-                {isTeamsGame ? (
-                  <section className="managePlayersDialog__section">
-                    <div className="managePlayersDialog__sectionHeaderRow managePlayersDialog__sectionHeaderRow--teams">
+              {isTeamsGame ? (
+                <section className="managePlayersDialog__section">
+                  <div className="managePlayersDialog__sectionHeaderRow managePlayersDialog__sectionHeaderRow--teams">
+                    <div className="managePlayersDialog__titleRow">
                       <div className="managePlayersDialog__simpleTitle">
                         Teams in this game
                       </div>
+                      <span
+                        className="managePlayersDialog__countChip managePlayersDialog__countChip--teams"
+                        aria-label={`${currentTeams.length} teams in this game`}
+                      >
+                        {currentTeams.length}
+                      </span>
                     </div>
+                  </div>
 
-                    {currentTeams.length > 0 ? (
-                      <div className="managePlayersDialog__teamList">
-                        {currentTeams.map((team) => {
-                          const members =
-                            teamMembersByTeamId.get(team.id) ?? [];
-                          const overflowCount = Math.max(0, members.length - 5);
-                          const TeamIcon =
-                            TEAM_ICON_COMPONENTS[
-                              (team.icon ??
-                                DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
-                            ] ?? Dumbbell;
-                          return (
-                            <article
-                              className="managePlayersDialog__teamCard"
-                              key={team.id}
-                            >
-                              <div className="managePlayersDialog__teamCardMain">
-                                <div className="managePlayersDialog__teamIdentity">
-                                  <div className="managePlayersDialog__teamHeading">
-                                    <span
-                                      className="managePlayersDialog__teamIcon"
-                                      aria-hidden="true"
-                                    >
-                                      <TeamIcon size={15} strokeWidth={2.2} />
-                                    </span>
-                                    <span className="managePlayersDialog__teamName">
-                                      {team.name}
-                                    </span>
-                                    <div
-                                      className="managePlayersDialog__teamMembers"
-                                      aria-label={`${team.name} members`}
-                                    >
-                                      {members.slice(0, 5).map((member) => (
-                                        <span
-                                          key={`${team.id}:${member.id}`}
-                                          className="managePlayersDialog__teamMemberAvatar"
-                                          style={avatarStyleFor(
-                                            member.avatarColor,
-                                          )}
-                                          title={member.name}
-                                          aria-label={member.name}
-                                        >
-                                          {getInitials(member.name)}
-                                        </span>
-                                      ))}
-                                      {overflowCount > 0 ? (
-                                        <span
-                                          className="managePlayersDialog__teamMemberOverflow"
-                                          aria-label={`${overflowCount} more players`}
-                                        >
-                                          +{overflowCount}
-                                        </span>
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="managePlayersDialog__actionsRow">
-                                  <button
-                                    className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
-                                    type="button"
-                                    onClick={() =>
-                                      void onDeleteTeam(team.id, team.name)
-                                    }
-                                    aria-label={`Remove ${team.name}`}
-                                    title="Remove"
-                                  >
-                                    <X size={15} strokeWidth={2.7} aria-hidden="true" />
-                                  </button>
-                                </div>
-                              </div>
-                            </article>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="managePlayersDialog__empty">
-                        No teams in this game yet.
-                      </div>
-                    )}
-
-                    <div className="managePlayersDialog__sectionHeaderRow">
-                      <div className="managePlayersDialog__simpleTitle">
-                        Saved teams
-                      </div>
-                    </div>
-
-                    <SearchableRosterPicker
-                      variant="dark"
-                      listMaxHeight="150px"
-                      searchValue={search}
-                      onSearchChange={setSearch}
-                      searchPlaceholder="Search saved teams"
-                      searchAriaLabel="Search saved teams"
-                      clearAriaLabel="Clear team search"
-                      emptyState={
-                        search
-                          ? "No saved teams match that search."
-                          : savedTeams.length > 0
-                            ? "All saved teams are already in this game."
-                            : "No saved teams yet. Create one from the Teams tab."
-                      }
-                    >
-                      {availableSavedTeams.map((team) => {
-                        const members =
-                          savedTeamProfilesByTeamId.get(team.id) ?? [];
+                  {currentTeams.length > 0 ? (
+                    <div className="managePlayersDialog__teamList">
+                      {currentTeams.map((team) => {
+                        const members = teamMembersByTeamId.get(team.id) ?? [];
                         const overflowCount = Math.max(0, members.length - 5);
                         const TeamIcon =
                           TEAM_ICON_COMPONENTS[
                             (team.icon ??
                               DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
                           ] ?? Dumbbell;
-
                         return (
                           <article
                             className="managePlayersDialog__teamCard"
-                            key={`saved-team-${team.id}`}
+                            key={team.id}
                           >
                             <div className="managePlayersDialog__teamCardMain">
                               <div className="managePlayersDialog__teamIdentity">
@@ -607,571 +595,726 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                                   <span className="managePlayersDialog__teamName">
                                     {team.name}
                                   </span>
-                                  {members.length > 0 ? (
-                                    <div
-                                      className="managePlayersDialog__teamMembers"
-                                      aria-label={`${team.name} saved members`}
-                                    >
-                                      {members.slice(0, 5).map((member) => (
-                                        <span
-                                          key={`${team.id}:saved:${member.id}`}
-                                          className="managePlayersDialog__teamMemberAvatar"
-                                          style={avatarStyleFor(
-                                            member.avatarColor,
-                                          )}
-                                          title={member.name}
-                                          aria-label={member.name}
-                                        >
-                                          {getInitials(member.name)}
-                                        </span>
-                                      ))}
-                                      {overflowCount > 0 ? (
-                                        <span
-                                          className="managePlayersDialog__teamMemberOverflow"
-                                          aria-label={`${overflowCount} more saved players`}
-                                        >
-                                          +{overflowCount}
-                                        </span>
-                                      ) : null}
-                                    </div>
-                                  ) : null}
+                                  <div
+                                    className="managePlayersDialog__teamMembers"
+                                    aria-label={`${team.name} members`}
+                                  >
+                                    {members.slice(0, 5).map((member) => (
+                                      <span
+                                        key={`${team.id}:${member.id}`}
+                                        className="managePlayersDialog__teamMemberAvatar"
+                                        style={avatarStyleFor(
+                                          member.avatarColor,
+                                        )}
+                                        title={member.name}
+                                        aria-label={member.name}
+                                      >
+                                        {getInitials(member.name)}
+                                      </span>
+                                    ))}
+                                    {overflowCount > 0 ? (
+                                      <span
+                                        className="managePlayersDialog__teamMemberOverflow"
+                                        aria-label={`${overflowCount} more players`}
+                                      >
+                                        +{overflowCount}
+                                      </span>
+                                    ) : null}
+                                  </div>
                                 </div>
-                                {members.length === 0 ? (
-                                  <span className="managePlayersDialog__meta">
-                                    Saved team
-                                  </span>
-                                ) : null}
                               </div>
                               <div className="managePlayersDialog__actionsRow">
-                                <button
-                                  className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--add"
-                                  type="button"
-                                  onClick={() => addSavedTeamToCurrentGame(team)}
-                                  aria-label={`Add ${team.name}`}
-                                  title="Add"
-                                  disabled={!canUseTeams}
-                                >
-                                  <Plus size={16} strokeWidth={2.8} aria-hidden="true" />
-                                </button>
                                 <button
                                   className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
                                   type="button"
                                   onClick={() =>
-                                    void onDeleteSavedTeam(team.id, team.name)
+                                    void onDeleteTeam(team.id, team.name)
                                   }
-                                  aria-label={`Delete saved team ${team.name}`}
-                                  title="Delete saved team"
+                                  aria-label={`Remove ${team.name}`}
+                                  title="Remove"
                                 >
-                                  <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
+                                  <X
+                                    size={15}
+                                    strokeWidth={2.7}
+                                    aria-hidden="true"
+                                  />
                                 </button>
                               </div>
                             </div>
                           </article>
                         );
                       })}
-                    </SearchableRosterPicker>
-
-                    <div className="managePlayersDialog__modeNotice">
-                      <div className="managePlayersDialog__modeNoticeLead">
-                        <div
-                          className="managePlayersDialog__modeNoticeIcon"
-                          aria-hidden="true"
-                        >
-                          <Users size={18} strokeWidth={2.3} />
-                        </div>
-                        <div className="managePlayersDialog__modeNoticeCopy">
-                          <span className="managePlayersDialog__modeNoticeTag">
-                            Teams only
-                          </span>
-                          <span>
-                            To add more teams, create them in the Teams tab first.
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        className="btn managePlayersDialog__modeCta"
-                        type="button"
-                        onClick={() => {
-                          close();
-                          onOpenTeamsTab();
-                        }}
-                      >
-                        <span>Add teams</span>
-                        <ArrowUpRight size={15} strokeWidth={2.3} aria-hidden="true" />
-                      </button>
                     </div>
-                  </section>
-                ) : null}
+                  ) : (
+                    <div className="managePlayersDialog__empty">
+                      No teams in this game yet.
+                    </div>
+                  )}
 
-                {isPlayersGame && currentGamePlayers.length > 0 ? (
-                  <section className="managePlayersDialog__section">
+                  <SearchableRosterPicker
+                    variant="dark"
+                    className="managePlayersDialog__savedPicker"
+                    listMaxHeight="170px"
+                    searchValue={search}
+                    onSearchChange={setSearch}
+                    listTriggerLabel="Add teams"
+                    listTitle="Your teams"
+                    collapseLabel="Hide teams"
+                    searchPlaceholder="Search teams"
+                    searchAriaLabel="Search saved teams"
+                    clearAriaLabel="Clear team search"
+                    emptyState={
+                      search
+                        ? "No saved teams match that search."
+                        : savedTeams.length > 0
+                          ? "All saved teams are already in this game."
+                          : "No saved teams yet. Create one from the Teams tab."
+                    }
+                    footerContent={teamsModeNotice}
+                  >
+                    {availableSavedTeams.map((team) => {
+                      const members =
+                        savedTeamProfilesByTeamId.get(team.id) ?? [];
+                      const overflowCount = Math.max(0, members.length - 5);
+                      const isStaged = stagedTeamIds.has(team.id);
+                      const TeamIcon =
+                        TEAM_ICON_COMPONENTS[
+                          (team.icon ??
+                            DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+                        ] ?? Dumbbell;
+
+                      return (
+                        <article
+                          className="managePlayersDialog__teamCard"
+                          key={`saved-team-${team.id}`}
+                        >
+                          <div className="managePlayersDialog__teamCardMain">
+                            <div className="managePlayersDialog__teamIdentity">
+                              <div className="managePlayersDialog__teamHeading">
+                                <span
+                                  className="managePlayersDialog__teamIcon"
+                                  aria-hidden="true"
+                                >
+                                  <TeamIcon size={15} strokeWidth={2.2} />
+                                </span>
+                                <span className="managePlayersDialog__teamName">
+                                  {team.name}
+                                </span>
+                                {members.length > 0 ? (
+                                  <div
+                                    className="managePlayersDialog__teamMembers"
+                                    aria-label={`${team.name} saved members`}
+                                  >
+                                    {members.slice(0, 5).map((member) => (
+                                      <span
+                                        key={`${team.id}:saved:${member.id}`}
+                                        className="managePlayersDialog__teamMemberAvatar"
+                                        style={avatarStyleFor(
+                                          member.avatarColor,
+                                        )}
+                                        title={member.name}
+                                        aria-label={member.name}
+                                      >
+                                        {getInitials(member.name)}
+                                      </span>
+                                    ))}
+                                    {overflowCount > 0 ? (
+                                      <span
+                                        className="managePlayersDialog__teamMemberOverflow"
+                                        aria-label={`${overflowCount} more saved players`}
+                                      >
+                                        +{overflowCount}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                              </div>
+                              {members.length === 0 ? (
+                                <span className="managePlayersDialog__meta">
+                                  Saved team
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="managePlayersDialog__actionsRow">
+                              <button
+                                className={`iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--add${
+                                  isStaged
+                                    ? " managePlayersDialog__actionBtn--queued"
+                                    : ""
+                                }`}
+                                type="button"
+                                onClick={() => toggleTeam(team.id)}
+                                aria-label={
+                                  isStaged
+                                    ? `Remove ${team.name}`
+                                    : `Add ${team.name}`
+                                }
+                                title={isStaged ? "Queued" : "Add"}
+                                disabled={!canUseTeams}
+                              >
+                                {isStaged ? (
+                                  <Check
+                                    size={15}
+                                    strokeWidth={3}
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <Plus
+                                    size={16}
+                                    strokeWidth={2.8}
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </button>
+                              <button
+                                className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
+                                type="button"
+                                onClick={() =>
+                                  void onDeleteSavedTeam(team.id, team.name)
+                                }
+                                aria-label={`Delete saved team ${team.name}`}
+                                title="Delete saved team"
+                              >
+                                <Trash2
+                                  size={14}
+                                  strokeWidth={2.4}
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </SearchableRosterPicker>
+                  {readyToAddTeamsSection}
+                </section>
+              ) : null}
+
+              {isPlayersGame && currentGamePlayers.length > 0 ? (
+                <section className="managePlayersDialog__section">
+                  <div className="managePlayersDialog__titleRow">
                     <div className="managePlayersDialog__simpleTitle">
                       Players in this game
                     </div>
+                    <span
+                      className="managePlayersDialog__countChip"
+                      aria-label={`${currentGamePlayers.length} players in this game`}
+                    >
+                      {currentGamePlayers.length}
+                    </span>
+                  </div>
 
-                    <div className="managePlayersDialog__list">
-                      {currentGamePlayers.map((player) => {
-                        const linkedProfile = player.profileId
-                          ? profiles.find(
-                              (profile) => profile.id === player.profileId,
-                            )
-                          : undefined;
-                        const displayName = linkedProfile?.isAccountPlayer
-                          ? formatAccountPlayerName(player.name)
-                          : capitalizeFirst(player.name);
-                        const isEditing = editingPlayerId === player.id;
+                  <div className="managePlayersDialog__list">
+                    {currentGamePlayers.map((player) => {
+                      const linkedProfile = player.profileId
+                        ? profiles.find(
+                            (profile) => profile.id === player.profileId,
+                          )
+                        : undefined;
+                      const displayName = linkedProfile?.isAccountPlayer
+                        ? formatAccountPlayerName(player.name)
+                        : capitalizeFirst(player.name);
+                      const isEditing = editingPlayerId === player.id;
 
-                        return (
-                          <article
-                            className={`managePlayersDialog__card${
-                              isEditing
-                                ? " managePlayersDialog__card--editing"
-                                : ""
-                            }`}
-                            key={`current-${player.id}`}
-                          >
-                            <div className="managePlayersDialog__cardMain">
-                              <span
-                                className="managePlayersDialog__avatar"
-                                style={avatarStyleFor(
-                                  isEditing ? editingColor : player.avatarColor,
-                                )}
-                                aria-hidden="true"
-                              >
-                                {getInitials(player.name)}
-                              </span>
+                      return (
+                        <article
+                          className={`managePlayersDialog__card${
+                            isEditing
+                              ? " managePlayersDialog__card--editing"
+                              : ""
+                          }`}
+                          key={`current-${player.id}`}
+                        >
+                          <div className="managePlayersDialog__cardMain">
+                            <span
+                              className="managePlayersDialog__avatar"
+                              style={avatarStyleFor(
+                                isEditing ? editingColor : player.avatarColor,
+                              )}
+                              aria-hidden="true"
+                            >
+                              {getInitials(player.name)}
+                            </span>
 
-                              {isEditing ? (
-                                <div className="managePlayersDialog__editStack">
-                                  <div className="managePlayersDialog__editTop">
-                                    <input
-                                      className="input input--compact managePlayersDialog__editInput"
-                                      value={editingName}
-                                      onChange={(e) =>
-                                        setEditingName(e.target.value)
-                                      }
-                                      autoFocus
-                                      maxLength={28}
-                                      placeholder="Player name"
-                                      aria-invalid={
+                            {isEditing ? (
+                              <div className="managePlayersDialog__editStack">
+                                <div className="managePlayersDialog__editTop">
+                                  <input
+                                    className="input input--compact managePlayersDialog__editInput"
+                                    value={editingName}
+                                    onChange={(e) =>
+                                      setEditingName(e.target.value)
+                                    }
+                                    autoFocus
+                                    maxLength={28}
+                                    placeholder="Player name"
+                                    aria-invalid={
+                                      !!currentPlayerNameValidationMessage
+                                    }
+                                  />
+                                  <div className="managePlayersDialog__actionsRow managePlayersDialog__actionsRow--edit">
+                                    <button
+                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--save"
+                                      type="button"
+                                      onClick={() => {
+                                        const trimmedName =
+                                          clampName(editingName);
+                                        if (
+                                          !trimmedName ||
+                                          currentPlayerNameValidationMessage
+                                        ) {
+                                          return;
+                                        }
+                                        onUpdatePlayer(player.id, {
+                                          name: trimmedName,
+                                          avatarColor: editingColor,
+                                        });
+                                        setEditingPlayerId(null);
+                                        setEditingName("");
+                                      }}
+                                      disabled={
+                                        !clampName(editingName) ||
                                         !!currentPlayerNameValidationMessage
                                       }
-                                    />
-                                    <div className="managePlayersDialog__actionsRow managePlayersDialog__actionsRow--edit">
-                                      <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--save"
-                                        type="button"
-                                        onClick={() => {
-                                          const trimmedName =
-                                            clampName(editingName);
-                                          if (
-                                            !trimmedName ||
-                                            currentPlayerNameValidationMessage
-                                          ) {
-                                            return;
-                                          }
-                                          onUpdatePlayer(player.id, {
-                                            name: trimmedName,
-                                            avatarColor: editingColor,
-                                          });
-                                          setEditingPlayerId(null);
-                                          setEditingName("");
-                                        }}
-                                        disabled={
-                                          !clampName(editingName) ||
-                                          !!currentPlayerNameValidationMessage
-                                        }
-                                        aria-label={`Save ${displayName}`}
-                                        title="Save"
-                                      >
-                                        <Check size={15} strokeWidth={3} aria-hidden="true" />
-                                      </button>
-                                      <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--cancel"
-                                        type="button"
-                                        onClick={() => {
-                                          setEditingPlayerId(null);
-                                          setEditingName("");
-                                          setEditingColor(
-                                            player.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
-                                          );
-                                        }}
-                                        aria-label={`Cancel editing ${displayName}`}
-                                        title="Cancel"
-                                      >
-                                        <X size={15} strokeWidth={2.6} aria-hidden="true" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div
-                                    className="managePlayersDialog__swatches"
-                                    role="radiogroup"
-                                    aria-label="Choose color for player"
-                                  >
-                                    {AVATAR_COLORS.map((color) => (
-                                      <button
-                                        key={color.id}
-                                        type="button"
-                                        className={
-                                          color.value === editingColor
-                                            ? "managePlayersDialog__swatch managePlayersDialog__swatch--selected"
-                                            : "managePlayersDialog__swatch"
-                                        }
-                                        style={{ backgroundColor: color.value }}
-                                        onClick={() =>
-                                          setEditingColor(
-                                            color.value as (typeof AVATAR_COLORS)[number]["value"],
-                                          )
-                                        }
-                                        aria-label={color.label}
-                                        aria-checked={
-                                          color.value === editingColor
-                                        }
-                                        role="radio"
-                                      />
-                                    ))}
-                                  </div>
-                                  {currentPlayerNameValidationMessage ? (
-                                    <div
-                                      className="managePlayersDialog__error"
-                                      role="alert"
+                                      aria-label={`Save ${displayName}`}
+                                      title="Save"
                                     >
-                                      {currentPlayerNameValidationMessage}
-                                    </div>
-                                  ) : null}
+                                      <Check
+                                        size={15}
+                                        strokeWidth={3}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                    <button
+                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--cancel"
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingPlayerId(null);
+                                        setEditingName("");
+                                        setEditingColor(
+                                          player.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
+                                        );
+                                      }}
+                                      aria-label={`Cancel editing ${displayName}`}
+                                      title="Cancel"
+                                    >
+                                      <X
+                                        size={15}
+                                        strokeWidth={2.6}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                  </div>
                                 </div>
-                              ) : (
-                                <div className="managePlayersDialog__identity">
-                                  <div className="managePlayersDialog__identityTop">
-                                    <span className="managePlayersDialog__name">
-                                      {displayName}
-                                    </span>
-                                    <div className="managePlayersDialog__actionsRow">
+                                <div
+                                  className="managePlayersDialog__swatches"
+                                  role="radiogroup"
+                                  aria-label="Choose color for player"
+                                >
+                                  {AVATAR_COLORS.map((color) => (
+                                    <button
+                                      key={color.id}
+                                      type="button"
+                                      className={
+                                        color.value === editingColor
+                                          ? "managePlayersDialog__swatch managePlayersDialog__swatch--selected"
+                                          : "managePlayersDialog__swatch"
+                                      }
+                                      style={{ backgroundColor: color.value }}
+                                      onClick={() =>
+                                        setEditingColor(
+                                          color.value as (typeof AVATAR_COLORS)[number]["value"],
+                                        )
+                                      }
+                                      aria-label={color.label}
+                                      aria-checked={
+                                        color.value === editingColor
+                                      }
+                                      role="radio"
+                                    />
+                                  ))}
+                                </div>
+                                {currentPlayerNameValidationMessage ? (
+                                  <div
+                                    className="managePlayersDialog__error"
+                                    role="alert"
+                                  >
+                                    {currentPlayerNameValidationMessage}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <div className="managePlayersDialog__identity">
+                                <div className="managePlayersDialog__identityTop">
+                                  <span className="managePlayersDialog__name">
+                                    {displayName}
+                                  </span>
+                                  <div className="managePlayersDialog__actionsRow">
+                                    <button
+                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingPlayerId(player.id);
+                                        setEditingProfileId(null);
+                                        setEditingName(player.name);
+                                        setEditingColor(
+                                          player.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
+                                        );
+                                      }}
+                                      aria-label={`Edit ${displayName}`}
+                                      title="Edit"
+                                    >
+                                      <Pencil
+                                        size={14}
+                                        strokeWidth={2.5}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                    <button
+                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
+                                      type="button"
+                                      onClick={() =>
+                                        void onDeletePlayer(player.id)
+                                      }
+                                      aria-label={`Remove ${displayName}`}
+                                      title="Remove"
+                                    >
+                                      <X
+                                        size={15}
+                                        strokeWidth={2.7}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+              ) : isPlayersGame ? (
+                <div className="managePlayersDialog__empty">
+                  No players in this game yet.
+                </div>
+              ) : null}
+
+              {isPlayersGame && isAuthenticated ? (
+                <section className="managePlayersDialog__section managePlayersDialog__section--saved">
+                  <SearchableRosterPicker
+                    variant="dark"
+                    className="managePlayersDialog__savedPicker"
+                    listMaxHeight="170px"
+                    searchValue={search}
+                    onSearchChange={setSearch}
+                    listTitle="Saved players"
+                    collapseLabel="Hide players"
+                    searchPlaceholder="Search players"
+                    searchAriaLabel="Search saved players"
+                    clearAriaLabel="Clear player search"
+                    emptyState={
+                      search
+                        ? "No saved players match that search."
+                        : profiles.length > 0
+                          ? "Every saved player is already in this game."
+                          : "No saved players yet."
+                    }
+                    createButtonLabel="Add new player"
+                    onCreateButtonClick={() => {
+                      setIsCreating(true);
+                      queueMicrotask(() => nameInputRef.current?.focus());
+                    }}
+                    footerContent={
+                      <NewPlayerComposer
+                        isOpen={isCreating}
+                        showTrigger={false}
+                        isAuthenticated={isAuthenticated}
+                        name={pendingName}
+                        color={selectedColor}
+                        saveAsProfile={saveForLater}
+                        validationMessage={newPlayerValidationMessage}
+                        onOpen={() => {
+                          setIsCreating(true);
+                          queueMicrotask(() => nameInputRef.current?.focus());
+                        }}
+                        onOpenAuth={onOpenTeamsTab}
+                        onCancel={() => setIsCreating(false)}
+                        onAdd={submit}
+                        onNameChange={setPendingName}
+                        onColorChange={setSelectedColor}
+                        onSaveAsProfileChange={setSaveForLater}
+                      />
+                    }
+                    >
+                      {filteredProfiles.map((profile) => {
+                      const isTaken = takenProfileIds.has(profile.id);
+                      const isStaged = stagedProfileIds.has(profile.id);
+                      const displayName = profile.isAccountPlayer
+                        ? formatAccountPlayerName(profile.name)
+                        : capitalizeFirst(profile.name);
+                      const isEditingProfile = editingProfileId === profile.id;
+
+                      return (
+                        <article
+                          className={`managePlayersDialog__card${
+                            isEditingProfile
+                              ? " managePlayersDialog__card--editing"
+                              : ""
+                          }`}
+                          key={profile.id}
+                        >
+                          <div className="managePlayersDialog__cardMain">
+                            <span
+                              className="managePlayersDialog__avatar"
+                              style={avatarStyleFor(
+                                isEditingProfile
+                                  ? editingColor
+                                  : profile.avatarColor,
+                              )}
+                              aria-hidden="true"
+                            >
+                              {getInitials(profile.name)}
+                            </span>
+                            {isEditingProfile ? (
+                              <div className="managePlayersDialog__editStack">
+                                <div className="managePlayersDialog__editTop">
+                                  <input
+                                    className="input input--compact managePlayersDialog__editInput"
+                                    value={editingName}
+                                    onChange={(e) =>
+                                      setEditingName(e.target.value)
+                                    }
+                                    autoFocus
+                                    maxLength={28}
+                                    placeholder="Player name"
+                                    aria-invalid={
+                                      !!savedProfileNameValidationMessage
+                                    }
+                                  />
+                                  <div className="managePlayersDialog__actionsRow managePlayersDialog__actionsRow--edit">
+                                    <button
+                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--save"
+                                      type="button"
+                                      onClick={() => {
+                                        const trimmedName =
+                                          clampName(editingName);
+                                        if (
+                                          !trimmedName ||
+                                          savedProfileNameValidationMessage
+                                        ) {
+                                          return;
+                                        }
+                                        onUpdateProfile(profile.id, {
+                                          name: trimmedName,
+                                          avatarColor: editingColor,
+                                        });
+                                        setEditingProfileId(null);
+                                        setEditingName("");
+                                      }}
+                                      disabled={
+                                        !clampName(editingName) ||
+                                        !!savedProfileNameValidationMessage
+                                      }
+                                      aria-label={`Save ${displayName}`}
+                                      title="Save"
+                                    >
+                                      <Check
+                                        size={15}
+                                        strokeWidth={3}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                    <button
+                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--cancel"
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingProfileId(null);
+                                        setEditingName("");
+                                        setEditingColor(
+                                          profile.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
+                                        );
+                                      }}
+                                      aria-label={`Cancel editing ${displayName}`}
+                                      title="Cancel"
+                                    >
+                                      <X
+                                        size={15}
+                                        strokeWidth={2.6}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div
+                                  className="managePlayersDialog__swatches"
+                                  role="radiogroup"
+                                  aria-label="Choose color for player"
+                                >
+                                  {AVATAR_COLORS.map((color) => (
+                                    <button
+                                      key={color.id}
+                                      type="button"
+                                      className={
+                                        color.value === editingColor
+                                          ? "managePlayersDialog__swatch managePlayersDialog__swatch--selected"
+                                          : "managePlayersDialog__swatch"
+                                      }
+                                      style={{ backgroundColor: color.value }}
+                                      onClick={() =>
+                                        setEditingColor(
+                                          color.value as (typeof AVATAR_COLORS)[number]["value"],
+                                        )
+                                      }
+                                      aria-label={color.label}
+                                      aria-checked={
+                                        color.value === editingColor
+                                      }
+                                      role="radio"
+                                    />
+                                  ))}
+                                </div>
+                                {savedProfileNameValidationMessage ? (
+                                  <div
+                                    className="managePlayersDialog__error"
+                                    role="alert"
+                                  >
+                                    {savedProfileNameValidationMessage}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <div className="managePlayersDialog__identity">
+                                <div className="managePlayersDialog__identityTop">
+                                  <span className="managePlayersDialog__name">
+                                    {displayName}
+                                  </span>
+                                  <div className="managePlayersDialog__actionsRow">
+                                    {isTaken ? (
+                                      <span className="pill pill--winner">
+                                        In
+                                      </span>
+                                    ) : (
                                       <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
+                                        className={`iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--add${
+                                          isStaged
+                                            ? " managePlayersDialog__actionBtn--queued"
+                                            : ""
+                                        }`}
                                         type="button"
-                                        onClick={() => {
-                                          setEditingPlayerId(player.id);
-                                          setEditingProfileId(null);
-                                          setEditingName(player.name);
-                                          setEditingColor(
-                                            player.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
-                                          );
-                                        }}
-                                        aria-label={`Edit ${displayName}`}
-                                        title="Edit"
+                                        onClick={() =>
+                                          toggleProfile(profile.id)
+                                        }
+                                        aria-label={
+                                          isStaged
+                                            ? `Remove ${displayName}`
+                                            : `Add ${displayName}`
+                                        }
+                                        title={isStaged ? "Queued" : "Add"}
                                       >
-                                        <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
+                                        {isStaged ? (
+                                          <Check
+                                            size={15}
+                                            strokeWidth={3}
+                                            aria-hidden="true"
+                                          />
+                                        ) : (
+                                          <Plus
+                                            size={16}
+                                            strokeWidth={2.8}
+                                            aria-hidden="true"
+                                          />
+                                        )}
                                       </button>
+                                    )}
+                                    <button
+                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingProfileId(profile.id);
+                                        setEditingPlayerId(null);
+                                        setEditingName(profile.name);
+                                        setEditingColor(
+                                          profile.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
+                                        );
+                                      }}
+                                      aria-label={`Edit saved player ${displayName}`}
+                                      title="Edit saved player"
+                                    >
+                                      <Pencil
+                                        size={14}
+                                        strokeWidth={2.5}
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                    {!profile.isAccountPlayer ? (
                                       <button
                                         className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
                                         type="button"
                                         onClick={() =>
-                                          void onDeletePlayer(player.id)
+                                          onDeleteProfile(profile.id)
                                         }
-                                        aria-label={`Remove ${displayName}`}
-                                        title="Remove"
+                                        aria-label={`Delete saved player ${displayName}`}
+                                        title="Delete saved player"
                                       >
-                                        <X size={15} strokeWidth={2.7} aria-hidden="true" />
+                                        <Trash2
+                                          size={14}
+                                          strokeWidth={2.4}
+                                          aria-hidden="true"
+                                        />
                                       </button>
-                                    </div>
+                                    ) : null}
                                   </div>
                                 </div>
-                              )}
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ) : isPlayersGame ? (
-                  <div className="managePlayersDialog__empty">
-                    No players in this game yet.
-                  </div>
-                ) : null}
-
-                {isPlayersGame && isAuthenticated ? (
-                  <section className="managePlayersDialog__section managePlayersDialog__section--saved">
-                    <div className="managePlayersDialog__sectionHeaderRow">
-                      <div className="managePlayersDialog__simpleTitle">
-                        Saved players
-                      </div>
-                    </div>
-
-                    <SearchableRosterPicker
-                      variant="dark"
-                      listMaxHeight="140px"
-                      searchValue={search}
-                      onSearchChange={setSearch}
-                      searchPlaceholder="Search players"
-                      searchAriaLabel="Search saved players"
-                      clearAriaLabel="Clear player search"
-                      emptyState={
-                        search
-                          ? "No saved players match that search."
-                          : profiles.length > 0
-                            ? "Every saved player is already in this game."
-                            : "No saved players yet."
-                      }
-                      createButtonLabel="Add new player"
-                      onCreateButtonClick={() => {
-                        setIsCreating(true);
-                        queueMicrotask(() => nameInputRef.current?.focus());
-                      }}
-                      footerContent={
-                        <NewPlayerComposer
-                          isOpen={isCreating}
-                          showTrigger={false}
-                          isAuthenticated={isAuthenticated}
-                          name={pendingName}
-                          color={selectedColor}
-                          saveAsProfile={saveForLater}
-                          validationMessage={newPlayerValidationMessage}
-                          onOpen={() => {
-                            setIsCreating(true);
-                            queueMicrotask(() => nameInputRef.current?.focus());
-                          }}
-                          onOpenAuth={onOpenTeamsTab}
-                          onCancel={() => setIsCreating(false)}
-                          onAdd={submit}
-                          onNameChange={setPendingName}
-                          onColorChange={setSelectedColor}
-                          onSaveAsProfileChange={setSaveForLater}
-                        />
-                      }
-                    >
-                      {filteredProfiles.map((profile) => {
-                        const isTaken = takenProfileIds.has(profile.id);
-                        const isStaged = stagedProfileIds.has(profile.id);
-                        const displayName = profile.isAccountPlayer
-                          ? formatAccountPlayerName(profile.name)
-                          : capitalizeFirst(profile.name);
-                        const isEditingProfile = editingProfileId === profile.id;
-
-                        return (
-                          <article
-                            className={`managePlayersDialog__card${
-                              isEditingProfile
-                                ? " managePlayersDialog__card--editing"
-                                : ""
-                            }`}
-                            key={profile.id}
-                          >
-                            <div className="managePlayersDialog__cardMain">
-                              <span
-                                className="managePlayersDialog__avatar"
-                                style={avatarStyleFor(
-                                  isEditingProfile
-                                    ? editingColor
-                                    : profile.avatarColor,
-                                )}
-                                aria-hidden="true"
-                              >
-                                {getInitials(profile.name)}
-                              </span>
-                              {isEditingProfile ? (
-                                <div className="managePlayersDialog__editStack">
-                                  <div className="managePlayersDialog__editTop">
-                                    <input
-                                      className="input input--compact managePlayersDialog__editInput"
-                                      value={editingName}
-                                      onChange={(e) =>
-                                        setEditingName(e.target.value)
-                                      }
-                                      autoFocus
-                                      maxLength={28}
-                                      placeholder="Player name"
-                                      aria-invalid={
-                                        !!savedProfileNameValidationMessage
-                                      }
-                                    />
-                                    <div className="managePlayersDialog__actionsRow managePlayersDialog__actionsRow--edit">
-                                      <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--save"
-                                        type="button"
-                                        onClick={() => {
-                                          const trimmedName =
-                                            clampName(editingName);
-                                          if (
-                                            !trimmedName ||
-                                            savedProfileNameValidationMessage
-                                          ) {
-                                            return;
-                                          }
-                                          onUpdateProfile(profile.id, {
-                                            name: trimmedName,
-                                            avatarColor: editingColor,
-                                          });
-                                          setEditingProfileId(null);
-                                          setEditingName("");
-                                        }}
-                                        disabled={
-                                          !clampName(editingName) ||
-                                          !!savedProfileNameValidationMessage
-                                        }
-                                        aria-label={`Save ${displayName}`}
-                                        title="Save"
-                                      >
-                                        <Check size={15} strokeWidth={3} aria-hidden="true" />
-                                      </button>
-                                      <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--cancel"
-                                        type="button"
-                                        onClick={() => {
-                                          setEditingProfileId(null);
-                                          setEditingName("");
-                                          setEditingColor(
-                                            profile.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
-                                          );
-                                        }}
-                                        aria-label={`Cancel editing ${displayName}`}
-                                        title="Cancel"
-                                      >
-                                        <X size={15} strokeWidth={2.6} aria-hidden="true" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div
-                                    className="managePlayersDialog__swatches"
-                                    role="radiogroup"
-                                    aria-label="Choose color for player"
-                                  >
-                                    {AVATAR_COLORS.map((color) => (
-                                      <button
-                                        key={color.id}
-                                        type="button"
-                                        className={
-                                          color.value === editingColor
-                                            ? "managePlayersDialog__swatch managePlayersDialog__swatch--selected"
-                                            : "managePlayersDialog__swatch"
-                                        }
-                                        style={{ backgroundColor: color.value }}
-                                        onClick={() =>
-                                          setEditingColor(
-                                            color.value as (typeof AVATAR_COLORS)[number]["value"],
-                                          )
-                                        }
-                                        aria-label={color.label}
-                                        aria-checked={
-                                          color.value === editingColor
-                                        }
-                                        role="radio"
-                                      />
-                                    ))}
-                                  </div>
-                                  {savedProfileNameValidationMessage ? (
-                                    <div
-                                      className="managePlayersDialog__error"
-                                      role="alert"
-                                    >
-                                      {savedProfileNameValidationMessage}
-                                    </div>
-                                  ) : null}
-                                </div>
-                              ) : (
-                                <div className="managePlayersDialog__identity">
-                                  <div className="managePlayersDialog__identityTop">
-                                    <span className="managePlayersDialog__name">
-                                      {displayName}
-                                    </span>
-                                    <div className="managePlayersDialog__actionsRow">
-                                      {isTaken ? (
-                                        <span className="pill pill--winner">
-                                          In
-                                        </span>
-                                      ) : (
-                                        <button
-                                          className={`iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--add${
-                                            isStaged
-                                              ? " managePlayersDialog__actionBtn--queued"
-                                              : ""
-                                          }`}
-                                          type="button"
-                                          onClick={() =>
-                                            toggleProfile(profile.id)
-                                          }
-                                          aria-label={
-                                            isStaged
-                                              ? `Remove ${displayName}`
-                                              : `Add ${displayName}`
-                                          }
-                                          title={isStaged ? "Queued" : "Add"}
-                                        >
-                                          {isStaged ? (
-                                            <Check size={15} strokeWidth={3} aria-hidden="true" />
-                                          ) : (
-                                            <Plus size={16} strokeWidth={2.8} aria-hidden="true" />
-                                          )}
-                                        </button>
-                                      )}
-                                      <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
-                                        type="button"
-                                        onClick={() => {
-                                          setEditingProfileId(profile.id);
-                                          setEditingPlayerId(null);
-                                          setEditingName(profile.name);
-                                          setEditingColor(
-                                            profile.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
-                                          );
-                                        }}
-                                        aria-label={`Edit saved player ${displayName}`}
-                                        title="Edit saved player"
-                                      >
-                                        <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
-                                      </button>
-                                      {!profile.isAccountPlayer ? (
-                                        <button
-                                          className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
-                                          type="button"
-                                          onClick={() =>
-                                            onDeleteProfile(profile.id)
-                                          }
-                                          aria-label={`Delete saved player ${displayName}`}
-                                          title="Delete saved player"
-                                        >
-                                          <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
-                                        </button>
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                  {isTaken ? (
-                                    <span className="managePlayersDialog__meta">
-                                      In game
-                                    </span>
-                                  ) : null}
-                                </div>
-                              )}
-                            </div>
-                          </article>
-                        );
+                                {isTaken ? (
+                                  <span className="managePlayersDialog__meta">
+                                    In game
+                                  </span>
+                                ) : null}
+                              </div>
+                            )}
+                          </div>
+                        </article>
+                      );
                       })}
                     </SearchableRosterPicker>
+                    {readyToAddSection}
                   </section>
                 ) : null}
-              </div>
-
-              <div className="managePlayersDialog__footer">
-                {isPlayersGame ? (
-                  <div className="dialog__actions managePlayersDialog__submitRow">
-                    <button
-                      className="btn btn--primary btn--wide"
-                      type="button"
-                      onClick={() => {
-                        onStartGame(
-                          Array.from(stagedProfileIds),
-                          stagedCustomPlayers,
-                        );
-                        close();
-                      }}
-                      disabled={stagedCount === 0}
-                    >
-                      {submitLabel}
-                    </button>
-                  </div>
-                ) : null}
-              </div>
             </div>
+
+            <div className="managePlayersDialog__footer">
+              {isPlayersGame && stagedCount > 0 ? (
+                <div className="dialog__actions managePlayersDialog__submitRow managePlayersDialog__submitRow--players">
+                  <button
+                    className="btn btn--primary btn--wide"
+                    type="button"
+                    onClick={() => {
+                      onStartGame(
+                        Array.from(stagedProfileIds),
+                        stagedCustomPlayers,
+                      );
+                      close();
+                    }}
+                  >
+                    {submitLabel}
+                  </button>
+                </div>
+              ) : isTeamsGame && stagedTeamCount > 0 ? (
+                <div className="dialog__actions managePlayersDialog__submitRow managePlayersDialog__submitRow--teams">
+                  <button
+                    className="btn btn--primary btn--wide"
+                    type="button"
+                    onClick={submitTeams}
+                  >
+                    {teamSubmitLabel}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
       </dialog>
     );

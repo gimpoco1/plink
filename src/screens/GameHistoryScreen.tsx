@@ -147,7 +147,7 @@ export function GameHistoryScreen({ game }: Props) {
   );
 
   const entries = game.scoreHistory ?? [];
-  const isTeamsGame = game.participantMode === "teams" && game.teams.length > 0;
+  const isTeamsGame = game.participantMode === "teams";
   const subjectsByPlayerId = useMemo(() => {
     const map = new Map<string, HistorySubject>();
 
