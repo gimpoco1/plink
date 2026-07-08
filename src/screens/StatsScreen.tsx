@@ -633,7 +633,11 @@ export function StatsScreen({
                 <h3>Choose who to analyze</h3>
               </div>
               <div className="statsSelectorControls">
-                <div className="statsScopeSwitch" role="tablist" aria-label="Stats view">
+                <div
+                  className={`statsScopeSwitch statsScopeSwitch--${activeKind}`}
+                  role="tablist"
+                  aria-label="Stats view"
+                >
                   <button
                     type="button"
                     role="tab"
@@ -645,7 +649,7 @@ export function StatsScreen({
                     }`}
                     onClick={() => setActiveKind("players")}
                   >
-                    Players
+                    Individuals
                   </button>
                   <button
                     type="button"

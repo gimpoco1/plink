@@ -1,4 +1,4 @@
-import { Lock, Swords } from "lucide-react";
+import { Check, CircleX, Lock, Minus, Swords, Trophy } from "lucide-react";
 import { STATUS_LABELS } from "./statsTypes";
 import type {
   HeadToHeadSummary,
@@ -132,7 +132,7 @@ function StreakRow({ summary }: { summary: StreakSubjectSummary }) {
                 className={`statsStreakForm__chip statsStreakForm__chip--${status}`}
                 title={STATUS_LABELS[status]}
               >
-                {STATUS_LABELS[status].slice(0, 1)}
+                <StreakStatusIcon status={status} />
               </span>
             ))
           ) : (
@@ -142,6 +142,24 @@ function StreakRow({ summary }: { summary: StreakSubjectSummary }) {
       </div>
     </div>
   );
+}
+
+function StreakStatusIcon({
+  status,
+}: {
+  status: StreakSubjectSummary["form"][number];
+}) {
+  switch (status) {
+    case "won":
+      return <Trophy size={13} strokeWidth={2.6} aria-hidden="true" />;
+    case "lost":
+      return <CircleX size={14} strokeWidth={2.6} aria-hidden="true" />;
+    case "draw":
+      return <Minus size={14} strokeWidth={2.8} aria-hidden="true" />;
+    case "completed":
+    default:
+      return <Check size={13} strokeWidth={2.8} aria-hidden="true" />;
+  }
 }
 
 function ProOverlay({

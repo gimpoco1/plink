@@ -72,6 +72,8 @@
 }
 
 .statsScopeSwitch {
+  --stats-switch-active-bg: rgba(216, 255, 79, 0.12);
+  --stats-switch-active-color: var(--accent);
   display: inline-grid;
   grid-auto-flow: column;
   gap: 4px;
@@ -79,6 +81,11 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
+}
+
+.statsScopeSwitch--teams {
+  --stats-switch-active-bg: rgba(122, 208, 255, 0.16);
+  --stats-switch-active-color: #7ad0ff;
 }
 
 .statsScopeSwitch__option {
@@ -111,8 +118,8 @@
 }
 
 .statsScopeSwitch__option--active {
-  background: rgba(216, 255, 79, 0.12);
-  color: var(--accent);
+  background: var(--stats-switch-active-bg);
+  color: var(--stats-switch-active-color);
 }
 
 .statsCompareToggle {
@@ -1317,8 +1324,10 @@
   border-radius: 999px;
   display: inline-grid;
   place-items: center;
-  font-size: 9px;
-  font-weight: 900;
+}
+
+.statsStreakForm__chip svg {
+  display: block;
 }
 
 .statsStreakForm__chip--won {
