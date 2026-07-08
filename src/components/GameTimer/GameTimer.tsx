@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Pause, Play, TimerReset, TriangleAlert } from "lucide-react";
 import {
   loadTimerSnapshot,
   saveTimerSnapshot,
@@ -27,7 +28,7 @@ function restoreElapsedMs(
 
   const totalMs = Math.max(1, durationSeconds) * 1000;
   return mode === "countdown"
-    ? Math.max(0, Math.min(totalMs, snapshot.elapsedMs))
+    ? Math.min(totalMs, snapshot.elapsedMs)
     : Math.max(0, snapshot.elapsedMs);
 }
 
@@ -80,7 +81,7 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
   const totalMs = Math.max(1, durationSeconds) * 1000;
   const normalizeElapsedMs = (value: number) =>
     mode === "countdown"
-      ? Math.max(0, Math.min(totalMs, value))
+      ? Math.min(totalMs, value)
       : Math.max(0, value);
 
   const activeElapsed = useMemo(() => {
@@ -96,7 +97,11 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
       : Math.max(0, activeElapsed);
   const isDone = mode === "countdown" && displayMs <= 0;
   const hasProgress = elapsedMs > 0 || (isRunning && activeElapsed > 0);
-  const actionLabel = isRunning ? "Pause" : hasProgress && !isDone ? "Resume" : "Start";
+  const actionLabel = isRunning
+    ? "Pause"
+    : hasProgress && !isDone
+      ? "Resume"
+      : "Start";
 
   useEffect(() => {
     if (!isDone || !isRunning) return;
@@ -157,14 +162,55 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
     setIsRunning(false);
   }
 
+  function adjustBySeconds(deltaSeconds: number) {
+    const deltaMs = deltaSeconds * 1000;
+    const currentElapsed =
+      startedAtRef.current === null
+        ? elapsedMs
+        : normalizeElapsedMs(elapsedMs + (Date.now() - startedAtRef.current));
+
+    const nextElapsed = normalizeElapsedMs(
+      mode === "countdown"
+        ? currentElapsed - deltaMs
+        : currentElapsed + deltaMs,
+    );
+
+    setElapsedMs(nextElapsed);
+    if (isRunning) {
+      startedAtRef.current = Date.now();
+      setTick((value) => value + 1);
+    } else {
+      startedAtRef.current = null;
+    }
+  }
+
   return (
-    <div className="gameTimer" ref={timerRef}>
+    <div
+      className={`gameTimer${isDone ? " gameTimer--done" : ""}`}
+      ref={timerRef}
+    >
       {isOpen ? (
         <div className="gameTimer__panel">
           <div className="gameTimer__mode">
             {mode === "countdown" ? "Countdown" : "Stopwatch"}
           </div>
-          <div className="gameTimer__clock">{formatClock(displayMs)}</div>
+          <div className="gameTimer__quickAdjust">
+            <button
+              className="btn btn--sm btn--ghost gameTimer__adjustBtn"
+              type="button"
+              onClick={() => adjustBySeconds(-10)}
+            >
+              -10s
+            </button>
+            <div className="gameTimer__clock">{formatClock(displayMs)}</div>
+            <button
+              className="btn btn--sm btn--ghost gameTimer__adjustBtn"
+              type="button"
+              onClick={() => adjustBySeconds(10)}
+            >
+              +10s
+            </button>
+          </div>
           <div className="gameTimer__actions">
             <button
               className="btn btn--sm gameTimer__start"
@@ -173,29 +219,57 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
             >
               {actionLabel}
             </button>
-            <button className="btn btn--sm btn--ghost" type="button" onClick={reset}>
+            <button
+              className="btn btn--sm btn--ghost"
+              type="button"
+              onClick={reset}
+            >
               Reset
             </button>
           </div>
         </div>
       ) : null}
-      <button
-        className="gameTimer__fab"
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-        aria-label="Timer"
-      >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="13" r="7" stroke="currentColor" strokeWidth="2" />
-          <path
-            d="M12 13V9M9 3h6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span>{formatClock(displayMs)}</span>
-      </button>
+      {isDone ? (
+        <div className="gameTimer__alert" role="status" aria-live="assertive">
+          <TriangleAlert size={14} strokeWidth={2.4} aria-hidden="true" />
+          <span>Time&apos;s up</span>
+        </div>
+      ) : null}
+      <div className="gameTimer__dock">
+        <div
+          className="gameTimer__fab"
+          role="group"
+          aria-label="Timer controls"
+        >
+          <div className="gameTimer__fabRow">
+            <button
+              className="gameTimer__fabMain"
+              type="button"
+              onClick={() => setIsOpen((value) => !value)}
+              aria-label="Open timer"
+            >
+              <TimerReset size={18} strokeWidth={2.2} aria-hidden="true" />
+              <span>{formatClock(displayMs)}</span>
+            </button>
+            <button
+              className={`gameTimer__fabToggle${isRunning ? " gameTimer__fabToggle--running" : ""}`}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (isRunning) pause();
+                else start();
+              }}
+              aria-label={actionLabel}
+            >
+              {isRunning ? (
+                <Pause size={18} strokeWidth={2.4} aria-hidden="true" />
+              ) : (
+                <Play size={18} strokeWidth={2.4} aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

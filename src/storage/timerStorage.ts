@@ -24,7 +24,7 @@ export function loadTimerSnapshot(gameId: string): TimerSnapshot | null {
       typeof snapshot.durationSeconds !== "number" ||
       snapshot.durationSeconds <= 0 ||
       typeof snapshot.elapsedMs !== "number" ||
-      snapshot.elapsedMs < 0
+      !Number.isFinite(snapshot.elapsedMs)
     ) {
       return null;
     }
@@ -41,7 +41,12 @@ export function loadTimerSnapshot(gameId: string): TimerSnapshot | null {
 
 export function saveTimerSnapshot(gameId: string, snapshot: TimerSnapshot | null) {
   const storageKey = getTimerStorageKey(gameId);
-  if (!snapshot || snapshot.elapsedMs <= 0) {
+  if (
+    !snapshot ||
+    (snapshot.mode === "stopwatch"
+      ? snapshot.elapsedMs <= 0
+      : snapshot.elapsedMs === 0)
+  ) {
     localStorage.removeItem(storageKey);
     return;
   }
