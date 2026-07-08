@@ -25,6 +25,7 @@ import {
 import { PlayerCard } from "../components/PlayerCard/PlayerCard";
 import { TeamScoreCard } from "../components/TeamScoreCard/TeamScoreCard";
 import { GameTimer } from "../components/GameTimer/GameTimer";
+import { GameDiceTray } from "../components/GameDiceTray/GameDiceTray";
 import type { ProfileStats } from "../utils/profileStats";
 import "./GameScreen.css";
 
@@ -502,6 +503,8 @@ export function GameScreen({
           durationSeconds={game.timerSeconds}
         />
       ) : null}
+
+      <GameDiceTray accentTone={isTeamGame ? "team" : "default"} />
 
       <ManagePlayersDialog
         ref={managePlayersDialogRef}
