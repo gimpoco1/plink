@@ -16,6 +16,16 @@ type DieValue = 1 | 2 | 3 | 4 | 5 | 6;
 type PipPosition = "tl" | "tr" | "ml" | "mr" | "bl" | "br" | "c";
 type DiceCount = 1 | 2;
 type DiceStateByCount<T> = Record<DiceCount, T>;
+type DieMotion = {
+  spinX: number;
+  spinY: number;
+  spinZ: number;
+  preX: number;
+  preY: number;
+  preZ: number;
+  lift: number;
+  shadowScale: number;
+};
 
 const ROLL_DURATION_MS = 1380;
 const RESULT_REVEAL_DELAY_MS = 240;
@@ -42,6 +52,22 @@ function randomDieValue(): DieValue {
   return (Math.floor(Math.random() * 6) + 1) as DieValue;
 }
 
+function createDieMotion(): DieMotion {
+  const spinX = 720 + Math.floor(Math.random() * 540);
+  const spinY = 880 + Math.floor(Math.random() * 720);
+  const spinZ = 460 + Math.floor(Math.random() * 420);
+  return {
+    spinX,
+    spinY,
+    spinZ,
+    preX: 28 + Math.floor(Math.random() * 18),
+    preY: -36 + Math.floor(Math.random() * 72),
+    preZ: -18 + Math.floor(Math.random() * 36),
+    lift: 10 + Math.floor(Math.random() * 8),
+    shadowScale: 1.08 + Math.random() * 0.18,
+  };
+}
+
 function formatRollSummary(values: DieValue[]) {
   if (values.length === 1) return `${values[0]}`;
   return `${values.join(" + ")} = ${values.reduce((sum, value) => sum + value, 0)}`;
@@ -52,11 +78,13 @@ function DieCube({
   rolling,
   delayMs,
   rollCycle,
+  motion,
 }: {
   value: DieValue;
   rolling: boolean;
   delayMs: number;
   rollCycle: number;
+  motion: DieMotion;
 }) {
   const rotation = DIE_ROTATIONS[value];
   const cubeStyle = {
@@ -64,10 +92,22 @@ function DieCube({
     "--die-rotate-y": rotation.y,
     "--die-roll-delay": `${delayMs}ms`,
     "--die-roll-duration": `${Math.max(980, ROLL_DURATION_MS - delayMs)}ms`,
+    "--die-spin-x": `${motion.spinX}deg`,
+    "--die-spin-y": `${motion.spinY}deg`,
+    "--die-spin-z": `${motion.spinZ}deg`,
+    "--die-pre-x": `${motion.preX}deg`,
+    "--die-pre-y": `${motion.preY}deg`,
+    "--die-pre-z": `${motion.preZ}deg`,
+    "--die-lift": `${motion.lift}px`,
+    "--die-shadow-scale": `${motion.shadowScale}`,
   } as CSSProperties;
 
   return (
     <div className="gameDiceTray__dieScene" aria-hidden="true">
+      <div
+        className={`gameDiceTray__dieShadow${rolling ? " gameDiceTray__dieShadow--rolling" : ""}`}
+        style={cubeStyle}
+      />
       <div
         key={`${rollCycle}:${value}:${rolling ? "rolling" : "idle"}`}
         className={`gameDiceTray__cube${rolling ? " gameDiceTray__cube--rolling" : ""}`}
@@ -129,6 +169,10 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
   const [resultVisible, setResultVisible] = useState(false);
   const [rollCycle, setRollCycle] = useState(0);
   const [rollingDiceCount, setRollingDiceCount] = useState<DiceCount>(2);
+  const [dieMotions, setDieMotions] = useState<[DieMotion, DieMotion]>([
+    createDieMotion(),
+    createDieMotion(),
+  ]);
   const trayRef = useRef<HTMLDivElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const rollTokenRef = useRef(0);
@@ -213,6 +257,7 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
     }));
     setIsResolvingResult(true);
     setRollingPreviewValues(previewValues);
+    setDieMotions([createDieMotion(), createDieMotion()]);
     pendingValuesRef.current = nextValues;
     setRollingDiceCount(nextDiceCount);
     setIsRolling(true);
@@ -350,6 +395,7 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
                 rolling={isRolling}
                 delayMs={index * 120}
                 rollCycle={rollCycle}
+                motion={dieMotions[index] ?? createDieMotion()}
               />
             ))}
           </div>
