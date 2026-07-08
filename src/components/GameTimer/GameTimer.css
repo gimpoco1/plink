@@ -163,6 +163,7 @@
   align-self: flex-start;
   min-height: 26px;
   padding: 0 12px;
+  border: 0;
   border-radius: 999px;
   border: 1px solid rgba(248, 113, 113, 0.34);
   background:
@@ -182,12 +183,20 @@
     0 0 0 1px rgba(248, 113, 113, 0.08);
   transform-origin: left center;
   will-change: transform;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .gameTimer__alert svg {
   width: 14px;
   height: 14px;
   display: block;
+}
+
+.gameTimer__alert:focus-visible {
+  outline: 2px solid rgba(254, 202, 202, 0.9);
+  outline-offset: 2px;
 }
 
 .gameTimer--done .gameTimer__alert {

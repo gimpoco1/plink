@@ -230,10 +230,15 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
         </div>
       ) : null}
       {isDone ? (
-        <div className="gameTimer__alert" role="status" aria-live="assertive">
+        <button
+          className="gameTimer__alert"
+          type="button"
+          onClick={reset}
+          aria-label="Time's up. Reset timer"
+        >
           <TriangleAlert size={14} strokeWidth={2.4} aria-hidden="true" />
           <span>Time&apos;s up</span>
-        </div>
+        </button>
       ) : null}
       <div className="gameTimer__dock">
         <div
