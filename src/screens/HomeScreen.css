@@ -78,6 +78,12 @@
   z-index: 1;
 }
 
+.homeHero__resumePill--teams {
+  background: rgba(122, 208, 255, 0.12);
+  border-color: rgba(122, 208, 255, 0.24);
+  color: var(--ds-color-secondary);
+}
+
 .homeHero__newGameWrap {
   margin-top: 0;
 }

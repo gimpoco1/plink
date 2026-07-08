@@ -1701,6 +1701,7 @@
     width: 100%;
   }
   .newGamePanel__trigger {
+    max-height: 68px;
     min-height: 68px;
     padding: 0 18px;
   }

@@ -443,7 +443,15 @@ export function HomeScreen({
         {resumableGame ? (
           <div className="homeHero__actions">
             <div className="homeHero__resumeWrap">
-              <span className="homeHero__resumePill">{resumableGameLabel}</span>
+              <span
+                className={`homeHero__resumePill${
+                  resumableGame.participantMode === "teams"
+                    ? " homeHero__resumePill--teams"
+                    : ""
+                }`}
+              >
+                {resumableGameLabel}
+              </span>
               <button
                 className="btn btn--ghost btn--xl homeHero__secondary"
                 type="button"
