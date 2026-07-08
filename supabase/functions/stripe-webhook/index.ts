@@ -15,6 +15,10 @@ if (!webhookSecret) {
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
 
+function normalizeBillingPeriod(value: unknown): "monthly" | "yearly" | null {
+  return value === "monthly" || value === "yearly" ? value : null;
+}
+
 async function findSubscriptionOwner(
   admin: ReturnType<typeof createAdminClient>,
   params: {
@@ -71,9 +75,11 @@ async function upsertStripeSubscription(
       ? subscription.customer
       : subscription.customer?.id ?? null;
   const priceId = subscription.items.data[0]?.price?.id ?? null;
-  const itemPeriodEnd = subscription.items.data[0]?.current_period_end ?? null;
-  const currentPeriodEnd = itemPeriodEnd
-    ? new Date(itemPeriodEnd * 1000).toISOString()
+  const billingPeriod = normalizeBillingPeriod(
+    subscription.metadata.billing_period,
+  );
+  const currentPeriodEnd = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000).toISOString()
     : null;
   const cancelAt = subscription.cancel_at
     ? new Date(subscription.cancel_at * 1000).toISOString()
@@ -86,7 +92,7 @@ async function upsertStripeSubscription(
   const { data: existingSubscription } = await admin
     .from("subscriptions")
     .select(
-      "subscription_id,status,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
+      "subscription_id,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -106,6 +112,7 @@ async function upsertStripeSubscription(
       price_id: shouldPreserveExistingStatus
         ? existingSubscription?.price_id ?? priceId
         : priceId,
+      billing_period: existingSubscription?.billing_period ?? billingPeriod,
       plan: shouldPreserveExistingStatus ? "pro" : nextPlan,
       status: shouldPreserveExistingStatus
         ? existingSubscription.status
@@ -163,10 +170,11 @@ async function upsertCheckoutSession(
     typeof session.subscription === "string"
       ? session.subscription
       : session.subscription?.id ?? null;
+  const billingPeriod = normalizeBillingPeriod(session.metadata?.billing_period);
   const { data: existingSubscription } = await admin
     .from("subscriptions")
     .select(
-      "plan,status,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
+      "plan,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -178,6 +186,7 @@ async function upsertCheckoutSession(
       subscription_id: subscriptionId,
       plan: existingSubscription?.plan ?? "pro",
       status: existingSubscription?.status ?? "inactive",
+      billing_period: existingSubscription?.billing_period ?? billingPeriod,
       current_period_end: existingSubscription?.current_period_end ?? null,
       price_id: existingSubscription?.price_id ?? null,
       cancel_at_period_end:

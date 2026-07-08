@@ -19,6 +19,7 @@ export function useAuthSession() {
       setLoading(false);
       return;
     }
+    const authClient = supabase;
 
     let alive = true;
     let refreshRequestId = 0;
@@ -27,7 +28,7 @@ export function useAuthSession() {
       const requestId = ++refreshRequestId;
 
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await authClient.auth.getSession();
         if (!alive || requestId !== refreshRequestId) return;
         if (!error) setSession(data.session);
       } catch {
@@ -42,7 +43,7 @@ export function useAuthSession() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    } = authClient.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setLoading(false);
       if (event === "PASSWORD_RECOVERY") {
