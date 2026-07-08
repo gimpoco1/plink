@@ -71,7 +71,7 @@ export function SessionsScreen({
           ) || b.updatedAt - a.updatedAt
         );
       if (sort === "oldest") return a.createdAt - b.createdAt;
-      return b.updatedAt - a.updatedAt;
+      return b.createdAt - a.createdAt;
     });
   }, [filter, games, sort]);
 

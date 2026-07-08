@@ -1,3 +1,107 @@
+.gameScreen {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gameScreen > .content {
+  flex: 1;
+  min-height: 0;
+}
+
+.gameScreen--teams {
+  --accent: var(--ds-color-secondary);
+  --accent-ink: var(--ds-color-on-secondary);
+  --primary: var(--ds-color-secondary-container);
+  --primaryInk: var(--ds-color-on-secondary-container);
+  --brand: var(--ds-color-secondary);
+  --pos: var(--ds-color-secondary-fixed-dim);
+  --accent-soft: rgba(122, 208, 255, 0.12);
+  --accent-border: rgba(122, 208, 255, 0.32);
+  --accent-glow: rgba(122, 208, 255, 0.26);
+  --focus: 0 0 0 4px rgba(122, 208, 255, 0.28);
+}
+
+.gameScreen--teams .teamScoreCard__teamIcon {
+  background: linear-gradient(
+    180deg,
+    var(--ds-color-secondary-fixed),
+    var(--accent)
+  );
+}
+
+.gameScreen--teams .card--leader {
+  border-color: rgba(122, 208, 255, 0.5);
+  background: rgba(122, 208, 255, 0.05);
+}
+
+.gameScreen--teams .card--winner {
+  background: rgba(122, 208, 255, 0.05);
+}
+
+.gameScreen--teams .scoreUndo {
+  border-color: var(--accent-border);
+}
+
+.gameScreen--teams .manualEndPrompt {
+  border-color: rgba(122, 208, 255, 0.2);
+}
+
+.gameScreen--teams .gameScreen__emptyCta.btn--primary:not(:disabled):hover {
+  border-color: var(--ds-color-secondary);
+  background: var(--ds-color-secondary);
+  color: var(--ds-color-on-secondary);
+  box-shadow: 0 16px 34px rgba(122, 208, 255, 0.2);
+}
+
+.teamBoard {
+  display: grid;
+  gap: 18px;
+}
+
+.teamBoard__group {
+  display: grid;
+  gap: 10px;
+}
+
+.teamBoard__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.teamBoard__title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.teamBoard__meta {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.teamBoard__group--unassigned .teamBoard__title {
+  color: var(--text-dim);
+}
+
+.teamBoard__empty {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .scoreUndo {
   position: fixed;
   z-index: 150;

@@ -10,8 +10,13 @@ import {
   AuthDialog,
   type AuthDialogHandle,
 } from "./components/AuthDialog/AuthDialog";
+import {
+  ProFeatureGateDialog,
+  type ProFeatureGateDialogHandle,
+} from "./components/ProFeatureGateDialog/ProFeatureGateDialog";
 import { TopBar } from "./components/TopBar/TopBar";
 import { useProfiles } from "./hooks/useProfiles";
+import { useTeams } from "./hooks/useTeams";
 import { useGames } from "./hooks/useGames";
 import { useScorePulse } from "./hooks/useScorePulse";
 import { useAuthSession } from "./hooks/useAuthSession";
@@ -20,7 +25,13 @@ import { supabase } from "./lib/supabase";
 import { DashboardScreen } from "./screens/DashboardScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { GameHistoryScreen } from "./screens/GameHistoryScreen";
-import type { Game, PlayerProfile, ToastState, ToastTone } from "./types";
+import type {
+  Game,
+  GameTeam,
+  PlayerProfile,
+  ToastState,
+  ToastTone,
+} from "./types";
 import {
   GameSettingsDialog,
   GameSettingsDialogHandle,
@@ -33,11 +44,13 @@ import {
   formatPlayerName,
   getGameDisplayName,
 } from "./utils/text";
-import { findWinner } from "./utils/ranking";
+import { findWinner, sortPlayers } from "./utils/ranking";
+import { getGameParticipants } from "./utils/gameParticipants";
 import {
   computeProfileStats,
   createEmptyProfileStats,
 } from "./utils/profileStats";
+import { shouldSortLowToHigh } from "./utils/scoring";
 import {
   createBackupPayload,
   getGameImportSignature,
@@ -52,8 +65,11 @@ import {
   AVATAR_COLORS,
   HOME_TAB_STORAGE_KEY,
   LOCAL_SESSIONS_HINT_DISMISSED_KEY,
+  PLAYERS_VIEW_STORAGE_KEY,
 } from "./constants";
 import { CircleUser } from "lucide-react";
+
+type PresetDraftIntent = "edit" | "teams-detour" | null;
 
 export default function App() {
   const reduceMotion = useReducedMotion();
@@ -75,6 +91,18 @@ export default function App() {
     syncNotice: profileSyncNotice,
   } = useProfiles(session);
   const {
+    teams,
+    teamMembers,
+    createTeam,
+    updateTeam,
+    deleteTeam: deleteSavedTeam,
+    toggleTeamMember,
+    removeProfileMemberships,
+    importTeams,
+    remoteReady: teamsReady,
+    syncNotice: teamSyncNotice,
+  } = useTeams(session);
+  const {
     games,
     currentGameId,
     currentGame,
@@ -84,7 +112,9 @@ export default function App() {
     deleteGame,
     renameGame,
     addPlayer,
+    addTeam,
     removePlayer,
+    removeTeam,
     updatePlayer,
     resetScores,
     updateScore,
@@ -98,8 +128,10 @@ export default function App() {
   const { pulseById, triggerPulse } = useScorePulse();
   const confirmRef = useRef<ConfirmDialogHandle>(null!);
   const managePlayersDialogRef = useRef<ManagePlayersDialogHandle>(null!);
+  const handledManageTeamsDialogOpenTokenRef = useRef(0);
   const settingsDialogRef = useRef<GameSettingsDialogHandle>(null!);
   const authDialogRef = useRef<AuthDialogHandle>(null!);
+  const proFeatureGateDialogRef = useRef<ProFeatureGateDialogHandle>(null!);
   const wantsRestoredGameView = useMemo(() => {
     try {
       return localStorage.getItem(APP_VIEW_STORAGE_KEY) === "game";
@@ -129,8 +161,7 @@ export default function App() {
     }
   });
   const [gameReturnTab, setGameReturnTab] = useState<HomeTab>(homeTab);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const appTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [visibleToast, setVisibleToast] = useState<ToastState | null>(null);
   const [localDataVersion, setLocalDataVersion] = useState(0);
   const [shouldSaveGamePlayersOnSignIn, setShouldSaveGamePlayersOnSignIn] =
@@ -138,6 +169,16 @@ export default function App() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<NewGameInput | null>(null);
   const [presetDraftToken, setPresetDraftToken] = useState(0);
+  const [presetDraftIntent, setPresetDraftIntent] =
+    useState<PresetDraftIntent>(null);
+  const [openTeamBuilderRequestToken, setOpenTeamBuilderRequestToken] =
+    useState(0);
+  const [returnToManageTeamsAfterCreate, setReturnToManageTeamsAfterCreate] =
+    useState(false);
+  const [
+    pendingManageTeamsDialogOpenToken,
+    setPendingManageTeamsDialogOpenToken,
+  ] = useState(0);
   const [
     dismissedLocalSessionsHintSignature,
     setDismissedLocalSessionsHintSignature,
@@ -152,6 +193,8 @@ export default function App() {
   const canViewSavedData = !!session;
   const visibleGames = canViewSavedData && !gamesReady ? [] : games;
   const visibleProfiles = canViewSavedData ? profiles : [];
+  const visibleTeams = canViewSavedData && teamsReady ? teams : [];
+  const visibleTeamMembers = canViewSavedData && teamsReady ? teamMembers : [];
   const localGuestGames = useMemo(
     () => (canViewSavedData ? loadGuestGames() : games),
     [canViewSavedData, games, localDataVersion],
@@ -260,6 +303,50 @@ export default function App() {
     setView("home");
   }
 
+  function openTeamsTabFromGame() {
+    try {
+      localStorage.setItem(PLAYERS_VIEW_STORAGE_KEY, "teams");
+    } catch {
+      // Ignore storage failures; fallback tab navigation still works.
+    }
+    setReturnToManageTeamsAfterCreate(true);
+    setOpenTeamBuilderRequestToken((value) => value + 1);
+    setGameReturnTab("players");
+    setHomeTab("players");
+    setView("home");
+  }
+
+  function handleTeamCreatedFromDashboard(team: GameTeam) {
+    if (presetDraftIntent === "teams-detour" && presetDraft) {
+      setPresetDraft({
+        ...presetDraft,
+        participantMode: "teams",
+        initialTeams: [
+          {
+            id: team.id,
+            name: team.name,
+            icon: team.icon,
+            members: [],
+          },
+          ...(presetDraft.initialTeams ?? []).filter(
+            (draftTeam) => draftTeam.id !== team.id,
+          ),
+        ],
+      });
+      setPresetDraftToken((value) => value + 1);
+      setPresetDraftIntent("edit");
+      setHomeTab("home");
+      setView("home");
+      return;
+    }
+
+    if (!returnToManageTeamsAfterCreate) return;
+    setReturnToManageTeamsAfterCreate(false);
+    setGameReturnTab("players");
+    setView("game");
+    setPendingManageTeamsDialogOpenToken((value) => value + 1);
+  }
+
   function dismissLocalSessionsHint() {
     setDismissedLocalSessionsHintSignature(pendingLocalSessionsHintSignature);
     try {
@@ -270,6 +357,10 @@ export default function App() {
     } catch {
       // Ignore storage failures.
     }
+  }
+
+  async function openProFeatureAuthPrompt() {
+    await proFeatureGateDialogRef.current?.open();
   }
 
   function updateProfileEverywhere(
@@ -299,9 +390,20 @@ export default function App() {
 
     const items: Array<{ label: string; tone?: "accent" | "muted" }> = [];
     const winner = findWinner(currentGame.players, currentGame);
+    const isTeamsGame =
+      currentGame.participantMode === "teams" && currentGame.teams.length > 0;
+    const winningTeamName =
+      winner && isTeamsGame
+        ? getGameParticipants(currentGame).find((participant) =>
+            participant.members.some((member) => member.id === winner.id),
+          )?.name
+        : null;
 
     if (winner) {
-      items.push({ label: `Winner ${winner.name}`, tone: "accent" });
+      items.push({
+        label: `Winner ${winningTeamName ?? capitalizeFirst(winner.name)}`,
+        tone: "accent",
+      });
     }
 
     items.push({
@@ -349,21 +451,50 @@ export default function App() {
 
   async function handleEndCurrentGame() {
     if (!currentGame) return;
-    const ok = await confirmRef.current?.confirm({
+    const participants = [...getGameParticipants(currentGame)].sort((a, b) =>
+      sortPlayers(a, b, shouldSortLowToHigh(currentGame)),
+    );
+    const leader = participants[0] ?? null;
+    const runnerUp = participants[1] ?? null;
+    const isDraw = Boolean(
+      leader && runnerUp && leader.score === runnerUp.score,
+    );
+    const canDeclareWinner = Boolean(
+      leader && (!runnerUp || leader.score !== runnerUp.score),
+    );
+
+    const result = await confirmRef.current?.choose({
       title: "End game",
-      message: "Mark this game as finished using the current standings?",
-      confirmText: "End game",
+      message: isDraw
+        ? "Current standings are tied. End this game as a draw or finish it without a winner?"
+        : canDeclareWinner
+          ? "Finish this game using the current standings, or end it without a winner?"
+          : "Mark this game as finished without a winner?",
+      confirmText: isDraw
+        ? "End as draw"
+        : canDeclareWinner
+          ? "End with winner"
+          : "End game",
+      extraActionText: isDraw || canDeclareWinner ? "End without winner" : "",
       tone: "default",
     });
-    if (!ok) return;
-    finishGame(currentGame.id);
+    if (!result || result === "cancel") return;
+    if (result === "extra") {
+      finishGame(currentGame.id, "no_winner");
+      return;
+    }
+    if (isDraw) {
+      finishGame(currentGame.id, "draw");
+      return;
+    }
+    finishGame(currentGame.id, canDeclareWinner ? "winner" : "no_winner");
   }
 
   useEffect(() => {
-    const nextToast = gameSyncNotice ?? profileSyncNotice;
+    const nextToast = gameSyncNotice ?? profileSyncNotice ?? teamSyncNotice;
     if (!nextToast) return;
     setVisibleToast(nextToast);
-  }, [gameSyncNotice, profileSyncNotice]);
+  }, [gameSyncNotice, profileSyncNotice, teamSyncNotice]);
 
   useEffect(() => {
     if (!visibleToast) return;
@@ -392,6 +523,25 @@ export default function App() {
       setView("home");
     }
   }, [currentGameId, gamesReady, hasCompletedInitialViewRestore, view]);
+
+  useEffect(() => {
+    if (
+      !pendingManageTeamsDialogOpenToken ||
+      pendingManageTeamsDialogOpenToken ===
+        handledManageTeamsDialogOpenTokenRef.current ||
+      view !== "game" ||
+      !currentGame
+    ) {
+      return;
+    }
+
+    handledManageTeamsDialogOpenTokenRef.current =
+      pendingManageTeamsDialogOpenToken;
+    const frame = window.requestAnimationFrame(() => {
+      managePlayersDialogRef.current?.open();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentGame, pendingManageTeamsDialogOpenToken, view]);
 
   useEffect(() => {
     if (
@@ -514,6 +664,7 @@ export default function App() {
     const created = createGame(input);
     if (created) {
       setPresetDraft(null);
+      setPresetDraftIntent(null);
       setGameReturnTab(homeTab);
       setView("game");
       return true;
@@ -526,6 +677,12 @@ export default function App() {
     details: {
       label: string;
       players: { name: string; avatarColor: string }[];
+      teams?: Array<{
+        id: string;
+        name: string;
+        icon?: string;
+        members: { name: string; avatarColor: string }[];
+      }>;
     },
   ) {
     const timerValue = !input.timerEnabled
@@ -568,8 +725,16 @@ export default function App() {
         },
         { label: "Timer", value: timerValue },
       ],
-      players: details.players,
-      message: details.players.length ? "Players" : "",
+      players: input.participantMode === "teams" ? [] : details.players,
+      teams: details.teams,
+      message:
+        input.participantMode === "teams"
+          ? details.teams?.length
+            ? "Teams"
+            : ""
+          : details.players.length
+            ? "Players"
+            : "",
       hideCancelAction: true,
       extraActionText: "Edit",
       confirmText: "Start new game",
@@ -579,12 +744,19 @@ export default function App() {
     if (result === "extra") {
       setPresetDraft(input);
       setPresetDraftToken((value) => value + 1);
+      setPresetDraftIntent("edit");
       setHomeTab("home");
       setView("home");
       return;
     }
     if (result !== "confirm") return;
     await handleCreateGame(input);
+  }
+
+  function handleStoreNewGameDraft(draft: NewGameInput) {
+    setPresetDraft(draft);
+    setPresetDraftToken((value) => value + 1);
+    setPresetDraftIntent("teams-detour");
   }
 
   function formatDialogTimer(totalSeconds: number | undefined) {
@@ -603,15 +775,19 @@ export default function App() {
   }
 
   function handleTouchStart(event: TouchEvent<HTMLElement>) {
-    setTouchStartX(event.touches[0]?.clientX ?? null);
-    setTouchStartY(event.touches[0]?.clientY ?? null);
+    const touch = event.touches[0];
+    appTouchStartRef.current = touch
+      ? { x: touch.clientX, y: touch.clientY }
+      : null;
   }
 
   function handleTouchEnd(event: TouchEvent<HTMLElement>) {
-    if (touchStartX === null || touchStartY === null) return;
+    const touchStart = appTouchStartRef.current;
+    appTouchStartRef.current = null;
+    if (!touchStart) return;
 
-    const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStartX;
-    const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStartY;
+    const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStart.x;
+    const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStart.y;
     if (
       view === "history" &&
       deltaX > 60 &&
@@ -625,9 +801,6 @@ export default function App() {
     ) {
       returnToGameSource();
     }
-
-    setTouchStartX(null);
-    setTouchStartY(null);
   }
 
   function prepareImportedData(
@@ -704,21 +877,30 @@ export default function App() {
     return { games, profiles: profilesToImport };
   }
 
+  function filterImportableGames(incomingGames: Game[]) {
+    if (entitlements.canUseTeams) return incomingGames;
+    return incomingGames.filter((game) => game.participantMode !== "teams");
+  }
+
   async function handleImportLocalData(selection: {
     gameIds: string[];
     profileIds: string[];
   }) {
-    const localGames = localGuestGames.filter((game) =>
+    const selectedLocalGames = localGuestGames.filter((game) =>
       selection.gameIds.includes(game.id),
     );
     const localProfiles = localGuestProfiles.filter((profile) =>
       selection.profileIds.includes(profile.id),
     );
+    const localGames = filterImportableGames(selectedLocalGames);
+    const skippedTeamContent = selectedLocalGames.length !== localGames.length;
 
     const prepared = prepareImportedData(localGames, localProfiles);
     const importCapacityState = getSessionCapacityState(prepared.games.length);
     if (importCapacityState === "loading") {
-      throw new Error("Loading your saved sessions. Try importing again in a moment.");
+      throw new Error(
+        "Loading your saved sessions. Try importing again in a moment.",
+      );
     }
     if (importCapacityState === "blocked") {
       throw new Error(
@@ -729,7 +911,12 @@ export default function App() {
     const importedGames = importGames(prepared.games);
 
     setLocalDataVersion((value) => value + 1);
-    return { games: importedGames, profiles: importedProfiles };
+    return {
+      games: importedGames,
+      profiles: importedProfiles,
+      teams: 0,
+      skippedTeamContent,
+    };
   }
 
   async function handleImportBackupFile(
@@ -738,11 +925,29 @@ export default function App() {
   ) {
     const raw = await file.text();
     const backup = parseBackupPayload(raw);
+    const canImportTeams = entitlements.canUseTeams && selection.profiles;
+    const skippedTeamContent =
+      !entitlements.canUseTeams &&
+      ((selection.games &&
+        backup.games.some((game) => game.participantMode === "teams")) ||
+        (selection.profiles &&
+          (backup.teams.length > 0 || backup.teamMembers.length > 0)));
+
+    if (canImportTeams && !teamsReady) {
+      throw new Error(
+        "Loading your saved teams. Try restoring again in a moment.",
+      );
+    }
+
     const prepared = prepareBackupImport(backup, {
       importGames: selection.games,
       importProfiles: selection.profiles,
+      importTeams: canImportTeams,
+      allowTeamSessions: entitlements.canUseTeams,
       existingGames: games,
       existingProfiles: profiles,
+      existingTeams: teams,
+      existingTeamMembers: teamMembers,
     });
 
     const reconciled = prepareImportedData(
@@ -760,7 +965,9 @@ export default function App() {
       uniqueReconciledGames.length,
     );
     if (restoreCapacityState === "loading") {
-      throw new Error("Loading your saved sessions. Try restoring again in a moment.");
+      throw new Error(
+        "Loading your saved sessions. Try restoring again in a moment.",
+      );
     }
     if (restoreCapacityState === "blocked") {
       throw new Error(
@@ -769,15 +976,35 @@ export default function App() {
     }
     const importedProfiles = importProfiles(reconciled.profiles);
     const importedGames = importGames(uniqueReconciledGames);
+    const importedTeams = canImportTeams
+      ? importTeams(prepared.teams, prepared.teamMembers)
+      : 0;
 
-    return { games: importedGames, profiles: importedProfiles };
+    return {
+      games: importedGames,
+      profiles: importedProfiles,
+      teams: importedTeams,
+      skippedTeamContent,
+    };
   }
 
   async function handleDownloadBackupFile(selection: BackupSelection) {
-    const payload = createBackupPayload(games, profiles, selection);
+    if (selection.profiles && session && !teamsReady) {
+      throw new Error(
+        "Loading your saved teams. Try downloading again in a moment.",
+      );
+    }
+
+    const payload = createBackupPayload(
+      games,
+      profiles,
+      teams,
+      teamMembers,
+      selection,
+    );
     const backupJson = JSON.stringify(payload, null, 2);
     const stamp = new Date().toISOString().slice(0, 10);
-    const filename = `point-tracker-backup-${stamp}.json`;
+    const filename = `plink-backup-${stamp}.json`;
     const file = new File([backupJson], filename, {
       type: "application/json",
     });
@@ -798,6 +1025,7 @@ export default function App() {
           return {
             games: selection.games ? payload.games.length : 0,
             profiles: selection.profiles ? payload.profiles.length : 0,
+            teams: selection.profiles ? payload.teams.length : 0,
           };
         }
         throw error;
@@ -806,6 +1034,7 @@ export default function App() {
       return {
         games: selection.games ? payload.games.length : 0,
         profiles: selection.profiles ? payload.profiles.length : 0,
+        teams: selection.profiles ? payload.teams.length : 0,
       };
     }
 
@@ -822,6 +1051,7 @@ export default function App() {
     return {
       games: selection.games ? payload.games.length : 0,
       profiles: selection.profiles ? payload.profiles.length : 0,
+      teams: selection.profiles ? payload.teams.length : 0,
     };
   }
 
@@ -856,6 +1086,14 @@ export default function App() {
           transition={{ duration: reduceMotion ? 0 : 0.24, ease: "easeOut" }}
         >
           <TopBar
+            accentTone={
+              view === "game" &&
+              !!currentGame &&
+              currentGame.participantMode === "teams"
+                ? "team"
+                : "default"
+            }
+            balancedLayout={view === "history"}
             title={
               view === "history" && currentGame
                 ? "History"
@@ -872,12 +1110,8 @@ export default function App() {
             showBackButton={view !== "home" && !!currentGame}
             showActionMenu={view === "game" && !!currentGame}
             primaryActionLabel={
-              view === "home" &&
-              homeTab !== "home" &&
-              (homeTab !== "players" || !!session)
-                ? homeTab === "players"
-                  ? "New Player"
-                  : "New game"
+              view === "home" && homeTab !== "home" && homeTab !== "players"
+                ? "New game"
                 : undefined
             }
             authLabel={
@@ -921,6 +1155,11 @@ export default function App() {
               setShouldSaveGamePlayersOnSignIn(false);
               authDialogRef.current?.open();
             }}
+            onAddPlayerLabel={
+              view === "game" && currentGame?.participantMode === "teams"
+                ? "Manage teams"
+                : "Manage players"
+            }
             onAddPlayer={() => managePlayersDialogRef.current?.open()}
             onOpenSettings={
               view === "game" && currentGame
@@ -989,7 +1228,10 @@ export default function App() {
               <GameScreen
                 game={currentGame}
                 profiles={visibleProfiles}
+                teams={visibleTeams}
+                teamMembers={visibleTeamMembers}
                 isAuthenticated={canViewSavedData}
+                canUseTeams={entitlements.canUseTeams}
                 pulseById={pulseById}
                 onTriggerPulse={triggerPulse}
                 managePlayersDialogRef={managePlayersDialogRef}
@@ -1063,6 +1305,9 @@ export default function App() {
                   if (!ok) return;
                   removePlayer(currentGame.id, playerId);
                 }}
+                onUpdateProfile={(profileId, updates) => {
+                  updateProfileEverywhere(profileId, updates);
+                }}
                 onUpdatePlayer={(playerId, updates) => {
                   const player = currentGame.players.find(
                     (item) => item.id === playerId,
@@ -1083,6 +1328,41 @@ export default function App() {
                   }
                   updatePlayer(currentGame.id, playerId, updates);
                 }}
+                onCreateTeam={(name, icon, members = []) => {
+                  return addTeam(
+                    currentGame.id,
+                    name,
+                    icon,
+                    members.map((member) => ({
+                      name: member.name,
+                      avatarColor: member.avatarColor,
+                      profileId: member.id,
+                    })),
+                  );
+                }}
+                onDeleteTeam={async (teamId, teamName) => {
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Remove team",
+                    message:
+                      currentGame.participantMode === "teams"
+                        ? `Remove "${teamName}" from this game? Players in this team will also be removed from this game.`
+                        : `Remove "${teamName}" from this game? Players will stay in the game but be unassigned from that team.`,
+                    confirmText: "Remove",
+                    tone: "danger",
+                  });
+                  if (!ok) return;
+                  removeTeam(currentGame.id, teamId);
+                }}
+                onDeleteSavedTeam={async (teamId, teamName) => {
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Delete team",
+                    message: `Delete "${teamName}"? This removes the team only. Saved players will stay in your roster.`,
+                    confirmText: "Delete",
+                    tone: "danger",
+                  });
+                  if (ok) deleteSavedTeam(teamId);
+                }}
+                onOpenTeamsTab={openTeamsTabFromGame}
                 winnerStats={currentWinnerStats}
                 onReplayGame={() => {
                   if (!guardSessionCreation()) {
@@ -1112,16 +1392,25 @@ export default function App() {
               <DashboardScreen
                 games={visibleGames}
                 profiles={visibleProfiles}
+                teams={visibleTeams}
+                teamMembers={visibleTeamMembers}
+                canUseTeams={entitlements.canUseTeams}
                 isAuthenticated={canViewSavedData}
                 showLocalSessionsHint={showLocalSessionsHint}
                 pendingLocalSessionsCount={pendingLocalSessionsCount}
                 onDismissLocalSessionsHint={dismissLocalSessionsHint}
                 presetDraft={presetDraft}
                 presetDraftToken={presetDraftToken}
+                presetDraftIntent={presetDraftIntent}
+                openTeamBuilderRequestToken={openTeamBuilderRequestToken}
+                onOpenTeamBuilderRequestHandled={() =>
+                  setOpenTeamBuilderRequestToken(0)
+                }
                 onOpenAuth={() => {
                   setShouldSaveGamePlayersOnSignIn(false);
                   authDialogRef.current?.open();
                 }}
+                onOpenProFeatureAuth={openProFeatureAuthPrompt}
                 onOpenLocalImport={() => {
                   setShouldSaveGamePlayersOnSignIn(false);
                   authDialogRef.current?.openLocalImport();
@@ -1132,6 +1421,7 @@ export default function App() {
                 }}
                 activeTab={homeTab}
                 onActiveTabChange={setHomeTab}
+                onStoreNewGameDraft={handleStoreNewGameDraft}
                 onCreate={handleCreateGame}
                 onStartQuickSetup={handleStartQuickSetup}
                 onUpsertProfile={upsertProfile}
@@ -1150,7 +1440,26 @@ export default function App() {
                     confirmText: "Delete",
                     tone: "danger",
                   });
-                  if (ok) deleteProfile(profileId);
+                  if (ok) {
+                    removeProfileMemberships(profileId);
+                    deleteProfile(profileId);
+                  }
+                }}
+                onCreateTeam={(name, icon) => createTeam(name, icon)}
+                onTeamCreated={handleTeamCreatedFromDashboard}
+                onUpdateTeam={updateTeam}
+                onDeleteTeam={async (teamId) => {
+                  const team = teams.find((item) => item.id === teamId);
+                  const ok = await confirmRef.current?.confirm({
+                    title: "Delete team",
+                    message: `Delete "${team?.name ?? "this team"}"? This removes the team only. Saved players will stay in your roster.`,
+                    confirmText: "Delete",
+                    tone: "danger",
+                  });
+                  if (ok) deleteSavedTeam(teamId);
+                }}
+                onToggleTeamMember={(teamId, profileId) => {
+                  toggleTeamMember(teamId, profileId);
                 }}
                 onDuplicate={(gameId) => {
                   if (!guardSessionCreation()) {
@@ -1244,6 +1553,13 @@ export default function App() {
           onImportLocalData={handleImportLocalData}
           onImportBackupFile={handleImportBackupFile}
           onDownloadBackupFile={handleDownloadBackupFile}
+        />
+        <ProFeatureGateDialog
+          ref={proFeatureGateDialogRef}
+          onContinue={() => {
+            setShouldSaveGamePlayersOnSignIn(false);
+            authDialogRef.current?.open();
+          }}
         />
         <ConfirmDialog ref={confirmRef} />
         <AnimatePresence>

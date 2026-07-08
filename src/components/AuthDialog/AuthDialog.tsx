@@ -45,6 +45,13 @@ export type AuthDialogHandle = {
   close: () => void;
 };
 
+type DataTransferResult = {
+  games: number;
+  profiles: number;
+  teams: number;
+  skippedTeamContent?: boolean;
+};
+
 type Props = {
   session: Session | null;
   onOpenChange?: (open: boolean) => void;
@@ -64,19 +71,19 @@ type Props = {
     gameIds: string[];
     profileIds: string[];
   }) =>
-    | Promise<{ games: number; profiles: number }>
-    | { games: number; profiles: number };
+    | Promise<DataTransferResult>
+    | DataTransferResult;
   onImportBackupFile?: (
     file: File,
     selection: BackupSelection,
   ) =>
-    | Promise<{ games: number; profiles: number }>
-    | { games: number; profiles: number };
+    | Promise<DataTransferResult>
+    | DataTransferResult;
   onDownloadBackupFile?: (
     selection: BackupSelection,
   ) =>
-    | Promise<{ games: number; profiles: number }>
-    | { games: number; profiles: number };
+    | Promise<DataTransferResult>
+    | DataTransferResult;
 };
 
 export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
@@ -727,13 +734,16 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       }
     }
 
-    function formatTransferParts(result: { games: number; profiles: number }) {
+    function formatTransferParts(result: DataTransferResult) {
       return [
         result.games
           ? `${result.games} session${result.games === 1 ? "" : "s"}`
           : "",
         result.profiles
           ? `${result.profiles} player${result.profiles === 1 ? "" : "s"}`
+          : "",
+        result.teams
+          ? `${result.teams} team${result.teams === 1 ? "" : "s"}`
           : "",
       ].filter(Boolean);
     }
@@ -890,12 +900,19 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         const parts = formatTransferParts(result);
 
         if (parts.length === 0) {
-          showTransferToast("Nothing new to import from this device.");
+          showTransferToast(
+            result.skippedTeamContent
+              ? "Only team-based sessions were selected. Upgrade to Pro to import them."
+              : "Nothing new to import from this device.",
+          );
           return;
         }
 
+        const skippedTeamContentLabel = result.skippedTeamContent
+          ? " Team-based sessions were skipped because this account is on Free plan."
+          : "";
         showTransferToast(
-          `Imported ${parts.join(" and ")} to your account.`,
+          `Imported ${parts.join(" , ")} to your account.${skippedTeamContentLabel}`,
           "success",
         );
       } catch (err) {
@@ -926,13 +943,18 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
 
         if (parts.length === 0) {
           showTransferToast(
-            "No new sessions or players were found in that backup file.",
+            result.skippedTeamContent
+              ? "This backup only contains team data. Upgrade to Pro to restore it."
+              : "No new sessions, players, or teams were found in that backup file.",
           );
           return;
         }
 
+        const skippedTeamContentLabel = result.skippedTeamContent
+          ? " Team data was skipped because this account is on Free plan."
+          : "";
         showTransferToast(
-          `Imported ${parts.join(" and ")} from backup file.`,
+          `Imported ${parts.join(" and ")} from backup file.${skippedTeamContentLabel}`,
           "success",
         );
       } catch (err) {
@@ -1898,7 +1920,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               setIncludeProfiles(e.target.checked)
                             }
                           />
-                          <span>Players</span>
+                          <span>
+                            {isPro ? "Players and saved teams" : "Players"}
+                          </span>
                         </label>
                       </div>
                       <div className="authDialog__transferActions">

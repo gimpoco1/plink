@@ -1,0 +1,207 @@
+.proGateDialog {
+  width: min(520px, calc(100% - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.proGateDialog::backdrop {
+  background: rgba(4, 8, 12, 0.74);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.proGateDialog__panel {
+  overflow: hidden;
+  border: 1px solid rgba(216, 255, 79, 0.16);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top center, rgba(64, 196, 255, 0.16), transparent 32%),
+    radial-gradient(circle at top left, rgba(216, 255, 79, 0.16), transparent 38%),
+    linear-gradient(180deg, rgba(14, 19, 27, 0.98), rgba(9, 12, 18, 0.98));
+  box-shadow:
+    0 36px 120px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.proGateDialog__form {
+  position: relative;
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+}
+
+.proGateDialog__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+}
+
+.proGateDialog__hero {
+  display: grid;
+  gap: 10px;
+  padding-right: 58px;
+}
+
+.proGateDialog__eyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.proGateDialog__heroTop {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.proGateDialog__heroBadge {
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(180deg, rgba(232, 255, 126, 0.96), rgba(216, 255, 79, 0.92)),
+    rgba(255, 255, 255, 0.04);
+  color: #18200f;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 16px 28px rgba(216, 255, 79, 0.18);
+}
+
+.proGateDialog__heroTag {
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(64, 196, 255, 0.14);
+  border: 1px solid rgba(64, 196, 255, 0.22);
+  color: #9ddfff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.proGateDialog__title {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(27px, 4vw, 34px);
+  font-weight: 900;
+  line-height: 1.03;
+  letter-spacing: -0.05em;
+  max-width: 10ch;
+}
+
+.proGateDialog__copy {
+  margin: 0;
+  color: rgba(240, 245, 250, 0.8);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 34ch;
+}
+
+.proGateDialog__includes {
+  display: grid;
+  gap: 12px;
+}
+
+.proGateDialog__includesTitle {
+  color: rgba(240, 245, 250, 0.74);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.proGateDialog__featureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.proGateDialog__featureList li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.proGateDialog__featureList svg {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.proGateDialog__note {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(216, 255, 79, 0.12);
+  background: rgba(216, 255, 79, 0.06);
+  color: rgba(245, 250, 235, 0.88);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.proGateDialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.proGateDialog__secondary {
+  min-width: 124px;
+}
+
+.proGateDialog__primary {
+  min-width: 194px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.proGateDialog__primary svg {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 560px) {
+  .proGateDialog__form {
+    padding: 18px;
+  }
+
+  .proGateDialog__hero {
+    padding-right: 52px;
+  }
+
+  .proGateDialog__title {
+    max-width: none;
+  }
+
+  .proGateDialog__actions {
+    flex-direction: column-reverse;
+  }
+
+  .proGateDialog__secondary,
+  .proGateDialog__primary {
+    width: 100%;
+    min-width: 0;
+  }
+}

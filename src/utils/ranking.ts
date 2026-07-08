@@ -1,4 +1,5 @@
 import type { Game, Player } from "../types";
+import { getGameParticipants } from "./gameParticipants";
 import { hasGameEnded, shouldSortLowToHigh } from "./scoring";
 
 export function sortPlayers(
@@ -18,34 +19,80 @@ export function findWinner(
   players: Player[],
   game: Pick<
     Game,
+    | "participantMode"
+    | "teams"
     | "scoreDirection"
     | "targetScore"
     | "winCondition"
     | "winByTwo"
     | "manualEndOnly"
+    | "completionMode"
     | "endedAt"
   >,
 ): Player | null {
   if (!players.length || !hasGameEnded(players, game)) return null;
-  const sorted = [...players].sort((a, b) =>
+  if (game.completionMode === "draw" || game.completionMode === "no_winner") {
+    return null;
+  }
+  const sorted = getGameParticipants({
+    participantMode: game.participantMode,
+    players,
+    teams: game.teams ?? [],
+  }).sort((a, b) =>
     sortPlayers(a, b, shouldSortLowToHigh(game)),
   );
   const winner = sorted[0] ?? null;
   if (!winner) return null;
   const tiedWinner = sorted[1];
   if (tiedWinner && tiedWinner.score === winner.score) return null;
-  return winner;
+  return winner.members[0] ?? null;
+}
+
+export function isGameDraw(
+  game: Pick<
+    Game,
+    | "players"
+    | "participantMode"
+    | "teams"
+    | "scoreDirection"
+    | "targetScore"
+    | "winCondition"
+    | "winByTwo"
+    | "manualEndOnly"
+    | "completionMode"
+    | "endedAt"
+  >,
+) {
+  if (!hasGameEnded(game.players, game)) return false;
+  if (game.completionMode === "draw") return true;
+  if (game.completionMode === "no_winner") return false;
+
+  const winner = findWinner(game.players, game);
+  if (winner) return false;
+
+  const sorted = getGameParticipants({
+    participantMode: game.participantMode,
+    players: game.players,
+    teams: game.teams ?? [],
+  }).sort((a, b) => sortPlayers(a, b, shouldSortLowToHigh(game)));
+
+  const leader = sorted[0];
+  const runnerUp = sorted[1];
+  return Boolean(leader && runnerUp && leader.score === runnerUp.score);
 }
 
 export function isGameComplete(
   game: Pick<
     Game,
     | "players"
+    | "participantMode"
+    | "teams"
     | "scoreDirection"
     | "targetScore"
     | "winCondition"
     | "winByTwo"
     | "manualEndOnly"
+    | "completionMode"
     | "endedAt"
   >,
 ) {

@@ -6,29 +6,75 @@ import {
   type TouchEvent,
   type MouseEvent,
 } from "react";
+import { DEFAULT_TEAM_ICON } from "../constants";
 import type { Game, ScoreHistoryEntry } from "../types";
+import { getGameParticipants } from "../utils/gameParticipants";
 import { avatarStyleFor } from "../utils/color";
 import { capitalizeFirst, getInitials } from "../utils/text";
+import {
+  Clock3,
+  Dumbbell,
+  Flag,
+  Flame,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import "./GameHistoryScreen.css";
 
 type Props = {
   game: Game;
 };
 
+type HistorySubject = {
+  id: string;
+  name: string;
+  avatarColor: string;
+  icon?: string;
+};
+
+type HistoryAction = {
+  key: string;
+  subjectId: string;
+  subjectName: string;
+  avatarColor: string;
+  icon?: string;
+  createdAt: number;
+  scoreBefore: number;
+  scoreAfter: number;
+  delta: number;
+  entries: ScoreHistoryEntry[];
+};
+
 type HistoryTurn = {
   key: string;
   turnNumber: number;
-  playerId: string;
-  playerName: string;
+  subjectId: string;
+  subjectName: string;
   avatarColor: string;
+  icon?: string;
   createdAt: number;
   scoreBefore: number;
   scoreAfter: number;
   totalDelta: number;
-  entries: ScoreHistoryEntry[];
+  actions: HistoryAction[];
 };
 
-const TURN_GROUP_WINDOW_MS = 15_000;
+const ACTION_MERGE_WINDOW_MS = 15_000;
+const TURN_BOUNDARY_WINDOW_MS = 60_000;
+
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
 
 function getDeltaLabel(delta: number) {
   return delta > 0 ? `+${delta}` : String(delta);
@@ -81,11 +127,13 @@ export function GameHistoryScreen({ game }: Props) {
       new Intl.DateTimeFormat(undefined, {
         hour: "2-digit",
         minute: "2-digit",
+        second: "2-digit",
       }),
     [],
   );
   const dateFormat = useMemo(
-    () => new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }),
+    () =>
+      new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }),
     [],
   );
   const dateWithYearFormat = useMemo(
@@ -99,67 +147,136 @@ export function GameHistoryScreen({ game }: Props) {
   );
 
   const entries = game.scoreHistory ?? [];
-  const playerOptions = useMemo(() => {
-    const players = new Map<
-      string,
-      { id: string; name: string; avatarColor: string }
-    >();
+  const isTeamsGame = game.participantMode === "teams";
+  const subjectsByPlayerId = useMemo(() => {
+    const map = new Map<string, HistorySubject>();
 
-    for (const entry of entries) {
-      if (!players.has(entry.playerId)) {
-        players.set(entry.playerId, {
-          id: entry.playerId,
-          name: entry.playerName,
-          avatarColor: entry.avatarColor,
-        });
+    for (const participant of getGameParticipants(game)) {
+      const subject: HistorySubject = {
+        id: participant.id,
+        name: participant.name,
+        avatarColor: participant.avatarColor,
+        icon: participant.icon,
+      };
+
+      for (const member of participant.members) {
+        map.set(member.id, subject);
       }
     }
 
-    return Array.from(players.values());
-  }, [entries]);
-  const showPlayerFilter = playerOptions.length > 1;
-  const hasSelectedPlayer = playerOptions.some(
-    (player) => player.id === selectedPlayerId,
-  );
-  const visibleEntries =
-    selectedPlayerId === "all" || !hasSelectedPlayer
-      ? entries
-      : entries.filter((entry) => entry.playerId === selectedPlayerId);
-  const visibleTurns = useMemo(() => {
-    const chronologicalEntries = [...visibleEntries].reverse();
-    const turns: HistoryTurn[] = [];
+    return map;
+  }, [game]);
+  const historyActions = useMemo(() => {
+    const actions: HistoryAction[] = [];
+    const chronologicalEntries = [...entries].reverse();
 
     for (const entry of chronologicalEntries) {
-      const currentTurn = turns[turns.length - 1];
-      const shouldAppendToTurn =
-        currentTurn &&
-        currentTurn.playerId === entry.playerId &&
-        entry.createdAt - currentTurn.createdAt <= TURN_GROUP_WINDOW_MS;
+      const subject = subjectsByPlayerId.get(entry.playerId) ?? {
+        id: entry.playerId,
+        name: entry.playerName,
+        avatarColor: entry.avatarColor,
+      };
+      const currentAction = actions[actions.length - 1];
+      const shouldMergeIntoAction =
+        currentAction &&
+        currentAction.subjectId === subject.id &&
+        currentAction.createdAt === entry.createdAt &&
+        currentAction.scoreBefore === entry.scoreBefore &&
+        currentAction.scoreAfter === entry.scoreAfter &&
+        currentAction.delta === entry.delta;
 
-      if (shouldAppendToTurn) {
-        currentTurn.entries.push(entry);
-        currentTurn.createdAt = entry.createdAt;
-        currentTurn.scoreAfter = entry.scoreAfter;
-        currentTurn.totalDelta += entry.delta;
+      if (shouldMergeIntoAction) {
+        currentAction.entries.push(entry);
         continue;
       }
 
-      turns.push({
+      actions.push({
         key: entry.id,
-        turnNumber: turns.length + 1,
-        playerId: entry.playerId,
-        playerName: entry.playerName,
-        avatarColor: entry.avatarColor,
+        subjectId: subject.id,
+        subjectName: subject.name,
+        avatarColor: subject.avatarColor,
+        icon: subject.icon,
         createdAt: entry.createdAt,
         scoreBefore: entry.scoreBefore,
         scoreAfter: entry.scoreAfter,
-        totalDelta: entry.delta,
+        delta: entry.delta,
         entries: [entry],
       });
     }
 
+    return actions;
+  }, [entries, subjectsByPlayerId]);
+  const playerOptions = useMemo(() => {
+    const subjects = new Map<string, HistorySubject>();
+
+    for (const action of historyActions) {
+      if (!subjects.has(action.subjectId)) {
+        subjects.set(action.subjectId, {
+          id: action.subjectId,
+          name: action.subjectName,
+          avatarColor: action.avatarColor,
+          icon: action.icon,
+        });
+      }
+    }
+
+    return Array.from(subjects.values());
+  }, [historyActions]);
+  const showPlayerFilter = playerOptions.length > 1;
+  const hasSelectedPlayer = playerOptions.some(
+    (player) => player.id === selectedPlayerId,
+  );
+  const visibleActions =
+    selectedPlayerId === "all" || !hasSelectedPlayer
+      ? historyActions
+      : historyActions.filter(
+          (action) => action.subjectId === selectedPlayerId,
+        );
+  const visibleTurns = useMemo(() => {
+    const turns: HistoryTurn[] = [];
+    let currentTurnNumber = 0;
+    let previousActionAt: number | null = null;
+
+    for (const action of visibleActions) {
+      if (
+        previousActionAt === null ||
+        action.createdAt - previousActionAt >= TURN_BOUNDARY_WINDOW_MS
+      ) {
+        currentTurnNumber += 1;
+      }
+      previousActionAt = action.createdAt;
+
+      const currentTurn = turns[turns.length - 1];
+      const shouldAppendToTurn =
+        currentTurn &&
+        currentTurn.subjectId === action.subjectId &&
+        action.createdAt - currentTurn.createdAt <= ACTION_MERGE_WINDOW_MS;
+
+      if (shouldAppendToTurn) {
+        currentTurn.actions.push(action);
+        currentTurn.createdAt = action.createdAt;
+        currentTurn.scoreAfter = action.scoreAfter;
+        currentTurn.totalDelta += action.delta;
+        continue;
+      }
+
+      turns.push({
+        key: action.key,
+        turnNumber: currentTurnNumber,
+        subjectId: action.subjectId,
+        subjectName: action.subjectName,
+        avatarColor: action.avatarColor,
+        icon: action.icon,
+        createdAt: action.createdAt,
+        scoreBefore: action.scoreBefore,
+        scoreAfter: action.scoreAfter,
+        totalDelta: action.delta,
+        actions: [action],
+      });
+    }
+
     return turns.reverse();
-  }, [visibleEntries]);
+  }, [visibleActions]);
 
   const groupedEntries = useMemo(() => {
     const groups: Array<{
@@ -185,7 +302,6 @@ export function GameHistoryScreen({ game }: Props) {
 
     return groups;
   }, [dateFormat, dateWithYearFormat, visibleTurns]);
-
   function handleFilterPointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
 
@@ -229,13 +345,17 @@ export function GameHistoryScreen({ game }: Props) {
   }
 
   return (
-    <main className="content historyContent">
+    <main
+      className={`content historyContent${
+        isTeamsGame ? " historyContent--teams" : ""
+      }`}
+    >
       {entries.length > 0 ? (
         <section className="historyList" aria-label="Game history">
           {showPlayerFilter ? (
             <div
               className="historyFilter"
-              aria-label="Filter history by player"
+              aria-label={`Filter history by ${isTeamsGame ? "team" : "player"}`}
               onClickCapture={handleFilterClickCapture}
               onPointerDown={handleFilterPointerDown}
               onPointerMove={handleFilterPointerMove}
@@ -266,11 +386,20 @@ export function GameHistoryScreen({ game }: Props) {
                   type="button"
                   onClick={() => setSelectedPlayerId(player.id)}
                 >
-                  <span
-                    className="historyFilter__swatch"
-                    style={avatarStyleFor(player.avatarColor)}
-                    aria-hidden="true"
-                  />
+                  {player.icon ? (
+                    <span
+                      className="historyFilter__teamIcon"
+                      aria-hidden="true"
+                    >
+                      <TeamIconGlyph icon={player.icon} size={13} />
+                    </span>
+                  ) : (
+                    <span
+                      className="historyFilter__swatch"
+                      style={avatarStyleFor(player.avatarColor)}
+                      aria-hidden="true"
+                    />
+                  )}
                   {capitalizeFirst(player.name)}
                 </button>
               ))}
@@ -285,6 +414,7 @@ export function GameHistoryScreen({ game }: Props) {
                     key={turn.key}
                     turn={turn}
                     timeLabel={timeFormat.format(new Date(turn.createdAt))}
+                    isTeamsGame={isTeamsGame}
                   />
                 ))}
               </div>
@@ -304,11 +434,13 @@ export function GameHistoryScreen({ game }: Props) {
 function HistoryTurnRow({
   turn,
   timeLabel,
+  isTeamsGame,
 }: {
   turn: HistoryTurn;
   timeLabel: string;
+  isTeamsGame: boolean;
 }) {
-  const displayName = capitalizeFirst(turn.playerName);
+  const displayName = capitalizeFirst(turn.subjectName);
   const deltaClass =
     turn.totalDelta >= 0
       ? "historyDelta historyDelta--pos"
@@ -316,36 +448,36 @@ function HistoryTurnRow({
 
   return (
     <article className="historyRow">
-      <div
-        className="historyAvatar"
-        style={avatarStyleFor(turn.avatarColor)}
-        aria-hidden="true"
-      >
-        {getInitials(turn.playerName)}
-      </div>
+      {turn.icon ? (
+        <div className="historyAvatar historyAvatar--team" aria-hidden="true">
+          <TeamIconGlyph icon={turn.icon} size={16} />
+        </div>
+      ) : (
+        <div
+          className="historyAvatar"
+          style={avatarStyleFor(turn.avatarColor)}
+          aria-hidden="true"
+        >
+          {getInitials(turn.subjectName)}
+        </div>
+      )}
       <div className="historyInfo">
         <div className="historyInfo__top">
           <div className="historyInfo__name">{displayName}</div>
           <div className={deltaClass}>{getDeltaLabel(turn.totalDelta)}</div>
         </div>
         <div className="historyInfo__meta">
-          <span>Turn {turn.turnNumber}</span>
-          <span>{timeLabel}</span>
+          <span className="historyTurnLabel">
+            Turn <strong>{turn.turnNumber}</strong>
+          </span>
+          <span
+            className="historyTimeChip"
+            aria-label={`Scored at ${timeLabel}`}
+          >
+            <Clock3 size={11} strokeWidth={2.5} aria-hidden="true" />
+            {timeLabel}
+          </span>
         </div>
-        {turn.entries.length > 1 ? (
-          <div className="historyTurnSteps" aria-label="Score changes in this turn">
-            {turn.entries.map((entry) => (
-              <span
-                key={entry.id}
-                className={`historyTurnStep${
-                  entry.delta >= 0 ? " historyTurnStep--pos" : " historyTurnStep--neg"
-                }`}
-              >
-                {getDeltaLabel(entry.delta)}
-              </span>
-            ))}
-          </div>
-        ) : null}
       </div>
       <div className="historyScore">
         <span>{turn.scoreBefore}</span>
@@ -362,4 +494,12 @@ function HistoryTurnRow({
       </div>
     </article>
   );
+}
+
+function TeamIconGlyph({ icon, size }: { icon?: string; size: number }) {
+  const Icon =
+    TEAM_ICON_COMPONENTS[
+      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+    ] ?? Dumbbell;
+  return <Icon size={size} strokeWidth={2.2} aria-hidden="true" />;
 }
