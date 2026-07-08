@@ -1,4 +1,4 @@
-import { useEffect, useState, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import type { Game, GameTeam, HomeTab, PlayerProfile, TeamMember } from "../types";
 import type { NewGameInput } from "../components/NewGameCard/NewGameCard";
 import { HomeTabBar } from "../components/HomeTabBar/HomeTabBar";
@@ -74,9 +74,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
       return "players";
     }
   });
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
-    null,
-  );
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     try {
@@ -149,21 +147,24 @@ export function DashboardScreen(props: DashboardScreenProps) {
     const x = event.touches[0]?.clientX ?? 0;
     const y = event.touches[0]?.clientY ?? 0;
     const threshold = Math.min(92, Math.max(56, window.innerWidth * 0.2));
-    setTouchStart({ x, y });
-    if (x > threshold && x < window.innerWidth - threshold) {
-      setTouchStart(null);
-    }
+    touchStartRef.current =
+      x > threshold && x < window.innerWidth - threshold ? null : { x, y };
   }
 
   function moveTouch(event: TouchEvent<HTMLElement>) {
+    const touchStart = touchStartRef.current;
     if (!touchStart) return;
     const x = event.touches[0]?.clientX ?? touchStart.x;
     const y = event.touches[0]?.clientY ?? touchStart.y;
-    if (Math.abs(x - touchStart.x) > Math.abs(y - touchStart.y))
+    const deltaX = Math.abs(x - touchStart.x);
+    const deltaY = Math.abs(y - touchStart.y);
+    if (deltaX > 14 && deltaX > deltaY) {
       event.preventDefault();
+    }
   }
 
   function endTouch(event: TouchEvent<HTMLElement>) {
+    const touchStart = touchStartRef.current;
     if (!touchStart) return resetTouch();
     const deltaX = (event.changedTouches[0]?.clientX ?? 0) - touchStart.x;
     const deltaY = (event.changedTouches[0]?.clientY ?? 0) - touchStart.y;
@@ -181,7 +182,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
   }
 
   function resetTouch() {
-    setTouchStart(null);
+    touchStartRef.current = null;
   }
 
   function renderActiveTab() {
