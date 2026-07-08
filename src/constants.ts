@@ -1,16 +1,16 @@
-export const STORAGE_KEY = "point-tracker:v1";
-export const PROFILES_STORAGE_KEY = "point-tracker:profiles:v1";
-export const GAMES_STORAGE_KEY = "point-tracker:games:v1";
-export const CURRENT_GAME_ID_KEY = "point-tracker:currentGameId:v1";
-export const GUEST_GAMES_STORAGE_KEY = "point-tracker:guest:games:v1";
-export const GUEST_CURRENT_GAME_ID_KEY = "point-tracker:guest:currentGameId:v1";
-export const APP_VIEW_STORAGE_KEY = "point-tracker:view:v1";
-export const HOME_TAB_STORAGE_KEY = "point-tracker:homeTab:v1";
-export const PLAYERS_VIEW_STORAGE_KEY = "point-tracker:playersView:v1";
-export const HOME_NEW_GAME_OPEN_KEY = "point-tracker:homeNewGameOpen:v1";
+export const STORAGE_KEY = "plink:v1";
+export const PROFILES_STORAGE_KEY = "plink:profiles:v1";
+export const GAMES_STORAGE_KEY = "plink:games:v1";
+export const CURRENT_GAME_ID_KEY = "plink:currentGameId:v1";
+export const GUEST_GAMES_STORAGE_KEY = "plink:guest:games:v1";
+export const GUEST_CURRENT_GAME_ID_KEY = "plink:guest:currentGameId:v1";
+export const APP_VIEW_STORAGE_KEY = "plink:view:v1";
+export const HOME_TAB_STORAGE_KEY = "plink:homeTab:v1";
+export const PLAYERS_VIEW_STORAGE_KEY = "plink:playersView:v1";
+export const HOME_NEW_GAME_OPEN_KEY = "plink:homeNewGameOpen:v1";
 export const LOCAL_SESSIONS_HINT_DISMISSED_KEY =
-  "point-tracker:localSessionsHintDismissed:v1";
-export const GAME_TIMER_STORAGE_KEY = "point-tracker:timer:v1";
+  "plink:localSessionsHintDismissed:v1";
+export const GAME_TIMER_STORAGE_KEY = "plink:timer:v1";
 export const QUICK_DELTAS = [-2, -1, 1, 2] as const;
 export const MAX_ABS_SCORE = 999999;
 export const DEFAULT_TEAM_ICON = "dumbbell";
@@ -33,5 +33,5 @@ export const AVATAR_COLORS = [
   { id: "lime", label: "Lime", value: "#9fbe38" },
   { id: "coral", label: "Coral", value: "#f36f85" },
   { id: "violet", label: "Violet", value: "#9276e8" },
-  { id: "stone", label: "Stone", value: "#aba39b" }
+  { id: "stone", label: "Stone", value: "#aba39b" },
 ] as const;

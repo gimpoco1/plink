@@ -456,7 +456,9 @@ export default function App() {
     );
     const leader = participants[0] ?? null;
     const runnerUp = participants[1] ?? null;
-    const isDraw = Boolean(leader && runnerUp && leader.score === runnerUp.score);
+    const isDraw = Boolean(
+      leader && runnerUp && leader.score === runnerUp.score,
+    );
     const canDeclareWinner = Boolean(
       leader && (!runnerUp || leader.score !== runnerUp.score),
     );
@@ -799,7 +801,6 @@ export default function App() {
     ) {
       returnToGameSource();
     }
-
   }
 
   function prepareImportedData(
@@ -933,7 +934,9 @@ export default function App() {
           (backup.teams.length > 0 || backup.teamMembers.length > 0)));
 
     if (canImportTeams && !teamsReady) {
-      throw new Error("Loading your saved teams. Try restoring again in a moment.");
+      throw new Error(
+        "Loading your saved teams. Try restoring again in a moment.",
+      );
     }
 
     const prepared = prepareBackupImport(backup, {
@@ -987,7 +990,9 @@ export default function App() {
 
   async function handleDownloadBackupFile(selection: BackupSelection) {
     if (selection.profiles && session && !teamsReady) {
-      throw new Error("Loading your saved teams. Try downloading again in a moment.");
+      throw new Error(
+        "Loading your saved teams. Try downloading again in a moment.",
+      );
     }
 
     const payload = createBackupPayload(
@@ -999,7 +1004,7 @@ export default function App() {
     );
     const backupJson = JSON.stringify(payload, null, 2);
     const stamp = new Date().toISOString().slice(0, 10);
-    const filename = `point-tracker-backup-${stamp}.json`;
+    const filename = `plink-backup-${stamp}.json`;
     const file = new File([backupJson], filename, {
       type: "application/json",
     });
