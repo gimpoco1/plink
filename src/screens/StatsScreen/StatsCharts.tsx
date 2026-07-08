@@ -61,6 +61,19 @@ type StatsChartsProps = {
   onUnlock?: () => void;
 };
 
+const chartInteractionProps = {
+  accessibilityLayer: false,
+  tabIndex: -1,
+} as const;
+
+function releaseChartFocus() {
+  requestAnimationFrame(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  });
+}
+
 export function StatsCharts({
   activeKind,
   primaryName,
@@ -105,8 +118,10 @@ export function StatsCharts({
             />
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart
+                {...chartInteractionProps}
                 data={winsComparisonTrend}
                 margin={{ top: 6, right: 4, bottom: 0, left: -10 }}
+                onTouchEnd={releaseChartFocus}
               >
                 <defs>
                   <linearGradient id="statsPrimaryFill" x1="0" x2="0" y1="0" y2="1">
@@ -136,6 +151,7 @@ export function StatsCharts({
                   tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 11 }}
                 />
                 <Tooltip
+                  cursor={false}
                   content={
                     <CompareChartTooltip
                       primaryLabel={primaryName}
@@ -189,8 +205,10 @@ export function StatsCharts({
             />
             <ResponsiveContainer width="100%" height={190}>
               <RechartsLineChart
+                {...chartInteractionProps}
                 data={rateComparisonTrend}
                 margin={{ top: 6, right: 4, bottom: 0, left: -2 }}
+                onTouchEnd={releaseChartFocus}
               >
                 <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis
@@ -215,6 +233,7 @@ export function StatsCharts({
                   tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 11 }}
                 />
                 <Tooltip
+                  cursor={false}
                   content={
                     <CompareChartTooltip
                       primaryLabel={primaryName}
@@ -263,8 +282,10 @@ export function StatsCharts({
             ) : null}
             <ResponsiveContainer width="100%" height={170}>
               <BarChart
+                {...chartInteractionProps}
                 data={outcomeBreakdown}
                 margin={{ top: 12, right: 4, bottom: 0, left: 0 }}
+                onTouchEnd={releaseChartFocus}
               >
                 <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis
@@ -334,9 +355,11 @@ export function StatsCharts({
             ) : null}
             <ResponsiveContainer width="100%" height={170}>
               <BarChart
+                {...chartInteractionProps}
                 data={gameWinRateBreakdown}
                 layout="vertical"
                 margin={{ top: 4, right: 10, bottom: 0, left: 0 }}
+                onTouchEnd={releaseChartFocus}
               >
                 <CartesianGrid stroke="rgba(255,255,255,0.05)" horizontal={false} />
                 <XAxis
