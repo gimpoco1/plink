@@ -98,6 +98,7 @@ export default function App() {
     deleteTeam: deleteSavedTeam,
     toggleTeamMember,
     removeProfileMemberships,
+    importTeams,
     remoteReady: teamsReady,
     syncNotice: teamSyncNotice,
   } = useTeams(session);
@@ -875,16 +876,23 @@ export default function App() {
     return { games, profiles: profilesToImport };
   }
 
+  function filterImportableGames(incomingGames: Game[]) {
+    if (entitlements.canUseTeams) return incomingGames;
+    return incomingGames.filter((game) => game.participantMode !== "teams");
+  }
+
   async function handleImportLocalData(selection: {
     gameIds: string[];
     profileIds: string[];
   }) {
-    const localGames = localGuestGames.filter((game) =>
+    const selectedLocalGames = localGuestGames.filter((game) =>
       selection.gameIds.includes(game.id),
     );
     const localProfiles = localGuestProfiles.filter((profile) =>
       selection.profileIds.includes(profile.id),
     );
+    const localGames = filterImportableGames(selectedLocalGames);
+    const skippedTeamContent = selectedLocalGames.length !== localGames.length;
 
     const prepared = prepareImportedData(localGames, localProfiles);
     const importCapacityState = getSessionCapacityState(prepared.games.length);
@@ -902,7 +910,12 @@ export default function App() {
     const importedGames = importGames(prepared.games);
 
     setLocalDataVersion((value) => value + 1);
-    return { games: importedGames, profiles: importedProfiles };
+    return {
+      games: importedGames,
+      profiles: importedProfiles,
+      teams: 0,
+      skippedTeamContent,
+    };
   }
 
   async function handleImportBackupFile(
@@ -911,11 +924,27 @@ export default function App() {
   ) {
     const raw = await file.text();
     const backup = parseBackupPayload(raw);
+    const canImportTeams = entitlements.canUseTeams && selection.profiles;
+    const skippedTeamContent =
+      !entitlements.canUseTeams &&
+      ((selection.games &&
+        backup.games.some((game) => game.participantMode === "teams")) ||
+        (selection.profiles &&
+          (backup.teams.length > 0 || backup.teamMembers.length > 0)));
+
+    if (canImportTeams && !teamsReady) {
+      throw new Error("Loading your saved teams. Try restoring again in a moment.");
+    }
+
     const prepared = prepareBackupImport(backup, {
       importGames: selection.games,
       importProfiles: selection.profiles,
+      importTeams: canImportTeams,
+      allowTeamSessions: entitlements.canUseTeams,
       existingGames: games,
       existingProfiles: profiles,
+      existingTeams: teams,
+      existingTeamMembers: teamMembers,
     });
 
     const reconciled = prepareImportedData(
@@ -944,12 +973,30 @@ export default function App() {
     }
     const importedProfiles = importProfiles(reconciled.profiles);
     const importedGames = importGames(uniqueReconciledGames);
+    const importedTeams = canImportTeams
+      ? importTeams(prepared.teams, prepared.teamMembers)
+      : 0;
 
-    return { games: importedGames, profiles: importedProfiles };
+    return {
+      games: importedGames,
+      profiles: importedProfiles,
+      teams: importedTeams,
+      skippedTeamContent,
+    };
   }
 
   async function handleDownloadBackupFile(selection: BackupSelection) {
-    const payload = createBackupPayload(games, profiles, selection);
+    if (selection.profiles && session && !teamsReady) {
+      throw new Error("Loading your saved teams. Try downloading again in a moment.");
+    }
+
+    const payload = createBackupPayload(
+      games,
+      profiles,
+      teams,
+      teamMembers,
+      selection,
+    );
     const backupJson = JSON.stringify(payload, null, 2);
     const stamp = new Date().toISOString().slice(0, 10);
     const filename = `point-tracker-backup-${stamp}.json`;
@@ -973,6 +1020,7 @@ export default function App() {
           return {
             games: selection.games ? payload.games.length : 0,
             profiles: selection.profiles ? payload.profiles.length : 0,
+            teams: selection.profiles ? payload.teams.length : 0,
           };
         }
         throw error;
@@ -981,6 +1029,7 @@ export default function App() {
       return {
         games: selection.games ? payload.games.length : 0,
         profiles: selection.profiles ? payload.profiles.length : 0,
+        teams: selection.profiles ? payload.teams.length : 0,
       };
     }
 
@@ -997,6 +1046,7 @@ export default function App() {
     return {
       games: selection.games ? payload.games.length : 0,
       profiles: selection.profiles ? payload.profiles.length : 0,
+      teams: selection.profiles ? payload.teams.length : 0,
     };
   }
 

@@ -45,6 +45,24 @@ function dedupeTeamMembers(members: TeamMember[]) {
   return [...unique.values()];
 }
 
+function mergeTeamsById(baseTeams: GameTeam[], incomingTeams: GameTeam[]) {
+  const merged = new Map(baseTeams.map((team) => [team.id, team]));
+
+  for (const incoming of incomingTeams) {
+    const existing = merged.get(incoming.id);
+    const existingUpdatedAt = existing?.updatedAt ?? existing?.createdAt ?? 0;
+    const incomingUpdatedAt = incoming.updatedAt ?? incoming.createdAt;
+    if (!existing || incomingUpdatedAt >= existingUpdatedAt) {
+      merged.set(incoming.id, incoming);
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => {
+    if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export function useTeams(session: Session | null) {
   const userId = session?.user.id ?? null;
   const [teams, setTeams] = useState<GameTeam[]>([]);
@@ -381,6 +399,71 @@ export function useTeams(session: Session | null) {
     );
   }
 
+  function importTeams(
+    incomingTeams: GameTeam[],
+    incomingTeamMembers: TeamMember[],
+  ) {
+    if (!canPersistTeams) {
+      setSyncNotice({
+        message: "Teams are still loading. Try again in a moment.",
+        tone: "error",
+      });
+      return 0;
+    }
+
+    const existingTeamsById = new Map(teams.map((team) => [team.id, team]));
+    const existingTeamMemberByKey = new Map(
+      teamMembers.map((member) => [
+        `${member.teamId}:${member.profileId}`,
+        member,
+      ]),
+    );
+    const changedTeamIds = new Set<string>();
+
+    for (const incomingTeam of incomingTeams) {
+      const existingTeam = existingTeamsById.get(incomingTeam.id);
+      if (!existingTeam) {
+        changedTeamIds.add(incomingTeam.id);
+        continue;
+      }
+      const existingUpdatedAt =
+        existingTeam.updatedAt ?? existingTeam.createdAt;
+      const incomingUpdatedAt = incomingTeam.updatedAt ?? incomingTeam.createdAt;
+      if (
+        incomingUpdatedAt > existingUpdatedAt ||
+        incomingTeam.name !== existingTeam.name ||
+        incomingTeam.icon !== existingTeam.icon
+      ) {
+        changedTeamIds.add(incomingTeam.id);
+      }
+    }
+
+    const dedupedIncomingMembers = dedupeTeamMembers(incomingTeamMembers);
+    for (const incomingMember of dedupedIncomingMembers) {
+      const key = `${incomingMember.teamId}:${incomingMember.profileId}`;
+      const existingMember = existingTeamMemberByKey.get(key);
+      if (
+        !existingMember ||
+        incomingMember.createdAt < existingMember.createdAt
+      ) {
+        changedTeamIds.add(incomingMember.teamId);
+      }
+    }
+
+    markLocalChange();
+    const mergedTeams = mergeTeamsById(teams, incomingTeams);
+    const validTeamIds = new Set(mergedTeams.map((team) => team.id));
+    const mergedTeamMembers = dedupeTeamMembers([
+      ...teamMembers,
+      ...dedupedIncomingMembers,
+    ]).filter((member) => validTeamIds.has(member.teamId));
+
+    setTeams(mergedTeams);
+    setTeamMembers(mergedTeamMembers);
+
+    return changedTeamIds.size;
+  }
+
   return {
     teams,
     teamMembers,
@@ -390,6 +473,7 @@ export function useTeams(session: Session | null) {
     deleteTeam,
     toggleTeamMember,
     removeProfileMemberships,
+    importTeams,
     remoteReady,
     syncNotice,
   };
