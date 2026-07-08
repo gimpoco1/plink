@@ -36,7 +36,7 @@ export function SessionsScreen({
   onDelete,
 }: SessionsScreenProps) {
   const { isLoading, isPro, maxSessions } = useEntitlementsContext();
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("active");
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
   const remainingSessions =
     maxSessions === null ? null : Math.max(0, maxSessions - games.length);

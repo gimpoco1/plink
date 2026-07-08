@@ -23,6 +23,14 @@ function getSyncErrorMessage(error: unknown) {
   return "Unknown sync error";
 }
 
+function compareProfiles(left: PlayerProfile, right: PlayerProfile) {
+  if (Boolean(left.isAccountPlayer) !== Boolean(right.isAccountPlayer)) {
+    return left.isAccountPlayer ? -1 : 1;
+  }
+  if (left.createdAt !== right.createdAt) return left.createdAt - right.createdAt;
+  return left.name.localeCompare(right.name);
+}
+
 function mergeProfilesById(
   baseProfiles: PlayerProfile[],
   incomingProfiles: PlayerProfile[],
@@ -36,10 +44,7 @@ function mergeProfilesById(
     }
   }
 
-  return Array.from(merged.values()).sort((a, b) => {
-    if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
-    return a.name.localeCompare(b.name);
-  });
+  return Array.from(merged.values()).sort(compareProfiles);
 }
 
 function normalizeAccountPlayers(
@@ -280,10 +285,7 @@ export function useProfiles(session: Session | null) {
   }, [profiles]);
 
   const sortedProfiles = useMemo(() => {
-    return [...profiles].sort((a, b) => {
-      if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
-      return a.name.localeCompare(b.name);
-    });
+    return [...profiles].sort(compareProfiles);
   }, [profiles]);
 
   function upsertProfile(
