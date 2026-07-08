@@ -504,7 +504,9 @@ export function GameScreen({
         />
       ) : null}
 
-      <GameDiceTray accentTone={isTeamGame ? "team" : "default"} />
+      {game.diceEnabled ? (
+        <GameDiceTray accentTone={isTeamGame ? "team" : "default"} />
+      ) : null}
 
       <ManagePlayersDialog
         ref={managePlayersDialogRef}

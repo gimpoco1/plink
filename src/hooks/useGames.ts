@@ -40,6 +40,7 @@ type CreateGameInput = {
   winByTwo?: boolean;
   manualEndOnly?: boolean;
   timerEnabled?: boolean;
+  diceEnabled?: boolean;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
   initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
@@ -64,6 +65,7 @@ type UpdateGameSettingsInput = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  diceEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
 };
@@ -413,6 +415,7 @@ export function useGames(session: Session | null, authLoading = false) {
         ? input.winCondition
         : "reach_target";
     const timerEnabled = input.timerEnabled === true;
+    const diceEnabled = input.diceEnabled === true;
     const timerMode =
       input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
     const timerSeconds =
@@ -483,6 +486,7 @@ export function useGames(session: Session | null, authLoading = false) {
       winByTwo: input.winByTwo === true,
       manualEndOnly,
       timerEnabled,
+      diceEnabled,
       timerMode,
       timerSeconds,
       teams,
@@ -863,6 +867,7 @@ export function useGames(session: Session | null, authLoading = false) {
         winByTwo: input.winByTwo,
         manualEndOnly: input.manualEndOnly,
         timerEnabled: input.timerEnabled,
+        diceEnabled: input.diceEnabled,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
         completionMode: undefined,

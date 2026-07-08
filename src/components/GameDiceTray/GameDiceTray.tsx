@@ -1,11 +1,7 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Dices } from "lucide-react";
+import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import "./GameDiceTray.css";
 
 type Props = {
@@ -13,59 +9,27 @@ type Props = {
 };
 
 type DieValue = 1 | 2 | 3 | 4 | 5 | 6;
-type PipPosition = "tl" | "tr" | "ml" | "mr" | "bl" | "br" | "c";
 type DiceCount = 1 | 2;
 type DiceStateByCount<T> = Record<DiceCount, T>;
-type DieMotion = {
-  spinX: number;
-  spinY: number;
-  spinZ: number;
-  preX: number;
-  preY: number;
-  preZ: number;
-  lift: number;
-  shadowScale: number;
-};
 
 const ROLL_DURATION_MS = 1380;
 const RESULT_REVEAL_DELAY_MS = 240;
+const DIE_SIZE = 1.74;
+const DIE_HALF = DIE_SIZE / 2;
+const PIP_OFFSET = 0.38;
+const PIP_RADIUS = 0.094;
 
-const FACE_PIPS: Record<DieValue, PipPosition[]> = {
-  1: ["c"],
-  2: ["tl", "br"],
-  3: ["tl", "c", "br"],
-  4: ["tl", "tr", "bl", "br"],
-  5: ["tl", "tr", "c", "bl", "br"],
-  6: ["tl", "tr", "ml", "mr", "bl", "br"],
-};
-
-const DIE_ROTATIONS: Record<DieValue, { x: string; y: string }> = {
-  1: { x: "0deg", y: "0deg" },
-  2: { x: "90deg", y: "0deg" },
-  3: { x: "0deg", y: "-90deg" },
-  4: { x: "0deg", y: "90deg" },
-  5: { x: "-90deg", y: "0deg" },
-  6: { x: "0deg", y: "180deg" },
+const DIE_FINAL_ROTATIONS: Record<DieValue, THREE.Euler> = {
+  1: new THREE.Euler(0, 0, 0),
+  2: new THREE.Euler(-Math.PI / 2, 0, 0),
+  3: new THREE.Euler(0, -Math.PI / 2, 0),
+  4: new THREE.Euler(0, Math.PI / 2, 0),
+  5: new THREE.Euler(Math.PI / 2, 0, 0),
+  6: new THREE.Euler(0, Math.PI, 0),
 };
 
 function randomDieValue(): DieValue {
   return (Math.floor(Math.random() * 6) + 1) as DieValue;
-}
-
-function createDieMotion(): DieMotion {
-  const spinX = 720 + Math.floor(Math.random() * 540);
-  const spinY = 880 + Math.floor(Math.random() * 720);
-  const spinZ = 460 + Math.floor(Math.random() * 420);
-  return {
-    spinX,
-    spinY,
-    spinZ,
-    preX: 28 + Math.floor(Math.random() * 18),
-    preY: -36 + Math.floor(Math.random() * 72),
-    preZ: -18 + Math.floor(Math.random() * 36),
-    lift: 10 + Math.floor(Math.random() * 8),
-    shadowScale: 1.08 + Math.random() * 0.18,
-  };
 }
 
 function formatRollSummary(values: DieValue[]) {
@@ -73,74 +37,347 @@ function formatRollSummary(values: DieValue[]) {
   return `${values.join(" + ")} = ${values.reduce((sum, value) => sum + value, 0)}`;
 }
 
-function DieCube({
-  value,
-  rolling,
-  delayMs,
-  rollCycle,
-  motion,
-}: {
-  value: DieValue;
-  rolling: boolean;
-  delayMs: number;
-  rollCycle: number;
-  motion: DieMotion;
-}) {
-  const rotation = DIE_ROTATIONS[value];
-  const cubeStyle = {
-    "--die-rotate-x": rotation.x,
-    "--die-rotate-y": rotation.y,
-    "--die-roll-delay": `${delayMs}ms`,
-    "--die-roll-duration": `${Math.max(980, ROLL_DURATION_MS - delayMs)}ms`,
-    "--die-spin-x": `${motion.spinX}deg`,
-    "--die-spin-y": `${motion.spinY}deg`,
-    "--die-spin-z": `${motion.spinZ}deg`,
-    "--die-pre-x": `${motion.preX}deg`,
-    "--die-pre-y": `${motion.preY}deg`,
-    "--die-pre-z": `${motion.preZ}deg`,
-    "--die-lift": `${motion.lift}px`,
-    "--die-shadow-scale": `${motion.shadowScale}`,
-  } as CSSProperties;
+function getPipPoints(value: DieValue) {
+  const left = -PIP_OFFSET;
+  const right = PIP_OFFSET;
+  const top = PIP_OFFSET;
+  const bottom = -PIP_OFFSET;
+  const center = 0;
 
-  return (
-    <div className="gameDiceTray__dieScene" aria-hidden="true">
-      <div
-        className={`gameDiceTray__dieShadow${rolling ? " gameDiceTray__dieShadow--rolling" : ""}`}
-        style={cubeStyle}
-      />
-      <div
-        key={`${rollCycle}:${value}:${rolling ? "rolling" : "idle"}`}
-        className={`gameDiceTray__cube${rolling ? " gameDiceTray__cube--rolling" : ""}`}
-        style={cubeStyle}
-      >
-        <DieFace face="front" value={1} />
-        <DieFace face="back" value={6} />
-        <DieFace face="right" value={3} />
-        <DieFace face="left" value={4} />
-        <DieFace face="top" value={5} />
-        <DieFace face="bottom" value={2} />
-      </div>
-    </div>
-  );
+  switch (value) {
+    case 1:
+      return [[center, center]];
+    case 2:
+      return [
+        [left, top],
+        [right, bottom],
+      ];
+    case 3:
+      return [
+        [left, top],
+        [center, center],
+        [right, bottom],
+      ];
+    case 4:
+      return [
+        [left, top],
+        [right, top],
+        [left, bottom],
+        [right, bottom],
+      ];
+    case 5:
+      return [
+        [left, top],
+        [right, top],
+        [center, center],
+        [left, bottom],
+        [right, bottom],
+      ];
+    case 6:
+      return [
+        [left, top],
+        [right, top],
+        [left, center],
+        [right, center],
+        [left, bottom],
+        [right, bottom],
+      ];
+  }
 }
 
-function DieFace({
-  face,
-  value,
-}: {
-  face: "front" | "back" | "right" | "left" | "top" | "bottom";
-  value: DieValue;
-}) {
-  return (
-    <div className={`gameDiceTray__face gameDiceTray__face--${face}`}>
-      {FACE_PIPS[value].map((position) => (
-        <span
-          key={`${face}:${value}:${position}`}
-          className={`gameDiceTray__pip gameDiceTray__pip--${position}`}
-        />
-      ))}
-    </div>
+function addPip(
+  group: THREE.Group,
+  material: THREE.Material,
+  position: THREE.Vector3,
+  rotation: THREE.Euler,
+) {
+  const pip = new THREE.Mesh(new THREE.CircleGeometry(PIP_RADIUS, 28), material);
+  pip.position.copy(position);
+  pip.rotation.copy(rotation);
+  group.add(pip);
+}
+
+function addPipsToFace(
+  group: THREE.Group,
+  value: DieValue,
+  face:
+    | "front"
+    | "back"
+    | "right"
+    | "left"
+    | "top"
+    | "bottom",
+  material: THREE.Material,
+) {
+  const points = getPipPoints(value);
+  const faceOffset = DIE_HALF + 0.006;
+
+  points.forEach(([a, b]) => {
+    switch (face) {
+      case "front":
+        addPip(group, material, new THREE.Vector3(a, b, faceOffset), new THREE.Euler(0, 0, 0));
+        break;
+      case "back":
+        addPip(
+          group,
+          material,
+          new THREE.Vector3(-a, b, -faceOffset),
+          new THREE.Euler(0, Math.PI, 0),
+        );
+        break;
+      case "right":
+        addPip(
+          group,
+          material,
+          new THREE.Vector3(faceOffset, b, -a),
+          new THREE.Euler(0, Math.PI / 2, 0),
+        );
+        break;
+      case "left":
+        addPip(
+          group,
+          material,
+          new THREE.Vector3(-faceOffset, b, a),
+          new THREE.Euler(0, -Math.PI / 2, 0),
+        );
+        break;
+      case "top":
+        addPip(
+          group,
+          material,
+          new THREE.Vector3(a, faceOffset, -b),
+          new THREE.Euler(-Math.PI / 2, 0, 0),
+        );
+        break;
+      case "bottom":
+        addPip(
+          group,
+          material,
+          new THREE.Vector3(a, -faceOffset, b),
+          new THREE.Euler(Math.PI / 2, 0, 0),
+        );
+        break;
+    }
+  });
+}
+
+function createDieMesh() {
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(
+    new RoundedBoxGeometry(DIE_SIZE, DIE_SIZE, DIE_SIZE, 8, 0.22),
+    new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.46,
+      metalness: 0.02,
+    }),
   );
+  body.castShadow = true;
+  body.receiveShadow = true;
+  group.add(body);
+
+  const pipMaterial = new THREE.MeshStandardMaterial({
+    color: 0x0b1220,
+    roughness: 0.7,
+    metalness: 0,
+  });
+
+  addPipsToFace(group, 1, "front", pipMaterial);
+  addPipsToFace(group, 6, "back", pipMaterial);
+  addPipsToFace(group, 3, "right", pipMaterial);
+  addPipsToFace(group, 4, "left", pipMaterial);
+  addPipsToFace(group, 5, "top", pipMaterial);
+  addPipsToFace(group, 2, "bottom", pipMaterial);
+
+  return group;
+}
+
+function normalizeRotation(current: number, target: number) {
+  const twoPi = Math.PI * 2;
+  return current + ((((target - current) % twoPi) + Math.PI * 3) % twoPi) - Math.PI;
+}
+
+function easeOutCubic(value: number) {
+  return 1 - Math.pow(1 - value, 3);
+}
+
+function DiceCanvas({
+  values,
+  diceCount,
+  rolling,
+  rollCycle,
+}: {
+  values: DieValue[];
+  diceCount: DiceCount;
+  rolling: boolean;
+  rollCycle: number;
+}) {
+  const mountRef = useRef<HTMLDivElement | null>(null);
+  const diceGroupsRef = useRef<THREE.Group[]>([]);
+  const frameRef = useRef(0);
+  const rollingRef = useRef(rolling);
+  const valuesRef = useRef(values);
+  const diceCountRef = useRef(diceCount);
+  const settleStartRef = useRef<number | null>(null);
+  const settleFromRef = useRef<THREE.Euler[]>([
+    new THREE.Euler(),
+    new THREE.Euler(),
+  ]);
+
+  useEffect(() => {
+    rollingRef.current = rolling;
+    if (rolling) {
+      settleStartRef.current = null;
+    } else {
+      settleStartRef.current = performance.now();
+      settleFromRef.current = diceGroupsRef.current.map((group) =>
+        group.rotation.clone(),
+      );
+    }
+  }, [rolling, rollCycle]);
+
+  useEffect(() => {
+    valuesRef.current = values;
+    diceCountRef.current = diceCount;
+    diceGroupsRef.current.forEach((group, index) => {
+      group.visible = index < diceCount;
+    });
+    if (!rollingRef.current) {
+      settleStartRef.current = performance.now();
+      settleFromRef.current = diceGroupsRef.current.map((group) =>
+        group.rotation.clone(),
+      );
+    }
+  }, [diceCount, values]);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+    const mountElement = mount;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(29, 1, 0.1, 100);
+    camera.position.set(0, 0.1, 6.9);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance",
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    mountElement.appendChild(renderer.domElement);
+
+    const ambient = new THREE.HemisphereLight(0xffffff, 0x1f2937, 2.35);
+    scene.add(ambient);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.4);
+    keyLight.position.set(-3.4, 5.8, 5.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xd8ff4f, 1.05);
+    rimLight.position.set(4.2, 2.4, 2.4);
+    scene.add(rimLight);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(7, 4),
+      new THREE.ShadowMaterial({ opacity: 0.28 }),
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.18;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const dice = [createDieMesh(), createDieMesh()];
+    dice.forEach((die, index) => {
+      die.position.x = index === 0 ? -1.28 : 1.28;
+      die.position.y = -0.06;
+      scene.add(die);
+    });
+    diceGroupsRef.current = dice;
+
+    function resize() {
+      const width = Math.max(1, mountElement.clientWidth);
+      const height = Math.max(1, mountElement.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(mountElement);
+    resize();
+
+    const clock = new THREE.Clock();
+    function render(now: number) {
+      const delta = Math.min(clock.getDelta(), 0.034);
+      const activeCount = diceCountRef.current;
+
+      dice.forEach((die, index) => {
+        die.visible = index < activeCount;
+        die.position.x =
+          activeCount === 1 ? 0 : index === 0 ? -1.3 : 1.3;
+
+        if (rollingRef.current) {
+          const direction = index === 0 ? 1 : -1;
+          die.rotation.x += delta * (9.4 + index * 1.2);
+          die.rotation.y += delta * (12.2 + index * 1.4) * direction;
+          die.rotation.z += delta * (7.6 + index * 1.1);
+          die.position.y = -0.06 + Math.sin(now / 72 + index) * 0.18;
+          return;
+        }
+
+        const value = valuesRef.current[index] ?? 1;
+        const target = DIE_FINAL_ROTATIONS[value];
+        const startedAt = settleStartRef.current ?? now;
+        const progress = Math.min(1, (now - startedAt) / 360);
+        const eased = easeOutCubic(progress);
+        const from = settleFromRef.current[index] ?? die.rotation;
+        die.rotation.x = THREE.MathUtils.lerp(
+          from.x,
+          normalizeRotation(from.x, target.x),
+          eased,
+        );
+        die.rotation.y = THREE.MathUtils.lerp(
+          from.y,
+          normalizeRotation(from.y, target.y),
+          eased,
+        );
+        die.rotation.z = THREE.MathUtils.lerp(from.z, 0, eased);
+        die.position.y = THREE.MathUtils.lerp(die.position.y, -0.06, 0.18);
+      });
+
+      renderer.render(scene, camera);
+      frameRef.current = window.requestAnimationFrame(render);
+    }
+
+    frameRef.current = window.requestAnimationFrame(render);
+
+    return () => {
+      window.cancelAnimationFrame(frameRef.current);
+      resizeObserver.disconnect();
+      diceGroupsRef.current = [];
+      scene.traverse((object: THREE.Object3D) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          const material = object.material;
+          if (Array.isArray(material)) {
+            material.forEach((entry) => entry.dispose());
+          } else {
+            material.dispose();
+          }
+        }
+      });
+      renderer.dispose();
+      mountElement.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  return <div className="gameDiceTray__diceCanvas" ref={mountRef} />;
 }
 
 export function GameDiceTray({ accentTone = "default" }: Props) {
@@ -169,10 +406,6 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
   const [resultVisible, setResultVisible] = useState(false);
   const [rollCycle, setRollCycle] = useState(0);
   const [rollingDiceCount, setRollingDiceCount] = useState<DiceCount>(2);
-  const [dieMotions, setDieMotions] = useState<[DieMotion, DieMotion]>([
-    createDieMotion(),
-    createDieMotion(),
-  ]);
   const trayRef = useRef<HTMLDivElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const rollTokenRef = useRef(0);
@@ -257,7 +490,6 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
     }));
     setIsResolvingResult(true);
     setRollingPreviewValues(previewValues);
-    setDieMotions([createDieMotion(), createDieMotion()]);
     pendingValuesRef.current = nextValues;
     setRollingDiceCount(nextDiceCount);
     setIsRolling(true);
@@ -336,7 +568,7 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
       <button
         className="gameDiceTray__tab"
         type="button"
-        aria-label={isOpen ? "Collapse dice tray" : "Open dice tray"}
+        aria-label={isOpen ? "Collapse dice roller" : "Open dice roller"}
         aria-expanded={isOpen}
         onClick={() => setIsOpen((value) => !value)}
       >
@@ -387,18 +619,12 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
         </div>
 
         <div className="gameDiceTray__stage">
-          <div className="gameDiceTray__diceRow">
-            {visibleValues.map((value, index) => (
-              <DieCube
-                key={`${index}:${rollCycle}:${visibleDiceCount}`}
-                value={value}
-                rolling={isRolling}
-                delayMs={index * 120}
-                rollCycle={rollCycle}
-                motion={dieMotions[index] ?? createDieMotion()}
-              />
-            ))}
-          </div>
+          <DiceCanvas
+            values={visibleValues}
+            diceCount={visibleDiceCount}
+            rolling={isRolling}
+            rollCycle={rollCycle}
+          />
           {isRolling || resultVisible ? (
             <div
               className={`gameDiceTray__status${

@@ -67,6 +67,7 @@ export type NewGameInput = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  diceEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   initialPlayers: { name: string; avatarColor: string; profileId?: string }[];
@@ -169,6 +170,7 @@ export function NewGameCard({
   const [winByTwo, setWinByTwo] = useState(false);
   const [manualEndOnly, setManualEndOnly] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
+  const [diceEnabled, setDiceEnabled] = useState(false);
   const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
     "countdown",
   );
@@ -238,6 +240,7 @@ export function NewGameCard({
     setWinByTwo(false);
     setManualEndOnly(false);
     setTimerEnabled(false);
+    setDiceEnabled(false);
     setTimerMode("countdown");
     setTimerMinutes("5");
     setTimerSeconds("0");
@@ -409,6 +412,7 @@ export function NewGameCard({
       winByTwo: draft.winByTwo,
       manualEndOnly: draft.manualEndOnly,
       timerEnabled: draft.timerEnabled,
+      diceEnabled: draft.diceEnabled ?? false,
       timerMode: draft.timerMode,
       timerSeconds: draft.timerSeconds,
       initialPlayers: draft.initialPlayers.map((player) => player.profileId ?? player.name),
@@ -432,6 +436,7 @@ export function NewGameCard({
     setWinByTwo(draft.winByTwo);
     setManualEndOnly(draft.manualEndOnly);
     setTimerEnabled(draft.timerEnabled);
+    setDiceEnabled(draft.diceEnabled ?? false);
     setTimerMode(draft.timerMode);
     setTimerMinutes(String(Math.floor(draft.timerSeconds / 60)));
     setTimerSeconds(String(draft.timerSeconds % 60));
@@ -558,6 +563,7 @@ export function NewGameCard({
     setWinByTwo(preset.winByTwo);
     setManualEndOnly(preset.manualEndOnly);
     setTimerEnabled(preset.timerEnabled);
+    setDiceEnabled(false);
     setTimerMode(preset.timerMode);
     setTimerMinutes(String(Math.floor(preset.timerSeconds / 60)));
     setTimerSeconds(String(preset.timerSeconds % 60));
@@ -643,6 +649,7 @@ export function NewGameCard({
       winByTwo,
       manualEndOnly,
       timerEnabled,
+      diceEnabled,
       timerMode,
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds || 0) : 300,
@@ -684,6 +691,7 @@ export function NewGameCard({
       winByTwo,
       manualEndOnly,
       timerEnabled,
+      diceEnabled,
       timerMode,
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds) : 300,
@@ -1420,6 +1428,13 @@ export function NewGameCard({
                   }}
                 />
                 <ModeButton
+                  icon={<Flag size={22} strokeWidth={2.3} />}
+                  title="Manual finish"
+                  description="End from the game menu."
+                  active={manualEndOnly}
+                  onClick={() => setManualEndOnly((value) => !value)}
+                />
+                <ModeButton
                   icon={<Trophy size={22} strokeWidth={2.3} />}
                   title="Win by 2"
                   description="Leader needs a 2 point gap."
@@ -1429,13 +1444,6 @@ export function NewGameCard({
                     setScoreDirection("up");
                     setWinByTwo((value) => !value);
                   }}
-                />
-                <ModeButton
-                  icon={<Flag size={22} strokeWidth={2.3} />}
-                  title="Manual finish"
-                  description="End from the game menu."
-                  active={manualEndOnly}
-                  onClick={() => setManualEndOnly((value) => !value)}
                 />
                 <ModeButton
                   icon={<Timer size={22} strokeWidth={2.3} />}
@@ -1449,6 +1457,15 @@ export function NewGameCard({
                   }
                   active={timerEnabled}
                   onClick={() => setTimerEnabled((value) => !value)}
+                />
+                <ModeButton
+                  icon={<Dices size={22} strokeWidth={2.3} />}
+                  title="Dice"
+                  description={
+                    diceEnabled ? "Ready during the game." : "No dice roller."
+                  }
+                  active={diceEnabled}
+                  onClick={() => setDiceEnabled((value) => !value)}
                 />
               </motion.div>
 

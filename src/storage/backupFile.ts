@@ -143,6 +143,7 @@ export function getGameImportSignature(game: Game) {
     winByTwo: game.winByTwo,
     manualEndOnly: game.manualEndOnly,
     timerEnabled: game.timerEnabled,
+    diceEnabled: game.diceEnabled,
     timerMode: game.timerMode,
     timerSeconds: game.timerSeconds,
     completionMode: game.completionMode ?? null,

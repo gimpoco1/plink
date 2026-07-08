@@ -724,6 +724,7 @@ export default function App() {
                   : "Highest score wins",
         },
         { label: "Timer", value: timerValue },
+        { label: "Dice", value: input.diceEnabled ? "On" : "Off" },
       ],
       players: input.participantMode === "teams" ? [] : details.players,
       teams: details.teams,
