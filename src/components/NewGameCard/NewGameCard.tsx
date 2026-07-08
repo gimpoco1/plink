@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AVATAR_COLORS, DEFAULT_TEAM_ICON } from "../../constants";
 import type {
@@ -187,10 +194,38 @@ export function NewGameCard({
     (typeof AVATAR_COLORS)[number]["value"]
   >(AVATAR_COLORS[0].value);
   const presetBrowserRef = useRef<HTMLDivElement | null>(null);
+  const bodyInnerRef = useRef<HTMLDivElement | null>(null);
   const reduceMotion = useReducedMotion();
+  const [bodyContentHeight, setBodyContentHeight] = useState(0);
 
   useEffect(() => {
     setHasMounted(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    const node = bodyInnerRef.current;
+    if (!node) return;
+
+    const measure = () => {
+      setBodyContentHeight(node.scrollHeight);
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+
+    if (typeof ResizeObserver === "undefined") {
+      return () => {
+        window.removeEventListener("resize", measure);
+      };
+    }
+
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(node);
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      resizeObserver.disconnect();
+    };
   }, []);
 
   function resetForm() {
@@ -671,31 +706,6 @@ export function NewGameCard({
         mass: 0.72,
       };
 
-  const bodyTransition = reduceMotion
-    ? { duration: 0 }
-    : {
-        height: {
-          type: "spring" as const,
-          stiffness: 210,
-          damping: 25,
-          mass: 0.9,
-        },
-        opacity: { duration: 0.18, ease: "easeOut" as const },
-        y: { type: "spring" as const, stiffness: 260, damping: 24, mass: 0.7 },
-        scale: {
-          type: "spring" as const,
-          stiffness: 260,
-          damping: 24,
-          mass: 0.7,
-        },
-        paddingBottom: {
-          type: "spring" as const,
-          stiffness: 210,
-          damping: 25,
-          mass: 0.9,
-        },
-      };
-
   const staggerVariants = {
     closed: {},
     open: {
@@ -741,48 +751,31 @@ export function NewGameCard({
         </span>
       </motion.button>
 
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.div
-            className="newGamePanel__body"
-            key="new-game-body"
-            initial={
-              !hasMounted || reduceMotion
-                ? false
-                : {
-                    height: 0,
-                    opacity: 0,
-                    y: -10,
-                    scale: 0.985,
-                    paddingBottom: 0,
-                  }
-            }
-            animate={{
-              height: "auto",
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              paddingBottom: 12,
-            }}
-            exit={
-              reduceMotion
-                ? { height: 0, opacity: 0, paddingBottom: 0 }
-                : {
-                    height: 0,
-                    opacity: 0,
-                    y: -8,
-                    scale: 0.985,
-                    paddingBottom: 0,
-                  }
-            }
-            transition={bodyTransition}
-          >
-            <motion.div
-              className="homeForm homeForm--newSession"
-              variants={staggerVariants}
-              initial={reduceMotion ? false : "closed"}
-              animate="open"
-            >
+      <div
+        className={`newGamePanel__body${open ? " newGamePanel__body--open" : ""}`}
+        aria-hidden={!open}
+        style={
+          hasMounted
+            ? {
+                height: open ? bodyContentHeight : 0,
+                opacity: open ? 1 : 0,
+                paddingBottom: open ? 12 : 0,
+                transform: reduceMotion
+                  ? "none"
+                  : open
+                    ? "translateY(0) scale(1)"
+                    : "translateY(-8px) scale(0.985)",
+              }
+            : undefined
+        }
+      >
+        <motion.div
+          ref={bodyInnerRef}
+          className="homeForm homeForm--newSession"
+          variants={staggerVariants}
+          initial={false}
+          animate={reduceMotion ? undefined : open ? "open" : "closed"}
+        >
               <motion.header
                 className="newSessionHeader"
                 variants={sectionVariants}
@@ -1523,10 +1516,8 @@ export function NewGameCard({
               >
                 Start Game
               </motion.button>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+        </motion.div>
+      </div>
     </motion.div>
   );
 }

@@ -109,13 +109,13 @@
     0 12px 28px rgba(216, 255, 79, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition:
-    max-height 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    min-height 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    max-height 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    min-height 360ms cubic-bezier(0.16, 1, 0.3, 1),
     padding 360ms cubic-bezier(0.16, 1, 0.3, 1),
     border-radius 360ms cubic-bezier(0.16, 1, 0.3, 1),
     border-width 260ms ease,
     opacity 220ms ease,
-    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 280ms ease,
     background-color 260ms ease;
   overflow: hidden;
@@ -190,10 +190,17 @@
   z-index: 1;
   transform-origin: top center;
   will-change: height, transform, opacity;
+  pointer-events: none;
+  transition:
+    height 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding-bottom 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 180ms ease,
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.newGamePanel--open .newGamePanel__body {
+.newGamePanel__body--open {
   overflow: visible;
+  pointer-events: auto;
 }
 
 .newGamePanel__body > .homeForm {
