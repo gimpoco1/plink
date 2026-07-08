@@ -59,6 +59,7 @@
 
 .newSessionStart {
   min-height: 50px;
+  margin-bottom: 12px;
   font-size: 16px;
   letter-spacing: -0.03em;
 }

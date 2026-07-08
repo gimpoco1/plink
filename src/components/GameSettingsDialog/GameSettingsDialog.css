@@ -1,6 +1,6 @@
 .settingsDialogBody {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .settingsAuthCard {
@@ -62,20 +62,76 @@
   line-height: 1.35;
 }
 
-.settingsToggle {
+.settingsModeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settingsModeCard {
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid rgba(216, 255, 79, 0.1);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.06), transparent 120%),
+    rgba(255, 255, 255, 0.03);
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
-.settingsToggle input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
+.settingsModeCard:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(216, 255, 79, 0.2);
+}
+
+.settingsModeCard--active {
+  border-color: rgba(216, 255, 79, 0.24);
+  background: var(--accent);
+  color: #11180f;
+  box-shadow:
+    0 12px 26px rgba(216, 255, 79, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.settingsModeCard--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settingsModeCard__icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.settingsModeCard__copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.settingsModeCard__copy strong {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.settingsModeCard__copy span {
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: 0.8;
 }
 
 .settingsTimerRow {
@@ -143,6 +199,10 @@
   .settingsRequirement {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .settingsModeGrid {
+    grid-template-columns: 1fr;
   }
 
   .settingsTimerToggle__btn {

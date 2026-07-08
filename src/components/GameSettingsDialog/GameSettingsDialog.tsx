@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { Game, ScoreDirection, WinCondition } from "../../types";
+import { ArrowDownUp, Flag, Timer, Trophy } from "lucide-react";
 import "./GameSettingsDialog.css";
 
 export type GameSettingsDialogHandle = {
@@ -205,41 +206,52 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
               />
             </label>
 
-            <label className="settingsToggle">
-              <input
-                type="checkbox"
-                checked={winCondition === "lowest"}
-                onChange={(e) => {
+            <div className="settingsModeGrid" aria-label="Game rules">
+              <SettingsModeButton
+                icon={<ArrowDownUp size={22} strokeWidth={2.3} />}
+                title="Lowest wins"
+                description="Lowest score wins."
+                active={winCondition === "lowest"}
+                onClick={() => {
                   setScoreDirection("up");
-                  setWinCondition(
-                    e.target.checked ? "lowest" : "reach_target",
+                  setWinCondition((value) =>
+                    value === "lowest" ? "reach_target" : "lowest",
                   );
                 }}
               />
-              <span>Lowest score wins</span>
-            </label>
-
-            <label className="settingsToggle">
-              <input
-                type="checkbox"
-                checked={winByTwo}
+              <SettingsModeButton
+                icon={<Trophy size={22} strokeWidth={2.3} />}
+                title="Win by 2"
+                description="Leader needs a 2 point gap."
+                active={winByTwo}
                 disabled={winCondition === "reach_zero"}
-                onChange={(e) => {
+                onClick={() => {
+                  if (winCondition === "reach_zero") return;
                   setScoreDirection("up");
-                  setWinByTwo(e.target.checked);
+                  setWinByTwo((value) => !value);
                 }}
               />
-              <span>Win by 2 points</span>
-            </label>
-
-            <label className="settingsToggle">
-              <input
-                type="checkbox"
-                checked={manualEndOnly}
-                onChange={(e) => setManualEndOnly(e.target.checked)}
+              <SettingsModeButton
+                icon={<Flag size={22} strokeWidth={2.3} />}
+                title="Manual finish"
+                description="End from the game menu."
+                active={manualEndOnly}
+                onClick={() => setManualEndOnly((value) => !value)}
               />
-              <span>End manually from the game menu</span>
-            </label>
+              <SettingsModeButton
+                icon={<Timer size={22} strokeWidth={2.3} />}
+                title="Timer"
+                description={
+                  timerEnabled
+                    ? timerMode === "stopwatch"
+                      ? "Stopwatch active."
+                      : `${timerMinutes || "0"}m ${timerSecondsRaw || "0"}s`
+                    : "No timer for this game."
+                }
+                active={timerEnabled}
+                onClick={() => setTimerEnabled((value) => !value)}
+              />
+            </div>
 
             {ruleNeedsMorePlayers ? (
               <div className="settingsRequirement" role="status">
@@ -266,15 +278,6 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
                 ) : null}
               </div>
             ) : null}
-
-            <label className="settingsToggle">
-              <input
-                type="checkbox"
-                checked={timerEnabled}
-                onChange={(e) => setTimerEnabled(e.target.checked)}
-              />
-              <span>Timer</span>
-            </label>
 
             {timerEnabled ? (
               <div
@@ -348,3 +351,39 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
     );
   },
 );
+
+function SettingsModeButton({
+  icon,
+  title,
+  description,
+  active,
+  disabled,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`settingsModeCard${active ? " settingsModeCard--active" : ""}${
+        disabled ? " settingsModeCard--disabled" : ""
+      }`}
+      aria-pressed={active}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <span className="settingsModeCard__icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="settingsModeCard__copy">
+        <strong>{title}</strong>
+        <span>{description}</span>
+      </span>
+    </button>
+  );
+}

@@ -195,6 +195,7 @@ export function NewGameCard({
   >(AVATAR_COLORS[0].value);
   const presetBrowserRef = useRef<HTMLDivElement | null>(null);
   const bodyInnerRef = useRef<HTMLDivElement | null>(null);
+  const appliedDraftKeyRef = useRef<string | null>(null);
   const reduceMotion = useReducedMotion();
   const [bodyContentHeight, setBodyContentHeight] = useState(0);
 
@@ -392,7 +393,30 @@ export function NewGameCard({
   ]);
 
   useEffect(() => {
-    if (!draft) return;
+    if (!draft) {
+      appliedDraftKeyRef.current = null;
+      return;
+    }
+
+    const draftKey = JSON.stringify({
+      token: draftToken ?? 0,
+      name: draft.name,
+      participantMode: draft.participantMode,
+      scoreDirection: draft.scoreDirection,
+      startingScore: draft.startingScore,
+      targetScore: draft.targetScore,
+      winCondition: draft.winCondition,
+      winByTwo: draft.winByTwo,
+      manualEndOnly: draft.manualEndOnly,
+      timerEnabled: draft.timerEnabled,
+      timerMode: draft.timerMode,
+      timerSeconds: draft.timerSeconds,
+      initialPlayers: draft.initialPlayers.map((player) => player.profileId ?? player.name),
+      initialTeams: (draft.initialTeams ?? []).map((team) => team.id),
+    });
+
+    if (appliedDraftKeyRef.current === draftKey) return;
+    appliedDraftKeyRef.current = draftKey;
 
     setName(draft.name);
     setParticipantMode(draft.participantMode ?? "players");
@@ -759,7 +783,7 @@ export function NewGameCard({
             ? {
                 height: open ? bodyContentHeight : 0,
                 opacity: open ? 1 : 0,
-                paddingBottom: open ? 12 : 0,
+                paddingBottom: open ? 20 : 0,
                 transform: reduceMotion
                   ? "none"
                   : open
