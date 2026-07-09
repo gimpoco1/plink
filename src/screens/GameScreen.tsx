@@ -41,6 +41,10 @@ type Props = {
   onTriggerPulse: (playerId: string, delta: number) => void;
   onDeleteProfile: (profileId: string) => void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
+  onUpsertLocalPlayer: (
+    name: string,
+    avatarColor: string,
+  ) => PlayerProfile | null;
   onUpdateProfile: (
     profileId: string,
     updates: Partial<Pick<PlayerProfile, "name" | "avatarColor">>,
@@ -90,6 +94,7 @@ export function GameScreen({
   onTriggerPulse,
   onDeleteProfile,
   onUpsertProfile,
+  onUpsertLocalPlayer,
   onUpdateProfile,
   onStartGame,
   onUpdateScore,
@@ -522,6 +527,7 @@ export function GameScreen({
         onDeleteProfile={(profileId) => onDeleteProfile(profileId)}
         onDeletePlayer={onDeletePlayer}
         onUpsertProfile={onUpsertProfile}
+        onUpsertLocalPlayer={onUpsertLocalPlayer}
         onUpdateProfile={onUpdateProfile}
         onUpdatePlayer={onUpdatePlayer}
         onCreateTeam={onCreateTeam}

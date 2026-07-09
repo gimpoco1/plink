@@ -212,6 +212,7 @@ function DiceCanvas({
   rollCycle: number;
 }) {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const [renderMode, setRenderMode] = useState<"webgl" | "fallback">("webgl");
   const diceGroupsRef = useRef<THREE.Group[]>([]);
   const frameRef = useRef(0);
   const rollingRef = useRef(rolling);
@@ -250,6 +251,7 @@ function DiceCanvas({
   }, [diceCount, values]);
 
   useEffect(() => {
+    if (renderMode === "fallback") return;
     const mount = mountRef.current;
     if (!mount) return;
     const mountElement = mount;
@@ -259,11 +261,18 @@ function DiceCanvas({
     camera.position.set(0, 0.1, 6.9);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-      powerPreference: "high-performance",
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+      });
+    } catch (error) {
+      console.warn("Falling back to non-WebGL dice renderer", error);
+      setRenderMode("fallback");
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -372,10 +381,27 @@ function DiceCanvas({
           }
         }
       });
+      renderer.forceContextLoss();
       renderer.dispose();
-      mountElement.removeChild(renderer.domElement);
+      if (renderer.domElement.parentNode === mountElement) {
+        mountElement.removeChild(renderer.domElement);
+      }
     };
-  }, []);
+  }, [renderMode]);
+
+  if (renderMode === "fallback") {
+    return (
+      <div className="gameDiceTray__diceCanvas gameDiceTray__diceCanvas--fallback">
+        <div className="gameDiceTray__diceFallback" aria-hidden="true">
+          {values.slice(0, diceCount).map((value, index) => (
+            <div className="gameDiceTray__dieFallback" key={`${index}-${value}`}>
+              {value}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return <div className="gameDiceTray__diceCanvas" ref={mountRef} />;
 }
