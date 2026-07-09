@@ -1,0 +1,252 @@
+.rosterPicker {
+  --roster-picker-max-height: min(208px, 26vh);
+  --roster-picker-ink: #11180f;
+  --roster-picker-placeholder: rgba(17, 24, 10, 0.54);
+  --roster-picker-surface: rgba(17, 24, 10, 0.08);
+  --roster-picker-surface-strong: rgba(17, 24, 10, 0.06);
+  --roster-picker-border: rgba(17, 24, 10, 0.12);
+  --roster-picker-clear-bg: rgba(17, 24, 10, 0.08);
+  --roster-picker-clear-ink: rgba(17, 24, 10, 0.66);
+  --roster-picker-scrollbar: rgba(17, 24, 10, 0.24);
+  --roster-picker-empty: rgba(17, 24, 10, 0.62);
+  --roster-picker-create-bg: rgba(17, 24, 10, 0.08);
+  --roster-picker-create-border: rgba(17, 24, 10, 0.12);
+  --roster-picker-create-ink: #11180f;
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+}
+
+.rosterPicker--dark {
+  --roster-picker-ink: var(--text);
+  --roster-picker-placeholder: rgba(217, 228, 235, 0.48);
+  --roster-picker-surface: rgba(255, 255, 255, 0.03);
+  --roster-picker-surface-strong: rgba(255, 255, 255, 0.035);
+  --roster-picker-border: rgba(255, 255, 255, 0.08);
+  --roster-picker-clear-bg: rgba(255, 255, 255, 0.04);
+  --roster-picker-clear-ink: rgba(217, 228, 235, 0.72);
+  --roster-picker-scrollbar: rgba(255, 255, 255, 0.18);
+  --roster-picker-empty: var(--text-dim);
+  --roster-picker-create-bg: rgba(17, 24, 10, 0.08);
+  --roster-picker-create-border: rgba(17, 24, 10, 0.12);
+  --roster-picker-create-ink: #11180f;
+}
+
+.rosterPicker__search {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--roster-picker-border);
+  border-radius: 16px;
+  background: var(--roster-picker-surface);
+  color: var(--roster-picker-ink);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.rosterPicker__search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--roster-picker-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rosterPicker__search input::placeholder {
+  color: var(--roster-picker-placeholder);
+  font-size: 13px;
+}
+
+.rosterPicker__clear {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--roster-picker-clear-bg);
+  color: var(--roster-picker-clear-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.rosterPicker__listTrigger {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--roster-picker-border);
+  border-radius: 16px;
+  background: var(--roster-picker-surface-strong);
+  color: var(--roster-picker-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.rosterPicker__listTrigger:hover {
+  transform: translateY(-1px);
+}
+
+.rosterPicker__openHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rosterPicker__openTitle {
+  min-width: 0;
+  color: var(--roster-picker-ink);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rosterPicker__collapseBtn {
+  width: auto;
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--roster-picker-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--roster-picker-empty);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.rosterPicker__listShell {
+  position: relative;
+  min-height: 0;
+}
+
+.rosterPicker__list {
+  max-height: var(--roster-picker-max-height);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  margin-right: -6px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--roster-picker-scrollbar) transparent;
+}
+
+.rosterPicker__list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rosterPicker__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rosterPicker__list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--roster-picker-scrollbar);
+}
+
+.rosterPicker__listShell--fadeTop .rosterPicker__list {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 28px,
+    #000 100%
+  );
+  mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 100%);
+}
+
+.rosterPicker__listShell--fadeBottom .rosterPicker__list {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+.rosterPicker__listShell--fadeTop.rosterPicker__listShell--fadeBottom
+  .rosterPicker__list {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+.rosterPicker__listContent {
+  display: grid;
+  gap: 8px;
+}
+
+.rosterPicker__empty {
+  color: var(--roster-picker-empty);
+  font-size: 12px;
+  line-height: 1.45;
+  justify-self: center;
+}
+
+.rosterPicker__createBtn {
+  min-height: 42px;
+  margin-top: 8px;
+  padding: 0 18px;
+  border: 1px solid var(--roster-picker-create-border);
+  border-radius: 16px;
+  background: var(--roster-picker-create-bg);
+  color: var(--roster-picker-create-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.rosterPicker__createBtn:hover {
+  transform: translateY(-1px);
+}
+
+.rosterPicker__createBtn--dark {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+}

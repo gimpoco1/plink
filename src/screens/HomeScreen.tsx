@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type {
   Game,
+  GameTeam,
   PlayerProfile,
   ScoreDirection,
+  TeamMember,
   WinCondition,
 } from "../types";
+import { DEFAULT_TEAM_ICON } from "../constants";
 import {
   NewGameCard,
   type NewGameInput,
@@ -15,12 +18,24 @@ import { HOME_NEW_GAME_OPEN_KEY } from "../constants";
 import { avatarStyleFor } from "../utils/color";
 import { getGameDisplayName } from "../utils/text";
 import { getInitials } from "../utils/text";
-import { findWinner } from "../utils/ranking";
+import { isGameComplete } from "../utils/ranking";
 import "./HomeScreen.css";
+import {
+  Dumbbell,
+  Flag,
+  Flame,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Users,
+  Zap,
+} from "lucide-react";
 
 type QuickSetup = {
   key: string;
   label: string;
+  participantMode: "players" | "teams";
   scoreDirection: ScoreDirection;
   startingScore: number;
   targetScore: number;
@@ -28,31 +43,62 @@ type QuickSetup = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  diceEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   suggestedPlayers: { name: string; avatarColor: string; profileId?: string }[];
+  suggestedTeams?: Array<{
+    id: string;
+    name: string;
+    icon?: string;
+    members: Array<{ name: string; avatarColor: string; profileId?: string }>;
+  }>;
   uses: number;
 };
+
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
 
 type HomeScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
+  teams: GameTeam[];
+  teamMembers: TeamMember[];
+  canUseTeams: boolean;
   isAuthenticated: boolean;
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
+  pendingLocalProfilesCount: number;
   isCreating: boolean;
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
   onCreatingChange: (creating: boolean) => void;
   onOpenAuth: () => void;
+  onOpenProFeatureAuth: () => void;
   onOpenLocalImport: () => void;
+  onOpenProPlan: () => void;
   onDismissLocalSessionsHint: () => void;
+  onOpenTeamsTab: (draft: NewGameInput) => void;
   onCreate: (input: NewGameInput) => boolean | Promise<boolean>;
   onStartQuickSetup: (
     input: NewGameInput,
     details: {
       label: string;
       players: { name: string; avatarColor: string }[];
+      teams?: Array<{
+        id: string;
+        name: string;
+        icon?: string;
+        members: { name: string; avatarColor: string }[];
+      }>;
     },
   ) => void | Promise<void>;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
@@ -62,16 +108,23 @@ type HomeScreenProps = {
 export function HomeScreen({
   games,
   profiles,
+  teams,
+  teamMembers,
+  canUseTeams,
   isAuthenticated,
   showLocalSessionsHint,
   pendingLocalSessionsCount,
+  pendingLocalProfilesCount,
   isCreating,
   presetDraft,
   presetDraftToken,
   onCreatingChange,
   onOpenAuth,
+  onOpenProFeatureAuth,
   onOpenLocalImport,
+  onOpenProPlan,
   onDismissLocalSessionsHint,
+  onOpenTeamsTab,
   onCreate,
   onStartQuickSetup,
   onUpsertProfile,
@@ -156,10 +209,7 @@ export function HomeScreen({
   const resumableGame = useMemo(() => {
     return (
       [...games]
-        .filter(
-          (game) =>
-            !findWinner(game.players, game),
-        )
+        .filter((game) => !isGameComplete(game))
         .sort((a, b) => b.updatedAt - a.updatedAt)[0] ?? null
     );
   }, [games]);
@@ -179,6 +229,7 @@ export function HomeScreen({
       const label = getGameDisplayName(game.name).title;
       const key = [
         label,
+        game.participantMode ?? "players",
         game.scoreDirection,
         game.startingScore,
         game.targetScore,
@@ -187,6 +238,7 @@ export function HomeScreen({
         game.manualEndOnly,
         game.timerEnabled ? game.timerMode : "off",
         game.timerEnabled ? game.timerSeconds : 0,
+        game.diceEnabled ? "dice" : "no-dice",
       ].join("|");
 
       const existing = setups.get(key);
@@ -198,6 +250,7 @@ export function HomeScreen({
       setups.set(key, {
         key,
         label,
+        participantMode: game.participantMode ?? "players",
         scoreDirection: game.scoreDirection,
         startingScore: game.startingScore,
         targetScore: game.targetScore,
@@ -205,6 +258,7 @@ export function HomeScreen({
         winByTwo: game.winByTwo,
         manualEndOnly: game.manualEndOnly,
         timerEnabled: game.timerEnabled,
+        diceEnabled: game.diceEnabled,
         timerMode: game.timerMode,
         timerSeconds: game.timerSeconds,
         suggestedPlayers: game.players.slice(0, 4).map((player) => {
@@ -217,6 +271,21 @@ export function HomeScreen({
             profileId: player.profileId,
           };
         }),
+        suggestedTeams:
+          game.participantMode === "teams"
+            ? game.teams.map((team) => ({
+                id: team.id,
+                name: team.name,
+                icon: team.icon,
+                members: game.players
+                  .filter((player) => player.teamId === team.id)
+                  .map((player) => ({
+                    name: player.name,
+                    avatarColor: player.avatarColor,
+                    profileId: player.profileId,
+                  })),
+              }))
+            : undefined,
         uses: 1,
       });
     }
@@ -249,6 +318,7 @@ export function HomeScreen({
     void onStartQuickSetup(
       {
         name: nextSuggestionName(setup.label),
+        participantMode: setup.participantMode,
         scoreDirection: setup.scoreDirection,
         startingScore: setup.startingScore,
         targetScore: setup.targetScore,
@@ -256,15 +326,26 @@ export function HomeScreen({
         winByTwo: setup.winByTwo,
         manualEndOnly: setup.manualEndOnly,
         timerEnabled: setup.timerEnabled,
+        diceEnabled: setup.diceEnabled,
         timerMode: setup.timerMode,
         timerSeconds: setup.timerSeconds,
         initialPlayers: setup.suggestedPlayers,
+        initialTeams: setup.suggestedTeams ?? [],
       },
       {
         label: setup.label,
         players: setup.suggestedPlayers.map((player) => ({
           name: player.name,
           avatarColor: player.avatarColor,
+        })),
+        teams: setup.suggestedTeams?.map((team) => ({
+          id: team.id,
+          name: team.name,
+          icon: team.icon,
+          members: team.members.map((member) => ({
+            name: member.name,
+            avatarColor: member.avatarColor,
+          })),
         })),
       },
     );
@@ -301,6 +382,10 @@ export function HomeScreen({
           ? "stopwatch"
           : formatTimerText(setup.timerSeconds, "long"),
       );
+    }
+
+    if (setup.diceEnabled) {
+      parts.push("dice");
     }
 
     return parts;
@@ -341,7 +426,8 @@ export function HomeScreen({
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="homeLocalSessionsHint"
-          count={pendingLocalSessionsCount}
+          sessionCount={pendingLocalSessionsCount}
+          profileCount={pendingLocalProfilesCount}
           onDismiss={onDismissLocalSessionsHint}
           onAdd={onOpenLocalImport}
         />
@@ -368,7 +454,15 @@ export function HomeScreen({
         {resumableGame ? (
           <div className="homeHero__actions">
             <div className="homeHero__resumeWrap">
-              <span className="homeHero__resumePill">{resumableGameLabel}</span>
+              <span
+                className={`homeHero__resumePill${
+                  resumableGame.participantMode === "teams"
+                    ? " homeHero__resumePill--teams"
+                    : ""
+                }`}
+              >
+                {resumableGameLabel}
+              </span>
               <button
                 className="btn btn--ghost btn--xl homeHero__secondary"
                 type="button"
@@ -383,11 +477,17 @@ export function HomeScreen({
           <NewGameCard
             open={showForm}
             profiles={profiles}
+            teams={teams}
+            teamMembers={teamMembers}
+            canUseTeams={canUseTeams}
             isAuthenticated={isAuthenticated}
             draft={presetDraft}
             draftToken={presetDraftToken}
             onOpenChange={handleOpenChange}
             onOpenAuth={onOpenAuth}
+            onOpenProFeatureAuth={onOpenProFeatureAuth}
+            onOpenProPlan={onOpenProPlan}
+            onOpenTeamsTab={onOpenTeamsTab}
             onCreate={onCreate}
             onUpsertProfile={onUpsertProfile}
           />
@@ -400,15 +500,23 @@ export function HomeScreen({
             <div className="homeList__title">Games you play often</div>
           </div>
           <div className="quickSetups__grid">
-            {quickSetups.map((setup) => (
+            {quickSetups.map((setup, index) => (
               <button
-                key={setup.key}
+                key={`${setup.key}-${index}`}
                 type="button"
                 className="quickSetupCard"
                 onClick={() => startSuggestion(setup)}
               >
                 <div className="quickSetupCard__main">
-                  <div className="quickSetupCard__title">{setup.label}</div>
+                  <div className="quickSetupCard__titleRow">
+                    <div className="quickSetupCard__title">{setup.label}</div>
+                    {setup.participantMode === "teams" ? (
+                      <span className="quickSetupCard__teamsChip">
+                        <Users size={10} strokeWidth={2.5} aria-hidden="true" />
+                        Teams
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="quickSetupCard__metaRow">
                     <div className="quickSetupCard__facts" aria-hidden="true">
                       {getSuggestionFacts(setup).map((fact) => (
@@ -420,21 +528,47 @@ export function HomeScreen({
                         </span>
                       ))}
                     </div>
-                    {setup.suggestedPlayers.length > 0 ? (
+                    {setup.participantMode === "teams" &&
+                    setup.suggestedTeams &&
+                    setup.suggestedTeams.length > 0 ? (
+                      <div
+                        className="quickSetupCard__teams"
+                        aria-label="Preset teams"
+                      >
+                        {setup.suggestedTeams.slice(0, 4).map((team, index) => (
+                          <Fragment
+                            key={`${setup.key}-${team.id}-${team.name}-${index}`}
+                          >
+                            {index > 0 ? (
+                              <span className="quickSetupCard__versus">vs</span>
+                            ) : null}
+                            <span
+                              className="quickSetupCard__teamIcon"
+                              title={team.name}
+                              aria-hidden="true"
+                            >
+                              <QuickSetupTeamIcon icon={team.icon} />
+                            </span>
+                          </Fragment>
+                        ))}
+                      </div>
+                    ) : setup.suggestedPlayers.length > 0 ? (
                       <div
                         className="quickSetupCard__players"
                         aria-label="Preset players"
                       >
-                        {setup.suggestedPlayers.slice(0, 4).map((player) => (
-                          <span
-                            key={`${setup.key}-${player.profileId ?? player.name}`}
-                            className="quickSetupCard__playerAvatar"
-                            style={avatarStyleFor(player.avatarColor)}
-                            title={player.name}
-                          >
-                            {getInitials(player.name)}
-                          </span>
-                        ))}
+                        {setup.suggestedPlayers
+                          .slice(0, 4)
+                          .map((player, index) => (
+                            <span
+                              key={`${setup.key}-${player.profileId ?? player.name}-${index}`}
+                              className="quickSetupCard__playerAvatar"
+                              style={avatarStyleFor(player.avatarColor)}
+                              title={player.name}
+                            >
+                              {getInitials(player.name)}
+                            </span>
+                          ))}
                         {setup.suggestedPlayers.length > 4 ? (
                           <span className="quickSetupCard__playerMore">
                             +{setup.suggestedPlayers.length - 4}
@@ -460,4 +594,12 @@ export function HomeScreen({
       ) : null}
     </div>
   );
+}
+
+function QuickSetupTeamIcon({ icon }: { icon?: string }) {
+  const Icon =
+    TEAM_ICON_COMPONENTS[
+      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+    ] ?? Dumbbell;
+  return <Icon size={16} strokeWidth={2.35} aria-hidden="true" />;
 }

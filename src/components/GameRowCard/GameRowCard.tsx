@@ -1,6 +1,16 @@
 import { useMemo, useRef, useState } from "react";
+import {
+  Copy,
+  Crosshair,
+  Pencil,
+  Trash2,
+  Trophy,
+  User,
+  Users,
+} from "lucide-react";
 import type { Game } from "../../types";
-import { findWinner, isGameComplete } from "../../utils/ranking";
+import { findWinner, isGameComplete, isGameDraw } from "../../utils/ranking";
+import { getGameParticipants } from "../../utils/gameParticipants";
 import { capitalizeFirst, getGameDisplayName } from "../../utils/text";
 import "./GameRowCard.css";
 
@@ -103,13 +113,31 @@ export function GameRowCard({
   const winner = useMemo(() => {
     return findWinner(game.players, game);
   }, [game]);
+  const participants = useMemo(() => getGameParticipants(game), [game]);
   const complete = useMemo(() => isGameComplete(game), [game]);
+  const draw = useMemo(() => isGameDraw(game), [game]);
+  const isTeamsGame = game.participantMode === "teams";
 
   const parsedName = getGameDisplayName(game.name);
   const displayName = parsedName.title
     ? parsedName.title.toUpperCase()
     : "GAME";
-  const winnerName = winner ? capitalizeFirst(winner.name) : null;
+  const winningParticipant = useMemo(() => {
+    if (!winner) return null;
+    return (
+      participants.find((participant) =>
+        participant.members.some((member) => member.id === winner.id),
+      ) ?? null
+    );
+  }, [participants, winner]);
+  const winnerName = winner
+    ? isTeamsGame
+      ? (winningParticipant?.name ?? capitalizeFirst(winner.name))
+      : capitalizeFirst(winner.name)
+    : null;
+  const participantCount = isTeamsGame
+    ? game.teams.length
+    : game.players.length;
 
   return (
     <div
@@ -129,18 +157,7 @@ export function GameRowCard({
           }}
           aria-label={`Rename game ${game.name}`}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
+          <Pencil size={18} strokeWidth={2} aria-hidden="true" />
           Rename
         </button>
         <button
@@ -152,18 +169,7 @@ export function GameRowCard({
           }}
           aria-label={`Duplicate game ${game.name}`}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
+          <Copy size={18} strokeWidth={2} aria-hidden="true" />
           Re-play
         </button>
         <button
@@ -175,21 +181,15 @@ export function GameRowCard({
           }}
           aria-label={`Delete game ${game.name}`}
         >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M9 3h6m-8 4h10m-9 0 .7 13h6.6L16 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <Trash2 size={18} strokeWidth={2} aria-hidden="true" />
           Delete
         </button>
       </div>
 
       <article
-        className={`card swipeCard gameRowCard${isSwiping ? " swipeCard--dragging" : ""}`}
+        className={`card swipeCard gameRowCard${
+          isTeamsGame ? " gameRowCard--teams" : ""
+        }${isSwiping ? " swipeCard--dragging" : ""}`}
         style={{ transform: `translateX(${swipeX}px)` }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -219,35 +219,49 @@ export function GameRowCard({
                 </span>
               ) : null}
             </div>
-            <div
-              className="gameRow__date"
-              aria-label={`Created ${createdLabel}`}
-            >
-              {createdLabel}
+            <div className="gameRow__headMeta">
+              {isTeamsGame ? (
+                <span
+                  className="gameRow__modeBadge gameRow__modeBadge--teams"
+                  aria-label="Team game"
+                >
+                  <Users size={14} strokeWidth={2.3} aria-hidden="true" />
+                  <span>Teams</span>
+                </span>
+              ) : null}
+              <div
+                className="gameRow__date"
+                aria-label={`Created ${createdLabel}`}
+              >
+                {createdLabel}
+              </div>
             </div>
           </div>
           <div className="gameRow__meta">
             {winnerName ? (
               <span className="gameRow__detail gameRow__winnerDetail">
                 <span className="gameRow__winnerIcon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M8 4h8v4.5a4 4 0 0 1-8 0V4Zm0 2H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 12.5V17m-3 3h6m-5-3h4"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <Trophy
+                    size={14}
+                    strokeWidth={2.3}
+                    aria-hidden="true"
+                    color="black"
+                  />
                 </span>
-                <span className="gameRow__winnerLabel">Winner</span>
+                <span className="gameRow__winnerLabel">Won by</span>
                 <strong>{winnerName}</strong>
               </span>
             ) : null}
-            {complete && !winner ? (
+            {complete && draw ? (
               <span className="gameRow__detail">
                 <span className="gameRow__statusDot" aria-hidden="true" />
                 Draw
+              </span>
+            ) : null}
+            {complete && !winner && !draw ? (
+              <span className="gameRow__detail">
+                <span className="gameRow__statusDot" aria-hidden="true" />
+                Completed
               </span>
             ) : null}
             {!complete ? (
@@ -257,22 +271,7 @@ export function GameRowCard({
               </span>
             ) : null}
             <span className="gameRow__detail">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="8"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                />
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="3"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                />
-              </svg>
+              <Crosshair size={15} strokeWidth={2.3} aria-hidden="true" />
               <span>
                 {game.winCondition === "reach_zero" ? "Start" : "Target"}
               </span>
@@ -291,18 +290,23 @@ export function GameRowCard({
             </span>
             <span
               className="gameRow__detail gameRow__players"
-              aria-label={`Player count ${game.players.length}`}
+              aria-label={`${
+                isTeamsGame ? "Team" : "Player"
+              } count ${participantCount}`}
             >
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20m17.5 0v-1.2a3.4 3.4 0 0 0-2.5-3.3M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-6.8a3.5 3.5 0 0 1 0 6.6"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {game.players.length}{" "}
-              {game.players.length === 1 ? "player" : "players"}
+              {isTeamsGame ? (
+                <Users size={15} strokeWidth={2.3} aria-hidden="true" />
+              ) : (
+                <User size={15} strokeWidth={2.3} aria-hidden="true" />
+              )}
+              {participantCount}{" "}
+              {participantCount === 1
+                ? isTeamsGame
+                  ? "team"
+                  : "player"
+                : isTeamsGame
+                  ? "teams"
+                  : "players"}
             </span>
           </div>
         </button>

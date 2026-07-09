@@ -7,26 +7,132 @@
   gap: 8px;
 }
 
+@keyframes timerAlarmShake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  12% {
+    transform: translate3d(-6px, 0, 0) rotate(-2.8deg);
+  }
+  24% {
+    transform: translate3d(7px, 0, 0) rotate(3.1deg);
+  }
+  36% {
+    transform: translate3d(-7px, 0, 0) rotate(-3.4deg);
+  }
+  48% {
+    transform: translate3d(6px, 0, 0) rotate(2.8deg);
+  }
+  60% {
+    transform: translate3d(-4px, 0, 0) rotate(-2deg);
+  }
+  72% {
+    transform: translate3d(3px, 0, 0) rotate(1.4deg);
+  }
+  84%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes timerAlarmPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, 0.24),
+      0 0 0 rgba(248, 113, 113, 0);
+  }
+  30% {
+    box-shadow:
+      0 14px 30px rgba(127, 29, 29, 0.32),
+      0 0 0 4px rgba(248, 113, 113, 0.12);
+  }
+}
+
+.gameTimer__dock {
+  display: inline-flex;
+  align-items: center;
+  transform-origin: left center;
+  will-change: transform;
+}
+
+.gameTimer--done .gameTimer__dock {
+  animation: timerAlarmShake 0.58s linear infinite;
+}
+
 .gameTimer__fab {
-  min-height: 44px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: rgba(12, 16, 30, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text);
-  padding: 8px 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  gap: 2px;
   font-size: 13px;
   font-weight: 900;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  padding: 0;
+}
+
+.gameTimer--done .gameTimer__fab {
+  border-color: rgba(248, 113, 113, 0.35);
+  background:
+    linear-gradient(180deg, rgba(127, 29, 29, 0.34), rgba(69, 10, 10, 0.9)),
+    rgba(12, 16, 30, 0.95);
+  color: #fee2e2;
+  animation: timerAlarmPulse 0.95s ease-in-out infinite;
+}
+
+.gameTimer__fabRow {
+  display: inline-flex;
+  align-items: center;
 }
 
 .gameTimer__fab svg {
   width: 18px;
   height: 18px;
   display: block;
+}
+
+.gameTimer__fabMain {
+  min-height: 44px;
+  padding: 8px 10px 8px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.gameTimer__fabToggle {
+  width: 42px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gameTimer__fabToggle svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.gameTimer__fabToggle--running {
+  color: var(--accent);
+}
+
+.gameTimer--done .gameTimer__fabToggle {
+  color: #fecaca;
 }
 
 .gameTimer__panel {
@@ -42,6 +148,63 @@
   gap: 8px;
 }
 
+.gameTimer--done .gameTimer__panel {
+  border-color: rgba(248, 113, 113, 0.35);
+  background:
+    linear-gradient(180deg, rgba(127, 29, 29, 0.3), rgba(12, 16, 30, 0.96) 70%),
+    rgba(12, 16, 30, 0.96);
+  box-shadow:
+    0 18px 34px rgba(69, 10, 10, 0.45),
+    0 0 0 1px rgba(248, 113, 113, 0.12);
+  animation: timerAlarmShake 0.58s linear infinite;
+}
+
+.gameTimer__alert {
+  align-self: flex-start;
+  min-height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 113, 113, 0.34);
+  background:
+    linear-gradient(180deg, rgba(127, 29, 29, 0.52), rgba(69, 10, 10, 0.9)),
+    rgba(127, 29, 29, 0.92);
+  color: #fee2e2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow:
+    0 10px 20px rgba(69, 10, 10, 0.3),
+    0 0 0 1px rgba(248, 113, 113, 0.08);
+  transform-origin: left center;
+  will-change: transform;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.gameTimer__alert svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.gameTimer__alert:focus-visible {
+  outline: 2px solid rgba(254, 202, 202, 0.9);
+  outline-offset: 2px;
+}
+
+.gameTimer--done .gameTimer__alert {
+  animation:
+    timerAlarmShake 0.58s linear infinite,
+    timerAlarmPulse 0.95s ease-in-out infinite;
+}
+
 .gameTimer__mode {
   font-size: 11px;
   font-weight: 800;
@@ -50,11 +213,32 @@
   color: var(--muted);
 }
 
+.gameTimer--done .gameTimer__mode {
+  color: #fca5a5;
+}
+
 .gameTimer__clock {
   font-variant-numeric: tabular-nums;
   font-size: 26px;
   font-weight: 950;
   letter-spacing: -0.4px;
+  text-align: center;
+}
+
+.gameTimer--done .gameTimer__clock {
+  color: #fff1f2;
+}
+
+.gameTimer__quickAdjust {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.gameTimer__adjustBtn {
+  min-width: 56px;
+  justify-content: center;
 }
 
 .gameTimer__actions {

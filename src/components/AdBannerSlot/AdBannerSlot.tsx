@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useEntitlementsContext } from "../../hooks/useEntitlements";
 import "./AdBannerSlot.css";
 
 type AdBannerSlotProps = {
@@ -48,7 +49,9 @@ const showPlaceholder =
   import.meta.env.VITE_SHOW_AD_PLACEHOLDERS === "true";
 
 export function AdBannerSlot({ slotId, placement }: AdBannerSlotProps) {
-  if (!showAdSlots) return null;
+  const { shouldShowAds } = useEntitlementsContext();
+
+  if (!showAdSlots || !shouldShowAds) return null;
 
   const adRef = useRef<HTMLModElement | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);

@@ -1,27 +1,27 @@
 .lockedFrame {
   position: relative;
   margin-top: 10px;
-  min-height: clamp(520px, calc(100dvh - 180px), 980px);
+  min-height: clamp(420px, calc(100dvh - 260px), 760px);
 }
 
 .lockedFrame__content {
   position: absolute;
   inset: 0;
-  filter: blur(8px) saturate(0.76);
-  opacity: 0.42;
+  filter: blur(14px) saturate(0.62);
+  opacity: 0.28;
   pointer-events: none;
   user-select: none;
-  transform: scale(0.995);
+  transform: scale(0.985);
   overflow: hidden;
 }
 
 .lockedFrame__cta {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: 26%;
   transform: translate(-50%, -50%);
   width: min(520px, calc(100% - 24px));
-  min-height: 220px;
+  min-height: 190px;
   border: none;
   background: none;
   color: var(--text);
@@ -35,7 +35,7 @@
 
 .lockedFrame__panel {
   width: min(520px, 100%);
-  min-height: 220px;
+  min-height: 190px;
   position: relative;
   isolation: isolate;
   border: 1px solid rgba(216, 255, 79, 0.18);
@@ -51,8 +51,8 @@
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 12px;
-  padding: 28px 24px;
+  gap: 10px;
+  padding: 24px 22px;
   text-align: center;
   pointer-events: auto;
   transition:
@@ -359,6 +359,11 @@
 .sessionsToolbar--skeleton,
 .statsHeroCard--skeleton,
 .statsRow--skeleton,
+.statsSelectorPanel--skeleton,
+.statsSelectorCard--skeleton,
+.statsFocusCard--skeleton,
+.statsMetricCard--skeleton,
+.statsPanel--skeleton,
 .profileCard--skeleton {
   pointer-events: none;
 }
@@ -369,6 +374,10 @@
 
 .statsHeroCard--skeleton {
   min-height: 118px;
+}
+
+.statsFocusCard--skeleton {
+  min-height: 132px;
 }
 
 .profileCard--skeleton {
@@ -391,8 +400,21 @@
 }
 
 @media (max-width: 560px) {
-  .lockedFrame { margin-top: 12px; min-height: clamp(460px, calc(100dvh - 150px), 860px); }
-  .lockedFrame__cta { top: 42%; width: min(100%, calc(100vw - 48px)); min-height: 190px; }
-  .lockedFrame__panel { padding: 22px 16px; border-radius: 22px; }
-  .lockedFrame__cta strong { font-size: 19px; }
+  .lockedFrame {
+    margin-top: 12px;
+    min-height: clamp(360px, calc(100dvh - 240px), 620px);
+  }
+  .lockedFrame__cta {
+    top: 22%;
+    width: min(100%, calc(100vw - 48px));
+    min-height: 176px;
+  }
+  .lockedFrame__panel {
+    min-height: 176px;
+    padding: 20px 16px;
+    border-radius: 22px;
+  }
+  .lockedFrame__cta strong {
+    font-size: 19px;
+  }
 }

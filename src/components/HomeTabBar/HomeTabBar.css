@@ -1,4 +1,6 @@
 .tabBar {
+  --tabBar-accent: var(--accent);
+  --tabBar-accent-bg: rgba(216, 255, 79, 0.12);
   position: fixed;
   bottom: max(18px, env(safe-area-inset-bottom));
   left: 50%;
@@ -15,10 +17,23 @@
   padding: 0 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   z-index: 1000;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.tabBar--teamsTheme {
+  --tabBar-accent: var(--ds-color-secondary);
+  --tabBar-accent-bg: rgba(122, 208, 255, 0.12);
+}
+
+.tabItemWrap {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  display: flex;
 }
 
 .tabItem {
+  width: 100%;
   background: none;
   border: none;
   display: flex;
@@ -32,6 +47,64 @@
   cursor: pointer;
   position: relative;
   z-index: 1;
+}
+
+.tabSwitcher {
+  position: absolute;
+  right: 2px;
+  bottom: calc(100% + 12px);
+  min-width: 132px;
+  padding: 6px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(12, 17, 23, 0.98);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+  display: grid;
+  gap: 4px;
+  z-index: 5;
+}
+
+.tabSwitcher__item {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tabSwitcher__item[aria-checked="true"] {
+  background: var(--tabBar-accent-bg);
+  color: var(--tabBar-accent);
+}
+
+.tabSwitcher__item--locked {
+  opacity: 0.76;
+}
+
+.tabSwitcher__badge {
+  min-width: 28px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex: 0 0 auto;
 }
 
 .tabItem svg {
@@ -51,7 +124,7 @@
 }
 
 .tabItem[data-active="true"] {
-  color: var(--accent);
+  color: var(--tabBar-accent);
 }
 
 @media (max-width: 560px) {

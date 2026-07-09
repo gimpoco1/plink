@@ -136,7 +136,7 @@
 .iconbtn:focus-visible,
 .input:focus-visible {
   outline: none;
-  box-shadow: var(--focus);
+
 }
 
 .iconbtn {
@@ -219,4 +219,9 @@
 .input--compact {
   padding: 12px 12px;
   min-height: 44px;
+}
+
+.input-search-compact {
+  padding: 12px 12px;
+  min-height: 30px;
 }

@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type {
+  CompletionMode,
   Game,
+  GameTeam,
   Player,
   ScoreDirection,
   ToastState,
   WinCondition,
 } from "../types";
-import { MAX_ABS_SCORE } from "../constants";
+import { MAX_ABS_SCORE, DEFAULT_TEAM_ICON } from "../constants";
 import { supabase } from "../lib/supabase";
-import { clampName, formatPlayerName } from "../utils/text";
+import { clampName, formatPlayerName, formatTeamName } from "../utils/text";
 import { uid } from "../utils/id";
 import {
   loadCurrentGameId,
@@ -30,6 +32,7 @@ import {
 
 type CreateGameInput = {
   name: string;
+  participantMode?: "players" | "teams";
   scoreDirection: ScoreDirection;
   startingScore: number;
   targetScore: number;
@@ -37,9 +40,20 @@ type CreateGameInput = {
   winByTwo?: boolean;
   manualEndOnly?: boolean;
   timerEnabled?: boolean;
+  diceEnabled?: boolean;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
   initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
+  initialTeams?: Array<{
+    id: string;
+    name: string;
+    icon?: string;
+    members: Array<{
+      profileId?: string;
+      name: string;
+      avatarColor: string;
+    }>;
+  }>;
 };
 
 type UpdateGameSettingsInput = {
@@ -51,6 +65,7 @@ type UpdateGameSettingsInput = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  diceEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
 };
@@ -81,6 +96,15 @@ function getSyncErrorMessage(error: unknown) {
   return "Unknown sync error";
 }
 
+function isTransientFetchError(error: unknown) {
+  const message = getSyncErrorMessage(error).toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("load failed") ||
+    message.includes("networkerror")
+  );
+}
+
 function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
   const merged = new Map(baseGames.map((game) => [game.id, game]));
 
@@ -98,7 +122,15 @@ function clampScore(value: number) {
   return Math.max(-MAX_ABS_SCORE, Math.min(MAX_ABS_SCORE, value));
 }
 
+function hasOwn<T extends object, K extends PropertyKey>(
+  value: T,
+  key: K,
+): value is T & Record<K, unknown> {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
 export function useGames(session: Session | null, authLoading = false) {
+  const sessionUserId = session?.user.id ?? null;
   const migrated = useMemo(() => migrateSingleGameToGamesIfNeeded(), []);
   const [games, setGames] = useState<Game[]>(
     () => migrated?.games ?? loadGuestGames(),
@@ -112,7 +144,18 @@ export function useGames(session: Session | null, authLoading = false) {
   const [remoteReady, setRemoteReady] = useState(!session && !authLoading);
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
+  const [saveRetryTick, setSaveRetryTick] = useState(0);
   const remoteSignatureRef = useRef<string | null>(null);
+  const failedSaveNoticeSignatureRef = useRef<string | null>(null);
+  const saveRetryTimeoutRef = useRef<number | null>(null);
+  const saveInFlightRef = useRef(false);
+  const saveInFlightUserIdRef = useRef<string | null>(null);
+  const queuedSaveSignatureRef = useRef<string | null>(null);
+  const latestSessionUserIdRef = useRef<string | null>(sessionUserId);
+
+  useEffect(() => {
+    latestSessionUserIdRef.current = sessionUserId;
+  }, [sessionUserId]);
 
   useEffect(() => {
     let alive = true;
@@ -138,17 +181,18 @@ export function useGames(session: Session | null, authLoading = false) {
             return remote && remote.updatedAt !== game.updatedAt;
           });
           if (removed.length > 0) {
-            setSyncNotice(
-              {
-                message:
-                  removed.length === 1
-                    ? `"${removed[0].name}" was removed from your account.`
-                    : `${removed.length} games were removed from your account.`,
-                tone: "default",
-              },
-            );
+            setSyncNotice({
+              message:
+                removed.length === 1
+                  ? `"${removed[0].name}" was removed from your account.`
+                  : `${removed.length} games were removed from your account.`,
+              tone: "default",
+            });
           } else if (changed.length > 0) {
-            setSyncNotice({ message: "Your games were updated.", tone: "default" });
+            setSyncNotice({
+              message: "Your games were updated.",
+              tone: "default",
+            });
           }
         }
         remoteSignatureRef.current = remoteSignature;
@@ -209,12 +253,10 @@ export function useGames(session: Session | null, authLoading = false) {
         setGames([]);
         setCurrentGameId(null);
         setRemoteUserId(null);
-        setSyncNotice(
-          {
-            message: `Could not load games: ${getSyncErrorMessage(error)}`,
-            tone: "error",
-          },
-        );
+        setSyncNotice({
+          message: `Could not load games: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
         setRemoteReady(true);
       });
 
@@ -261,17 +303,18 @@ export function useGames(session: Session | null, authLoading = false) {
             return remote && remote.updatedAt !== game.updatedAt;
           });
           if (removed.length > 0) {
-            setSyncNotice(
-              {
-                message:
-                  removed.length === 1
-                    ? `"${removed[0].name}" was removed from your account.`
-                    : `${removed.length} games were removed from your account.`,
-                tone: "default",
-              },
-            );
+            setSyncNotice({
+              message:
+                removed.length === 1
+                  ? `"${removed[0].name}" was removed from your account.`
+                  : `${removed.length} games were removed from your account.`,
+              tone: "default",
+            });
           } else if (changed.length > 0) {
-            setSyncNotice({ message: "Your games were updated.", tone: "default" });
+            setSyncNotice({
+              message: "Your games were updated.",
+              tone: "default",
+            });
           }
           remoteSignatureRef.current = remoteSignature;
           appliedRemoteState = true;
@@ -331,26 +374,80 @@ export function useGames(session: Session | null, authLoading = false) {
   }, [remoteUserId, session]);
 
   useEffect(() => {
-    if (!session) {
+    if (!sessionUserId) {
       if (!remoteReady || remoteUserId !== null) return;
       saveGuestGames(games);
       return;
     }
-    if (!remoteReady || remoteUserId !== session.user.id) return;
-    void saveRemoteGames(session.user.id, games)
+    if (!remoteReady || remoteUserId !== sessionUserId) return;
+    const nextSignature = getGameSyncSignature(games);
+    if (nextSignature === remoteSignatureRef.current) return;
+
+    if (saveRetryTimeoutRef.current !== null) {
+      window.clearTimeout(saveRetryTimeoutRef.current);
+      saveRetryTimeoutRef.current = null;
+    }
+
+    if (
+      saveInFlightRef.current &&
+      saveInFlightUserIdRef.current === sessionUserId
+    ) {
+      queuedSaveSignatureRef.current = nextSignature;
+      return;
+    }
+
+    saveInFlightRef.current = true;
+    saveInFlightUserIdRef.current = sessionUserId;
+    queuedSaveSignatureRef.current = null;
+
+    void saveRemoteGames(sessionUserId, games)
       .then(() => {
-        remoteSignatureRef.current = getGameSyncSignature(games);
+        if (latestSessionUserIdRef.current !== sessionUserId) return;
+        remoteSignatureRef.current = nextSignature;
+        failedSaveNoticeSignatureRef.current = null;
       })
       .catch((error) => {
+        if (latestSessionUserIdRef.current !== sessionUserId) return;
+        if (isTransientFetchError(error)) {
+          console.warn("Could not reach Supabase while saving games", error);
+          saveRetryTimeoutRef.current = window.setTimeout(() => {
+            saveRetryTimeoutRef.current = null;
+            setSaveRetryTick((value) => value + 1);
+          }, 5000);
+          return;
+        }
+
+        if (failedSaveNoticeSignatureRef.current === nextSignature) return;
+        failedSaveNoticeSignatureRef.current = nextSignature;
         console.error("Failed to save games to Supabase", error);
-        setSyncNotice(
-          {
-            message: `Could not save games: ${getSyncErrorMessage(error)}`,
-            tone: "error",
-          },
-        );
+        setSyncNotice({
+          message: `Could not save games: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
+      })
+      .finally(() => {
+        if (saveInFlightUserIdRef.current === sessionUserId) {
+          saveInFlightRef.current = false;
+          saveInFlightUserIdRef.current = null;
+        }
+        if (latestSessionUserIdRef.current !== sessionUserId) return;
+        if (
+          queuedSaveSignatureRef.current &&
+          queuedSaveSignatureRef.current !== remoteSignatureRef.current
+        ) {
+          queuedSaveSignatureRef.current = null;
+          setSaveRetryTick((value) => value + 1);
+        }
       });
-  }, [games, remoteReady, remoteUserId, session]);
+  }, [games, remoteReady, remoteUserId, saveRetryTick, sessionUserId]);
+
+  useEffect(() => {
+    return () => {
+      if (saveRetryTimeoutRef.current !== null) {
+        window.clearTimeout(saveRetryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!session) {
@@ -390,43 +487,82 @@ export function useGames(session: Session | null, authLoading = false) {
       !manualEndOnly &&
       input.winCondition !== "reach_zero" &&
       targetScore <= 0
-    ) return null;
+    )
+      return null;
     if (input.winCondition === "reach_zero" && startingScore <= targetScore)
       return null;
 
     const now = Date.now();
-    const scoreDirection =
-      input.scoreDirection === "down" ? "down" : "up";
+    const scoreDirection = input.scoreDirection === "down" ? "down" : "up";
     const winCondition =
-      input.winCondition === "reach_zero" ||
-      input.winCondition === "lowest"
+      input.winCondition === "reach_zero" || input.winCondition === "lowest"
         ? input.winCondition
         : "reach_target";
     const timerEnabled = input.timerEnabled === true;
+    const diceEnabled = input.diceEnabled === true;
     const timerMode =
       input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
     const timerSeconds =
       typeof input.timerSeconds === "number" && input.timerSeconds > 0
         ? Math.trunc(input.timerSeconds)
         : 300;
+    const participantMode =
+      input.participantMode === "teams" ? "teams" : "players";
+    const teamIdMap = new Map<string, string>();
+    const teams: GameTeam[] =
+      participantMode === "teams"
+        ? (input.initialTeams ?? []).map((team) => {
+            const gameTeamId = uid();
+            teamIdMap.set(team.id, gameTeamId);
+            return {
+              id: gameTeamId,
+              name: formatTeamName(team.name),
+              icon: team.icon ?? DEFAULT_TEAM_ICON,
+              sourceTeamId: team.id,
+              createdAt: now,
+              updatedAt: now,
+            };
+          })
+        : [];
 
-    const players: Player[] = (input.initialPlayers ?? []).map((p) => ({
-      id: uid(),
-      name: formatPlayerName(p.name),
-      score: startingScore,
-      createdAt: now,
-      reachedAt: now,
-      avatarColor: p.avatarColor,
-      profileId: p.profileId,
-    }));
+    const players: Player[] =
+      participantMode === "teams"
+        ? (input.initialTeams ?? []).flatMap((team) =>
+            team.members.map((member) => ({
+              id: uid(),
+              name: formatPlayerName(member.name),
+              score: startingScore,
+              createdAt: now,
+              reachedAt: now,
+              avatarColor: member.avatarColor,
+              profileId: member.profileId,
+              teamId: teamIdMap.get(team.id),
+            })),
+          )
+        : (input.initialPlayers ?? []).map((p) => ({
+            id: uid(),
+            name: formatPlayerName(p.name),
+            score: startingScore,
+            createdAt: now,
+            reachedAt: now,
+            avatarColor: p.avatarColor,
+            profileId: p.profileId,
+          }));
 
-    if ((winCondition === "lowest" || input.winByTwo === true) && players.length < 2) {
+    const participantCount =
+      participantMode === "teams" ? teams.length : players.length;
+
+    if (
+      (winCondition === "lowest" || input.winByTwo === true) &&
+      participantCount < 2
+    ) {
       return null;
     }
 
     const game: Game = {
       id: uid(),
       name,
+      participantMode,
       scoreDirection,
       startingScore,
       targetScore,
@@ -434,8 +570,10 @@ export function useGames(session: Session | null, authLoading = false) {
       winByTwo: input.winByTwo === true,
       manualEndOnly,
       timerEnabled,
+      diceEnabled,
       timerMode,
       timerSeconds,
+      teams,
       players,
       scoreHistory: [],
       createdAt: now,
@@ -458,9 +596,13 @@ export function useGames(session: Session | null, authLoading = false) {
   function duplicateGame(gameId: string): Game | null {
     const original = games.find((g) => g.id === gameId);
     if (!original) return null;
+    const participantCount =
+      original.participantMode === "teams"
+        ? original.teams.length
+        : original.players.length;
     if (
       (original.winCondition === "lowest" || original.winByTwo) &&
-      original.players.length < 2
+      participantCount < 2
     )
       return null;
 
@@ -494,8 +636,10 @@ export function useGames(session: Session | null, authLoading = false) {
       ...original,
       id: uid(),
       name: nextName,
+      teams: original.teams.map((team) => ({ ...team })),
       players: duplicatedPlayers,
       scoreHistory: [],
+      completionMode: undefined,
       createdAt: now,
       updatedAt: now,
       endedAt: undefined,
@@ -513,19 +657,49 @@ export function useGames(session: Session | null, authLoading = false) {
   }
 
   function updateGame(gameId: string, updater: (game: Game) => Game) {
-    setGames((prev) =>
-      prev.map((g) => {
+    setGames((prev) => {
+      let didChange = false;
+
+      const nextGames = prev.map((g) => {
         if (g.id !== gameId) return g;
         const next = updater(g);
         if (next === g) return g;
+        didChange = true;
         return { ...next, updatedAt: Date.now() };
-      }),
-    );
+      });
+
+      return didChange ? nextGames : prev;
+    });
+  }
+
+  function reconcileGameCompletion(
+    game: Game,
+    players: Player[],
+    teams = game.teams,
+    now = Date.now(),
+  ) {
+    const stillEnded = hasGameEnded(players, {
+      ...game,
+      teams,
+      endedAt: undefined,
+    });
+
+    return {
+      teams,
+      players,
+      completionMode: undefined,
+      endedAt: stillEnded ? (game.endedAt ?? now) : undefined,
+    };
   }
 
   function addPlayer(
     gameId: string,
-    input: { name: string; avatarColor: string; profileId?: string },
+    input: {
+      name: string;
+      avatarColor: string;
+      profileId?: string;
+      teamId?: string;
+    },
   ) {
     const name = formatPlayerName(input.name);
     if (!name) return;
@@ -539,40 +713,162 @@ export function useGames(session: Session | null, authLoading = false) {
         reachedAt: now,
         avatarColor: input.avatarColor,
         profileId: input.profileId,
+        teamId: input.teamId,
       };
-      return { ...g, players: [player, ...g.players] };
+      const players = [player, ...g.players];
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, players, g.teams, now),
+      };
     });
   }
 
   function removePlayer(gameId: string, playerId: string) {
-    updateGame(gameId, (g) => ({
-      ...g,
-      players: g.players.filter((p) => p.id !== playerId),
-    }));
+    const now = Date.now();
+    updateGame(gameId, (g) => {
+      const players = g.players.filter((p) => p.id !== playerId);
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, players, g.teams, now),
+      };
+    });
   }
 
   function updatePlayer(
     gameId: string,
     playerId: string,
-    updates: Partial<Pick<Player, "name" | "avatarColor" | "profileId">>,
+    updates: Partial<
+      Pick<Player, "name" | "avatarColor" | "profileId" | "teamId">
+    >,
   ) {
-    updateGame(gameId, (g) => ({
-      ...g,
-      players: g.players.map((p) => {
+    const now = Date.now();
+    updateGame(gameId, (g) => {
+      let didChange = false;
+
+      const players = g.players.map((p) => {
         if (p.id !== playerId) return p;
+
+        const nextName = hasOwn(updates, "name")
+          ? formatPlayerName(String(updates.name ?? p.name))
+          : p.name;
+        const nextAvatarColor = hasOwn(updates, "avatarColor")
+          ? (updates.avatarColor as string | undefined)
+          : p.avatarColor;
+        const nextProfileId = hasOwn(updates, "profileId")
+          ? (updates.profileId as string | undefined)
+          : p.profileId;
+        const nextTeamId = hasOwn(updates, "teamId")
+          ? (updates.teamId as string | undefined)
+          : p.teamId;
+
+        if (
+          nextName === p.name &&
+          nextAvatarColor === p.avatarColor &&
+          nextProfileId === p.profileId &&
+          nextTeamId === p.teamId
+        ) {
+          return p;
+        }
+
+        didChange = true;
         return {
           ...p,
-          ...updates,
-          name: updates.name ? formatPlayerName(updates.name) : p.name,
+          name: nextName,
+          avatarColor: nextAvatarColor ?? p.avatarColor,
+          profileId: nextProfileId,
+          teamId: nextTeamId,
         };
-      }),
-    }));
+      });
+
+      if (!didChange) return g;
+
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, players, g.teams, now),
+      };
+    });
+  }
+
+  function addTeam(
+    gameId: string,
+    rawName: string,
+    icon?: string,
+    members: Array<{
+      name: string;
+      avatarColor: string;
+      profileId?: string;
+    }> = [],
+  ): GameTeam | null {
+    const name = formatTeamName(rawName);
+    if (!name) return null;
+
+    let createdTeam: GameTeam | null = null;
+    const now = Date.now();
+
+    updateGame(gameId, (g) => {
+      if (
+        g.teams.some((team) => team.name.toLowerCase() === name.toLowerCase())
+      ) {
+        return g;
+      }
+
+      createdTeam = {
+        id: uid(),
+        name,
+        icon,
+        createdAt: now,
+      };
+      const teams = [...g.teams, createdTeam];
+      const nextPlayers =
+        members.length > 0
+          ? [
+              ...members.map((member, index) => ({
+                id: uid(),
+                name: formatPlayerName(member.name),
+                score: g.startingScore,
+                createdAt: now + index,
+                reachedAt: now + index,
+                avatarColor: member.avatarColor,
+                profileId: member.profileId,
+                teamId: createdTeam!.id,
+              })),
+              ...g.players,
+            ].filter((player) => player.name)
+          : g.players;
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, nextPlayers, teams, now),
+      };
+    });
+
+    return createdTeam;
+  }
+
+  function removeTeam(gameId: string, teamId: string) {
+    const now = Date.now();
+    updateGame(gameId, (g) => {
+      const teams = g.teams.filter((team) => team.id !== teamId);
+      const players =
+        g.participantMode === "teams"
+          ? g.players.filter((player) => player.teamId !== teamId)
+          : g.players.map((player) =>
+              player.teamId === teamId
+                ? { ...player, teamId: undefined }
+                : player,
+            );
+
+      return {
+        ...g,
+        ...reconcileGameCompletion(g, players, teams, now),
+      };
+    });
   }
 
   function resetScores(gameId: string) {
     const now = Date.now();
     updateGame(gameId, (g) => ({
       ...g,
+      completionMode: undefined,
       endedAt: undefined,
       scoreHistory: [],
       players: g.players.map((p) => ({
@@ -589,8 +885,14 @@ export function useGames(session: Session | null, authLoading = false) {
     updateGame(gameId, (g) => {
       let scoreHistory = g.scoreHistory ?? [];
       let didUpdateScore = false;
+      const targetPlayer = g.players.find((player) => player.id === playerId);
+      const teamScoreTargetId =
+        g.participantMode === "teams" ? targetPlayer?.teamId : undefined;
       const players = g.players.map((p) => {
-        if (p.id !== playerId) return p;
+        const shouldUpdate =
+          p.id === playerId ||
+          (teamScoreTargetId !== undefined && p.teamId === teamScoreTargetId);
+        if (!shouldUpdate) return p;
 
         const scoreBefore =
           typeof p.score === "number" && Number.isFinite(p.score)
@@ -627,6 +929,7 @@ export function useGames(session: Session | null, authLoading = false) {
         ...g,
         players,
         scoreHistory,
+        completionMode: undefined,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });
@@ -648,13 +951,22 @@ export function useGames(session: Session | null, authLoading = false) {
       !input.manualEndOnly &&
       input.winCondition !== "reach_zero" &&
       targetScore <= 0
-    ) return false;
+    )
+      return false;
     if (input.winCondition === "reach_zero" && startingScore <= targetScore)
       return false;
     if (input.timerEnabled && timerSeconds <= 0) return false;
 
     const now = Date.now();
     updateGame(gameId, (g) => {
+      const participantCount =
+        g.participantMode === "teams" ? g.teams.length : g.players.length;
+      if (
+        (input.winCondition === "lowest" || input.winByTwo) &&
+        participantCount < 2
+      ) {
+        return g;
+      }
       const nextGame = {
         ...g,
         scoreDirection: input.scoreDirection,
@@ -675,18 +987,24 @@ export function useGames(session: Session | null, authLoading = false) {
         winByTwo: input.winByTwo,
         manualEndOnly: input.manualEndOnly,
         timerEnabled: input.timerEnabled,
+        diceEnabled: input.diceEnabled,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
+        completionMode: undefined,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });
     return true;
   }
 
-  function finishGame(gameId: string) {
+  function finishGame(gameId: string, completionMode?: CompletionMode) {
     updateGame(gameId, (g) => {
       if (!g.players.length || g.endedAt) return g;
-      return { ...g, endedAt: Date.now() };
+      return {
+        ...g,
+        completionMode,
+        endedAt: Date.now(),
+      };
     });
   }
 
@@ -694,30 +1012,73 @@ export function useGames(session: Session | null, authLoading = false) {
     profileId: string,
     updates: Partial<Pick<Player, "name" | "avatarColor">>,
   ) {
-    setGames((prev) =>
-      prev.map((g) => ({
-        ...g,
-        players: g.players.map((p) => {
+    setGames((prev) => {
+      let didChange = false;
+
+      const nextGames = prev.map((g) => {
+        let didChangeGame = false;
+
+        const players = g.players.map((p) => {
           if (p.profileId === profileId) {
-            return { ...p, ...updates };
+            const nextName =
+              updates.name !== undefined ? formatPlayerName(updates.name) : p.name;
+            const nextAvatarColor =
+              updates.avatarColor !== undefined
+                ? updates.avatarColor
+                : p.avatarColor;
+
+            if (
+              nextName === p.name &&
+              nextAvatarColor === p.avatarColor
+            ) {
+              return p;
+            }
+
+            didChange = true;
+            didChangeGame = true;
+            return {
+              ...p,
+              name: nextName,
+              avatarColor: nextAvatarColor,
+            };
           }
           return p;
-        }),
-      })),
-    );
+        });
+
+        if (!didChangeGame) return g;
+
+        return {
+          ...g,
+          players,
+          updatedAt: Date.now(),
+        };
+      });
+
+      return didChange ? nextGames : prev;
+    });
   }
 
   function importGames(incomingGames: Game[]) {
+    if (incomingGames.length === 0) return 0;
+
     const existingGamesById = new Map(games.map((game) => [game.id, game]));
+
     const changedCount = incomingGames.reduce((count, incomingGame) => {
       const existingGame = existingGamesById.get(incomingGame.id);
+
       if (!existingGame) return count + 1;
+
       return incomingGame.updatedAt > existingGame.updatedAt
         ? count + 1
         : count;
     }, 0);
+
+    if (changedCount === 0) return 0;
+
     const mergedGames = mergeGamesById(games, incomingGames);
+
     setGames(mergedGames);
+
     if (
       currentGameId &&
       mergedGames.some((game) => game.id === currentGameId)
@@ -729,9 +1090,9 @@ export function useGames(session: Session | null, authLoading = false) {
     ) {
       setCurrentGameId(incomingGames[0].id);
     }
+
     return changedCount;
   }
-
   const sortedPlayers = useMemo(() => {
     if (!currentGame) return [];
     return [...currentGame.players].sort((a, b) =>
@@ -758,7 +1119,9 @@ export function useGames(session: Session | null, authLoading = false) {
     deleteGame,
     renameGame,
     addPlayer,
+    addTeam,
     removePlayer,
+    removeTeam,
     updatePlayer,
     resetScores,
     updateScore,

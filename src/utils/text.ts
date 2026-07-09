@@ -12,6 +12,10 @@ export function formatPlayerName(raw: string): string {
   return capitalizeFirst(clampName(raw));
 }
 
+export function formatTeamName(raw: string): string {
+  return capitalizeFirst(clampName(raw));
+}
+
 export function formatAccountPlayerName(raw: string): string {
   const name = capitalizeFirst(raw);
   return name ? `${name} (You)` : "";
@@ -43,4 +47,10 @@ export function getGameDisplayName(name: string): {
     title: normalized.slice(0, replayMatch.index).trim(),
     replayNumber,
   };
+}
+
+export function getGameSessionLabel(name: string): string {
+  const parsed = getGameDisplayName(name);
+  if (parsed.replayNumber) return `${parsed.title} #${parsed.replayNumber}`;
+  return parsed.title;
 }

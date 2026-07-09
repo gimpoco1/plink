@@ -23,6 +23,14 @@ function getSyncErrorMessage(error: unknown) {
   return "Unknown sync error";
 }
 
+function compareProfiles(left: PlayerProfile, right: PlayerProfile) {
+  if (Boolean(left.isAccountPlayer) !== Boolean(right.isAccountPlayer)) {
+    return left.isAccountPlayer ? -1 : 1;
+  }
+  if (left.createdAt !== right.createdAt) return left.createdAt - right.createdAt;
+  return left.name.localeCompare(right.name);
+}
+
 function mergeProfilesById(
   baseProfiles: PlayerProfile[],
   incomingProfiles: PlayerProfile[],
@@ -36,10 +44,40 @@ function mergeProfilesById(
     }
   }
 
-  return Array.from(merged.values()).sort((a, b) => {
-    if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
-    return a.name.localeCompare(b.name);
+  return Array.from(merged.values()).sort(compareProfiles);
+}
+
+function normalizeAccountPlayers(
+  profiles: PlayerProfile[],
+  preferredAccountPlayerId?: string | null,
+) {
+  const currentAccountPlayers = profiles.filter(
+    (profile) => profile.isAccountPlayer,
+  );
+  const preferredExists = preferredAccountPlayerId
+    ? profiles.some((profile) => profile.id === preferredAccountPlayerId)
+    : false;
+  const keepId =
+    (preferredExists ? preferredAccountPlayerId : null) ??
+    currentAccountPlayers[0]?.id ??
+    null;
+
+  if (!keepId) return profiles;
+
+  let changed = false;
+  const normalized = profiles.map((profile) => {
+    const shouldBeAccountPlayer = profile.id === keepId;
+    if (Boolean(profile.isAccountPlayer) === shouldBeAccountPlayer) {
+      return profile;
+    }
+    changed = true;
+    return {
+      ...profile,
+      isAccountPlayer: shouldBeAccountPlayer,
+    };
   });
+
+  return changed ? normalized : profiles;
 }
 
 function shouldKeepLocalProfiles(
@@ -72,7 +110,7 @@ export function useProfiles(session: Session | null) {
       setRemoteUserId(null);
       setSyncNotice(null);
       remoteSignatureRef.current = null;
-      setProfiles(loadProfiles());
+      setProfiles(normalizeAccountPlayers(loadProfiles()));
       setRemoteReady(true);
       return () => {
         alive = false;
@@ -86,8 +124,9 @@ export function useProfiles(session: Session | null) {
     loadRemoteProfiles(userId)
       .then((remoteProfiles) => {
         if (!alive) return;
-        setProfiles(remoteProfiles);
-        remoteSignatureRef.current = getProfileSyncSignature(remoteProfiles);
+        const normalizedProfiles = normalizeAccountPlayers(remoteProfiles);
+        setProfiles(normalizedProfiles);
+        remoteSignatureRef.current = getProfileSyncSignature(normalizedProfiles);
         setRemoteUserId(userId);
         setRemoteReady(true);
       })
@@ -138,8 +177,12 @@ export function useProfiles(session: Session | null) {
             remoteSignatureRef.current = remoteSignature;
             return previousProfiles;
           }
+          const normalizedRemoteProfiles = normalizeAccountPlayers(
+            remoteProfiles,
+            previousProfiles.find((profile) => profile.isAccountPlayer)?.id,
+          );
           const remoteById = new Map(
-            remoteProfiles.map((profile) => [profile.id, profile]),
+            normalizedRemoteProfiles.map((profile) => [profile.id, profile]),
           );
           const removed = previousProfiles.filter(
             (profile) => !remoteById.has(profile.id),
@@ -164,8 +207,9 @@ export function useProfiles(session: Session | null) {
               tone: "default",
             });
           }
-          remoteSignatureRef.current = remoteSignature;
-          return remoteProfiles;
+          remoteSignatureRef.current =
+            getProfileSyncSignature(normalizedRemoteProfiles);
+          return normalizedRemoteProfiles;
         });
       } catch {
         // Keep local in-memory state if a background refresh fails.
@@ -219,9 +263,11 @@ export function useProfiles(session: Session | null) {
       return;
     }
     if (!remoteReady || remoteUserId !== userId) return;
+    const nextSignature = getProfileSyncSignature(profiles);
+    if (nextSignature === remoteSignatureRef.current) return;
     void saveRemoteProfiles(userId, profiles)
       .then(() => {
-        remoteSignatureRef.current = getProfileSyncSignature(profiles);
+        remoteSignatureRef.current = nextSignature;
       })
       .catch((error) => {
         console.error("Failed to save profiles to Supabase", error);
@@ -232,11 +278,16 @@ export function useProfiles(session: Session | null) {
       });
   }, [profiles, remoteReady, remoteUserId, userId]);
 
+  useEffect(() => {
+    const accountPlayerIds = profiles.filter(
+      (profile) => profile.isAccountPlayer,
+    );
+    if (accountPlayerIds.length <= 1) return;
+    setProfiles((prev) => normalizeAccountPlayers(prev));
+  }, [profiles]);
+
   const sortedProfiles = useMemo(() => {
-    return [...profiles].sort((a, b) => {
-      if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
-      return a.name.localeCompare(b.name);
-    });
+    return [...profiles].sort(compareProfiles);
   }, [profiles]);
 
   function upsertProfile(
@@ -329,18 +380,41 @@ export function useProfiles(session: Session | null) {
     return created;
   }
 
-  function importProfiles(incomingProfiles: PlayerProfile[]) {
+  async function importProfiles(incomingProfiles: PlayerProfile[]) {
+    if (incomingProfiles.length === 0) return 0;
+
+    const existingAccountPlayerId =
+      profiles.find((profile) => profile.isAccountPlayer)?.id ?? null;
     const existingProfilesById = new Map(
       profiles.map((profile) => [profile.id, profile]),
     );
-    const changedCount = incomingProfiles.reduce((count, incomingProfile) => {
+    const sanitizedIncomingProfiles = incomingProfiles.map((incomingProfile) => ({
+      ...incomingProfile,
+      isAccountPlayer:
+        existingProfilesById.get(incomingProfile.id)?.isAccountPlayer === true,
+    }));
+    const changedCount = sanitizedIncomingProfiles.reduce((count, incomingProfile) => {
       const existingProfile = existingProfilesById.get(incomingProfile.id);
       if (!existingProfile) return count + 1;
       return incomingProfile.updatedAt > existingProfile.updatedAt
         ? count + 1
         : count;
     }, 0);
-    const mergedProfiles = mergeProfilesById(profiles, incomingProfiles);
+    if (changedCount === 0) return 0;
+
+    const mergedProfiles = normalizeAccountPlayers(
+      mergeProfilesById(profiles, sanitizedIncomingProfiles),
+      existingAccountPlayerId,
+    );
+    if (userId) {
+      if (!remoteReady || remoteUserId !== userId) {
+        throw new Error(
+          "Loading your saved players. Try importing again in a moment.",
+        );
+      }
+      await saveRemoteProfiles(userId, mergedProfiles);
+      remoteSignatureRef.current = getProfileSyncSignature(mergedProfiles);
+    }
     setProfiles(mergedProfiles);
     return changedCount;
   }

@@ -7,37 +7,43 @@ import {
 } from "../lib/supabase";
 
 export function useAuthSession() {
-  const initialPersistedSession = loadPersistedSupabaseSession();
-  const [session, setSession] = useState<Session | null>(initialPersistedSession);
+  const [session, setSession] = useState<Session | null>(() =>
+    loadPersistedSupabaseSession(),
+  );
   const [passwordRecoveryRequestedAt, setPasswordRecoveryRequestedAt] =
     useState(0);
-  const [loading, setLoading] = useState(
-    hasSupabaseConfig && !initialPersistedSession,
-  );
+  const [loading, setLoading] = useState(hasSupabaseConfig);
 
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
       return;
     }
+    const authClient = supabase;
 
     let alive = true;
+    let refreshRequestId = 0;
 
-    supabase.auth
-      .getSession()
-      .then(({ data, error }) => {
-        if (!alive) return;
+    async function refreshSession() {
+      const requestId = ++refreshRequestId;
+
+      try {
+        const { data, error } = await authClient.auth.getSession();
+        if (!alive || requestId !== refreshRequestId) return;
         if (!error) setSession(data.session);
+      } catch {
+        if (!alive || requestId !== refreshRequestId) return;
+      } finally {
+        if (!alive || requestId !== refreshRequestId) return;
         setLoading(false);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setLoading(false);
-      });
+      }
+    }
+
+    void refreshSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    } = authClient.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setLoading(false);
       if (event === "PASSWORD_RECOVERY") {
@@ -45,9 +51,37 @@ export function useAuthSession() {
       }
     });
 
+    function handleWindowFocus() {
+      void refreshSession();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void refreshSession();
+      }
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (!event.key) return;
+      if (
+        event.key === "supabase.auth.token" ||
+        event.key.endsWith("-auth-token") ||
+        event.key.endsWith("-auth-token-user")
+      ) {
+        void refreshSession();
+      }
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("storage", handleStorage);
+
     return () => {
       alive = false;
       subscription.unsubscribe();
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("storage", handleStorage);
     };
   }, []);
 

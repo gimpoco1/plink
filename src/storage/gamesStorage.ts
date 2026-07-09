@@ -41,7 +41,10 @@ function sanitizeScoreHistory(input: unknown): Game["scoreHistory"] {
     .filter(Boolean) as Game["scoreHistory"];
 }
 
-function sanitizePlayers(input: unknown, startingScore: number): Game["players"] {
+function sanitizePlayers(
+  input: unknown,
+  startingScore: number,
+): Game["players"] {
   if (!Array.isArray(input)) return [];
   return input
     .map((player) => {
@@ -63,10 +66,39 @@ function sanitizePlayers(input: unknown, startingScore: number): Game["players"]
         createdAt: obj.createdAt,
         reachedAt: obj.reachedAt,
         avatarColor: obj.avatarColor,
-        profileId: typeof obj.profileId === "string" ? obj.profileId : undefined,
+        profileId:
+          typeof obj.profileId === "string" ? obj.profileId : undefined,
+        teamId: typeof obj.teamId === "string" ? obj.teamId : undefined,
       };
     })
     .filter(Boolean) as Game["players"];
+}
+
+function sanitizeTeams(input: unknown): Game["teams"] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((team) => {
+      if (!team || typeof team !== "object") return null;
+      const obj = team as Record<string, unknown>;
+      if (
+        typeof obj.id !== "string" ||
+        typeof obj.name !== "string" ||
+        typeof obj.createdAt !== "number"
+      ) {
+        return null;
+      }
+      return {
+        id: obj.id,
+        name: obj.name,
+        icon: typeof obj.icon === "string" ? obj.icon : undefined,
+        sourceTeamId:
+          typeof obj.sourceTeamId === "string" ? obj.sourceTeamId : undefined,
+        createdAt: obj.createdAt,
+        updatedAt:
+          typeof obj.updatedAt === "number" ? obj.updatedAt : obj.createdAt,
+      } satisfies Game["teams"][number];
+    })
+    .filter(Boolean) as Game["teams"];
 }
 
 export function sanitizeGames(input: unknown): Game[] {
@@ -101,6 +133,7 @@ export function sanitizeGames(input: unknown): Game[] {
       return {
         id: obj.id,
         name: obj.name,
+        participantMode: obj.participantMode === "teams" ? "teams" : "players",
         scoreDirection: obj.scoreDirection,
         startingScore,
         targetScore: obj.targetScore,
@@ -108,8 +141,16 @@ export function sanitizeGames(input: unknown): Game[] {
         winByTwo: obj.winByTwo === true,
         manualEndOnly: obj.manualEndOnly === true,
         timerEnabled,
+        diceEnabled: obj.diceEnabled === true,
         timerMode,
         timerSeconds,
+        teams: sanitizeTeams(obj.teams),
+        completionMode:
+          obj.completionMode === "winner" ||
+          obj.completionMode === "no_winner" ||
+          obj.completionMode === "draw"
+            ? obj.completionMode
+            : undefined,
         createdAt: obj.createdAt,
         updatedAt: obj.updatedAt,
         endedAt: typeof obj.endedAt === "number" ? obj.endedAt : undefined,
@@ -135,11 +176,16 @@ export function saveGames(games: Game[], storageKey = GAMES_STORAGE_KEY) {
   localStorage.setItem(storageKey, JSON.stringify(games));
 }
 
-export function loadCurrentGameId(storageKey = CURRENT_GAME_ID_KEY): string | null {
+export function loadCurrentGameId(
+  storageKey = CURRENT_GAME_ID_KEY,
+): string | null {
   return localStorage.getItem(storageKey);
 }
 
-export function saveCurrentGameId(gameId: string | null, storageKey = CURRENT_GAME_ID_KEY) {
+export function saveCurrentGameId(
+  gameId: string | null,
+  storageKey = CURRENT_GAME_ID_KEY,
+) {
   if (!gameId) localStorage.removeItem(storageKey);
   else localStorage.setItem(storageKey, gameId);
 }
@@ -178,6 +224,7 @@ export function migrateSingleGameToGamesIfNeeded(): {
   const migrated: Game = {
     id: gameId,
     name: "Game",
+    participantMode: "players",
     scoreDirection: "up",
     startingScore: 0,
     targetScore: 100,
@@ -185,8 +232,10 @@ export function migrateSingleGameToGamesIfNeeded(): {
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    diceEnabled: false,
     timerMode: "countdown",
     timerSeconds: 300,
+    teams: [],
     players: legacyPlayers,
     scoreHistory: [],
     createdAt: now,

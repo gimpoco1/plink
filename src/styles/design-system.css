@@ -1,0 +1,182 @@
+:root {
+  color-scheme: dark;
+
+  /* Core color tokens */
+  --ds-color-surface: #0b1519;
+  --ds-color-surface-dim: #0b1519;
+  --ds-color-surface-bright: #313b40;
+  --ds-color-surface-container-lowest: #060f14;
+  --ds-color-surface-container-low: #131d22;
+  --ds-color-surface-container: #172126;
+  --ds-color-surface-container-high: #212b30;
+  --ds-color-surface-container-highest: #2c363b;
+  --ds-color-on-surface: #d9e4eb;
+  --ds-color-on-surface-variant: #c5c8b3;
+  --ds-color-inverse-surface: #d9e4eb;
+  --ds-color-inverse-on-surface: #283237;
+  --ds-color-outline: #8f937f;
+  --ds-color-outline-variant: #454838;
+  --ds-color-surface-tint: #b4d256;
+  --ds-color-primary: #d9ff4f;
+  --ds-color-on-primary: #283500;
+  --ds-color-primary-container: #a4c248;
+  --ds-color-on-primary-container: #3d4e00;
+  --ds-color-inverse-primary: #516600;
+  --ds-color-secondary: #7ad0ff;
+  --ds-color-on-secondary: #003549;
+  --ds-color-secondary-container: #00a9e3;
+  --ds-color-on-secondary-container: #003a50;
+  --ds-color-tertiary: #cbd3d7;
+  --ds-color-on-tertiary: #2a3235;
+  --ds-color-tertiary-container: #afb8bc;
+  --ds-color-on-tertiary-container: #41494c;
+  --ds-color-error: #ffb4ab;
+  --ds-color-on-error: #690005;
+  --ds-color-error-container: #93000a;
+  --ds-color-on-error-container: #ffdad6;
+  --ds-color-primary-fixed: #d9ff4f;
+  --ds-color-primary-fixed-dim: #b4d256;
+  --ds-color-on-primary-fixed: #161e00;
+  --ds-color-on-primary-fixed-variant: #3c4d00;
+  --ds-color-secondary-fixed: #c3e8ff;
+  --ds-color-secondary-fixed-dim: #7ad0ff;
+  --ds-color-on-secondary-fixed: #001e2c;
+  --ds-color-on-secondary-fixed-variant: #004c69;
+  --ds-color-tertiary-fixed: #dbe4e8;
+  --ds-color-tertiary-fixed-dim: #bfc8cc;
+  --ds-color-on-tertiary-fixed: #151d20;
+  --ds-color-on-tertiary-fixed-variant: #40484b;
+  --ds-color-background: #0b1519;
+  --ds-color-on-background: #d9e4eb;
+  --ds-color-surface-variant: #2c363b;
+
+  /* Typography tokens */
+  --ds-font-family:
+    "Hanken Grotesk", "Nunito", "SF Pro Rounded", -apple-system, system-ui,
+    sans-serif;
+
+  --ds-font-headline-lg-size: 32px;
+  --ds-font-headline-lg-weight: 700;
+  --ds-font-headline-lg-line: 40px;
+  --ds-font-headline-lg-tracking: -0.02em;
+
+  --ds-font-headline-md-size: 24px;
+  --ds-font-headline-md-weight: 600;
+  --ds-font-headline-md-line: 32px;
+
+  --ds-font-title-sm-size: 14px;
+  --ds-font-title-sm-weight: 700;
+  --ds-font-title-sm-line: 20px;
+  --ds-font-title-sm-tracking: 0.05em;
+
+  --ds-font-body-lg-size: 18px;
+  --ds-font-body-lg-weight: 400;
+  --ds-font-body-lg-line: 28px;
+
+  --ds-font-body-md-size: 16px;
+  --ds-font-body-md-weight: 400;
+  --ds-font-body-md-line: 24px;
+
+  --ds-font-label-lg-size: 14px;
+  --ds-font-label-lg-weight: 600;
+  --ds-font-label-lg-line: 20px;
+
+  --ds-font-label-sm-size: 12px;
+  --ds-font-label-sm-weight: 500;
+  --ds-font-label-sm-line: 16px;
+
+  /* Shape and spacing tokens */
+  --ds-radius-sm: 0.25rem;
+  --ds-radius: 0.5rem;
+  --ds-radius-md: 0.75rem;
+  --ds-radius-lg: 1rem;
+  --ds-radius-xl: 1.5rem;
+  --ds-radius-full: 9999px;
+
+  --ds-space-base: 8px;
+  --ds-space-xs: 4px;
+  --ds-space-sm: 12px;
+  --ds-space-md: 24px;
+  --ds-space-lg: 40px;
+  --ds-space-xl: 64px;
+  --ds-space-gutter: 16px;
+  --ds-space-margin: 24px;
+
+  /* Existing app variable aliases (for compatibility) */
+  --bg: var(--ds-color-background);
+  --surface: rgba(11, 21, 25, 0.9);
+  --surface2: rgba(23, 33, 38, 0.96);
+  --text: var(--ds-color-on-surface);
+  --muted: #9ba6ac;
+  --text-dim: #7f8b91;
+  --border: rgba(217, 228, 235, 0.11);
+  --shadow: 0 24px 64px rgba(0, 0, 0, 0.34);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --floating-curve: 32px;
+  --card-tab-inset: 4px;
+  --focus: 0 0 0 4px rgba(191, 222, 97, 0.28);
+  --pos: var(--ds-color-primary-fixed-dim);
+  --neg: #ff8c82;
+  --primary: var(--ds-color-primary-container);
+  --primaryInk: var(--ds-color-on-primary);
+  --accent: var(--ds-color-primary);
+  --accent-ink: var(--ds-color-on-primary);
+  --brand: var(--ds-color-primary);
+  --accent-soft: rgba(191, 222, 97, 0.12);
+  --accent-border: rgba(191, 222, 97, 0.32);
+  --accent-glow: rgba(191, 222, 97, 0.26);
+  --glow: 0 16px 44px rgba(0, 0, 0, 0.26);
+}
+
+.ds-headline-lg {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-headline-lg-size);
+  font-weight: var(--ds-font-headline-lg-weight);
+  line-height: var(--ds-font-headline-lg-line);
+  letter-spacing: var(--ds-font-headline-lg-tracking);
+}
+
+.ds-headline-md {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-headline-md-size);
+  font-weight: var(--ds-font-headline-md-weight);
+  line-height: var(--ds-font-headline-md-line);
+}
+
+.ds-title-sm {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-title-sm-size);
+  font-weight: var(--ds-font-title-sm-weight);
+  line-height: var(--ds-font-title-sm-line);
+  letter-spacing: var(--ds-font-title-sm-tracking);
+  text-transform: uppercase;
+}
+
+.ds-body-lg {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-body-lg-size);
+  font-weight: var(--ds-font-body-lg-weight);
+  line-height: var(--ds-font-body-lg-line);
+}
+
+.ds-body-md {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-body-md-size);
+  font-weight: var(--ds-font-body-md-weight);
+  line-height: var(--ds-font-body-md-line);
+}
+
+.ds-label-lg {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-label-lg-size);
+  font-weight: var(--ds-font-label-lg-weight);
+  line-height: var(--ds-font-label-lg-line);
+}
+
+.ds-label-sm {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-font-label-sm-size);
+  font-weight: var(--ds-font-label-sm-weight);
+  line-height: var(--ds-font-label-sm-line);
+}

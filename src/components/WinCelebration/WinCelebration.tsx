@@ -1,7 +1,18 @@
 import { useEffect } from "react";
+import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import type { ProfileStats } from "../../utils/profileStats";
 import type { WinCondition } from "../../types";
+import {
+  Dumbbell,
+  Flag,
+  Flame,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import "./WinCelebration.css";
 
 type Standing = {
@@ -9,14 +20,27 @@ type Standing = {
   name: string;
   initials: string;
   avatarColor: string;
+  icon?: string;
   score: number;
   rank: number;
   isWinner: boolean;
 };
 
+const TEAM_ICON_COMPONENTS = {
+  dumbbell: Dumbbell,
+  trophy: Trophy,
+  shield: Shield,
+  flag: Flag,
+  target: Target,
+  zap: Zap,
+  flame: Flame,
+  star: Star,
+} as const;
+
 type Props = {
+  isTeamGame?: boolean;
   winnerName?: string | null;
-  isDraw?: boolean;
+  resultKind?: "winner" | "draw" | "completed";
   gameName: string;
   targetScore: number;
   startingScore: number;
@@ -30,8 +54,9 @@ type Props = {
 };
 
 export function WinCelebration({
+  isTeamGame = false,
   winnerName,
-  isDraw = false,
+  resultKind = "winner",
   gameName,
   targetScore,
   startingScore,
@@ -52,12 +77,20 @@ export function WinCelebration({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onDismiss]);
 
+  const isDraw = resultKind === "draw";
+  const isCompletedWithoutWinner = resultKind === "completed";
+  const dialogLabel = isDraw
+    ? `${gameName} ended in a draw`
+    : isCompletedWithoutWinner
+      ? `${gameName} ended without a winner`
+      : `${winnerName} wins ${gameName}`;
+
   return (
     <div
-      className="winFx"
+      className={`winFx${isTeamGame ? " winFx--teams" : ""}`}
       role="dialog"
       aria-modal="true"
-      aria-label={isDraw ? `${gameName} ended in a draw` : `${winnerName} wins ${gameName}`}
+      aria-label={dialogLabel}
     >
       <div className="winFx__veil" />
       <div className="winFx__burst" aria-hidden="true">
@@ -98,9 +131,17 @@ export function WinCelebration({
               />
             </svg>
           </div>
-          <div className="winFx__eyebrow">{isDraw ? "Draw" : "Winner"}</div>
-          <div className="winFx__name">{isDraw ? "Draw game" : winnerName}</div>
-          {!isDraw && winnerStats?.currentWinStreak ? (
+          <div className="winFx__eyebrow">
+            {isDraw ? "Draw" : isCompletedWithoutWinner ? "Finished" : "Winner"}
+          </div>
+          <div className="winFx__name">
+            {isDraw
+              ? "Draw game"
+              : isCompletedWithoutWinner
+                ? "No winner"
+                : winnerName}
+          </div>
+          {!isDraw && !isCompletedWithoutWinner && winnerStats?.currentWinStreak ? (
             <div className="winFx__streakHero" aria-label={`${winnerStats.currentWinStreak} win streak`}>
               <span className="winFx__streakHeroCount">
                 {winnerStats.currentWinStreak}
@@ -112,7 +153,9 @@ export function WinCelebration({
           )}
           {!isDraw ? (
             <div className="winFx__hint">
-              {manualEndOnly
+              {isCompletedWithoutWinner
+                ? "Ended without a winner"
+                : manualEndOnly
                 ? "Ended manually"
                 : winCondition === "reach_zero"
                 ? `Started at ${startingScore}, reached 0`
@@ -123,7 +166,7 @@ export function WinCelebration({
           ) : null}
         </div>
 
-        {!isDraw && winnerStats ? (
+        {!isDraw && !isCompletedWithoutWinner && winnerStats ? (
           <section className="winFx__playerStats" aria-label="Updated winner stats">
             <div className="winFx__playerStatsHeader">
               <div className="winFx__playerStatsTitle">Updated player stats</div>
@@ -159,13 +202,19 @@ export function WinCelebration({
               >
                 <div className="winFx__rowLeft">
                   <div className="winFx__rank">#{entry.rank}</div>
-                  <div
-                    className="winFx__avatar"
-                    style={avatarStyleFor(entry.avatarColor)}
-                    aria-hidden="true"
-                  >
-                    {entry.initials}
-                  </div>
+                  {isTeamGame && entry.icon ? (
+                    <div className="winFx__avatar winFx__avatar--team" aria-hidden="true">
+                      <TeamIconGlyph icon={entry.icon} />
+                    </div>
+                  ) : (
+                    <div
+                      className="winFx__avatar"
+                      style={avatarStyleFor(entry.avatarColor)}
+                      aria-hidden="true"
+                    >
+                      {entry.initials}
+                    </div>
+                  )}
                   <div className="winFx__player">
                     <strong>{entry.name}</strong>
                     {entry.isWinner ? <span>Champion</span> : null}
@@ -198,4 +247,12 @@ export function WinCelebration({
       </div>
     </div>
   );
+}
+
+function TeamIconGlyph({ icon }: { icon?: string }) {
+  const Icon =
+    TEAM_ICON_COMPONENTS[
+      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
+    ] ?? Dumbbell;
+  return <Icon size={18} strokeWidth={2.25} aria-hidden="true" />;
 }

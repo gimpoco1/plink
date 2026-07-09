@@ -6,6 +6,22 @@ export type Player = {
   reachedAt: number;
   avatarColor: string;
   profileId?: string;
+  teamId?: string;
+};
+
+export type GameTeam = {
+  id: string;
+  name: string;
+  icon?: string;
+  sourceTeamId?: string;
+  createdAt: number;
+  updatedAt?: number;
+};
+
+export type TeamMember = {
+  teamId: string;
+  profileId: string;
+  createdAt: number;
 };
 
 export type PlayerProfile = {
@@ -30,10 +46,12 @@ export type ScoreHistoryEntry = {
 
 export type ScoreDirection = "up" | "down";
 export type WinCondition = "reach_target" | "reach_zero" | "lowest";
+export type CompletionMode = "winner" | "no_winner" | "draw";
 
 export type Game = {
   id: string;
   name: string;
+  participantMode?: "players" | "teams";
   scoreDirection: ScoreDirection;
   startingScore: number;
   targetScore: number;
@@ -41,10 +59,13 @@ export type Game = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  diceEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
+  teams: GameTeam[];
   players: Player[];
   scoreHistory: ScoreHistoryEntry[];
+  completionMode?: CompletionMode;
   createdAt: number;
   updatedAt: number;
   endedAt?: number;

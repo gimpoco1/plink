@@ -1,15 +1,22 @@
+import { Plus } from "lucide-react";
 import { AVATAR_COLORS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import "./NewPlayerComposer.css";
 
 type Props = {
+  className?: string;
   isOpen: boolean;
+  showTrigger?: boolean;
   isAuthenticated: boolean;
+  disabled?: boolean;
+  inputId?: string;
   name: string;
   color: (typeof AVATAR_COLORS)[number]["value"];
   saveAsProfile: boolean;
   validationMessage?: string;
+  showPersistenceControls?: boolean;
+  showCancelButton?: boolean;
   onOpen: () => void;
   onOpenAuth: () => void;
   onCancel: () => void;
@@ -20,12 +27,18 @@ type Props = {
 };
 
 export function NewPlayerComposer({
+  className,
   isOpen,
+  showTrigger = true,
   isAuthenticated,
+  disabled = false,
+  inputId,
   name,
   color,
   saveAsProfile,
   validationMessage,
+  showPersistenceControls = true,
+  showCancelButton = true,
   onOpen,
   onOpenAuth,
   onCancel,
@@ -34,21 +47,21 @@ export function NewPlayerComposer({
   onColorChange,
   onSaveAsProfileChange,
 }: Props) {
-  const canAdd = name.trim().length > 0 && !validationMessage;
+  const canAdd = !disabled && name.trim().length > 0 && !validationMessage;
 
-  if (!isOpen) {
+  if (!isOpen && showTrigger) {
     return (
-      <button type="button" className="newPlayerTrigger" onClick={onOpen}>
-        <div className="newPlayerTrigger__icon">+</div>
-        <span className="newPlayerTrigger__copy">
-          <strong>Add player</strong>
-        </span>
+      <button type="button" className="teamPicker__createBtn" onClick={onOpen}>
+        <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
+        Add new player
       </button>
     );
   }
 
+  if (!isOpen) return null;
+
   return (
-    <div className="newPlayerComposer">
+    <div className={`newPlayerComposer${className ? ` ${className}` : ""}`}>
       <div className="newPlayerComposer__header">
         <span>Player name</span>
       </div>
@@ -63,10 +76,12 @@ export function NewPlayerComposer({
               {name.trim() ? getInitials(name) : "+"}
             </div>
             <input
+              id={inputId}
               className="input input--sm newPlayerComposer__input"
               autoFocus
               placeholder="e.g. John"
               value={name}
+              disabled={disabled}
               aria-invalid={!!validationMessage}
               onChange={(e) => onNameChange(e.target.value)}
               onKeyDown={(e) => {
@@ -101,6 +116,7 @@ export function NewPlayerComposer({
               className="colorDisc colorDisc--large"
               style={{ background: entry.value }}
               data-active={color === entry.value}
+              disabled={disabled}
               onClick={() => onColorChange(entry.value)}
               aria-label={`Use ${entry.id} color`}
               aria-pressed={color === entry.value}
@@ -109,34 +125,44 @@ export function NewPlayerComposer({
         </div>
       </div>
 
-      <div className="newPlayerComposer__footer">
-        {!isAuthenticated ? (
-          <button
-            className="newPlayerComposer__guestNote"
-            type="button"
-            onClick={onOpenAuth}
-          >
-            <strong>Sign in to save player</strong>
-          </button>
-        ) : (
-          <label className="saveProfileOption newPlayerComposer__save">
-            <input
-              type="checkbox"
-              checked={saveAsProfile}
-              onChange={(e) => onSaveAsProfileChange(e.target.checked)}
-            />
-            <span>Remember player</span>
-          </label>
-        )}
-
-        <button
-          className="newPlayerComposer__close"
-          type="button"
-          onClick={onCancel}
+      {showPersistenceControls || showCancelButton ? (
+        <div
+          className={`newPlayerComposer__footer${
+            !showPersistenceControls ? " newPlayerComposer__footer--actionsOnly" : ""
+          }`}
         >
-          Cancel
-        </button>
-      </div>
+          {showPersistenceControls ? (
+            !isAuthenticated ? (
+              <button
+                className="newPlayerComposer__guestNote"
+                type="button"
+                onClick={onOpenAuth}
+              >
+                <strong>Sign in to save player</strong>
+              </button>
+            ) : (
+              <label className="saveProfileOption newPlayerComposer__save">
+                <input
+                  type="checkbox"
+                  checked={saveAsProfile}
+                  onChange={(e) => onSaveAsProfileChange(e.target.checked)}
+                />
+                <span>Save player in your account</span>
+              </label>
+            )
+          ) : null}
+
+          {showCancelButton ? (
+            <button
+              className="newPlayerComposer__close"
+              type="button"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

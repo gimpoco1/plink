@@ -6,11 +6,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.managePlayersDialog__form {
-  padding: 20px;
-  min-height: 0;
-}
-
 .managePlayersDialog__head {
   margin-bottom: 14px;
   padding-bottom: 14px;
@@ -32,50 +27,6 @@
   flex: 1;
 }
 
-.managePlayersDialog__summary {
-  display: grid;
-  gap: 8px;
-}
-
-.managePlayersDialog__summaryStats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.managePlayersDialog__summaryStat {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid rgba(216, 255, 79, 0.14);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent 120%),
-    rgba(255, 255, 255, 0.03);
-}
-
-.managePlayersDialog__summaryStat span {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.managePlayersDialog__summaryStat strong {
-  color: var(--text);
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-}
-
-.managePlayersDialog__summary span {
-  color: var(--text-dim);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
 .managePlayersDialog__hero {
   display: grid;
   gap: 10px;
@@ -83,7 +34,11 @@
   border: 1px solid rgba(216, 255, 79, 0.18);
   border-radius: 20px;
   background:
-    radial-gradient(circle at top right, rgba(216, 255, 79, 0.16), transparent 34%),
+    radial-gradient(
+      circle at top right,
+      rgba(216, 255, 79, 0.16),
+      transparent 34%
+    ),
     linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent 120%),
     rgba(255, 255, 255, 0.03);
 }
@@ -169,6 +124,100 @@
   gap: 10px;
 }
 
+.managePlayersDialog__modeNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid rgba(122, 208, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(122, 208, 255, 0.07);
+}
+
+.managePlayersDialog__modeNoticeLead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.managePlayersDialog__modeNoticeIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(122, 208, 255, 0.14);
+  color: var(--ds-color-secondary);
+  box-shadow: inset 0 0 0 1px rgba(122, 208, 255, 0.18);
+}
+
+.managePlayersDialog__modeNoticeCopy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.managePlayersDialog__modeNoticeTag {
+  color: var(--ds-color-secondary);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.managePlayersDialog__modeNoticeCopy > span:last-child {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.managePlayersDialog__modeCta {
+  min-height: 34px;
+  width: fit-content;
+  margin-top: 0;
+  padding-inline: 12px 13px;
+  border-color: rgba(122, 208, 255, 0.24);
+  background: rgba(122, 208, 255, 0.12);
+  color: var(--ds-color-secondary);
+  gap: 8px;
+  box-shadow: none;
+}
+
+.managePlayersDialog__modeCta:not(:disabled):hover {
+  border-color: rgba(122, 208, 255, 0.36);
+  background: rgba(122, 208, 255, 0.18);
+  color: #a7e1ff;
+}
+
+.managePlayersDialog__modeCta svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.managePlayersDialog__teamComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.managePlayersDialog__teamInput.input {
+  min-width: 0;
+  min-height: 40px;
+  font-size: 12px;
+}
+
+.managePlayersDialog__teamCreateBtn {
+  min-height: 40px;
+  padding-inline: 14px;
+}
+
 .managePlayersDialog__createBtn {
   min-height: 44px;
   padding-inline: 16px;
@@ -191,6 +240,10 @@
   flex: none;
 }
 
+.managePlayersDialog__savedPicker {
+  margin-top: 10px;
+}
+
 .managePlayersDialog__simpleTitle {
   color: var(--text);
   font-size: 13px;
@@ -198,9 +251,50 @@
   letter-spacing: 0.02em;
 }
 
+.managePlayersDialog__titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.managePlayersDialog__countChip {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid rgba(216, 255, 79, 0.18);
+  border-radius: 999px;
+  background: rgba(216, 255, 79, 0.1);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.managePlayersDialog__countChip--teams {
+  border-color: rgba(122, 208, 255, 0.2);
+  background: rgba(122, 208, 255, 0.1);
+  color: var(--ds-color-secondary);
+}
+
 .managePlayersDialog__sectionHeaderRow {
   display: grid;
   gap: 10px;
+}
+
+.managePlayersDialog__sectionHeaderRow--teams {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.managePlayersDialog__teamQuickAdd {
+  min-height: 34px;
+  padding-inline: 12px;
 }
 
 .managePlayersDialog__searchInline {
@@ -231,6 +325,7 @@
 .managePlayersDialog__queue {
   display: grid;
   gap: 8px;
+  margin-top: 15px;
 }
 
 .managePlayersDialog__queueList {
@@ -267,6 +362,25 @@
   flex-shrink: 0;
 }
 
+.managePlayersDialog__queueTeamIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ds-color-on-secondary);
+  background:
+    linear-gradient(
+      180deg,
+      var(--ds-color-secondary-fixed),
+      var(--ds-color-secondary)
+    ),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
 .managePlayersDialog__queueRemove {
   color: var(--muted);
   font-size: 14px;
@@ -276,6 +390,116 @@
 .managePlayersDialog__list {
   display: grid;
   gap: 8px;
+}
+
+.managePlayersDialog__teamList {
+  display: grid;
+  gap: 8px;
+}
+
+.managePlayersDialog__teamCard {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.managePlayersDialog__teamCardMain {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.managePlayersDialog__teamIdentity {
+  display: grid;
+  gap: 0;
+  align-content: center;
+  min-width: 0;
+}
+
+.managePlayersDialog__teamHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.managePlayersDialog__teamIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ds-color-on-secondary);
+  background:
+    linear-gradient(
+      180deg,
+      var(--ds-color-secondary-fixed),
+      var(--ds-color-secondary)
+    ),
+    rgba(255, 255, 255, 0.03);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.managePlayersDialog__teamName {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.managePlayersDialog__teamMeta {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.managePlayersDialog__teamMembers {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+  min-width: 0;
+}
+
+.managePlayersDialog__teamMemberAvatar {
+  width: 22px;
+  height: 22px;
+  margin-left: -6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  border: 1px solid rgba(12, 16, 22, 0.82);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.managePlayersDialog__teamMemberAvatar:first-child {
+  margin-left: 0;
+}
+
+.managePlayersDialog__teamMemberOverflow {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  margin-left: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .managePlayersDialog__list--saved {
@@ -298,7 +522,8 @@
 }
 
 .managePlayersDialog__card--editing {
-  align-items: flex-start;
+  align-items: stretch;
+  padding: 12px;
 }
 
 .managePlayersDialog__cardMain {
@@ -307,6 +532,11 @@
   gap: 8px;
   min-width: 0;
   flex: 1;
+}
+
+.managePlayersDialog__card--editing .managePlayersDialog__cardMain {
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .managePlayersDialog__avatar {
@@ -321,6 +551,13 @@
   font-size: 12px;
   font-weight: 900;
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
+}
+
+.managePlayersDialog__card--editing .managePlayersDialog__avatar {
+  width: 34px;
+  height: 34px;
+  margin-top: 0;
+  border-radius: 10px;
 }
 
 .managePlayersDialog__avatar--preview {
@@ -343,7 +580,7 @@
 
 .managePlayersDialog__identity {
   display: grid;
-  gap: 1px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
@@ -360,7 +597,7 @@
 .managePlayersDialog__name {
   color: var(--text);
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.2;
   min-width: 0;
 }
@@ -371,17 +608,65 @@
   line-height: 1.25;
 }
 
+.managePlayersDialog__teamAssignment {
+  display: grid;
+  gap: 6px;
+}
+
+.managePlayersDialog__teamAssignmentLabel {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.managePlayersDialog__teamAssignmentChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.managePlayersDialog__teamChip {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.managePlayersDialog__teamChip--active {
+  border-color: rgba(216, 255, 79, 0.28);
+  background: rgba(216, 255, 79, 0.12);
+  color: var(--accent);
+}
+
+.managePlayersDialog__teamChip:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
 .managePlayersDialog__actionsRow {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
   justify-self: end;
+  align-self: stretch;
 }
 
 .managePlayersDialog__actionsRow--edit {
   margin-left: 0;
   justify-self: auto;
+  align-self: center;
 }
 
 .managePlayersDialog__actionBtn {
@@ -392,36 +677,163 @@
   font-size: 12px;
 }
 
-.managePlayersDialog__actionBtn--danger {
+.managePlayersDialog__actionBtn--add {
+  border-color: rgba(122, 208, 255, 0.28);
+  background: rgba(122, 208, 255, 0.12);
+  color: var(--ds-color-secondary);
+}
+
+.managePlayersDialog__actionBtn--add:hover:not(:disabled) {
+  border-color: rgba(122, 208, 255, 0.42);
+  background: rgba(122, 208, 255, 0.18);
+}
+
+.managePlayersDialog__actionBtn--edit {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+}
+
+.managePlayersDialog__actionBtn--edit:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.managePlayersDialog__actionBtn--save {
+  border-color: rgba(216, 255, 79, 0.46);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.managePlayersDialog__actionBtn--save:hover:not(:disabled) {
+  border-color: rgba(216, 255, 79, 0.72);
+  background: #e2ff78;
+}
+
+.managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(17, 24, 10, 0.12),
+    0 0 0 2px rgba(216, 255, 79, 0.2);
+}
+
+.managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued:hover:not(
+    :disabled
+  ),
+.managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued:active {
+  border-color: rgba(216, 255, 79, 0.86);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.managePlayersDialog__actionBtn--cancel {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-dim);
+}
+
+.managePlayersDialog__actionBtn--cancel:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.managePlayersDialog__inlineAction {
+  min-height: 32px;
+  align-self: center;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.managePlayersDialog__inlineAction:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.managePlayersDialog__inlineAction:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.managePlayersDialog__inlineAction--add {
+  border-color: rgba(122, 208, 255, 0.28);
+  background: rgba(122, 208, 255, 0.12);
+  color: var(--ds-color-secondary);
+  box-shadow: 0 8px 20px rgba(122, 208, 255, 0.12);
+}
+
+.managePlayersDialog__inlineAction--add:hover:not(:disabled) {
+  border-color: rgba(122, 208, 255, 0.42);
+  background: rgba(122, 208, 255, 0.18);
+}
+
+.managePlayersDialog__inlineAction--danger {
+  border-color: rgba(255, 140, 130, 0.24);
+  background: rgba(255, 140, 130, 0.1);
   color: var(--neg);
+}
+
+.managePlayersDialog__inlineAction--danger:hover:not(:disabled) {
+  border-color: rgba(255, 140, 130, 0.4);
+  background: rgba(255, 140, 130, 0.16);
+}
+
+.managePlayersDialog__actionBtn--danger {
+  border-color: rgba(255, 140, 130, 0.26);
+  background: rgba(255, 140, 130, 0.12);
+  color: var(--neg);
+}
+
+.managePlayersDialog__actionBtn--danger:hover:not(:disabled) {
+  border-color: rgba(255, 140, 130, 0.44);
+  background: rgba(255, 140, 130, 0.18);
 }
 
 .managePlayersDialog__editStack {
   display: grid;
-  gap: 6px;
+  gap: 12px;
   width: 100%;
   min-width: 0;
 }
 
 .managePlayersDialog__editTop {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
-.managePlayersDialog__editInput {
-  flex: 1;
+.managePlayersDialog__editInput.input {
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
   min-width: 0;
-  min-height: 40px;
-  padding: 8px 10px;
+  padding: 0 10px;
   font-size: 12px;
+  line-height: 1;
 }
 
 .managePlayersDialog__swatches {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 6px;
+  gap: 7px;
   width: 100%;
 }
 
@@ -444,9 +856,9 @@
 .managePlayersDialog__swatch--selected {
   border-color: rgba(255, 255, 255, 0.9);
   box-shadow:
-    0 0 0 2px rgba(216, 255, 79, 0.28),
-    0 8px 20px rgba(0, 0, 0, 0.25);
-  transform: scale(1.04);
+    0 0 0 2px rgba(246, 248, 235, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
 }
 
 .managePlayersDialog__toggle {
@@ -505,12 +917,21 @@
 .managePlayersDialog__footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 6px;
+  margin-bottom: 8px;
 }
 
 .managePlayersDialog__submitRow {
   margin-top: 0;
   width: 100%;
+}
+
+.managePlayersDialog__submitRow--teams .btn--primary:not(:disabled):hover {
+  border-color: rgba(122, 208, 255, 0.45);
+  background:
+    linear-gradient(180deg, rgba(122, 208, 255, 0.94), rgba(0, 169, 227, 0.92)),
+    var(--ds-color-secondary);
+  color: var(--ds-color-on-secondary);
+  box-shadow: 0 14px 30px rgba(122, 208, 255, 0.18);
 }
 
 @media (max-width: 640px) {
@@ -519,13 +940,13 @@
     max-height: calc(100dvh - 16px);
   }
 
-  .managePlayersDialog__form {
-    padding: 18px;
-  }
-
   .managePlayersDialog__toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .managePlayersDialog__teamComposer {
+    grid-template-columns: 1fr;
   }
 
   .managePlayersDialog__createBtn {
@@ -535,6 +956,15 @@
   .managePlayersDialog__sectionHeaderRow {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .managePlayersDialog__modeNotice {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .managePlayersDialog__modeCta {
+    width: 100%;
   }
 
   .managePlayersDialog__searchInline {
@@ -565,6 +995,6 @@
   }
 
   .managePlayersDialog__editTop {
-    align-items: flex-start;
+    align-items: center;
   }
 }
