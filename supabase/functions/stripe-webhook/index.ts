@@ -19,6 +19,18 @@ function normalizeBillingPeriod(value: unknown): "monthly" | "yearly" | null {
   return value === "monthly" || value === "yearly" ? value : null;
 }
 
+function getStripeCustomerId(
+  value: string | Stripe.Customer | Stripe.DeletedCustomer | null,
+) {
+  return typeof value === "string" ? value : value?.id ?? null;
+}
+
+function getStripeSubscriptionId(
+  value: string | Stripe.Subscription | null,
+) {
+  return typeof value === "string" ? value : value?.id ?? null;
+}
+
 async function findSubscriptionOwner(
   admin: ReturnType<typeof createAdminClient>,
   params: {
@@ -59,21 +71,18 @@ async function upsertStripeSubscription(
 ) {
   const userId = await findSubscriptionOwner(admin, {
     userId: subscription.metadata.user_id,
-    customerId:
-      typeof subscription.customer === "string"
-        ? subscription.customer
-        : subscription.customer?.id,
+    customerId: getStripeCustomerId(subscription.customer),
     subscriptionId: subscription.id,
   });
 
   if (!userId) {
+    console.warn(
+      `Unable to resolve subscription owner for Stripe subscription ${subscription.id}.`,
+    );
     return;
   }
 
-  const customerId =
-    typeof subscription.customer === "string"
-      ? subscription.customer
-      : subscription.customer?.id ?? null;
+  const customerId = getStripeCustomerId(subscription.customer);
   const priceId = subscription.items.data[0]?.price?.id ?? null;
   const billingPeriod = normalizeBillingPeriod(
     subscription.metadata.billing_period,
@@ -148,28 +157,18 @@ async function upsertCheckoutSession(
       (typeof session.client_reference_id === "string"
         ? session.client_reference_id
         : null),
-    customerId:
-      typeof session.customer === "string"
-        ? session.customer
-        : session.customer?.id,
-    subscriptionId:
-      typeof session.subscription === "string"
-        ? session.subscription
-        : session.subscription?.id,
+    customerId: getStripeCustomerId(session.customer),
+    subscriptionId: getStripeSubscriptionId(session.subscription),
   });
 
   if (!userId) {
-    return;
+    throw new Error(
+      `Unable to resolve checkout session owner for Stripe session ${session.id}.`,
+    );
   }
 
-  const customerId =
-    typeof session.customer === "string"
-      ? session.customer
-      : session.customer?.id ?? null;
-  const subscriptionId =
-    typeof session.subscription === "string"
-      ? session.subscription
-      : session.subscription?.id ?? null;
+  const customerId = getStripeCustomerId(session.customer);
+  const subscriptionId = getStripeSubscriptionId(session.subscription);
   const billingPeriod = normalizeBillingPeriod(session.metadata?.billing_period);
   const { data: existingSubscription } = await admin
     .from("subscriptions")
@@ -202,6 +201,25 @@ async function upsertCheckoutSession(
   }
 }
 
+async function syncCheckoutSessionSubscription(
+  admin: ReturnType<typeof createAdminClient>,
+  session: Stripe.Checkout.Session,
+) {
+  const subscriptionId = getStripeSubscriptionId(session.subscription);
+  if (!subscriptionId) {
+    throw new Error(
+      `Stripe checkout session ${session.id} completed without a subscription id.`,
+    );
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  await upsertStripeSubscription(
+    admin,
+    subscription,
+    "customer.subscription.updated",
+  );
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -229,10 +247,11 @@ Deno.serve(async (request) => {
 
     switch (event.type) {
       case "checkout.session.completed":
-        await upsertCheckoutSession(
-          admin,
-          event.data.object as Stripe.Checkout.Session,
-        );
+        {
+          const session = event.data.object as Stripe.Checkout.Session;
+          await upsertCheckoutSession(admin, session);
+          await syncCheckoutSessionSubscription(admin, session);
+        }
         break;
       case "customer.subscription.created":
       case "customer.subscription.updated":
