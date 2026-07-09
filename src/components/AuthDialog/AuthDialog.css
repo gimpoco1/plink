@@ -1237,7 +1237,43 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+}
+
+.authDialog__passwordField {
+  position: relative;
+  width: 100%;
+}
+
+.authDialog__passwordInput {
+  width: 100%;
+  padding-right: 48px;
+}
+
+.authDialog__passwordToggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.authDialog__passwordToggle:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.authDialog__passwordToggle:focus-visible {
+  outline: 2px solid rgba(216, 255, 79, 0.45);
+  outline-offset: 2px;
 }
 
 .authDialog__forgotPassword {
@@ -1262,6 +1298,109 @@
   font-size: 11.5px;
   font-weight: 650;
   line-height: 1.45;
+}
+
+.authDialog__authAlert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.authDialog__authAlert--error {
+  border-color: rgba(248, 113, 113, 0.28);
+  background:
+    linear-gradient(180deg, rgba(239, 68, 68, 0.18), rgba(127, 29, 29, 0.06)),
+    rgba(255, 255, 255, 0.03);
+  color: #ffe1e1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 22px rgba(90, 18, 18, 0.18);
+}
+
+.authDialog__authAlertIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #fecaca;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.authDialog__confirmationCard {
+  display: grid;
+  gap: 14px;
+  padding: 18px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(74, 222, 128, 0.24);
+  background:
+    linear-gradient(180deg, rgba(34, 197, 94, 0.16), rgba(21, 128, 61, 0.05)),
+    rgba(255, 255, 255, 0.03);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 38px rgba(8, 38, 18, 0.16);
+}
+
+.authDialog__confirmationIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #d9ffe1;
+  background:
+    linear-gradient(180deg, rgba(74, 222, 128, 0.3), rgba(34, 197, 94, 0.14)),
+    rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 28px rgba(22, 101, 52, 0.18);
+}
+
+.authDialog__confirmationCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.authDialog__confirmationCopy strong {
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.authDialog__confirmationCopy p {
+  margin: 0;
+  color: rgba(234, 255, 239, 0.88);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.authDialog__confirmationCopy span {
+  color: #f5fff7;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.authDialog__confirmationActions {
+  display: grid;
+  gap: 10px;
 }
 
 .authDialog__toast {
@@ -1304,6 +1443,7 @@
 .authDialog__notice {
   color: var(--accent);
   font-size: 13px;
+  font-weight: 700;
   line-height: 1.4;
 }
 

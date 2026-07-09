@@ -11,16 +11,21 @@ import {
   FunctionsHttpError,
   FunctionsRelayError,
   type Session,
+  type User,
 } from "@supabase/supabase-js";
 import {
+  AlertTriangle,
   Check,
   ChevronDown,
   Coffee,
   Croissant,
   Crown,
   Download,
+  Eye,
+  EyeOff,
   FileUp,
   LogOut,
+  Mail,
   Pencil,
   Plus,
 } from "lucide-react";
@@ -90,6 +95,10 @@ function areStringArraysEqual(left: string[], right: string[]) {
   return true;
 }
 
+function isExistingAccountSignUpResponse(user: User | null) {
+  return !!user && !user.is_anonymous && (user.identities?.length ?? 0) === 0;
+}
+
 export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
   function AuthDialog(
     {
@@ -133,11 +142,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const [editingAccountPlayer, setEditingAccountPlayer] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [notice, setNotice] = useState<string | null>(null);
     const [transferToast, setTransferToast] = useState<ToastState | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [signupConfirmationEmail, setSignupConfirmationEmail] = useState<
+      string | null
+    >(null);
     const [busy, setBusy] = useState(false);
     const [hasStripeBillingProfile, setHasStripeBillingProfile] =
       useState(false);
@@ -182,6 +195,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       filteredLocalGames.every((game) =>
         selectedLocalGameIds.includes(game.id),
       );
+    const isAwaitingSignupConfirmation =
+      mode === "signup" && !!signupConfirmationEmail;
     const transferSelection: BackupSelection = {
       games: includeGames,
       profiles: includeProfiles,
@@ -570,6 +585,15 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       return message || fallback;
     }
 
+    function openEmailApp() {
+      if (typeof window === "undefined") return;
+
+      const target = signupConfirmationEmail?.trim() || email.trim();
+      window.location.href = target
+        ? `mailto:${encodeURIComponent(target)}`
+        : "mailto:";
+    }
+
     async function submit() {
       if (!supabase) {
         setError("Supabase is not configured yet.");
@@ -587,6 +611,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setBusy(true);
       setError(null);
       setNotice(null);
+      setSignupConfirmationEmail(null);
       setTransferToast(null);
 
       try {
@@ -616,10 +641,16 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
             },
           });
           if (signUpError) throw signUpError;
-          if (!data.session) {
-            setNotice(
-              "Check your inbox to confirm the account before signing in.",
+          if (isExistingAccountSignUpResponse(data.user)) {
+            setSignupConfirmationEmail(null);
+            setError(
+              "An account with this email already exists. Sign in instead.",
             );
+            return;
+          }
+          if (!data.session) {
+            setPassword("");
+            setSignupConfirmationEmail(trimmedEmail);
           } else {
             if (dialogRef.current?.open) {
               onOpenChange?.(false);
@@ -2100,100 +2131,186 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                 <button
                   className={`authDialog__switchBtn${mode === "signin" ? " authDialog__switchBtn--active" : ""}`}
                   type="button"
-                  onClick={() => setMode("signin")}
+                  onClick={() => {
+                    setMode("signin");
+                    setSignupConfirmationEmail(null);
+                    setNotice(null);
+                    setError(null);
+                    setShowPassword(false);
+                  }}
                 >
                   Sign in
                 </button>
                 <button
                   className={`authDialog__switchBtn${mode === "signup" ? " authDialog__switchBtn--active" : ""}`}
                   type="button"
-                  onClick={() => setMode("signup")}
+                  onClick={() => {
+                    setMode("signup");
+                    setNotice(null);
+                    setError(null);
+                    setShowPassword(false);
+                  }}
                 >
                   Register
                 </button>
               </div>
 
               <div className="authDialog__panel">
-                {mode === "signup" ? (
-                  <label className="authField">
-                    <span>Name</span>
-                    <input
-                      className="input"
-                      type="text"
-                      autoComplete="name"
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                      placeholder="Your name"
-                    />
-                  </label>
-                ) : null}
+                {isAwaitingSignupConfirmation ? (
+                  <div className="authDialog__confirmationCard">
+                    <div className="authDialog__confirmationCopy">
+                      <strong>
+                        <span
+                          className="authDialog__confirmationIcon"
+                          aria-hidden="true"
+                        >
+                          <Check size={18} strokeWidth={2.8} />
+                        </span>
+                        <span>Check your inbox</span>
+                      </strong>
+                      <p>
+                        We sent a confirmation link to{" "}
+                        <span>{signupConfirmationEmail}</span>. Open the email
+                        and confirm the account before signing in.
+                      </p>
+                    </div>
+                    <div className="authDialog__confirmationActions">
+                      <button
+                        className="btn btn--primary btn--wide"
+                        type="button"
+                        onClick={openEmailApp}
+                      >
+                        <Mail size={16} strokeWidth={2.2} aria-hidden="true" />
+                        <div style={{ marginLeft: "8px" }}>Open email app</div>
+                      </button>
+                      <button
+                        className="btn btn--ghost btn--wide"
+                        type="button"
+                        onClick={() => {
+                          setSignupConfirmationEmail(null);
+                          setNotice(null);
+                          setError(null);
+                        }}
+                      >
+                        Use another email
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {mode === "signup" ? (
+                      <label className="authField">
+                        <span>Name</span>
+                        <input
+                          className="input"
+                          type="text"
+                          autoComplete="name"
+                          value={accountName}
+                          onChange={(e) => setAccountName(e.target.value)}
+                          placeholder="Your name"
+                        />
+                      </label>
+                    ) : null}
 
-                <label className="authField">
-                  <span>Email</span>
-                  <input
-                    className="input"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                  />
-                </label>
+                    <label className="authField">
+                      <span>Email</span>
+                      <input
+                        className="input"
+                        type="email"
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                      />
+                    </label>
 
-                <label className="authField">
-                  <span>Password</span>
-                  <input
-                    className="input"
-                    type="password"
-                    autoComplete={
-                      mode === "signin" ? "current-password" : "new-password"
-                    }
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") submit();
-                    }}
-                  />
-                </label>
+                    <label className="authField">
+                      <span>Password</span>
+                      <div className="authDialog__passwordField">
+                        <input
+                          className="input authDialog__passwordInput"
+                          type={showPassword ? "text" : "password"}
+                          autoComplete={
+                            mode === "signin"
+                              ? "current-password"
+                              : "new-password"
+                          }
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") submit();
+                          }}
+                        />
+                        <button
+                          className="authDialog__passwordToggle"
+                          type="button"
+                          onClick={() => setShowPassword((value) => !value)}
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                          title={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? (
+                            <EyeOff size={17} strokeWidth={2.1} />
+                          ) : (
+                            <Eye size={17} strokeWidth={2.1} />
+                          )}
+                        </button>
+                      </div>
+                    </label>
 
-                {mode === "signin" ? (
-                  <button
-                    className="authDialog__forgotPassword"
-                    type="button"
-                    onClick={() => void sendPasswordReset()}
-                    disabled={busy || !email.trim()}
-                  >
-                    Forgot password?
-                  </button>
-                ) : null}
+                    {mode === "signin" ? (
+                      <button
+                        className="authDialog__forgotPassword"
+                        type="button"
+                        onClick={() => void sendPasswordReset()}
+                        disabled={busy || !email.trim()}
+                      >
+                        Forgot password?
+                      </button>
+                    ) : null}
 
-                {notice ? (
-                  <div className="authDialog__notice">{notice}</div>
-                ) : null}
-                {error ? (
-                  <div className="authDialog__error">{error}</div>
-                ) : null}
+                    {notice ? (
+                      <div className="authDialog__notice">{notice}</div>
+                    ) : null}
+                    {error ? (
+                      <div
+                        className="authDialog__authAlert authDialog__authAlert--error"
+                        role="alert"
+                        aria-live="assertive"
+                      >
+                        <span
+                          className="authDialog__authAlertIcon"
+                          aria-hidden="true"
+                        >
+                          <AlertTriangle size={16} strokeWidth={2.4} />
+                        </span>
+                        <span>{error}</span>
+                      </div>
+                    ) : null}
 
-                <button
-                  className="btn btn--primary btn--wide"
-                  type="button"
-                  onClick={submit}
-                  disabled={
-                    busy ||
-                    !email.trim() ||
-                    !password ||
-                    (mode === "signup" && !formatPlayerName(accountName))
-                  }
-                >
-                  {busy
-                    ? mode === "signin"
-                      ? "Signing in..."
-                      : "Creating account..."
-                    : mode === "signin"
-                      ? "Sign in"
-                      : "Create account"}
-                </button>
+                    <button
+                      className="btn btn--primary btn--wide"
+                      type="button"
+                      onClick={submit}
+                      disabled={
+                        busy ||
+                        !email.trim() ||
+                        !password ||
+                        (mode === "signup" && !formatPlayerName(accountName))
+                      }
+                    >
+                      {busy
+                        ? mode === "signin"
+                          ? "Signing in..."
+                          : "Creating account..."
+                        : mode === "signin"
+                          ? "Sign in"
+                          : "Create account"}
+                    </button>
+                  </>
+                )}
                 <div className="authDialog__links" aria-label="Account links">
                   <a href="/privacy.html">Privacy</a>
                   <span aria-hidden="true">·</span>
