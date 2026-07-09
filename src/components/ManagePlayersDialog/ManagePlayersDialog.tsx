@@ -71,6 +71,10 @@ type Props = {
   onDeleteProfile: (profileId: string) => void;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
+  onUpsertLocalPlayer: (
+    name: string,
+    avatarColor: string,
+  ) => PlayerProfile | null;
   onUpdateProfile: (
     profileId: string,
     updates: Partial<Pick<PlayerProfile, "name" | "avatarColor">>,
@@ -107,6 +111,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
       onDeleteProfile,
       onDeletePlayer,
       onUpsertProfile,
+      onUpsertLocalPlayer,
       onUpdateProfile,
       onUpdatePlayer,
       onCreateTeam,
@@ -157,14 +162,13 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
     }, [currentGamePlayers]);
 
     const filteredProfiles = useMemo(() => {
-      if (!isAuthenticated) return [];
       const q = search.trim().toLowerCase();
       const visibleProfiles = profiles.filter(
         (p) => !currentProfileIds.has(p.id),
       );
       if (!q) return visibleProfiles;
       return visibleProfiles.filter((p) => p.name.toLowerCase().includes(q));
-    }, [profiles, currentProfileIds, isAuthenticated, search]);
+    }, [profiles, currentProfileIds, search]);
 
     const currentPlayerNameValidationMessage = useMemo(() => {
       const normalizedName = clampName(editingName).trim().toLowerCase();
@@ -509,6 +513,17 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
         const profile = onUpsertProfile(name, selectedColor);
         if (profile) {
           setStagedProfileIds((prev) => new Set(prev).add(profile.id));
+          setPendingName("");
+          setSelectedColor(AVATAR_COLORS[0]?.value ?? "#64748b");
+          setSaveForLater(isAuthenticated);
+          setIsCreating(false);
+          return;
+        }
+      }
+      if (!isAuthenticated) {
+        const localProfile = onUpsertLocalPlayer(name, selectedColor);
+        if (localProfile) {
+          setStagedProfileIds((prev) => new Set(prev).add(localProfile.id));
           setPendingName("");
           setSelectedColor(AVATAR_COLORS[0]?.value ?? "#64748b");
           setSaveForLater(isAuthenticated);
@@ -1002,7 +1017,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                 </div>
               ) : null}
 
-              {isPlayersGame && isAuthenticated ? (
+              {isPlayersGame ? (
                 <section className="managePlayersDialog__section managePlayersDialog__section--saved">
                   <SearchableRosterPicker
                     variant="dark"
@@ -1010,17 +1025,20 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                     listMaxHeight="170px"
                     searchValue={search}
                     onSearchChange={setSearch}
-                    listTitle="Saved players"
+                    listTitle={isAuthenticated ? "Saved players" : "Add players"}
                     collapseLabel="Hide players"
                     searchPlaceholder="Search players"
                     searchAriaLabel="Search saved players"
                     clearAriaLabel="Clear player search"
+                    showSearch={isAuthenticated && (profiles.length > 0 || !!search)}
                     emptyState={
                       search
                         ? "No saved players match that search."
-                        : profiles.length > 0
+                        : isAuthenticated && profiles.length > 0
                           ? "Every saved player is already in this game."
-                          : "No saved players yet."
+                          : isAuthenticated
+                            ? "No saved players yet."
+                            : "Add a player for this game below."
                     }
                     createButtonLabel="Add new player"
                     onCreateButtonClick={() => {
@@ -1036,6 +1054,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                         color={selectedColor}
                         saveAsProfile={saveForLater}
                         validationMessage={newPlayerValidationMessage}
+                        showPersistenceControls={isAuthenticated}
                         onOpen={() => {
                           setIsCreating(true);
                           queueMicrotask(() => nameInputRef.current?.focus());
@@ -1229,42 +1248,46 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                                         )}
                                       </button>
                                     )}
-                                    <button
-                                      className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
-                                      type="button"
-                                      onClick={() => {
-                                        setEditingProfileId(profile.id);
-                                        setEditingPlayerId(null);
-                                        setEditingName(profile.name);
-                                        setEditingColor(
-                                          profile.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
-                                        );
-                                      }}
-                                      aria-label={`Edit saved player ${displayName}`}
-                                      title="Edit saved player"
-                                    >
-                                      <Pencil
-                                        size={14}
-                                        strokeWidth={2.5}
-                                        aria-hidden="true"
-                                      />
-                                    </button>
-                                    {!profile.isAccountPlayer ? (
-                                      <button
-                                        className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
-                                        type="button"
-                                        onClick={() =>
-                                          onDeleteProfile(profile.id)
-                                        }
-                                        aria-label={`Delete saved player ${displayName}`}
-                                        title="Delete saved player"
-                                      >
-                                        <Trash2
-                                          size={14}
-                                          strokeWidth={2.4}
-                                          aria-hidden="true"
-                                        />
-                                      </button>
+                                    {isAuthenticated ? (
+                                      <>
+                                        <button
+                                          className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingProfileId(profile.id);
+                                            setEditingPlayerId(null);
+                                            setEditingName(profile.name);
+                                            setEditingColor(
+                                              profile.avatarColor as (typeof AVATAR_COLORS)[number]["value"],
+                                            );
+                                          }}
+                                          aria-label={`Edit saved player ${displayName}`}
+                                          title="Edit saved player"
+                                        >
+                                          <Pencil
+                                            size={14}
+                                            strokeWidth={2.5}
+                                            aria-hidden="true"
+                                          />
+                                        </button>
+                                        {!profile.isAccountPlayer ? (
+                                          <button
+                                            className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
+                                            type="button"
+                                            onClick={() =>
+                                              onDeleteProfile(profile.id)
+                                            }
+                                            aria-label={`Delete saved player ${displayName}`}
+                                            title="Delete saved player"
+                                          >
+                                            <Trash2
+                                              size={14}
+                                              strokeWidth={2.4}
+                                              aria-hidden="true"
+                                            />
+                                          </button>
+                                        ) : null}
+                                      </>
                                     ) : null}
                                   </div>
                                 </div>

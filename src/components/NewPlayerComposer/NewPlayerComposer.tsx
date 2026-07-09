@@ -147,7 +147,7 @@ export function NewPlayerComposer({
                   checked={saveAsProfile}
                   onChange={(e) => onSaveAsProfileChange(e.target.checked)}
                 />
-                <span>Remember player</span>
+                <span>Save player in your account</span>
               </label>
             )
           ) : null}

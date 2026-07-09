@@ -58,7 +58,7 @@ import {
   prepareBackupImport,
   type BackupSelection,
 } from "./storage/backupFile";
-import { loadGuestGames } from "./storage/gamesStorage";
+import { loadGuestGames, saveGuestGames } from "./storage/gamesStorage";
 import { loadProfiles } from "./storage/profilesStorage";
 import {
   APP_VIEW_STORAGE_KEY,
@@ -68,7 +68,13 @@ import {
   PLAYERS_VIEW_STORAGE_KEY,
 } from "./constants";
 import { CircleUser } from "lucide-react";
-
+import {
+  areLocalPlayersEqual,
+  loadLocalPlayers,
+  saveLocalPlayers,
+  LOCAL_PLAYERS_CHANGED_EVENT,
+  type LocalPlayer,
+} from "./storage/localPlayers";
 type PresetDraftIntent = "edit" | "teams-detour" | null;
 
 export default function App() {
@@ -164,6 +170,9 @@ export default function App() {
   const appTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [visibleToast, setVisibleToast] = useState<ToastState | null>(null);
   const [localDataVersion, setLocalDataVersion] = useState(0);
+  const [localStoredPlayers, setLocalStoredPlayers] = useState<LocalPlayer[]>(
+    () => loadLocalPlayers(),
+  );
   const [shouldSaveGamePlayersOnSignIn, setShouldSaveGamePlayersOnSignIn] =
     useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -203,8 +212,24 @@ export default function App() {
     () => (canViewSavedData ? loadProfiles() : profiles),
     [canViewSavedData, localDataVersion, profiles],
   );
+  const localStoredPlayerProfiles = useMemo<PlayerProfile[]>(
+    () =>
+      localStoredPlayers.map((player) => ({
+        id: player.id,
+        name: player.name,
+        avatarColor: player.avatarColor,
+        createdAt: player.createdAt,
+        updatedAt: player.updatedAt,
+      })),
+    [localStoredPlayers],
+  );
   const localGamesCount = localGuestGames.length;
-  const localProfilesCount = localGuestProfiles.length;
+  const localProfilesCount =
+    localGuestProfiles.length + localStoredPlayerProfiles.length;
+  const combinedGuestAndLocalProfiles = useMemo(
+    () => [...localGuestProfiles, ...localStoredPlayerProfiles],
+    [localGuestProfiles, localStoredPlayerProfiles],
+  );
   const pendingLocalGuestGames = useMemo(() => {
     if (!canViewSavedData) return [];
     const accountGamesById = new Map(games.map((game) => [game.id, game]));
@@ -213,6 +238,7 @@ export default function App() {
       return !accountGame || guestGame.updatedAt > accountGame.updatedAt;
     });
   }, [canViewSavedData, games, localGuestGames]);
+
   const pendingLocalGuestProfiles = useMemo(() => {
     if (!canViewSavedData) return [];
     const accountProfilesById = new Map(
@@ -224,7 +250,12 @@ export default function App() {
         .filter(Boolean),
     );
 
-    return localGuestProfiles.filter((guestProfile) => {
+    const allLocalProfiles = [
+      ...localGuestProfiles,
+      ...localStoredPlayerProfiles,
+    ];
+
+    return allLocalProfiles.filter((guestProfile) => {
       const accountProfile = accountProfilesById.get(guestProfile.id);
       if (accountProfile) {
         return guestProfile.updatedAt > accountProfile.updatedAt;
@@ -233,17 +264,38 @@ export default function App() {
       const key = formatPlayerName(guestProfile.name).toLowerCase();
       return Boolean(key) && !accountProfileKeys.has(key);
     });
-  }, [canViewSavedData, localGuestProfiles, profiles]);
+  }, [
+    canViewSavedData,
+    localGuestProfiles,
+    localStoredPlayerProfiles,
+    profiles,
+  ]);
   const pendingLocalSessionsHintSignature = useMemo(() => {
-    return pendingLocalGuestGames
+    const gameSignature = pendingLocalGuestGames
       .map((game) => `${game.id}:${game.updatedAt}`)
       .sort()
       .join("|");
-  }, [pendingLocalGuestGames]);
+    const profileSignature = pendingLocalGuestProfiles
+      .map((profile) => `${profile.id}:${profile.updatedAt}`)
+      .sort()
+      .join("|");
+
+    return [gameSignature, profileSignature].filter(Boolean).join("||");
+  }, [pendingLocalGuestGames, pendingLocalGuestProfiles]);
   const pendingLocalSessionsCount = pendingLocalGuestGames.length;
+  const pendingLocalProfilesCount = pendingLocalGuestProfiles.length;
   const showLocalSessionsHint =
-    pendingLocalSessionsCount > 0 &&
+    pendingLocalSessionsCount + pendingLocalProfilesCount > 0 &&
     pendingLocalSessionsHintSignature !== dismissedLocalSessionsHintSignature;
+  const authDialogLocalGames = canViewSavedData
+    ? pendingLocalGuestGames
+    : localGuestGames;
+  const authDialogLocalProfiles = canViewSavedData
+    ? pendingLocalGuestProfiles
+    : combinedGuestAndLocalProfiles;
+  const gameScreenProfiles = canViewSavedData
+    ? visibleProfiles
+    : combinedGuestAndLocalProfiles;
   const isSessionCountPending = canViewSavedData && !gamesReady;
   const currentSessionCount = canViewSavedData
     ? games.length
@@ -262,6 +314,54 @@ export default function App() {
 
   function showToast(message: string, tone: ToastTone = "default") {
     setVisibleToast({ message, tone });
+  }
+
+  function upsertLocalStoredPlayer(
+    rawName: string,
+    avatarColor: string,
+  ): LocalPlayer | null {
+    const name = formatPlayerName(rawName);
+    if (!name) return null;
+
+    const existingPlayers = loadLocalPlayers();
+    const existingIndex = existingPlayers.findIndex(
+      (player) => player.name.toLowerCase() === name.toLowerCase(),
+    );
+
+    if (existingIndex >= 0) {
+      const existing = existingPlayers[existingIndex];
+      if (
+        existing.name === name &&
+        existing.avatarColor === avatarColor
+      ) {
+        return existing;
+      }
+
+      const updated: LocalPlayer = {
+        ...existing,
+        name,
+        avatarColor,
+        updatedAt: Date.now(),
+      };
+      const nextPlayers = [...existingPlayers];
+      nextPlayers[existingIndex] = updated;
+      saveLocalPlayers(nextPlayers);
+      setLocalStoredPlayers(nextPlayers);
+      return updated;
+    }
+
+    const now = Date.now();
+    const created: LocalPlayer = {
+      id: uid(),
+      name,
+      avatarColor,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const nextPlayers = [...existingPlayers, created];
+    saveLocalPlayers(nextPlayers);
+    setLocalStoredPlayers(nextPlayers);
+    return created;
   }
 
   function getSessionCapacityState(extra = 1) {
@@ -645,6 +745,60 @@ export default function App() {
     });
   }, [games, gamesReady, profiles, profilesReady, session, updatePlayer]);
 
+  useEffect(() => {
+    function refreshLocalStoredPlayers() {
+      const nextPlayers = loadLocalPlayers();
+      setLocalStoredPlayers((current) =>
+        areLocalPlayersEqual(current, nextPlayers) ? current : nextPlayers,
+      );
+    }
+
+    refreshLocalStoredPlayers();
+
+    window.addEventListener("storage", refreshLocalStoredPlayers);
+    window.addEventListener("focus", refreshLocalStoredPlayers);
+    window.addEventListener(
+      LOCAL_PLAYERS_CHANGED_EVENT,
+      refreshLocalStoredPlayers,
+    );
+
+    return () => {
+      window.removeEventListener("storage", refreshLocalStoredPlayers);
+      window.removeEventListener("focus", refreshLocalStoredPlayers);
+      window.removeEventListener(
+        LOCAL_PLAYERS_CHANGED_EVENT,
+        refreshLocalStoredPlayers,
+      );
+    };
+  }, [localDataVersion]);
+
+  useEffect(() => {
+    if (
+      !canViewSavedData ||
+      localStoredPlayers.length === 0 ||
+      profiles.length === 0
+    ) {
+      return;
+    }
+
+    const accountProfileKeys = new Set(
+      profiles
+        .map((profile) => formatPlayerName(profile.name).toLowerCase())
+        .filter(Boolean),
+    );
+    const remainingLocalPlayers = localStoredPlayers.filter((player) => {
+      const key = formatPlayerName(player.name).toLowerCase();
+      return !key || !accountProfileKeys.has(key);
+    });
+
+    if (remainingLocalPlayers.length === localStoredPlayers.length) {
+      return;
+    }
+
+    saveLocalPlayers(remainingLocalPlayers);
+    setLocalStoredPlayers(remainingLocalPlayers);
+  }, [canViewSavedData, localStoredPlayers, profiles]);
+
   async function handleCreateGame(input: Parameters<typeof createGame>[0]) {
     if (!guardSessionCreation()) {
       return false;
@@ -807,7 +961,10 @@ export default function App() {
   function prepareImportedData(
     incomingGames: Game[],
     incomingProfiles: PlayerProfile[],
+    options: { importLinkedProfilesFromGames?: boolean } = {},
   ) {
+    const importLinkedProfilesFromGames =
+      options.importLinkedProfilesFromGames ?? true;
     const profileByKey = new Map<string, PlayerProfile>();
     const importedProfileById = new Map<string, PlayerProfile>();
     const profilesToImport: PlayerProfile[] = [];
@@ -846,7 +1003,7 @@ export default function App() {
             ? importedProfileById.get(player.profileId)
             : null) ?? (key ? profileByKey.get(key) : null);
 
-        if (!linkedProfile && key) {
+        if (!linkedProfile && key && importLinkedProfilesFromGames) {
           const now = Date.now();
           linkedProfile = {
             id: uid(),
@@ -860,8 +1017,9 @@ export default function App() {
         }
 
         if (!linkedProfile) {
+          const { profileId: _profileId, ...playerWithoutProfileId } = player;
           return {
-            ...player,
+            ...playerWithoutProfileId,
             name: formatPlayerName(player.name),
           };
         }
@@ -890,13 +1048,26 @@ export default function App() {
     const selectedLocalGames = localGuestGames.filter((game) =>
       selection.gameIds.includes(game.id),
     );
-    const localProfiles = localGuestProfiles.filter((profile) =>
+    const localProfilesForImport = [
+      ...localGuestProfiles,
+      ...localStoredPlayerProfiles,
+    ];
+
+    const localProfiles = localProfilesForImport.filter((profile) =>
       selection.profileIds.includes(profile.id),
+    );
+
+    const selectedLocalStoredPlayerIds = new Set(
+      localStoredPlayers
+        .filter((player) => selection.profileIds.includes(player.id))
+        .map((player) => player.id),
     );
     const localGames = filterImportableGames(selectedLocalGames);
     const skippedTeamContent = selectedLocalGames.length !== localGames.length;
 
-    const prepared = prepareImportedData(localGames, localProfiles);
+    const prepared = prepareImportedData(localGames, localProfiles, {
+      importLinkedProfilesFromGames: selection.profileIds.length > 0,
+    });
     const importCapacityState = getSessionCapacityState(prepared.games.length);
     if (importCapacityState === "loading") {
       throw new Error(
@@ -908,10 +1079,28 @@ export default function App() {
         `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to import more history.`,
       );
     }
-    const importedProfiles = importProfiles(prepared.profiles);
-    const importedGames = importGames(prepared.games);
+
+    const importedProfiles = await importProfiles(prepared.profiles);
+    const importedGames =
+      prepared.games.length > 0 ? importGames(prepared.games) : 0;
+    if (localGames.length > 0) {
+      const importedLocalGameIds = new Set(localGames.map((game) => game.id));
+      const remainingLocalGames = loadGuestGames().filter(
+        (game) => !importedLocalGameIds.has(game.id),
+      );
+      saveGuestGames(remainingLocalGames);
+    }
+    if (selectedLocalStoredPlayerIds.size > 0 && importedProfiles > 0) {
+      const remainingLocalPlayers = loadLocalPlayers().filter(
+        (player) => !selectedLocalStoredPlayerIds.has(player.id),
+      );
+
+      saveLocalPlayers(remainingLocalPlayers);
+      setLocalStoredPlayers(remainingLocalPlayers);
+    }
 
     setLocalDataVersion((value) => value + 1);
+
     return {
       games: importedGames,
       profiles: importedProfiles,
@@ -954,6 +1143,9 @@ export default function App() {
     const reconciled = prepareImportedData(
       selection.games ? prepared.games : [],
       selection.profiles ? prepared.profiles : [],
+      {
+        importLinkedProfilesFromGames: selection.profiles,
+      },
     );
     const existingGameSignatures = new Set(games.map(getGameImportSignature));
     const uniqueReconciledGames = reconciled.games.filter((game) => {
@@ -975,7 +1167,7 @@ export default function App() {
         `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to restore larger backups.`,
       );
     }
-    const importedProfiles = importProfiles(reconciled.profiles);
+    const importedProfiles = await importProfiles(reconciled.profiles);
     const importedGames = importGames(uniqueReconciledGames);
     const importedTeams = canImportTeams
       ? importTeams(prepared.teams, prepared.teamMembers)
@@ -1228,7 +1420,7 @@ export default function App() {
             >
               <GameScreen
                 game={currentGame}
-                profiles={visibleProfiles}
+                profiles={gameScreenProfiles}
                 teams={visibleTeams}
                 teamMembers={visibleTeamMembers}
                 isAuthenticated={canViewSavedData}
@@ -1253,12 +1445,27 @@ export default function App() {
                   deleteProfile(profileId);
                 }}
                 onUpsertProfile={upsertProfile}
+                onUpsertLocalPlayer={(name, avatarColor) => {
+                  const localPlayer = upsertLocalStoredPlayer(name, avatarColor);
+                  return localPlayer
+                    ? {
+                        id: localPlayer.id,
+                        name: localPlayer.name,
+                        avatarColor: localPlayer.avatarColor,
+                        createdAt: localPlayer.createdAt,
+                        updatedAt: localPlayer.updatedAt,
+                      }
+                    : null;
+                }}
                 onStartGame={(profileIds, newPlayers) => {
                   if (!currentGame) return;
+                  const availableProfiles = canViewSavedData
+                    ? profiles
+                    : combinedGuestAndLocalProfiles;
 
                   // 1. Add players from existing profiles
                   profileIds.forEach((pid) => {
-                    const profile = profiles.find((p) => p.id === pid);
+                    const profile = availableProfiles.find((p) => p.id === pid);
                     if (profile) {
                       addPlayer(currentGame.id, {
                         name: profile.name,
@@ -1280,9 +1487,14 @@ export default function App() {
                         });
                       }
                     } else {
+                      const localPlayer = upsertLocalStoredPlayer(
+                        np.name,
+                        np.avatarColor,
+                      );
                       addPlayer(currentGame.id, {
-                        name: np.name,
-                        avatarColor: np.avatarColor,
+                        name: localPlayer?.name ?? np.name,
+                        avatarColor: localPlayer?.avatarColor ?? np.avatarColor,
+                        profileId: localPlayer?.id,
                       });
                     }
                   });
@@ -1399,6 +1611,7 @@ export default function App() {
                 isAuthenticated={canViewSavedData}
                 showLocalSessionsHint={showLocalSessionsHint}
                 pendingLocalSessionsCount={pendingLocalSessionsCount}
+                pendingLocalProfilesCount={pendingLocalProfilesCount}
                 onDismissLocalSessionsHint={dismissLocalSessionsHint}
                 presetDraft={presetDraft}
                 presetDraftToken={presetDraftToken}
@@ -1539,10 +1752,10 @@ export default function App() {
               : localProfilesCount
           }
           localGames={
-            canViewSavedData ? pendingLocalGuestGames : localGuestGames
+            authDialogLocalGames
           }
           localProfiles={
-            canViewSavedData ? pendingLocalGuestProfiles : localGuestProfiles
+            authDialogLocalProfiles
           }
           accountGamesCount={games.length}
           accountProfilesCount={profiles.length}

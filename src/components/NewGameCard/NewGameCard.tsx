@@ -16,7 +16,11 @@ import type {
   WinCondition,
 } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
-import { formatAccountPlayerName, getInitials } from "../../utils/text";
+import {
+  formatAccountPlayerName,
+  formatPlayerName,
+  getInitials,
+} from "../../utils/text";
 import { GAME_PRESETS, type GamePreset } from "./gamePresets";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRosterPicker";
@@ -42,10 +46,13 @@ import {
   Zap,
   Boxes,
 } from "lucide-react";
-type StagedPlayer = {
-  name: string;
-  avatarColor: string;
-};
+import {
+  areLocalPlayersEqual,
+  loadLocalPlayers,
+  saveLocalPlayers,
+  LOCAL_PLAYERS_CHANGED_EVENT,
+  type LocalPlayer,
+} from "../../storage/localPlayers";
 
 const TEAM_ICON_COMPONENTS = {
   dumbbell: Dumbbell,
@@ -57,6 +64,8 @@ const TEAM_ICON_COMPONENTS = {
   flame: Flame,
   star: Star,
 } as const;
+
+type StagedPlayer = LocalPlayer;
 
 export type NewGameInput = {
   name: string;
@@ -183,7 +192,8 @@ export function NewGameCard({
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(
     new Set(),
   );
-  const [stagedPlayers, setStagedPlayers] = useState<StagedPlayer[]>([]);
+  const [stagedPlayers, setStagedPlayers] =
+    useState<StagedPlayer[]>(loadLocalPlayers);
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
   const [participantSearch, setParticipantSearch] = useState("");
   const [isPresetBrowserOpen, setIsPresetBrowserOpen] = useState(false);
@@ -199,8 +209,12 @@ export function NewGameCard({
   const presetBrowserRef = useRef<HTMLDivElement | null>(null);
   const bodyInnerRef = useRef<HTMLDivElement | null>(null);
   const appliedDraftKeyRef = useRef<string | null>(null);
+  const hasLoadedLocalPlayersRef = useRef(false);
   const reduceMotion = useReducedMotion();
   const [bodyContentHeight, setBodyContentHeight] = useState(0);
+  const [selectedStagedPlayerIds, setSelectedStagedPlayerIds] = useState<
+    Set<string>
+  >(new Set());
 
   useEffect(() => {
     setHasMounted(true);
@@ -232,6 +246,51 @@ export function NewGameCard({
     };
   }, []);
 
+  useEffect(() => {
+    if (!hasLoadedLocalPlayersRef.current) {
+      hasLoadedLocalPlayersRef.current = true;
+      return;
+    }
+
+    saveLocalPlayers(stagedPlayers);
+  }, [stagedPlayers]);
+
+  useEffect(() => {
+    function refreshLocalPlayers() {
+      const nextPlayers = loadLocalPlayers();
+      const nextPlayerIds = new Set(nextPlayers.map((player) => player.id));
+
+      setStagedPlayers((current) =>
+        areLocalPlayersEqual(current, nextPlayers) ? current : nextPlayers,
+      );
+
+      setSelectedStagedPlayerIds((current) => {
+        const next = new Set<string>();
+
+        current.forEach((playerId) => {
+          if (nextPlayerIds.has(playerId)) {
+            next.add(playerId);
+          }
+        });
+
+        return next;
+      });
+    }
+
+    window.addEventListener(LOCAL_PLAYERS_CHANGED_EVENT, refreshLocalPlayers);
+    window.addEventListener("storage", refreshLocalPlayers);
+    window.addEventListener("focus", refreshLocalPlayers);
+
+    return () => {
+      window.removeEventListener(
+        LOCAL_PLAYERS_CHANGED_EVENT,
+        refreshLocalPlayers,
+      );
+      window.removeEventListener("storage", refreshLocalPlayers);
+      window.removeEventListener("focus", refreshLocalPlayers);
+    };
+  }, []);
+
   function resetForm() {
     setName("");
     setTarget("8");
@@ -247,7 +306,6 @@ export function NewGameCard({
     setTimerSeconds("0");
     setSelectedProfileIds(new Set());
     setSelectedTeamIds(new Set());
-    setStagedPlayers([]);
     setIsAddingPlayer(false);
     setParticipantSearch("");
     setIsPresetBrowserOpen(false);
@@ -256,6 +314,7 @@ export function NewGameCard({
     setNewPlayerName("");
     setSaveAsProfile(true);
     setNewPlayerColor(AVATAR_COLORS[0].value);
+    setSelectedStagedPlayerIds(new Set());
   }
 
   const parsedTarget = Number.parseInt(target, 10);
@@ -279,13 +338,55 @@ export function NewGameCard({
         avatarColor: profile.avatarColor,
         stagedIndex: null,
       }));
-    const staged = stagedPlayers.map((player, stagedIndex) => ({
-      id: `staged-${stagedIndex}`,
-      ...player,
-      stagedIndex,
-    }));
+
+    const staged = stagedPlayers
+      .filter((player) => selectedStagedPlayerIds.has(player.id))
+      .map((player, stagedIndex) => ({
+        id: player.id,
+        name: player.name,
+        avatarColor: player.avatarColor,
+        stagedIndex,
+      }));
+
     return [...saved, ...staged];
-  }, [profiles, selectedProfileIds, stagedPlayers]);
+  }, [profiles, selectedProfileIds, stagedPlayers, selectedStagedPlayerIds]);
+
+  const selectedStagedPlayers = useMemo(
+    () =>
+      stagedPlayers.filter((player) => selectedStagedPlayerIds.has(player.id)),
+    [stagedPlayers, selectedStagedPlayerIds],
+  );
+  const visibleStagedPlayers = useMemo(
+    () =>
+      isAuthenticated
+        ? stagedPlayers.filter((player) => selectedStagedPlayerIds.has(player.id))
+        : stagedPlayers,
+    [isAuthenticated, stagedPlayers, selectedStagedPlayerIds],
+  );
+  const selectedStagedPlayersForGame = useMemo(
+    () =>
+      selectedStagedPlayers.map((player) => ({
+        name: player.name,
+        avatarColor: player.avatarColor,
+        profileId: player.id,
+      })),
+    [selectedStagedPlayers],
+  );
+
+  function toggleStagedPlayer(playerId: string) {
+    setSelectedStagedPlayerIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(playerId)) {
+        next.delete(playerId);
+      } else {
+        next.add(playerId);
+      }
+
+      return next;
+    });
+  }
+
   const draftTeamPriorityIds = useMemo(
     () =>
       draft?.participantMode === "teams"
@@ -361,13 +462,18 @@ export function NewGameCard({
   const newPlayerValidationMessage = useMemo(() => {
     const normalizedName = normalizePlayerName(newPlayerName);
     if (!normalizedName) return undefined;
+    const alreadyExists =
+      profiles.some(
+        (profile) => normalizePlayerName(profile.name) === normalizedName,
+      ) ||
+      stagedPlayers.some(
+        (player) => normalizePlayerName(player.name) === normalizedName,
+      );
 
-    return selectedPlayers.some(
-      (player) => normalizePlayerName(player.name) === normalizedName,
-    )
-      ? "This game already has a player with that name."
+    return alreadyExists
+      ? "A player with that name already exists."
       : undefined;
-  }, [newPlayerName, selectedPlayers]);
+  }, [newPlayerName, profiles, stagedPlayers]);
 
   const filteredProfiles = useMemo(() => {
     const query = participantSearch.trim().toLocaleLowerCase();
@@ -394,6 +500,11 @@ export function NewGameCard({
     filteredTeams.length,
     availableTeams.length,
     selectedTeamIds.size,
+  ]);
+
+  const stagedPlayerListFade = useScrollableListFade([
+    participantMode,
+    visibleStagedPlayers.length,
   ]);
 
   useEffect(() => {
@@ -466,18 +577,52 @@ export function NewGameCard({
           ),
       ),
     );
-    setStagedPlayers(
-      draft.initialPlayers
-        .filter(
-          (player) =>
-            !player.profileId ||
-            !profiles.some((profile) => profile.id === player.profileId),
-        )
-        .map((player) => ({
+    const draftLocalPlayers = draft.initialPlayers
+      .filter(
+        (player) =>
+          !player.profileId ||
+          !profiles.some((profile) => profile.id === player.profileId),
+      )
+      .map((player) => {
+        const now = Date.now();
+        return {
+          id: crypto.randomUUID(),
           name: player.name,
           avatarColor: player.avatarColor,
-        })),
-    );
+          createdAt: now,
+          updatedAt: now,
+        };
+      });
+
+    setStagedPlayers((current) => {
+      const playersByName = new Map(
+        current.map((player) => [normalizePlayerName(player.name), player]),
+      );
+
+      const merged = [...current];
+
+      draftLocalPlayers.forEach((player) => {
+        const key = normalizePlayerName(player.name);
+
+        if (!playersByName.has(key)) {
+          playersByName.set(key, player);
+          merged.push(player);
+        }
+      });
+
+      setSelectedStagedPlayerIds(
+        new Set(
+          draftLocalPlayers
+            .map(
+              (player) =>
+                playersByName.get(normalizePlayerName(player.name))?.id,
+            )
+            .filter((id): id is string => !!id),
+        ),
+      );
+
+      return merged;
+    });
     setIsAddingPlayer(false);
     setParticipantSearch("");
     setIsPresetBrowserOpen(false);
@@ -580,19 +725,38 @@ export function NewGameCard({
 
     if (isAuthenticated && saveAsProfile) {
       const profile = onUpsertProfile(trimmedName, newPlayerColor);
+
       if (profile) {
         setSelectedProfileIds((current) => new Set([...current, profile.id]));
       } else {
-        setStagedPlayers((current) => [
-          ...current,
-          { name: trimmedName, avatarColor: newPlayerColor },
-        ]);
+        const now = Date.now();
+        const localPlayer = {
+          id: crypto.randomUUID(),
+          name: trimmedName,
+          avatarColor: newPlayerColor,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        setStagedPlayers((current) => [...current, localPlayer]);
+        setSelectedStagedPlayerIds(
+          (current) => new Set([...current, localPlayer.id]),
+        );
       }
     } else {
-      setStagedPlayers((current) => [
-        ...current,
-        { name: trimmedName, avatarColor: newPlayerColor },
-      ]);
+      const now = Date.now();
+      const localPlayer = {
+        id: crypto.randomUUID(),
+        name: trimmedName,
+        avatarColor: newPlayerColor,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setStagedPlayers((current) => [...current, localPlayer]);
+      setSelectedStagedPlayerIds(
+        (current) => new Set([...current, localPlayer.id]),
+      );
     }
 
     setNewPlayerName("");
@@ -656,7 +820,7 @@ export function NewGameCard({
       timerMode,
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds || 0) : 300,
-      initialPlayers: [...savedPlayers, ...stagedPlayers],
+      initialPlayers: [...savedPlayers, ...selectedStagedPlayersForGame],
       initialTeams: selectedTeams.map((team) => ({
         id: team.id,
         name: team.name,
@@ -699,7 +863,9 @@ export function NewGameCard({
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds) : 300,
       initialPlayers:
-        participantMode === "teams" ? [] : [...savedPlayers, ...stagedPlayers],
+        participantMode === "teams"
+          ? []
+          : [...savedPlayers, ...selectedStagedPlayersForGame],
       initialTeams:
         participantMode === "teams"
           ? selectedTeams.map((team) => ({
@@ -1140,42 +1306,58 @@ export function NewGameCard({
             {participantMode === "players" ? (
               <>
                 <div className="profilePicker__list">
-                  {stagedPlayers.length > 0 ? (
-                    <div className="participantPicker__group">
-                      <div className="participantPicker__label">
-                        Added for this game
-                      </div>
-                      <div className="participantPicker__list">
-                        {stagedPlayers.map((player, index) => (
-                          <button
-                            key={`staged-${index}`}
-                            type="button"
-                            className="participantOption participantOption--active"
-                            onClick={() =>
-                              setStagedPlayers((current) =>
-                                current.filter(
-                                  (_, stagedIndex) => stagedIndex !== index,
-                                ),
-                              )
-                            }
-                          >
-                            <span
-                              className="participantOption__avatar"
-                              style={avatarStyleFor(player.avatarColor)}
-                            >
-                              {getInitials(player.name)}
-                            </span>
-                            <span className="participantOption__copy">
-                              <span className="participantOption__name">
-                                {player.name}
-                              </span>
-                              <span className="participantOption__hint">
-                                Game only
-                              </span>
-                            </span>
-                            <SelectionStateIcon selected />
-                          </button>
-                        ))}
+                  {visibleStagedPlayers.length > 0 ? (
+                    <div
+                      className={`participantPicker__listShell${
+                        stagedPlayerListFade.fadeState.top
+                          ? " participantPicker__listShell--fadeTop"
+                          : ""
+                      }${
+                        stagedPlayerListFade.fadeState.bottom
+                          ? " participantPicker__listShell--fadeBottom"
+                          : ""
+                      }`}
+                    >
+                      <div
+                        ref={stagedPlayerListFade.ref}
+                        className="participantPicker__list"
+                      >
+                        <div className="participantPicker__listContent">
+                          {visibleStagedPlayers.map((player) => {
+                            const selected = selectedStagedPlayerIds.has(
+                              player.id,
+                            );
+
+                            return (
+                              <button
+                                key={player.id}
+                                type="button"
+                                className={`participantOption${
+                                  selected ? " participantOption--active" : ""
+                                }`}
+                                onClick={() => toggleStagedPlayer(player.id)}
+                              >
+                                <span
+                                  className="participantOption__avatar"
+                                  style={avatarStyleFor(player.avatarColor)}
+                                >
+                                  {getInitials(player.name)}
+                                </span>
+
+                                <span className="participantOption__copy">
+                                  <span className="participantOption__name">
+                                    {formatPlayerName(player.name)}
+                                  </span>
+                                  <span className="participantOption__hint">
+                                    Local player
+                                  </span>
+                                </span>
+
+                                <SelectionStateIcon selected={selected} />
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   ) : null}
@@ -1192,7 +1374,8 @@ export function NewGameCard({
                     emptyState={
                       participantSearch
                         ? "No saved players match that search."
-                        : selectedPlayers.length === 0 && profiles.length === 0
+                        : visibleStagedPlayers.length === 0 &&
+                            profiles.length === 0
                           ? "No saved players yet. Create one below."
                           : undefined
                     }

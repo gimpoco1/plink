@@ -2,22 +2,39 @@ import { Plus, X } from "lucide-react";
 import "./LocalSessionsHint.css";
 
 type LocalSessionsHintProps = {
-  count: number;
+  sessionCount: number;
+  profileCount: number;
   onDismiss: () => void;
   onAdd: () => void;
   className?: string;
 };
 
 export function LocalSessionsHint({
-  count,
+  sessionCount,
+  profileCount,
   onDismiss,
   onAdd,
   className = "",
 }: LocalSessionsHintProps) {
+  const parts = [
+    sessionCount > 0
+      ? `${sessionCount} session${sessionCount === 1 ? "" : "s"}`
+      : "",
+    profileCount > 0
+      ? `${profileCount} player${profileCount === 1 ? "" : "s"}`
+      : "",
+  ].filter(Boolean);
+  const isPlural = sessionCount + profileCount !== 1;
   const message =
-    count === 1
-      ? "1 session is saved on this device but is not in your account yet. Add it now?"
-      : `${count} sessions are saved on this device but are not in your account yet. Add them now?`;
+    parts.length === 2
+      ? `${parts[0]} and ${parts[1]} are saved on this device but are not in your account yet. Add them now?`
+      : `${parts[0] ?? parts[1]} ${isPlural ? "are" : "is"} saved on this device but ${isPlural ? "are" : "is"} not in your account yet. Add ${isPlural ? "them" : "it"} now?`;
+  const eyebrow =
+    sessionCount > 0 && profileCount > 0
+      ? "Local sessions and players found"
+      : profileCount > 0
+        ? "Local players found"
+        : "Local sessions found";
 
   return (
     <div className={`localSessionsHint${className ? ` ${className}` : ""}`}>
@@ -31,7 +48,7 @@ export function LocalSessionsHint({
       </button>
       <div className="localSessionsHint__content">
         <div className="localSessionsHint__eyebrow">
-          <span>Local sessions found</span>
+          <span>{eyebrow}</span>
         </div>
         <p>{message}</p>
       </div>

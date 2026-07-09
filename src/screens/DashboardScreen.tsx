@@ -20,6 +20,7 @@ type DashboardScreenProps = {
   isAuthenticated: boolean;
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
+  pendingLocalProfilesCount: number;
   onDismissLocalSessionsHint: () => void;
   activeTab: HomeTab;
   onActiveTabChange: (tab: HomeTab) => void;
@@ -193,6 +194,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             games={props.games}
             showLocalSessionsHint={props.showLocalSessionsHint}
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
+            pendingLocalProfilesCount={props.pendingLocalProfilesCount}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             onOpenAuth={props.onOpenLocalImport}
             onOpenProPlan={props.onOpenProPlan}
@@ -226,6 +228,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             isAuthenticated={props.isAuthenticated}
             showLocalSessionsHint={props.showLocalSessionsHint}
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
+            pendingLocalProfilesCount={props.pendingLocalProfilesCount}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             addingPlayer={isAddingPlayer}
             openTeamBuilderToken={openTeamBuilderToken}
@@ -256,6 +259,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             isAuthenticated={props.isAuthenticated}
             showLocalSessionsHint={props.showLocalSessionsHint}
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
+            pendingLocalProfilesCount={props.pendingLocalProfilesCount}
             isCreating={isCreating}
             presetDraft={props.presetDraft}
             presetDraftToken={props.presetDraftToken}

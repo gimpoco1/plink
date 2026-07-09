@@ -76,6 +76,7 @@ type HomeScreenProps = {
   isAuthenticated: boolean;
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
+  pendingLocalProfilesCount: number;
   isCreating: boolean;
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
@@ -113,6 +114,7 @@ export function HomeScreen({
   isAuthenticated,
   showLocalSessionsHint,
   pendingLocalSessionsCount,
+  pendingLocalProfilesCount,
   isCreating,
   presetDraft,
   presetDraftToken,
@@ -424,7 +426,8 @@ export function HomeScreen({
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="homeLocalSessionsHint"
-          count={pendingLocalSessionsCount}
+          sessionCount={pendingLocalSessionsCount}
+          profileCount={pendingLocalProfilesCount}
           onDismiss={onDismissLocalSessionsHint}
           onAdd={onOpenLocalImport}
         />

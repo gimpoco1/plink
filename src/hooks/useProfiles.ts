@@ -263,9 +263,11 @@ export function useProfiles(session: Session | null) {
       return;
     }
     if (!remoteReady || remoteUserId !== userId) return;
+    const nextSignature = getProfileSyncSignature(profiles);
+    if (nextSignature === remoteSignatureRef.current) return;
     void saveRemoteProfiles(userId, profiles)
       .then(() => {
-        remoteSignatureRef.current = getProfileSyncSignature(profiles);
+        remoteSignatureRef.current = nextSignature;
       })
       .catch((error) => {
         console.error("Failed to save profiles to Supabase", error);
@@ -378,7 +380,9 @@ export function useProfiles(session: Session | null) {
     return created;
   }
 
-  function importProfiles(incomingProfiles: PlayerProfile[]) {
+  async function importProfiles(incomingProfiles: PlayerProfile[]) {
+    if (incomingProfiles.length === 0) return 0;
+
     const existingAccountPlayerId =
       profiles.find((profile) => profile.isAccountPlayer)?.id ?? null;
     const existingProfilesById = new Map(
@@ -396,10 +400,21 @@ export function useProfiles(session: Session | null) {
         ? count + 1
         : count;
     }, 0);
+    if (changedCount === 0) return 0;
+
     const mergedProfiles = normalizeAccountPlayers(
       mergeProfilesById(profiles, sanitizedIncomingProfiles),
       existingAccountPlayerId,
     );
+    if (userId) {
+      if (!remoteReady || remoteUserId !== userId) {
+        throw new Error(
+          "Loading your saved players. Try importing again in a moment.",
+        );
+      }
+      await saveRemoteProfiles(userId, mergedProfiles);
+      remoteSignatureRef.current = getProfileSyncSignature(mergedProfiles);
+    }
     setProfiles(mergedProfiles);
     return changedCount;
   }
