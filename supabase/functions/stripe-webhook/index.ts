@@ -31,6 +31,17 @@ function getStripeSubscriptionId(
   return typeof value === "string" ? value : value?.id ?? null;
 }
 
+function getStripeSubscriptionCurrentPeriodEnd(
+  subscription: Stripe.Subscription,
+) {
+  const timestamp =
+    subscription.current_period_end ??
+    subscription.items.data[0]?.current_period_end ??
+    null;
+
+  return timestamp ? new Date(timestamp * 1000).toISOString() : null;
+}
+
 async function findSubscriptionOwner(
   admin: ReturnType<typeof createAdminClient>,
   params: {
@@ -87,9 +98,7 @@ async function upsertStripeSubscription(
   const billingPeriod = normalizeBillingPeriod(
     subscription.metadata.billing_period,
   );
-  const currentPeriodEnd = subscription.current_period_end
-    ? new Date(subscription.current_period_end * 1000).toISOString()
-    : null;
+  const currentPeriodEnd = getStripeSubscriptionCurrentPeriodEnd(subscription);
   const cancelAt = subscription.cancel_at
     ? new Date(subscription.cancel_at * 1000).toISOString()
     : null;
@@ -220,6 +229,15 @@ async function syncCheckoutSessionSubscription(
   );
 }
 
+async function syncStripeSubscriptionById(
+  admin: ReturnType<typeof createAdminClient>,
+  subscriptionId: string,
+  eventType: Stripe.Event.Type,
+) {
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  await upsertStripeSubscription(admin, subscription, eventType);
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -255,6 +273,11 @@ Deno.serve(async (request) => {
         break;
       case "customer.subscription.created":
       case "customer.subscription.updated":
+        {
+          const subscription = event.data.object as Stripe.Subscription;
+          await syncStripeSubscriptionById(admin, subscription.id, event.type);
+        }
+        break;
       case "customer.subscription.deleted":
         await upsertStripeSubscription(
           admin,

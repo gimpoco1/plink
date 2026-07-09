@@ -123,6 +123,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       isLoading: entitlementsLoading,
       source,
       isPro,
+      subscriptionCancelAt,
       subscriptionCancelAtPeriodEnd,
       subscriptionCurrentPeriodEnd,
       subscriptionStartedAt,
@@ -207,10 +208,29 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const accountPlayerColor =
       accountPlayer?.avatarColor ?? AVATAR_COLORS[0]?.value ?? "#64748b";
     const userId = session?.user.id ?? null;
-    const formattedCurrentPeriodEnd = useMemo(() => {
-      if (!subscriptionCurrentPeriodEnd) return null;
+    const effectiveSubscriptionEndDate = useMemo(() => {
+      if (
+        subscriptionCancelAtPeriodEnd &&
+        (subscriptionStatus === "active" || subscriptionStatus === "trialing")
+      ) {
+        return subscriptionCancelAt ?? subscriptionCurrentPeriodEnd;
+      }
 
-      const date = new Date(subscriptionCurrentPeriodEnd);
+      if (subscriptionStatus === "canceled") {
+        return subscriptionCancelAt ?? subscriptionCurrentPeriodEnd;
+      }
+
+      return subscriptionCurrentPeriodEnd;
+    }, [
+      subscriptionCancelAt,
+      subscriptionCancelAtPeriodEnd,
+      subscriptionCurrentPeriodEnd,
+      subscriptionStatus,
+    ]);
+    const formattedSubscriptionEndDate = useMemo(() => {
+      if (!effectiveSubscriptionEndDate) return null;
+
+      const date = new Date(effectiveSubscriptionEndDate);
       if (Number.isNaN(date.getTime())) return null;
 
       return new Intl.DateTimeFormat(undefined, {
@@ -218,10 +238,10 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         month: "short",
         year: "numeric",
       }).format(date);
-    }, [subscriptionCurrentPeriodEnd]);
+    }, [effectiveSubscriptionEndDate]);
     const renewalLabel = useMemo(() => {
       if (
-        !formattedCurrentPeriodEnd ||
+        !formattedSubscriptionEndDate ||
         !subscriptionStatus ||
         source !== "subscription"
       ) {
@@ -232,23 +252,23 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         subscriptionCancelAtPeriodEnd &&
         (subscriptionStatus === "active" || subscriptionStatus === "trialing")
       ) {
-        return `Ending ${formattedCurrentPeriodEnd}`;
+        return `Ends on ${formattedSubscriptionEndDate}`;
       }
 
       if (
         subscriptionStatus === "active" ||
         subscriptionStatus === "trialing"
       ) {
-        return `Next renewal ${formattedCurrentPeriodEnd}`;
+        return `Renews on ${formattedSubscriptionEndDate}`;
       }
 
       if (subscriptionStatus === "canceled") {
-        return `Ending ${formattedCurrentPeriodEnd}`;
+        return `Ends on ${formattedSubscriptionEndDate}`;
       }
 
       return null;
     }, [
-      formattedCurrentPeriodEnd,
+      formattedSubscriptionEndDate,
       source,
       subscriptionCancelAtPeriodEnd,
       subscriptionStatus,
