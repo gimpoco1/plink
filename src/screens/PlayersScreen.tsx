@@ -57,6 +57,7 @@ type PlayersScreenProps = {
   isAuthenticated: boolean;
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
+  pendingLocalProfilesCount: number;
   onDismissLocalSessionsHint: () => void;
   onActiveViewChange: (view: "players" | "teams") => void;
   addingPlayer: boolean;
@@ -178,6 +179,7 @@ export function PlayersScreen({
   isAuthenticated,
   showLocalSessionsHint,
   pendingLocalSessionsCount,
+  pendingLocalProfilesCount,
   onDismissLocalSessionsHint,
   onActiveViewChange,
   addingPlayer,
@@ -899,7 +901,8 @@ export function PlayersScreen({
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="profilesHint"
-          count={pendingLocalSessionsCount}
+          sessionCount={pendingLocalSessionsCount}
+          profileCount={pendingLocalProfilesCount}
           onDismiss={onDismissLocalSessionsHint}
           onAdd={onOpenAuth}
         />

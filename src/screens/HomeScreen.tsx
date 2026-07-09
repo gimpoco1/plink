@@ -43,6 +43,7 @@ type QuickSetup = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  diceEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   suggestedPlayers: { name: string; avatarColor: string; profileId?: string }[];
@@ -75,6 +76,7 @@ type HomeScreenProps = {
   isAuthenticated: boolean;
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
+  pendingLocalProfilesCount: number;
   isCreating: boolean;
   presetDraft?: NewGameInput | null;
   presetDraftToken?: number;
@@ -112,6 +114,7 @@ export function HomeScreen({
   isAuthenticated,
   showLocalSessionsHint,
   pendingLocalSessionsCount,
+  pendingLocalProfilesCount,
   isCreating,
   presetDraft,
   presetDraftToken,
@@ -235,6 +238,7 @@ export function HomeScreen({
         game.manualEndOnly,
         game.timerEnabled ? game.timerMode : "off",
         game.timerEnabled ? game.timerSeconds : 0,
+        game.diceEnabled ? "dice" : "no-dice",
       ].join("|");
 
       const existing = setups.get(key);
@@ -254,6 +258,7 @@ export function HomeScreen({
         winByTwo: game.winByTwo,
         manualEndOnly: game.manualEndOnly,
         timerEnabled: game.timerEnabled,
+        diceEnabled: game.diceEnabled,
         timerMode: game.timerMode,
         timerSeconds: game.timerSeconds,
         suggestedPlayers: game.players.slice(0, 4).map((player) => {
@@ -321,6 +326,7 @@ export function HomeScreen({
         winByTwo: setup.winByTwo,
         manualEndOnly: setup.manualEndOnly,
         timerEnabled: setup.timerEnabled,
+        diceEnabled: setup.diceEnabled,
         timerMode: setup.timerMode,
         timerSeconds: setup.timerSeconds,
         initialPlayers: setup.suggestedPlayers,
@@ -378,6 +384,10 @@ export function HomeScreen({
       );
     }
 
+    if (setup.diceEnabled) {
+      parts.push("dice");
+    }
+
     return parts;
   }
 
@@ -416,7 +426,8 @@ export function HomeScreen({
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="homeLocalSessionsHint"
-          count={pendingLocalSessionsCount}
+          sessionCount={pendingLocalSessionsCount}
+          profileCount={pendingLocalProfilesCount}
           onDismiss={onDismissLocalSessionsHint}
           onAdd={onOpenLocalImport}
         />

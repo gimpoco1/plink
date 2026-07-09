@@ -61,6 +61,7 @@ export function SearchableRosterPicker({
   children,
 }: SearchableRosterPickerProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
+  const lastNotifiedOpenRef = useRef<boolean | null>(null);
   const [isListOpen, setIsListOpen] = useState(showListImmediately);
   const [fadeState, setFadeState] = useState({ top: false, bottom: false });
   const itemCount = Children.count(children);
@@ -72,13 +73,19 @@ export function SearchableRosterPicker({
   }, [showListImmediately]);
 
   useEffect(() => {
+    if (lastNotifiedOpenRef.current === shouldShowList) return;
+    lastNotifiedOpenRef.current = shouldShowList;
     onListOpenChange?.(shouldShowList);
   }, [onListOpenChange, shouldShowList]);
 
   useEffect(() => {
     const node = listRef.current;
     if (!node || !hasItems || !shouldShowList) {
-      setFadeState({ top: false, bottom: false });
+      setFadeState((current) =>
+        current.top || current.bottom
+          ? { top: false, bottom: false }
+          : current,
+      );
       return;
     }
 
@@ -87,7 +94,11 @@ export function SearchableRosterPicker({
       const remainingScroll =
         node.scrollHeight - node.clientHeight - node.scrollTop;
       const bottom = remainingScroll > 6;
-      setFadeState({ top, bottom });
+      setFadeState((current) =>
+        current.top === top && current.bottom === bottom
+          ? current
+          : { top, bottom },
+      );
     };
 
     updateFade();
@@ -106,7 +117,7 @@ export function SearchableRosterPicker({
       window.removeEventListener("resize", updateFade);
       resizeObserver?.disconnect();
     };
-  }, [children, hasItems, shouldShowList]);
+  }, [hasItems, itemCount, shouldShowList]);
 
   const style = listMaxHeight
     ? ({ "--roster-picker-max-height": listMaxHeight } as CSSProperties)

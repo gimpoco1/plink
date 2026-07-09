@@ -14,6 +14,7 @@ type SessionsScreenProps = {
   games: Game[];
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
+  pendingLocalProfilesCount: number;
   onDismissLocalSessionsHint: () => void;
   onOpenAuth: () => void;
   onOpenProPlan: () => void;
@@ -27,6 +28,7 @@ export function SessionsScreen({
   games,
   showLocalSessionsHint,
   pendingLocalSessionsCount,
+  pendingLocalProfilesCount,
   onDismissLocalSessionsHint,
   onOpenAuth,
   onOpenProPlan,
@@ -94,7 +96,8 @@ export function SessionsScreen({
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="signedInHint"
-          count={pendingLocalSessionsCount}
+          sessionCount={pendingLocalSessionsCount}
+          profileCount={pendingLocalProfilesCount}
           onDismiss={onDismissLocalSessionsHint}
           onAdd={onOpenAuth}
         />

@@ -25,6 +25,7 @@ import {
 import { PlayerCard } from "../components/PlayerCard/PlayerCard";
 import { TeamScoreCard } from "../components/TeamScoreCard/TeamScoreCard";
 import { GameTimer } from "../components/GameTimer/GameTimer";
+import { GameDiceTray } from "../components/GameDiceTray/GameDiceTray";
 import type { ProfileStats } from "../utils/profileStats";
 import "./GameScreen.css";
 
@@ -40,6 +41,10 @@ type Props = {
   onTriggerPulse: (playerId: string, delta: number) => void;
   onDeleteProfile: (profileId: string) => void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
+  onUpsertLocalPlayer: (
+    name: string,
+    avatarColor: string,
+  ) => PlayerProfile | null;
   onUpdateProfile: (
     profileId: string,
     updates: Partial<Pick<PlayerProfile, "name" | "avatarColor">>,
@@ -89,6 +94,7 @@ export function GameScreen({
   onTriggerPulse,
   onDeleteProfile,
   onUpsertProfile,
+  onUpsertLocalPlayer,
   onUpdateProfile,
   onStartGame,
   onUpdateScore,
@@ -503,6 +509,10 @@ export function GameScreen({
         />
       ) : null}
 
+      {game.diceEnabled ? (
+        <GameDiceTray accentTone={isTeamGame ? "team" : "default"} />
+      ) : null}
+
       <ManagePlayersDialog
         ref={managePlayersDialogRef}
         participantMode={game.participantMode === "teams" ? "teams" : "players"}
@@ -517,6 +527,7 @@ export function GameScreen({
         onDeleteProfile={(profileId) => onDeleteProfile(profileId)}
         onDeletePlayer={onDeletePlayer}
         onUpsertProfile={onUpsertProfile}
+        onUpsertLocalPlayer={onUpsertLocalPlayer}
         onUpdateProfile={onUpdateProfile}
         onUpdatePlayer={onUpdatePlayer}
         onCreateTeam={onCreateTeam}

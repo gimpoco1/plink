@@ -70,21 +70,25 @@ type Props = {
   onImportLocalData?: (selection: {
     gameIds: string[];
     profileIds: string[];
-  }) =>
-    | Promise<DataTransferResult>
-    | DataTransferResult;
+  }) => Promise<DataTransferResult> | DataTransferResult;
   onImportBackupFile?: (
     file: File,
     selection: BackupSelection,
-  ) =>
-    | Promise<DataTransferResult>
-    | DataTransferResult;
+  ) => Promise<DataTransferResult> | DataTransferResult;
   onDownloadBackupFile?: (
     selection: BackupSelection,
-  ) =>
-    | Promise<DataTransferResult>
-    | DataTransferResult;
+  ) => Promise<DataTransferResult> | DataTransferResult;
 };
+
+function areStringArraysEqual(left: string[], right: string[]) {
+  if (left.length !== right.length) return false;
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) return false;
+  }
+
+  return true;
+}
 
 export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
   function AuthDialog(
@@ -135,9 +139,12 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const [transferToast, setTransferToast] = useState<ToastState | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
-    const [hasStripeBillingProfile, setHasStripeBillingProfile] = useState(false);
+    const [hasStripeBillingProfile, setHasStripeBillingProfile] =
+      useState(false);
     const [showTransferTools, setShowTransferTools] = useState(false);
     const [showDeviceImport, setShowDeviceImport] = useState(false);
+    const [showDevicePlayersImport, setShowDevicePlayersImport] =
+      useState(false);
     const [showAccountDetails, setShowAccountDetails] = useState(false);
     const [showPlanDetails, setShowPlanDetails] = useState(false);
     const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<
@@ -152,9 +159,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     const [selectedLocalProfileIds, setSelectedLocalProfileIds] = useState<
       string[]
     >(() => localProfiles.map((profile) => profile.id));
-    const hasLocalData = localGamesCount > 0 || localProfilesCount > 0;
-    const hasSelectedLocalData =
-      selectedLocalGameIds.length > 0 || selectedLocalProfileIds.length > 0;
+    const selectedLocalGameIdsRef = useRef(selectedLocalGameIds);
+    const selectedLocalProfileIdsRef = useRef(selectedLocalProfileIds);
     const normalizedLocalSessionSearch = localSessionSearch
       .trim()
       .toLowerCase();
@@ -214,7 +220,10 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         return `Ending ${formattedCurrentPeriodEnd}`;
       }
 
-      if (subscriptionStatus === "active" || subscriptionStatus === "trialing") {
+      if (
+        subscriptionStatus === "active" ||
+        subscriptionStatus === "trialing"
+      ) {
         return `Next renewal ${formattedCurrentPeriodEnd}`;
       }
 
@@ -249,7 +258,11 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       refs.current[index]?.focus();
     }
 
-    function getWrappedIndex(length: number, currentIndex: number, delta: number) {
+    function getWrappedIndex(
+      length: number,
+      currentIndex: number,
+      delta: number,
+    ) {
       return (currentIndex + delta + length) % length;
     }
 
@@ -330,6 +343,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       setShowPlanDetails(false);
       setSelectedBillingPeriod("monthly");
       setEditingAccountPlayer(false);
+      setShowDevicePlayersImport(false);
       setLocalSessionSearch("");
       setAccountDraftName(accountPlayerName);
       setAccountDraftColor(accountPlayerColor);
@@ -426,6 +440,14 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     );
 
     useEffect(() => {
+      selectedLocalGameIdsRef.current = selectedLocalGameIds;
+    }, [selectedLocalGameIds]);
+
+    useEffect(() => {
+      selectedLocalProfileIdsRef.current = selectedLocalProfileIds;
+    }, [selectedLocalProfileIds]);
+
+    useEffect(() => {
       if (!transferToast) return;
       const timeout = window.setTimeout(() => setTransferToast(null), 5200);
       return () => window.clearTimeout(timeout);
@@ -487,18 +509,20 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
 
     useEffect(() => {
       const visibleGameIds = new Set(localGames.map((game) => game.id));
-      setSelectedLocalGameIds((current) =>
-        current.filter((id) => visibleGameIds.has(id)),
-      );
+      const current = selectedLocalGameIdsRef.current;
+      const next = current.filter((id) => visibleGameIds.has(id));
+      if (areStringArraysEqual(current, next)) return;
+      setSelectedLocalGameIds(next);
     }, [localGames]);
 
     useEffect(() => {
       const visibleProfileIds = new Set(
         localProfiles.map((profile) => profile.id),
       );
-      setSelectedLocalProfileIds((current) =>
-        current.filter((id) => visibleProfileIds.has(id)),
-      );
+      const current = selectedLocalProfileIdsRef.current;
+      const next = current.filter((id) => visibleProfileIds.has(id));
+      if (areStringArraysEqual(current, next)) return;
+      setSelectedLocalProfileIds(next);
     }, [localProfiles]);
 
     function toggleLocalGame(gameId: string) {
@@ -756,10 +780,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     function openUrl(url: string) {
       try {
         const parsedUrl = new URL(url, window.location.origin);
-        if (
-          parsedUrl.protocol !== "http:" &&
-          parsedUrl.protocol !== "https:"
-        ) {
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
           showTransferToast("This link is not valid.", "error");
           return;
         }
@@ -790,7 +811,10 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
         }
       }
 
-      if (err instanceof FunctionsRelayError || err instanceof FunctionsFetchError) {
+      if (
+        err instanceof FunctionsRelayError ||
+        err instanceof FunctionsFetchError
+      ) {
         return err.message || fallback;
       }
 
@@ -798,7 +822,9 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
     }
 
     async function requestBillingUrl(
-      functionName: "create-checkout-session" | "create-customer-portal-session",
+      functionName:
+        | "create-checkout-session"
+        | "create-customer-portal-session",
       body: Record<string, unknown>,
       fallback: string,
     ) {
@@ -879,9 +905,17 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       }
     }
 
-    async function runImportFromDevice() {
-      if (!hasSelectedLocalData) {
-        setError("Select at least one session or player to import.");
+    async function runImportFromDevice(
+      selection: { gameIds: string[]; profileIds: string[] } = {
+        gameIds: selectedLocalGameIds,
+        profileIds: selectedLocalProfileIds,
+      },
+      emptySelectionMessage = "Select at least one session or player to import.",
+    ) {
+      const { gameIds, profileIds } = selection;
+
+      if (gameIds.length === 0 && profileIds.length === 0) {
+        setError(emptySelectionMessage);
         return;
       }
 
@@ -894,8 +928,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
 
       try {
         const result = await onImportLocalData({
-          gameIds: selectedLocalGameIds,
-          profileIds: selectedLocalProfileIds,
+          gameIds,
+          profileIds,
         });
         const parts = formatTransferParts(result);
 
@@ -1113,9 +1147,6 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                   </div>
                 ) : null}
                 <section className="authDialog__accountPlayerSection">
-                  <div className="authDialog__accountPlayerTitle">
-                    Player profile
-                  </div>
                   <article
                     className={`authDialog__accountPlayerCard${
                       editingAccountPlayer && accountPlayer
@@ -1141,7 +1172,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                         <div className="authDialog__accountPlayerEditStack">
                           <div className="authDialog__accountPlayerEditTop">
                             <input
-                              className="input input--compact authDialog__accountPlayerInput"
+                              className="input input-search-compact authDialog__accountPlayerInput"
                               type="text"
                               value={accountDraftName}
                               onChange={(event) =>
@@ -1305,7 +1336,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                           </div>
                           {accountGames.length > 0 ? (
                             <ul className="authDialog__accountList">
-                              {accountGames.slice(0, 5).map((game) => (
+                              {accountGames.map((game) => (
                                 <li
                                   key={game.id}
                                   className="authDialog__accountItem"
@@ -1329,12 +1360,6 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               No saved sessions yet.
                             </div>
                           )}
-                          {accountGames.length > 5 ? (
-                            <div className="authDialog__accountMore">
-                              +{accountGames.length - 5} more session
-                              {accountGames.length - 5 === 1 ? "" : "s"}
-                            </div>
-                          ) : null}
                         </section>
 
                         <section className="authDialog__accountGroup">
@@ -1343,7 +1368,7 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                           </div>
                           {accountProfiles.length > 0 ? (
                             <ul className="authDialog__accountList">
-                              {accountProfiles.slice(0, 6).map((profile) => (
+                              {accountProfiles.map((profile) => (
                                 <li
                                   key={profile.id}
                                   className="authDialog__accountItem"
@@ -1367,12 +1392,6 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                               No saved players yet.
                             </div>
                           )}
-                          {accountProfiles.length > 6 ? (
-                            <div className="authDialog__accountMore">
-                              +{accountProfiles.length - 6} more player
-                              {accountProfiles.length - 6 === 1 ? "" : "s"}
-                            </div>
-                          ) : null}
                         </section>
                       </div>
                     ) : null}
@@ -1656,8 +1675,8 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                                 {busy
                                   ? "Working..."
                                   : selectedBillingPeriod === "monthly"
-                                  ? "Buy Pro Monthly"
-                                  : "Buy Pro Yearly"}
+                                    ? "Buy Pro Monthly"
+                                    : "Buy Pro Yearly"}
                               </button>
                               {hasStripeBillingProfile ? (
                                 <button
@@ -1731,154 +1750,253 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                         account.
                       </p>
                       <div className="authDialog__transferActions">
-                        <button
-                          className="authDialog__deviceToggle"
-                          type="button"
-                          onClick={() => setShowDeviceImport((value) => !value)}
-                          disabled={busy || !hasLocalData}
-                          aria-expanded={showDeviceImport}
-                        >
-                          <span>Sessions on this device</span>
-                          <span
-                            className={`authDialog__deviceToggleChevron${showDeviceImport ? " authDialog__deviceToggleChevron--open" : ""}`}
-                            aria-hidden="true"
-                          >
-                            <ChevronDown size={17} strokeWidth={2.2} />
-                          </span>
-                        </button>
-                      </div>
-                      {showDeviceImport && hasLocalData ? (
                         <div
-                          ref={deviceImportRef}
-                          className="authDialog__deviceImport"
+                          className={`authDialog__deviceSection${
+                            showDeviceImport && localGames.length > 0
+                              ? " authDialog__deviceSection--open"
+                              : ""
+                          }`}
                         >
-                          {localGames.length > 0 ? (
-                            <div className="authDialog__deviceGroup">
-                              <div className="authDialog__deviceGroupTitle">
-                                Choose sessions to add
-                              </div>
-                              <div className="authDialog__deviceTools">
-                                <input
-                                  className="input input--compact authDialog__deviceSearch"
-                                  type="search"
-                                  value={localSessionSearch}
-                                  onChange={(event) =>
-                                    setLocalSessionSearch(event.target.value)
-                                  }
-                                  placeholder="Search sessions or players"
-                                  aria-label="Search sessions saved on this device"
-                                />
-                                {filteredLocalGames.length >= 2 ? (
-                                  <label className="authDialog__selectAll">
-                                    <input
-                                      type="checkbox"
-                                      checked={allFilteredLocalGamesSelected}
-                                      onChange={toggleFilteredLocalGames}
-                                      disabled={!hasFilteredLocalGames}
-                                    />
-                                    <span>Select all</span>
-                                  </label>
-                                ) : null}
-                              </div>
-                              <div className="authDialog__deviceList authDialog__deviceList--scroll">
-                                {filteredLocalGames.map((game) => (
-                                  <label
-                                    key={game.id}
-                                    className="authDialog__deviceItem authDialog__deviceItem--session"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedLocalGameIds.includes(
-                                        game.id,
-                                      )}
-                                      onChange={() => toggleLocalGame(game.id)}
-                                    />
-                                    <span className="authDialog__deviceSessionText">
-                                      <span className="authDialog__deviceSessionTitle">
-                                        <strong>{game.name}</strong>
-                                        <span
-                                          className="authDialog__sessionAvatars"
-                                          aria-label={`${game.players.length} player${game.players.length === 1 ? "" : "s"}`}
-                                        >
-                                          {game.players
-                                            .slice(0, 4)
-                                            .map((player) => (
-                                              <span
-                                                key={player.id}
-                                                className="authDialog__sessionAvatar"
-                                                style={avatarStyleFor(
-                                                  player.avatarColor,
-                                                )}
-                                                title={player.name}
-                                              >
-                                                {getInitials(player.name)}
-                                              </span>
-                                            ))}
-                                          {game.players.length > 4 ? (
-                                            <span className="authDialog__sessionAvatar authDialog__sessionAvatar--more">
-                                              +{game.players.length - 4}
-                                            </span>
-                                          ) : null}
-                                        </span>
-                                      </span>
-                                    </span>
-                                  </label>
-                                ))}
-                                {!hasFilteredLocalGames ? (
-                                  <div className="authDialog__deviceEmpty">
-                                    No sessions match your search.
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          ) : null}
-                          {localProfiles.length > 0 ? (
-                            <div className="authDialog__deviceGroup">
-                              <div className="authDialog__deviceGroupTitle">
-                                Players saved on this device
-                              </div>
-                              <div className="authDialog__deviceList">
-                                {localProfiles.map((profile) => (
-                                  <label
-                                    key={profile.id}
-                                    className="authDialog__deviceItem"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedLocalProfileIds.includes(
-                                        profile.id,
-                                      )}
-                                      onChange={() =>
-                                        toggleLocalProfile(profile.id)
-                                      }
-                                    />
-                                    <span>
-                                      <strong>{profile.name}</strong>
-                                      <em>Player profile</em>
-                                    </span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
                           <button
-                            className="btn authDialog__actionBtn authDialog__actionBtn--add"
+                            className="authDialog__deviceToggle"
                             type="button"
-                            onClick={() => void runImportFromDevice()}
-                            disabled={busy || !hasSelectedLocalData}
+                            onClick={() =>
+                              setShowDeviceImport((value) => !value)
+                            }
+                            disabled={busy || localGames.length === 0}
+                            aria-expanded={showDeviceImport}
                           >
+                            <span>Sessions on this device</span>
                             <span
-                              className="authDialog__actionIcon"
+                              className={`authDialog__deviceToggleChevron${showDeviceImport ? " authDialog__deviceToggleChevron--open" : ""}`}
                               aria-hidden="true"
                             >
-                              <Plus size={16} strokeWidth={2.4} />
-                            </span>
-                            <span>
-                              {busy ? "Working..." : "Add selected to account"}
+                              <ChevronDown size={17} strokeWidth={2.2} />
                             </span>
                           </button>
+                          {showDeviceImport && localGames.length > 0 ? (
+                            <div
+                              ref={deviceImportRef}
+                              className="authDialog__deviceImport"
+                            >
+                              <div className="authDialog__deviceGroup">
+                                <div className="authDialog__deviceTools">
+                                  <input
+                                    className="input input-search-compact authDialog__deviceSearch"
+                                    type="search"
+                                    value={localSessionSearch}
+                                    onChange={(event) =>
+                                      setLocalSessionSearch(event.target.value)
+                                    }
+                                    placeholder="Search sessions or players"
+                                    aria-label="Search sessions saved on this device"
+                                  />
+
+                                  {filteredLocalGames.length >= 2 ? (
+                                    <label className="authDialog__selectAll">
+                                      <input
+                                        type="checkbox"
+                                        checked={allFilteredLocalGamesSelected}
+                                        onChange={toggleFilteredLocalGames}
+                                        disabled={!hasFilteredLocalGames}
+                                      />
+                                      <span>Select all</span>
+                                    </label>
+                                  ) : null}
+                                </div>
+
+                                <div className="authDialog__deviceList authDialog__deviceList--scroll">
+                                  {filteredLocalGames.map((game) => (
+                                    <label
+                                      key={game.id}
+                                      className="authDialog__deviceItem authDialog__deviceItem--session"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedLocalGameIds.includes(
+                                          game.id,
+                                        )}
+                                        onChange={() =>
+                                          toggleLocalGame(game.id)
+                                        }
+                                      />
+
+                                      <span className="authDialog__deviceSessionText">
+                                        <span className="authDialog__deviceSessionTitle">
+                                          <strong>{game.name}</strong>
+
+                                          <span
+                                            className="authDialog__sessionAvatars"
+                                            aria-label={`${game.players.length} player${
+                                              game.players.length === 1
+                                                ? ""
+                                                : "s"
+                                            }`}
+                                          >
+                                            {game.players
+                                              .slice(0, 4)
+                                              .map((player) => (
+                                                <span
+                                                  key={player.id}
+                                                  className="authDialog__sessionAvatar"
+                                                  style={avatarStyleFor(
+                                                    player.avatarColor,
+                                                  )}
+                                                  title={player.name}
+                                                >
+                                                  {getInitials(player.name)}
+                                                </span>
+                                              ))}
+
+                                            {game.players.length > 4 ? (
+                                              <span className="authDialog__sessionAvatar authDialog__sessionAvatar--more">
+                                                +{game.players.length - 4}
+                                              </span>
+                                            ) : null}
+                                          </span>
+                                        </span>
+                                      </span>
+                                    </label>
+                                  ))}
+
+                                  {!hasFilteredLocalGames ? (
+                                    <div className="authDialog__deviceEmpty">
+                                      No sessions match your search.
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                              <div className="authDialog__deviceActions">
+                                <button
+                                  className="btn authDialog__actionBtn authDialog__actionBtn--add authDialog__actionBtn--deviceImport"
+                                  type="button"
+                                  onClick={() =>
+                                    void runImportFromDevice(
+                                      {
+                                        gameIds: selectedLocalGameIds,
+                                        profileIds: [],
+                                      },
+                                      "Select at least one session to import.",
+                                    )
+                                  }
+                                  disabled={
+                                    busy || selectedLocalGameIds.length === 0
+                                  }
+                                >
+                                  <span
+                                    className="authDialog__actionIcon"
+                                    aria-hidden="true"
+                                  >
+                                    <Plus size={16} strokeWidth={2.4} />
+                                  </span>
+                                  <span>
+                                    {busy
+                                      ? "Working..."
+                                      : "Add selected to account"}
+                                  </span>
+                                </button>
+                                <p className="authDialog__deviceActionNote">
+                                  Added sessions move to your account and are
+                                  removed from this device&apos;s local storage.
+                                  They may not be available offline when signed
+                                  out.
+                                </p>
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
-                      ) : null}
+
+                        <div
+                          className={`authDialog__deviceSection${
+                            showDevicePlayersImport && localProfiles.length > 0
+                              ? " authDialog__deviceSection--open"
+                              : ""
+                          }`}
+                        >
+                          <button
+                            className="authDialog__deviceToggle"
+                            type="button"
+                            onClick={() =>
+                              setShowDevicePlayersImport((value) => !value)
+                            }
+                            disabled={busy || localProfiles.length === 0}
+                            aria-expanded={showDevicePlayersImport}
+                          >
+                            <span>Players on this device</span>
+                            <span
+                              className={`authDialog__deviceToggleChevron${showDevicePlayersImport ? " authDialog__deviceToggleChevron--open" : ""}`}
+                              aria-hidden="true"
+                            >
+                              <ChevronDown size={17} strokeWidth={2.2} />
+                            </span>
+                          </button>
+                          {showDevicePlayersImport &&
+                          localProfiles.length > 0 ? (
+                            <div className="authDialog__deviceImport">
+                              <div className="authDialog__deviceGroup">
+                                <div className="authDialog__deviceList">
+                                  {localProfiles.map((profile) => (
+                                    <label
+                                      key={profile.id}
+                                      className="authDialog__deviceItem"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedLocalProfileIds.includes(
+                                          profile.id,
+                                        )}
+                                        onChange={() =>
+                                          toggleLocalProfile(profile.id)
+                                        }
+                                      />
+
+                                      <span>
+                                        <strong>{formatPlayerName(profile.name)}</strong>
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="authDialog__deviceActions">
+                                <button
+                                  className="btn authDialog__actionBtn authDialog__actionBtn--add authDialog__actionBtn--deviceImport"
+                                  type="button"
+                                  onClick={() =>
+                                    void runImportFromDevice(
+                                      {
+                                        gameIds: [],
+                                        profileIds: selectedLocalProfileIds,
+                                      },
+                                      "Select at least one player to import.",
+                                    )
+                                  }
+                                  disabled={
+                                    busy || selectedLocalProfileIds.length === 0
+                                  }
+                                >
+                                  <span
+                                    className="authDialog__actionIcon"
+                                    aria-hidden="true"
+                                  >
+                                    <Plus size={16} strokeWidth={2.4} />
+                                  </span>
+                                  <span>
+                                    {busy
+                                      ? "Working..."
+                                      : "Add selected to account"}
+                                  </span>
+                                </button>
+                                <p className="authDialog__deviceActionNote">
+                                  Added players move to your account and are
+                                  removed from this device&apos;s local storage.
+                                  They may not be available offline when signed
+                                  out.
+                                </p>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
                       <div className="authDialog__transferActions">
                         <button
                           className="btn btn--ghost authDialog__actionBtn authDialog__actionBtn--file"

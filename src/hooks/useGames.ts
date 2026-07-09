@@ -40,6 +40,7 @@ type CreateGameInput = {
   winByTwo?: boolean;
   manualEndOnly?: boolean;
   timerEnabled?: boolean;
+  diceEnabled?: boolean;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
   initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
@@ -64,6 +65,7 @@ type UpdateGameSettingsInput = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  diceEnabled: boolean;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
 };
@@ -94,6 +96,15 @@ function getSyncErrorMessage(error: unknown) {
   return "Unknown sync error";
 }
 
+function isTransientFetchError(error: unknown) {
+  const message = getSyncErrorMessage(error).toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("load failed") ||
+    message.includes("networkerror")
+  );
+}
+
 function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
   const merged = new Map(baseGames.map((game) => [game.id, game]));
 
@@ -111,7 +122,15 @@ function clampScore(value: number) {
   return Math.max(-MAX_ABS_SCORE, Math.min(MAX_ABS_SCORE, value));
 }
 
+function hasOwn<T extends object, K extends PropertyKey>(
+  value: T,
+  key: K,
+): value is T & Record<K, unknown> {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
 export function useGames(session: Session | null, authLoading = false) {
+  const sessionUserId = session?.user.id ?? null;
   const migrated = useMemo(() => migrateSingleGameToGamesIfNeeded(), []);
   const [games, setGames] = useState<Game[]>(
     () => migrated?.games ?? loadGuestGames(),
@@ -125,7 +144,18 @@ export function useGames(session: Session | null, authLoading = false) {
   const [remoteReady, setRemoteReady] = useState(!session && !authLoading);
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
+  const [saveRetryTick, setSaveRetryTick] = useState(0);
   const remoteSignatureRef = useRef<string | null>(null);
+  const failedSaveNoticeSignatureRef = useRef<string | null>(null);
+  const saveRetryTimeoutRef = useRef<number | null>(null);
+  const saveInFlightRef = useRef(false);
+  const saveInFlightUserIdRef = useRef<string | null>(null);
+  const queuedSaveSignatureRef = useRef<string | null>(null);
+  const latestSessionUserIdRef = useRef<string | null>(sessionUserId);
+
+  useEffect(() => {
+    latestSessionUserIdRef.current = sessionUserId;
+  }, [sessionUserId]);
 
   useEffect(() => {
     let alive = true;
@@ -344,24 +374,80 @@ export function useGames(session: Session | null, authLoading = false) {
   }, [remoteUserId, session]);
 
   useEffect(() => {
-    if (!session) {
+    if (!sessionUserId) {
       if (!remoteReady || remoteUserId !== null) return;
       saveGuestGames(games);
       return;
     }
-    if (!remoteReady || remoteUserId !== session.user.id) return;
-    void saveRemoteGames(session.user.id, games)
+    if (!remoteReady || remoteUserId !== sessionUserId) return;
+    const nextSignature = getGameSyncSignature(games);
+    if (nextSignature === remoteSignatureRef.current) return;
+
+    if (saveRetryTimeoutRef.current !== null) {
+      window.clearTimeout(saveRetryTimeoutRef.current);
+      saveRetryTimeoutRef.current = null;
+    }
+
+    if (
+      saveInFlightRef.current &&
+      saveInFlightUserIdRef.current === sessionUserId
+    ) {
+      queuedSaveSignatureRef.current = nextSignature;
+      return;
+    }
+
+    saveInFlightRef.current = true;
+    saveInFlightUserIdRef.current = sessionUserId;
+    queuedSaveSignatureRef.current = null;
+
+    void saveRemoteGames(sessionUserId, games)
       .then(() => {
-        remoteSignatureRef.current = getGameSyncSignature(games);
+        if (latestSessionUserIdRef.current !== sessionUserId) return;
+        remoteSignatureRef.current = nextSignature;
+        failedSaveNoticeSignatureRef.current = null;
       })
       .catch((error) => {
+        if (latestSessionUserIdRef.current !== sessionUserId) return;
+        if (isTransientFetchError(error)) {
+          console.warn("Could not reach Supabase while saving games", error);
+          saveRetryTimeoutRef.current = window.setTimeout(() => {
+            saveRetryTimeoutRef.current = null;
+            setSaveRetryTick((value) => value + 1);
+          }, 5000);
+          return;
+        }
+
+        if (failedSaveNoticeSignatureRef.current === nextSignature) return;
+        failedSaveNoticeSignatureRef.current = nextSignature;
         console.error("Failed to save games to Supabase", error);
         setSyncNotice({
           message: `Could not save games: ${getSyncErrorMessage(error)}`,
           tone: "error",
         });
+      })
+      .finally(() => {
+        if (saveInFlightUserIdRef.current === sessionUserId) {
+          saveInFlightRef.current = false;
+          saveInFlightUserIdRef.current = null;
+        }
+        if (latestSessionUserIdRef.current !== sessionUserId) return;
+        if (
+          queuedSaveSignatureRef.current &&
+          queuedSaveSignatureRef.current !== remoteSignatureRef.current
+        ) {
+          queuedSaveSignatureRef.current = null;
+          setSaveRetryTick((value) => value + 1);
+        }
       });
-  }, [games, remoteReady, remoteUserId, session]);
+  }, [games, remoteReady, remoteUserId, saveRetryTick, sessionUserId]);
+
+  useEffect(() => {
+    return () => {
+      if (saveRetryTimeoutRef.current !== null) {
+        window.clearTimeout(saveRetryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!session) {
@@ -413,6 +499,7 @@ export function useGames(session: Session | null, authLoading = false) {
         ? input.winCondition
         : "reach_target";
     const timerEnabled = input.timerEnabled === true;
+    const diceEnabled = input.diceEnabled === true;
     const timerMode =
       input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
     const timerSeconds =
@@ -483,6 +570,7 @@ export function useGames(session: Session | null, authLoading = false) {
       winByTwo: input.winByTwo === true,
       manualEndOnly,
       timerEnabled,
+      diceEnabled,
       timerMode,
       timerSeconds,
       teams,
@@ -569,14 +657,19 @@ export function useGames(session: Session | null, authLoading = false) {
   }
 
   function updateGame(gameId: string, updater: (game: Game) => Game) {
-    setGames((prev) =>
-      prev.map((g) => {
+    setGames((prev) => {
+      let didChange = false;
+
+      const nextGames = prev.map((g) => {
         if (g.id !== gameId) return g;
         const next = updater(g);
         if (next === g) return g;
+        didChange = true;
         return { ...next, updatedAt: Date.now() };
-      }),
-    );
+      });
+
+      return didChange ? nextGames : prev;
+    });
   }
 
   function reconcileGameCompletion(
@@ -650,14 +743,45 @@ export function useGames(session: Session | null, authLoading = false) {
   ) {
     const now = Date.now();
     updateGame(gameId, (g) => {
+      let didChange = false;
+
       const players = g.players.map((p) => {
         if (p.id !== playerId) return p;
+
+        const nextName = hasOwn(updates, "name")
+          ? formatPlayerName(String(updates.name ?? p.name))
+          : p.name;
+        const nextAvatarColor = hasOwn(updates, "avatarColor")
+          ? (updates.avatarColor as string | undefined)
+          : p.avatarColor;
+        const nextProfileId = hasOwn(updates, "profileId")
+          ? (updates.profileId as string | undefined)
+          : p.profileId;
+        const nextTeamId = hasOwn(updates, "teamId")
+          ? (updates.teamId as string | undefined)
+          : p.teamId;
+
+        if (
+          nextName === p.name &&
+          nextAvatarColor === p.avatarColor &&
+          nextProfileId === p.profileId &&
+          nextTeamId === p.teamId
+        ) {
+          return p;
+        }
+
+        didChange = true;
         return {
           ...p,
-          ...updates,
-          name: updates.name ? formatPlayerName(updates.name) : p.name,
+          name: nextName,
+          avatarColor: nextAvatarColor ?? p.avatarColor,
+          profileId: nextProfileId,
+          teamId: nextTeamId,
         };
       });
+
+      if (!didChange) return g;
+
       return {
         ...g,
         ...reconcileGameCompletion(g, players, g.teams, now),
@@ -863,6 +987,7 @@ export function useGames(session: Session | null, authLoading = false) {
         winByTwo: input.winByTwo,
         manualEndOnly: input.manualEndOnly,
         timerEnabled: input.timerEnabled,
+        diceEnabled: input.diceEnabled,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
         completionMode: undefined,
@@ -887,30 +1012,73 @@ export function useGames(session: Session | null, authLoading = false) {
     profileId: string,
     updates: Partial<Pick<Player, "name" | "avatarColor">>,
   ) {
-    setGames((prev) =>
-      prev.map((g) => ({
-        ...g,
-        players: g.players.map((p) => {
+    setGames((prev) => {
+      let didChange = false;
+
+      const nextGames = prev.map((g) => {
+        let didChangeGame = false;
+
+        const players = g.players.map((p) => {
           if (p.profileId === profileId) {
-            return { ...p, ...updates };
+            const nextName =
+              updates.name !== undefined ? formatPlayerName(updates.name) : p.name;
+            const nextAvatarColor =
+              updates.avatarColor !== undefined
+                ? updates.avatarColor
+                : p.avatarColor;
+
+            if (
+              nextName === p.name &&
+              nextAvatarColor === p.avatarColor
+            ) {
+              return p;
+            }
+
+            didChange = true;
+            didChangeGame = true;
+            return {
+              ...p,
+              name: nextName,
+              avatarColor: nextAvatarColor,
+            };
           }
           return p;
-        }),
-      })),
-    );
+        });
+
+        if (!didChangeGame) return g;
+
+        return {
+          ...g,
+          players,
+          updatedAt: Date.now(),
+        };
+      });
+
+      return didChange ? nextGames : prev;
+    });
   }
 
   function importGames(incomingGames: Game[]) {
+    if (incomingGames.length === 0) return 0;
+
     const existingGamesById = new Map(games.map((game) => [game.id, game]));
+
     const changedCount = incomingGames.reduce((count, incomingGame) => {
       const existingGame = existingGamesById.get(incomingGame.id);
+
       if (!existingGame) return count + 1;
+
       return incomingGame.updatedAt > existingGame.updatedAt
         ? count + 1
         : count;
     }, 0);
+
+    if (changedCount === 0) return 0;
+
     const mergedGames = mergeGamesById(games, incomingGames);
+
     setGames(mergedGames);
+
     if (
       currentGameId &&
       mergedGames.some((game) => game.id === currentGameId)
@@ -922,9 +1090,9 @@ export function useGames(session: Session | null, authLoading = false) {
     ) {
       setCurrentGameId(incomingGames[0].id);
     }
+
     return changedCount;
   }
-
   const sortedPlayers = useMemo(() => {
     if (!currentGame) return [];
     return [...currentGame.players].sort((a, b) =>

@@ -50,11 +50,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
 
 .homeHero__resumeWrap {
   position: relative;
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   padding-top: 12px;
 }
 
@@ -92,6 +94,12 @@
   margin-top: -10px;
 }
 
+@media (min-width: 561px) {
+  .homeHero--hasResume .homeHero__newGameWrap {
+    margin-top: 10px;
+  }
+}
+
 .homeHero__action,
 .homeHero__secondary {
   flex: 0 0 auto;
@@ -100,6 +108,7 @@
 
 .homeHero__secondary {
   min-width: 176px;
+  width: 100%;
   justify-content: center;
 }
 

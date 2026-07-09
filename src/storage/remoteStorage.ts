@@ -7,6 +7,8 @@ const PROFILES_TABLE = "player_profiles";
 const TEAMS_TABLE = "teams";
 const TEAM_MEMBERS_TABLE = "team_members";
 const GAME_SELECT_COLUMNS =
+  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
+const GAME_SELECT_COLUMNS_WITHOUT_DICE =
   "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
   "id,user_id,name,score_direction,starting_score,target_score,win_condition,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
@@ -26,6 +28,7 @@ type GameRow = {
   win_condition: Game["winCondition"];
   win_by_two?: boolean | null;
   manual_end_only?: boolean | null;
+  dice_enabled?: boolean | null;
   completion_mode?: Game["completionMode"] | null;
   target_points?: number;
   is_low_score_wins?: boolean;
@@ -82,6 +85,7 @@ function gameToRow(userId: string, game: Game): GameRow {
     win_condition: game.winCondition,
     win_by_two: game.winByTwo,
     manual_end_only: game.manualEndOnly,
+    dice_enabled: game.diceEnabled,
     completion_mode: game.completionMode ?? null,
     timer_enabled: game.timerEnabled,
     timer_mode: game.timerMode,
@@ -176,6 +180,7 @@ function rowToGame(row: GameRow): Game {
     winCondition,
     winByTwo: row.win_by_two === true,
     manualEndOnly: row.manual_end_only === true,
+    diceEnabled: row.dice_enabled === true,
     completionMode:
       row.completion_mode === "winner" ||
       row.completion_mode === "no_winner" ||
@@ -205,8 +210,13 @@ function isMissingGameRuleColumn(error: unknown) {
   return (
     message.includes("win_by_two") ||
     message.includes("manual_end_only") ||
+    message.includes("dice_enabled") ||
     message.includes("completion_mode")
   );
+}
+
+function isMissingDiceEnabledColumn(error: unknown) {
+  return getErrorMessage(error).includes("dice_enabled");
 }
 
 function isMissingTeamsColumn(error: unknown) {
@@ -329,6 +339,19 @@ export async function loadRemoteGames(userId: string): Promise<Game[]> {
   if (!result.error) {
     return (result.data ?? []).map((row) => rowToGame(row as GameRow));
   }
+  if (isMissingDiceEnabledColumn(result.error)) {
+    const noDiceResult = await supabase
+      .from(GAMES_TABLE)
+      .select(GAME_SELECT_COLUMNS_WITHOUT_DICE)
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false });
+    if (!noDiceResult.error) {
+      return (noDiceResult.data ?? []).map((row) => rowToGame(row as GameRow));
+    }
+    if (!isMissingGameRuleColumn(noDiceResult.error)) {
+      throw noDiceResult.error;
+    }
+  }
   if (
     !isMissingScoreHistoryColumn(result.error) &&
     !isMissingGameRuleColumn(result.error) &&
@@ -372,7 +395,13 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
       error = retryResult.error;
     }
     if (error) {
-      if (isMissingTeamsColumn(error)) {
+      if (isMissingDiceEnabledColumn(error)) {
+        const noDiceRows = rows.map(({ dice_enabled, ...row }) => row);
+        const { error: noDiceError } = await supabase
+          .from(GAMES_TABLE)
+          .upsert(noDiceRows, { onConflict: "id" });
+        if (noDiceError) throw noDiceError;
+      } else if (isMissingTeamsColumn(error)) {
         throw new Error(
           "Missing games.teams column in Supabase. Run the latest database migration before using team support.",
         );
@@ -402,6 +431,7 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
               score_history,
               win_by_two,
               manual_end_only,
+              dice_enabled,
               completion_mode,
               ...row
             }) => row,
@@ -421,6 +451,7 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
             score_history,
             win_by_two,
             manual_end_only,
+            dice_enabled,
             completion_mode,
             ...row
           } = gameToLegacyCompatibleRow(userId, game);

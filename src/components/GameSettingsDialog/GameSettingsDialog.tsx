@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { Game, ScoreDirection, WinCondition } from "../../types";
-import { ArrowDownUp, Flag, Timer, Trophy } from "lucide-react";
+import { ArrowDownUp, Dices, Flag, Timer, Trophy } from "lucide-react";
 import "./GameSettingsDialog.css";
 
 export type GameSettingsDialogHandle = {
@@ -22,6 +22,7 @@ type Props = {
     winByTwo: boolean;
     manualEndOnly: boolean;
     timerEnabled: boolean;
+    diceEnabled: boolean;
     timerMode: "countdown" | "stopwatch";
     timerSeconds: number;
   }) => void;
@@ -50,6 +51,7 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
     const [winByTwo, setWinByTwo] = useState(game.winByTwo);
     const [manualEndOnly, setManualEndOnly] = useState(game.manualEndOnly);
     const [timerEnabled, setTimerEnabled] = useState(game.timerEnabled);
+    const [diceEnabled, setDiceEnabled] = useState(game.diceEnabled);
     const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
       game.timerMode,
     );
@@ -74,6 +76,7 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
       setWinByTwo(game.winByTwo);
       setManualEndOnly(game.manualEndOnly);
       setTimerEnabled(game.timerEnabled);
+      setDiceEnabled(game.diceEnabled);
       setTimerMode(game.timerMode);
       setTimerMinutes(String(Math.max(1, Math.round(game.timerSeconds / 60))));
       setTimerSecondsRaw(String(Math.max(0, game.timerSeconds % 60)));
@@ -128,6 +131,7 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
               winByTwo,
               manualEndOnly,
               timerEnabled,
+              diceEnabled,
               timerMode,
               timerSeconds:
                 timerMode === "countdown"
@@ -220,6 +224,13 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
                 }}
               />
               <SettingsModeButton
+                icon={<Flag size={22} strokeWidth={2.3} />}
+                title="Manual finish"
+                description="End from the game menu."
+                active={manualEndOnly}
+                onClick={() => setManualEndOnly((value) => !value)}
+              />
+              <SettingsModeButton
                 icon={<Trophy size={22} strokeWidth={2.3} />}
                 title="Win by 2"
                 description="Leader needs a 2 point gap."
@@ -230,13 +241,6 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
                   setScoreDirection("up");
                   setWinByTwo((value) => !value);
                 }}
-              />
-              <SettingsModeButton
-                icon={<Flag size={22} strokeWidth={2.3} />}
-                title="Manual finish"
-                description="End from the game menu."
-                active={manualEndOnly}
-                onClick={() => setManualEndOnly((value) => !value)}
               />
               <SettingsModeButton
                 icon={<Timer size={22} strokeWidth={2.3} />}
@@ -250,6 +254,13 @@ export const GameSettingsDialog = forwardRef<GameSettingsDialogHandle, Props>(
                 }
                 active={timerEnabled}
                 onClick={() => setTimerEnabled((value) => !value)}
+              />
+              <SettingsModeButton
+                icon={<Dices size={22} strokeWidth={2.3} />}
+                title="Dice"
+                description='Dice roller available during the game.'
+                active={diceEnabled}
+                onClick={() => setDiceEnabled((value) => !value)}
               />
             </div>
 
