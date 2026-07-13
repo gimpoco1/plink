@@ -119,34 +119,41 @@ export function TeamScoreCard({
           <div className="avatar teamScoreCard__teamIcon" aria-hidden="true">
             <TeamIcon size={28} strokeWidth={2.35} />
           </div>
-          <div className="who">
-            <div className="who__nameRow">
-              <div className="who__name">{name}</div>
+          <div className="teamScoreCard__identity">
+            <div className="who">
+              <div className="who__nameRow">
+                <div className="who__name">{name}</div>
+              </div>
+              <div
+                className="teamScoreCard__membersCompact"
+                aria-label={`${name} members`}
+              >
+                {members.slice(0, 5).map((member) => (
+                  <span
+                    key={`${id}:${member.id}`}
+                    className="teamScoreCard__memberAvatar"
+                    style={avatarStyleFor(member.avatarColor)}
+                    title={member.name}
+                    aria-label={member.name}
+                  >
+                    {getInitials(member.name)}
+                  </span>
+                ))}
+                {overflowCount > 0 ? (
+                  <span
+                    className="teamScoreCard__memberOverflow"
+                    aria-label={`${overflowCount} more members`}
+                  >
+                    +{overflowCount}
+                  </span>
+                ) : null}
+              </div>
             </div>
-            <div
-              className="teamScoreCard__membersCompact"
-              aria-label={`${name} members`}
-            >
-              {members.slice(0, 5).map((member) => (
-                <span
-                  key={`${id}:${member.id}`}
-                  className="teamScoreCard__memberAvatar"
-                  style={avatarStyleFor(member.avatarColor)}
-                  title={member.name}
-                  aria-label={member.name}
-                >
-                  {getInitials(member.name)}
-                </span>
-              ))}
-              {overflowCount > 0 ? (
-                <span
-                  className="teamScoreCard__memberOverflow"
-                  aria-label={`${overflowCount} more members`}
-                >
-                  +{overflowCount}
-                </span>
-              ) : null}
-            </div>
+            {isWinner ? (
+              <div className="winnerMark" aria-label="Winner">
+                <Trophy size={24} strokeWidth={2.2} aria-hidden="true" />
+              </div>
+            ) : null}
           </div>
         </div>
         <div className="cardHeader__right">

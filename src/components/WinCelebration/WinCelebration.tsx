@@ -1,4 +1,11 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
+import { toBlob } from "html-to-image";
 import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import type { ProfileStats, TeamStats } from "../../utils/profileStats";
@@ -43,7 +50,7 @@ const TEAM_ICON_COMPONENTS = {
   star: Star,
 } as const;
 
-type ShareStatus = "idle" | "copied" | "error";
+type ShareStatus = "idle" | "preparing" | "copied" | "error";
 
 type Props = {
   isTeamGame?: boolean;
@@ -77,6 +84,7 @@ export function WinCelebration({
   onBackToHome,
 }: Props) {
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.classList.add("winFx-scrollLock");
@@ -167,13 +175,41 @@ export function WinCelebration({
   async function handleShareWin() {
     if (!shareText) return;
 
-    setShareStatus("idle");
+    setShareStatus("preparing");
     try {
+      await document.fonts?.ready;
+      const imageBlob = shareCardRef.current
+        ? await toBlob(shareCardRef.current, {
+            cacheBust: true,
+            pixelRatio: 2,
+            backgroundColor: "#061013",
+          })
+        : null;
+      const imageFile = imageBlob
+        ? new File([imageBlob], `${toShareFileName(gameName)}-win-card.png`, {
+            type: "image/png",
+          })
+        : null;
+
+      if (
+        imageFile &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [imageFile] })
+      ) {
+        await navigator.share({
+          files: [imageFile],
+        });
+        setShareStatus("idle");
+        return;
+      }
+
       if (typeof navigator.share === "function") {
         await navigator.share({
           title: shareTitle,
           text: shareText,
         });
+        setShareStatus("idle");
         return;
       }
 
@@ -399,6 +435,7 @@ export function WinCelebration({
               type="button"
               className="winFx__btn winFx__btn--share"
               onClick={handleShareWin}
+              disabled={shareStatus === "preparing"}
             >
               {shareStatus === "copied" ? (
                 <Check size={17} strokeWidth={2.6} aria-hidden="true" />
@@ -408,9 +445,11 @@ export function WinCelebration({
               <span>
                 {shareStatus === "copied"
                   ? "Copied win"
+                  : shareStatus === "preparing"
+                    ? "Creating card"
                   : shareStatus === "error"
-                    ? "Copy failed"
-                    : "Share win"}
+                    ? "Share failed"
+                    : "Share card"}
               </span>
             </button>
           ) : null}
@@ -443,6 +482,16 @@ export function WinCelebration({
           />
         ))}
       </div>
+      {canShareWin ? (
+        <WinShareCard
+          cardRef={shareCardRef}
+          gameName={gameName}
+          winnerName={winnerName ?? winnerStanding?.name ?? "Winner"}
+          isTeamGame={isTeamGame}
+          winnerStats={winnerStats}
+          standings={standings}
+        />
+      ) : null}
     </div>
   );
 }
@@ -487,6 +536,199 @@ function buildWinShareText({
   ];
 
   return lines.filter((line): line is string => Boolean(line)).join("\n");
+}
+
+function WinShareCard({
+  cardRef,
+  gameName,
+  winnerName,
+  isTeamGame,
+  winnerStats,
+  standings,
+}: {
+  cardRef: RefObject<HTMLDivElement>;
+  gameName: string;
+  winnerName: string;
+  isTeamGame: boolean;
+  winnerStats: ProfileStats | TeamStats | null;
+  standings: Standing[];
+}) {
+  const shareDate = new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date());
+  const winnerStanding =
+    standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
+  const podiumEntries = [2, 1, 3].map(
+    (rank) => standings.find((entry) => entry.rank === rank) ?? null,
+  );
+  const lowerStandings = standings.filter((entry) => entry.rank > 3);
+
+  return (
+    <div className="winShareRenderHost" aria-hidden="true">
+      <div
+        ref={cardRef}
+        className={`winShareCard${isTeamGame ? " winShareCard--teams" : ""}`}
+      >
+        <div className="winShareCard__shell">
+          <header className="winShareCard__hero">
+            <div className="winShareCard__meta">
+              <span>Winner</span>
+            </div>
+            <h1>{winnerName}</h1>
+            <p>{gameName}</p>
+          </header>
+
+          <div className="winShareCard__stats">
+            <ShareStat
+              value={String(winnerStats?.wins ?? "—")}
+              label={isTeamGame ? "Team wins" : "Total wins"}
+            />
+            <ShareStat
+              value={
+                winnerStats?.completedGames ? `${winnerStats.winRate}%` : "—"
+              }
+              label="Win rate"
+              accent
+            />
+            <ShareStat
+              value={
+                (winnerStats?.currentWinStreak ?? 0) > 1
+                  ? `${winnerStats?.currentWinStreak}x`
+                  : "—"
+              }
+              label="Win streak"
+            />
+          </div>
+
+          <section className="winShareCard__standings">
+            <h2>Final standings</h2>
+            <div className="winSharePodium">
+              {podiumEntries.map((entry, index) => {
+                const rank = index === 0 ? 2 : index === 1 ? 1 : 3;
+                return (
+                  <div
+                    key={entry?.id ?? `share-empty-${rank}`}
+                    className={`winSharePodium__slot winSharePodium__slot--${rank}${
+                      rank === 1 ? " winSharePodium__slot--winner" : ""
+                    }${entry ? "" : " winSharePodium__slot--empty"}`}
+                  >
+                    {entry ? (
+                      <div className="winSharePodium__avatarWrap">
+                        {rank === 1 ? (
+                          <Crown
+                            className="winSharePodium__crown"
+                            size={30}
+                            strokeWidth={2.3}
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <ShareAvatar entry={entry} isTeamGame={isTeamGame} />
+                      </div>
+                    ) : null}
+                    <div className="winSharePodium__base">
+                      <div className="winSharePodium__rank">{rank}</div>
+                      {entry ? (
+                        <div className="winSharePodium__name">
+                          {entry.name}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {lowerStandings.length ? (
+              <div className="winShareList">
+                <div className="winShareList__grid">
+                  {lowerStandings.map((entry) => (
+                    <div key={entry.id} className="winShareList__row">
+                      <span className="winShareList__rank">#{entry.rank}</span>
+                      <ShareAvatar
+                        entry={entry}
+                        isTeamGame={isTeamGame}
+                        compact
+                      />
+                      <strong>{entry.name}</strong>
+                      <b>{entry.score}</b>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+
+          <footer className="winShareCard__footer">
+            <div>
+              <span>Winning score</span>
+              <strong>{winnerStanding?.score ?? "—"}</strong>
+            </div>
+            <div>
+              <span>Date</span>
+              <strong>{shareDate}</strong>
+            </div>
+            <div>
+              <span>Sent from</span>
+              <strong>Plink</strong>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShareStat({
+  value,
+  label,
+  accent = false,
+}: {
+  value: string;
+  label: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="winShareStat">
+      <strong className={accent ? "winShareStat__value--accent" : undefined}>
+        {value}
+      </strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function ShareAvatar({
+  entry,
+  isTeamGame,
+  compact = false,
+}: {
+  entry: Standing;
+  isTeamGame: boolean;
+  compact?: boolean;
+}) {
+  const className = `winShareAvatar${compact ? " winShareAvatar--compact" : ""}`;
+  if (isTeamGame && entry.icon) {
+    return (
+      <div className={`${className} winShareAvatar--team`}>
+        <TeamIconGlyph icon={entry.icon} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={className} style={avatarStyleFor(entry.avatarColor)}>
+      {entry.initials}
+    </div>
+  );
+}
+function toShareFileName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48) || "plink";
 }
 
 function StandingAvatar({

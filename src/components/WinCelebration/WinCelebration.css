@@ -785,6 +785,458 @@ body.winFx-scrollLock .content {
   filter: drop-shadow(0 0 10px rgba(var(--win-accent-rgb), 0.34));
 }
 
+.winFx__btn:disabled {
+  cursor: wait;
+  opacity: 0.78;
+}
+
+.winShareRenderHost {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 540px;
+  pointer-events: none;
+  opacity: 1;
+  z-index: -1;
+}
+
+.winShareCard {
+  --share-accent-rgb: 216, 255, 79;
+  --share-accent: rgb(var(--share-accent-rgb));
+  width: 540px;
+  min-height: 675px;
+  padding: 34px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(var(--share-accent-rgb), 0.22), transparent 42%),
+    radial-gradient(circle at 20% 86%, rgba(var(--share-accent-rgb), 0.08), transparent 34%),
+    #061013;
+  color: #f6f8f7;
+  font-family: var(--ds-font-family);
+}
+
+.winShareCard--teams {
+  --share-accent-rgb: 122, 208, 255;
+}
+
+.winShareCard::before {
+  content: "";
+  position: absolute;
+}
+
+.winShareCard__shell {
+  min-height: 607px;
+  padding: 22px 18px 18px;
+  border-radius: 26px;
+  border: 2px solid rgba(var(--share-accent-rgb), 0.34);
+  background:
+    linear-gradient(180deg, rgba(25, 34, 42, 0.98), rgba(13, 19, 24, 0.98)),
+    radial-gradient(circle at 50% 0%, rgba(var(--share-accent-rgb), 0.08), transparent 54%);
+  box-shadow:
+    0 0 0 1px rgba(var(--share-accent-rgb), 0.1),
+    0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.winShareCard__hero {
+  text-align: center;
+}
+
+.winShareCard__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--share-accent);
+}
+
+.winShareCard__meta span {
+  color: var(--share-accent);
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.winShareCard__hero h1 {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: 46px;
+  font-weight: 950;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.winShareCard__hero p {
+  margin: 11px 0 0;
+  color: rgba(246, 248, 247, 0.68);
+  font-size: 18px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.winShareCard__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.winShareStat {
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.035);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+}
+
+.winShareStat strong {
+  max-width: 100%;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 950;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winShareStat__value--accent {
+  color: var(--share-accent) !important;
+}
+
+.winShareStat span,
+.winShareCard__footer span,
+.winShareList__rank {
+  color: rgba(246, 248, 247, 0.68);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.winShareCard__standings {
+  margin-top: 16px;
+  padding: 16px 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.winShareCard__standings h2 {
+  margin: 0 14px 8px;
+  color: rgba(246, 248, 247, 0.72);
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.winSharePodium {
+  position: relative;
+  width: min(390px, calc(100% - 54px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 0;
+  padding: 32px 6px 14px;
+  margin: 0 auto;
+}
+
+.winSharePodium__slot {
+  --share-podium-height: 64px;
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  align-items: end;
+  align-self: end;
+  min-width: 0;
+}
+
+.winSharePodium__slot--1 {
+  --share-podium-height: 108px;
+  grid-column: 2;
+  z-index: 2;
+}
+
+.winSharePodium__slot--2 {
+  --share-podium-height: 86px;
+  grid-column: 1;
+  z-index: 1;
+}
+
+.winSharePodium__slot--3 {
+  --share-podium-height: 42px;
+  grid-column: 3;
+  z-index: 1;
+}
+
+.winSharePodium__avatarWrap {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  margin-bottom: 7px;
+}
+
+.winSharePodium__slot--2 .winSharePodium__avatarWrap {
+  transform: translateX(-8px);
+}
+
+.winSharePodium__slot--3 .winSharePodium__avatarWrap {
+  transform: translateX(8px);
+}
+
+.winShareAvatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 950;
+  box-shadow:
+    0 11px 18px rgba(0, 0, 0, 0.24),
+    0 3px 0 rgba(0, 0, 0, 0.08);
+}
+
+.winSharePodium__slot--1 .winShareAvatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  font-size: 24px;
+}
+
+.winShareAvatar--team {
+  color: #0c4f72;
+  background: linear-gradient(180deg, #b9dffd, #6cc4ff);
+}
+
+.winShareAvatar svg {
+  width: 30px;
+  height: 30px;
+}
+
+.winShareAvatar--compact {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  font-size: 12px;
+  box-shadow: none;
+}
+
+.winShareAvatar--compact svg {
+  width: 18px;
+  height: 18px;
+}
+
+.winSharePodium__crown {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  color: var(--share-accent);
+  fill: rgba(var(--share-accent-rgb), 0.18);
+  filter: drop-shadow(0 0 10px rgba(var(--share-accent-rgb), 0.28));
+  transform: translateX(-50%) rotate(-6deg);
+}
+
+.winSharePodium__base {
+  position: relative;
+  width: 100%;
+  min-height: var(--share-podium-height);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  padding: 14px 7px 8px;
+  border-radius: 4px 4px 7px 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 38%),
+    linear-gradient(180deg, #f1f5f2, #d9dfdb);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  box-shadow:
+    inset -8px 0 0 rgba(0, 0, 0, 0.045),
+    inset 0 -10px 0 rgba(0, 0, 0, 0.035),
+    0 14px 22px rgba(0, 0, 0, 0.2);
+}
+
+.winSharePodium__base::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -19px;
+  height: 20px;
+  border-radius: 4px 4px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 55%),
+    linear-gradient(180deg, var(--share-accent), rgba(var(--share-accent-rgb), 0.68));
+  border: 1px solid rgba(var(--share-accent-rgb), 0.5);
+  border-bottom: 0;
+  transform: perspective(80px) rotateX(18deg);
+  transform-origin: 50% 100%;
+}
+
+.winSharePodium__slot--1 .winSharePodium__base {
+  width: calc(100% + 20px);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(var(--share-accent-rgb), 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), transparent 34%),
+    linear-gradient(180deg, #fbfdf9, #dfe8df);
+  box-shadow:
+    inset -8px 0 0 rgba(0, 0, 0, 0.035),
+    inset 0 -10px 0 rgba(0, 0, 0, 0.028),
+    0 16px 24px rgba(0, 0, 0, 0.22),
+    0 0 24px rgba(var(--share-accent-rgb), 0.14);
+}
+
+.winSharePodium__slot--2 .winSharePodium__base {
+  width: calc(100% + 18px);
+  justify-self: end;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.winSharePodium__slot--3 .winSharePodium__base {
+  width: calc(100% + 18px);
+  justify-self: start;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.winSharePodium__slot--2 .winSharePodium__base::before {
+  border-top-right-radius: 0;
+}
+
+.winSharePodium__slot--3 .winSharePodium__base::before {
+  border-top-left-radius: 0;
+}
+
+.winSharePodium__rank {
+  color: rgba(31, 43, 6, 0.94);
+  font-size: 38px;
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.winSharePodium__slot--1 .winSharePodium__rank {
+  color: rgba(31, 43, 6, 0.94);
+  font-size: 46px;
+}
+
+.winSharePodium__name {
+  max-width: calc(100% - 12px);
+  color: rgba(31, 43, 6, 0.66);
+  font-size: 9px;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winShareList {
+  margin-top: 10px;
+  padding: 10px 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.winShareList__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px;
+}
+
+.winShareList__row {
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.035);
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.winShareList__rank {
+  min-width: 30px;
+  min-height: 28px;
+  border-radius: 10px;
+  color: rgba(246, 248, 247, 0.66);
+  background: rgba(255, 255, 255, 0.055);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.winShareList__row strong {
+  min-width: 0;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winShareList__row b {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.winShareCard__footer {
+  min-height: 54px;
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.045);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+}
+
+.winShareCard__footer div {
+  display: grid;
+  gap: 2px;
+}
+
+.winShareCard__footer div:last-child {
+  text-align: right;
+}
+
+.winShareCard__footer div:nth-child(2) {
+  text-align: center;
+}
+
+.winShareCard__footer strong {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.winShareCard__footer div:last-child strong {
+  color: var(--share-accent);
+  font-size: 24px;
+}
+
+.winShareCard__footer div:nth-child(2) strong {
+  color: rgba(246, 248, 247, 0.78);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
 .confetti {
   position: absolute;
   top: -16px;

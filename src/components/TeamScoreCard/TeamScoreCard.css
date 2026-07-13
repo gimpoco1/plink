@@ -19,6 +19,31 @@
     0 0 0 1px rgba(255, 255, 255, 0.16) inset;
 }
 
+.teamScoreCard__identity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.teamScoreCard__identity .who {
+  min-width: 0;
+}
+
+.teamScoreCard .winnerMark {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  color: var(--accent);
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+
+.teamScoreCard .winnerMark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .teamScoreCard__membersCompact {
   display: flex;
   align-items: center;
