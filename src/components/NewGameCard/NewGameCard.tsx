@@ -1189,7 +1189,6 @@ export function NewGameCard({
               <input
                 className="input input--featured"
                 value={name}
-                autoFocus={!isAddingPlayer}
                 placeholder="e.g. Tressette"
                 onChange={(event) => setName(event.target.value)}
               />
