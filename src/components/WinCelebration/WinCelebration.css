@@ -1173,6 +1173,7 @@ body.winFx-scrollLock .content {
 }
 
 .winSharePodium__slot--2 .winSharePodium__base {
+  width: calc(100% + 18px);
   justify-self: end;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
