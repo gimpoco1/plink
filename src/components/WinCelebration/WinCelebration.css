@@ -3,11 +3,17 @@
   position: fixed;
   inset: 0;
   z-index: 180;
-  overflow-y: auto;
-  overflow-x: hidden;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   display: grid;
   place-items: start center;
   padding: 14px;
+}
+
+body.winFx-scrollLock .content {
+  overflow: hidden;
 }
 
 .winFx--teams {
@@ -98,6 +104,9 @@
   width: min(560px, 100%);
   max-height: calc(100dvh - 28px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   border: 1px solid rgba(var(--win-accent-rgb), 0.32);
   border-radius: 28px;
   background:

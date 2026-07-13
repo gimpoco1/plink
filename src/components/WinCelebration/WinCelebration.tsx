@@ -73,6 +73,11 @@ export function WinCelebration({
   onBackToHome,
 }: Props) {
   useEffect(() => {
+    document.body.classList.add("winFx-scrollLock");
+    return () => document.body.classList.remove("winFx-scrollLock");
+  }, []);
+
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onDismiss();
     }
