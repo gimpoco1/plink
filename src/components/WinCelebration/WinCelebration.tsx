@@ -1,4 +1,11 @@
-import { useEffect, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
+import { toBlob } from "html-to-image";
 import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import type { ProfileStats, TeamStats } from "../../utils/profileStats";
@@ -9,6 +16,8 @@ import {
   Flag,
   Flame,
   Medal,
+  Check,
+  Share2,
   Shield,
   Star,
   Target,
@@ -41,6 +50,8 @@ const TEAM_ICON_COMPONENTS = {
   star: Star,
 } as const;
 
+type ShareStatus = "idle" | "preparing" | "copied" | "error";
+
 type Props = {
   isTeamGame?: boolean;
   winnerName?: string | null;
@@ -72,6 +83,9 @@ export function WinCelebration({
   onReplay,
   onBackToHome,
 }: Props) {
+  const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
+  const shareCardRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     document.body.classList.add("winFx-scrollLock");
     return () => document.body.classList.remove("winFx-scrollLock");
@@ -92,6 +106,7 @@ export function WinCelebration({
     resultKind === "winner" && standings.length === 1;
   const podiumStandings = [standings[0], standings[1], standings[2]];
   const listedStandings = standings.slice(3);
+  const rankCounts = getRankCounts(standings);
   const statsLabels = isSingleParticipantCompletion && !isTeamGame
     ? {
         title: "Player stats",
@@ -133,6 +148,23 @@ export function WinCelebration({
     (winnerStats?.currentWinStreak ?? 0) > 1
       ? winnerStats?.currentWinStreak ?? 0
       : 0;
+  const winnerStanding =
+    standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
+  const canShareWin =
+    !isDraw &&
+    !isCompletedWithoutWinner &&
+    !isSingleParticipantCompletion &&
+    Boolean(winnerName || winnerStanding);
+  const shareTitle = `${winnerName ?? winnerStanding?.name ?? "Winner"} won ${gameName}`;
+  const shareText = canShareWin
+    ? buildWinShareText({
+        gameName,
+        winnerName: winnerName ?? winnerStanding?.name ?? "Winner",
+        isTeamGame,
+        winnerStats,
+        standings,
+      })
+    : "";
   const dialogLabel = isDraw
     ? `${gameName} ended in a draw`
     : isCompletedWithoutWinner
@@ -140,6 +172,60 @@ export function WinCelebration({
       : isSingleParticipantCompletion
         ? `${gameName} completed by ${winnerName}`
       : `${winnerName} wins ${gameName}`;
+
+  async function handleShareWin() {
+    if (!shareText) return;
+
+    setShareStatus("preparing");
+    try {
+      await document.fonts?.ready;
+      const imageBlob = shareCardRef.current
+        ? await toBlob(shareCardRef.current, {
+            cacheBust: true,
+            pixelRatio: 2,
+            backgroundColor: "#061013",
+          })
+        : null;
+      const imageFile = imageBlob
+        ? new File([imageBlob], `${toShareFileName(gameName)}-win-card.png`, {
+            type: "image/png",
+          })
+        : null;
+
+      if (
+        imageFile &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [imageFile] })
+      ) {
+        await navigator.share({
+          files: [imageFile],
+        });
+        setShareStatus("idle");
+        return;
+      }
+
+      if (typeof navigator.share === "function") {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+        });
+        setShareStatus("idle");
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareText);
+      setShareStatus("copied");
+      window.setTimeout(() => setShareStatus("idle"), 2200);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setShareStatus("idle");
+        return;
+      }
+      setShareStatus("error");
+      window.setTimeout(() => setShareStatus("idle"), 2200);
+    }
+  }
 
   return (
     <div
@@ -282,43 +368,57 @@ export function WinCelebration({
                 }`}
                 aria-label="Top three"
               >
-                {podiumStandings.map((entry, index) => (
-                  <div
-                    key={entry?.id ?? `empty-podium-${index + 1}`}
-                    aria-label={
-                      entry
-                        ? `${entry.name}, rank ${entry.rank}, score ${entry.score}`
-                        : `No rank ${index + 1} player`
-                    }
-                    className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
-                      entry?.isWinner ? " winFx__podiumSlot--winner" : ""
-                    }${
-                      entry ? "" : " winFx__podiumSlot--empty"
-                    }`}
-                  >
-                    {entry ? (
-                      <div className="winFx__podiumAvatarWrap">
-                        {entry.isWinner ? (
-                          <Crown
-                            className="winFx__crown"
-                            size={30}
-                            strokeWidth={2.2}
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
-                      </div>
-                    ) : null}
-                    <div className="winFx__podiumBase">
-                      <div className="winFx__podiumRank">
-                        {entry?.rank ?? index + 1}
-                      </div>
+                {podiumStandings.map((entry, index) => {
+                  const isTied = entry ? isTiedRank(entry, rankCounts) : false;
+                  const rank = entry?.rank ?? index + 1;
+                  return (
+                    <div
+                      key={entry?.id ?? `empty-podium-${index + 1}`}
+                      aria-label={
+                        entry
+                          ? `${entry.name}, rank ${entry.rank}, score ${entry.score}${
+                              isTied ? ", tied score" : ""
+                            }`
+                          : `No rank ${index + 1} player`
+                      }
+                      className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
+                        entry?.isWinner ? " winFx__podiumSlot--winner" : ""
+                      }${
+                        entry ? "" : " winFx__podiumSlot--empty"
+                      }`}
+                    >
                       {entry ? (
-                        <div className="winFx__podiumName">{entry.name}</div>
+                        <div className="winFx__podiumAvatarWrap">
+                          {entry.isWinner ? (
+                            <Crown
+                              className="winFx__crown"
+                              size={30}
+                              strokeWidth={2.2}
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
+                          <div className="winFx__podiumName">{entry.name}</div>
+                        </div>
                       ) : null}
+                      <div className="winFx__podiumBase">
+                        <div className="winFx__podiumRank">
+                          <span className="winFx__podiumRankNumber">
+                            {rank}
+                          </span>
+                          <span className="winFx__podiumRankSuffix">
+                            {getOrdinalSuffix(rank)}
+                          </span>
+                        </div>
+                        {entry ? (
+                          <div className="winFx__podiumScoreChip">
+                            {formatPodiumScore(entry.score, isTied)}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : null}
             {listedStandings.length > 0 ? (
@@ -335,6 +435,9 @@ export function WinCelebration({
                         <strong>{entry.name}</strong>
                         {entry.isWinner ? <span>Champion</span> : null}
                         {isDraw && entry.rank === 1 ? <span>Draw</span> : null}
+                        {isTiedRank(entry, rankCounts) ? (
+                          <span>{formatTieScore(entry.score)}</span>
+                        ) : null}
                       </div>
                     </div>
                     <div className="winFx__score">{entry.score}</div>
@@ -346,6 +449,29 @@ export function WinCelebration({
         ) : null}
 
         <div className="winFx__actions">
+          {canShareWin ? (
+            <button
+              type="button"
+              className="winFx__btn winFx__btn--share"
+              onClick={handleShareWin}
+              disabled={shareStatus === "preparing"}
+            >
+              {shareStatus === "copied" ? (
+                <Check size={17} strokeWidth={2.6} aria-hidden="true" />
+              ) : (
+                <Share2 size={17} strokeWidth={2.6} aria-hidden="true" />
+              )}
+              <span>
+                {shareStatus === "copied"
+                  ? "Copied win"
+                  : shareStatus === "preparing"
+                    ? "Creating card"
+                  : shareStatus === "error"
+                    ? "Share failed"
+                    : "Share win"}
+              </span>
+            </button>
+          ) : null}
           <button type="button" className="winFx__btn winFx__btn--ghost" onClick={onDismiss}>
             Continue
           </button>
@@ -375,8 +501,303 @@ export function WinCelebration({
           />
         ))}
       </div>
+      {canShareWin ? (
+        <WinShareCard
+          cardRef={shareCardRef}
+          gameName={gameName}
+          winnerName={winnerName ?? winnerStanding?.name ?? "Winner"}
+          isTeamGame={isTeamGame}
+          winnerStats={winnerStats}
+          standings={standings}
+        />
+      ) : null}
     </div>
   );
+}
+
+function buildWinShareText({
+  gameName,
+  winnerName,
+  isTeamGame,
+  winnerStats,
+  standings,
+}: {
+  gameName: string;
+  winnerName: string;
+  isTeamGame: boolean;
+  winnerStats: ProfileStats | TeamStats | null;
+  standings: Standing[];
+}) {
+  const winnerStanding =
+    standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
+  const subject = isTeamGame ? "team" : "player";
+  const lines = [
+    `${winnerName} just won ${gameName}.`,
+    winnerStanding
+      ? `Winning ${subject} score: ${winnerStanding.score}`
+      : null,
+    winnerStats
+      ? `Updated stats: ${winnerStats.wins} win${
+          winnerStats.wins === 1 ? "" : "s"
+        } · ${winnerStats.completedGames > 0 ? `${winnerStats.winRate}%` : "—"} win rate${
+          winnerStats.currentWinStreak > 1
+            ? ` · ${winnerStats.currentWinStreak}x streak`
+            : ""
+        }`
+      : null,
+    standings.length > 1
+      ? `Final standings: ${standings
+          .slice(0, 3)
+          .map((entry) => `#${entry.rank} ${entry.name} (${entry.score})`)
+          .join(" · ")}`
+      : null,
+    "Sent from Plink.",
+  ];
+
+  return lines.filter((line): line is string => Boolean(line)).join("\n");
+}
+
+function getRankCounts(standings: Standing[]) {
+  return standings.reduce((counts, entry) => {
+    counts.set(entry.rank, (counts.get(entry.rank) ?? 0) + 1);
+    return counts;
+  }, new Map<number, number>());
+}
+
+function isTiedRank(entry: Standing, rankCounts: Map<number, number>) {
+  return (rankCounts.get(entry.rank) ?? 0) > 1;
+}
+
+function formatTieScore(score: number) {
+  return `Tied · ${formatScore(score)}`;
+}
+
+function formatPodiumScore(score: number, isTied: boolean) {
+  return isTied ? formatTieScore(score) : formatScore(score);
+}
+
+function formatScore(score: number) {
+  return `${score} pt${Math.abs(score) === 1 ? "" : "s"}`;
+}
+
+function getOrdinalSuffix(rank: number) {
+  const absoluteRank = Math.abs(rank);
+  const tens = absoluteRank % 100;
+  if (tens >= 11 && tens <= 13) return "th";
+
+  switch (absoluteRank % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
+function WinShareCard({
+  cardRef,
+  gameName,
+  winnerName,
+  isTeamGame,
+  winnerStats,
+  standings,
+}: {
+  cardRef: RefObject<HTMLDivElement>;
+  gameName: string;
+  winnerName: string;
+  isTeamGame: boolean;
+  winnerStats: ProfileStats | TeamStats | null;
+  standings: Standing[];
+}) {
+  const shareDate = new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date());
+  const winnerStanding =
+    standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
+  const rankCounts = getRankCounts(standings);
+  const podiumEntries = [standings[1], standings[0], standings[2]];
+  const lowerStandings = standings.slice(3);
+
+  return (
+    <div className="winShareRenderHost" aria-hidden="true">
+      <div
+        ref={cardRef}
+        className={`winShareCard${isTeamGame ? " winShareCard--teams" : ""}`}
+      >
+        <div className="winShareCard__shell">
+          <header className="winShareCard__hero">
+            <div className="winShareCard__meta">
+              <span>Winner</span>
+            </div>
+            <h1>{winnerName}</h1>
+            <p>{gameName}</p>
+          </header>
+
+          <div className="winShareCard__stats">
+            <ShareStat
+              value={String(winnerStats?.wins ?? "—")}
+              label={isTeamGame ? "Team wins" : "Total wins"}
+            />
+            <ShareStat
+              value={
+                winnerStats?.completedGames ? `${winnerStats.winRate}%` : "—"
+              }
+              label="Win rate"
+              accent
+            />
+            <ShareStat
+              value={
+                (winnerStats?.currentWinStreak ?? 0) > 1
+                  ? `${winnerStats?.currentWinStreak}x`
+                  : "—"
+              }
+              label="Win streak"
+            />
+          </div>
+
+          <section className="winShareCard__standings">
+            <h2>Final standings</h2>
+            <div className="winSharePodium">
+              {podiumEntries.map((entry, index) => {
+                const slotRank = index === 0 ? 2 : index === 1 ? 1 : 3;
+                const isTied = entry ? isTiedRank(entry, rankCounts) : false;
+                return (
+                  <div
+                    key={entry?.id ?? `share-empty-${slotRank}`}
+                    className={`winSharePodium__slot winSharePodium__slot--${slotRank}${
+                      slotRank === 1 ? " winSharePodium__slot--winner" : ""
+                    }${entry ? "" : " winSharePodium__slot--empty"}`}
+                  >
+                    {entry ? (
+                      <div className="winSharePodium__avatarWrap">
+                        {entry.rank === 1 ? (
+                          <Crown
+                            className="winSharePodium__crown"
+                            size={30}
+                            strokeWidth={2.3}
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <ShareAvatar entry={entry} isTeamGame={isTeamGame} />
+                        <div className="winSharePodium__name">
+                          {entry.name}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="winSharePodium__base">
+                      <div className="winSharePodium__rank">
+                        <span className="winSharePodium__rankNumber">
+                          {entry?.rank ?? slotRank}
+                        </span>
+                        <span className="winSharePodium__rankSuffix">
+                          {getOrdinalSuffix(entry?.rank ?? slotRank)}
+                        </span>
+                      </div>
+                      {entry ? (
+                        <div className="winSharePodium__scoreChip">
+                          {formatPodiumScore(entry.score, isTied)}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {lowerStandings.length ? (
+              <div className="winShareList">
+                <div className="winShareList__grid">
+                  {lowerStandings.map((entry) => (
+                    <div key={entry.id} className="winShareList__row">
+                      <span className="winShareList__rank">#{entry.rank}</span>
+                      <ShareAvatar
+                        entry={entry}
+                        isTeamGame={isTeamGame}
+                        compact
+                      />
+                      <strong>{entry.name}</strong>
+                      <b>{entry.score}</b>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+
+          <footer className="winShareCard__footer">
+            <div>
+              <span>Winning score</span>
+              <strong>{winnerStanding?.score ?? "—"}</strong>
+            </div>
+            <div>
+              <span>Date</span>
+              <strong>{shareDate}</strong>
+            </div>
+            <div>
+              <span>Sent from</span>
+              <strong>Plink</strong>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShareStat({
+  value,
+  label,
+  accent = false,
+}: {
+  value: string;
+  label: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="winShareStat">
+      <strong className={accent ? "winShareStat__value--accent" : undefined}>
+        {value}
+      </strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function ShareAvatar({
+  entry,
+  isTeamGame,
+  compact = false,
+}: {
+  entry: Standing;
+  isTeamGame: boolean;
+  compact?: boolean;
+}) {
+  const className = `winShareAvatar${compact ? " winShareAvatar--compact" : ""}`;
+  if (isTeamGame && entry.icon) {
+    return (
+      <div className={`${className} winShareAvatar--team`}>
+        <TeamIconGlyph icon={entry.icon} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={className} style={avatarStyleFor(entry.avatarColor)}>
+      {entry.initials}
+    </div>
+  );
+}
+function toShareFileName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48) || "plink";
 }
 
 function StandingAvatar({

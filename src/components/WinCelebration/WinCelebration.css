@@ -24,8 +24,16 @@ body.winFx-scrollLock .content {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(1200px 700px at 50% 12%, rgba(var(--win-accent-rgb), 0.28), transparent 60%),
-    radial-gradient(900px 560px at 50% 82%, rgba(var(--win-accent-rgb), 0.08), transparent 72%),
+    radial-gradient(
+      1200px 700px at 50% 12%,
+      rgba(var(--win-accent-rgb), 0.28),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 560px at 50% 82%,
+      rgba(var(--win-accent-rgb), 0.08),
+      transparent 72%
+    ),
     rgba(3, 8, 15, 0.8);
   backdrop-filter: blur(12px) saturate(1.05);
   animation: winVeil 420ms ease-out both;
@@ -49,7 +57,11 @@ body.winFx-scrollLock .content {
   border-radius: 999px;
   transform-origin: 50% 100%;
   transform: translate(-50%, -100%) rotate(var(--ray-rotate));
-  background: linear-gradient(to top, rgba(var(--win-accent-rgb), 0), rgba(var(--win-accent-rgb), 0.95));
+  background: linear-gradient(
+    to top,
+    rgba(var(--win-accent-rgb), 0),
+    rgba(var(--win-accent-rgb), 0.95)
+  );
   filter: drop-shadow(0 0 12px rgba(var(--win-accent-rgb), 0.5));
   opacity: 0;
   animation: rayPulse 1200ms ease-out forwards;
@@ -75,7 +87,11 @@ body.winFx-scrollLock .content {
   left: var(--orb-left);
   top: var(--orb-top);
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(var(--win-accent-rgb), 0.14), rgba(var(--win-accent-rgb), 0));
+  background: radial-gradient(
+    circle,
+    rgba(var(--win-accent-rgb), 0.14),
+    rgba(var(--win-accent-rgb), 0)
+  );
   filter: blur(10px);
   opacity: 0;
   animation:
@@ -111,7 +127,11 @@ body.winFx-scrollLock .content {
   border-radius: 28px;
   background:
     linear-gradient(180deg, rgba(25, 34, 42, 0.98), rgba(13, 19, 24, 0.98)),
-    radial-gradient(900px 280px at 50% 0%, rgba(var(--win-accent-rgb), 0.12), transparent 68%);
+    radial-gradient(
+      900px 280px at 50% 0%,
+      rgba(var(--win-accent-rgb), 0.12),
+      transparent 68%
+    );
   box-shadow:
     0 0 0 1px rgba(var(--win-accent-rgb), 0.16),
     0 30px 90px rgba(0, 0, 0, 0.52),
@@ -137,8 +157,12 @@ body.winFx-scrollLock .content {
   height: 140px;
   border-radius: 999px;
   transform: translateX(-50%);
-  background:
-    radial-gradient(circle, rgba(var(--win-accent-rgb), 0.22), rgba(var(--win-accent-rgb), 0.02) 55%, rgba(var(--win-accent-rgb), 0) 72%);
+  background: radial-gradient(
+    circle,
+    rgba(var(--win-accent-rgb), 0.22),
+    rgba(var(--win-accent-rgb), 0.02) 55%,
+    rgba(var(--win-accent-rgb), 0) 72%
+  );
   filter: blur(2px);
   opacity: 0;
   animation:
@@ -416,8 +440,12 @@ body.winFx-scrollLock .content {
   z-index: 3;
   grid-row: 1;
   display: grid;
+  grid-template-rows: auto auto;
   place-items: center;
-  margin-bottom: 7px;
+  gap: 3px;
+  margin-bottom: 3px;
+  min-width: 0;
+  max-width: calc(100% + 22px);
 }
 
 .winFx__podiumSlot--2 .winFx__podiumAvatarWrap {
@@ -429,7 +457,8 @@ body.winFx-scrollLock .content {
 }
 
 .winFx__podiumSlot--1 .winFx__podiumAvatarWrap {
-  animation: winnerAvatarHop 1350ms cubic-bezier(0.34, 1.56, 0.64, 1) 900ms infinite;
+  animation: winnerAvatarHop 1350ms cubic-bezier(0.34, 1.56, 0.64, 1) 900ms
+    infinite;
 }
 
 .winFx__podium .winFx__avatar {
@@ -468,8 +497,7 @@ body.winFx-scrollLock .content {
   left: 50%;
   color: var(--accent);
   fill: rgba(var(--win-accent-rgb), 0.2);
-  filter:
-    drop-shadow(0 6px 8px rgba(0, 0, 0, 0.28))
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.28))
     drop-shadow(0 0 10px rgba(var(--win-accent-rgb), 0.28));
   transform: translateX(-50%) rotate(-6deg);
   animation: crownDrop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 420ms both;
@@ -483,7 +511,7 @@ body.winFx-scrollLock .content {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 3px;
+  gap: 6px;
   padding: 16px 8px 8px;
   border-radius: 4px 4px 7px 7px;
   background:
@@ -552,7 +580,11 @@ body.winFx-scrollLock .content {
 
 .winFx__podiumSlot--winner .winFx__podiumBase {
   background:
-    radial-gradient(circle at 50% 35%, rgba(var(--win-accent-rgb), 0.14), transparent 42%),
+    radial-gradient(
+      circle at 50% 35%,
+      rgba(var(--win-accent-rgb), 0.14),
+      transparent 42%
+    ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.88), transparent 34%),
     linear-gradient(180deg, #fbfdf9, #dfe8df);
   box-shadow:
@@ -565,15 +597,20 @@ body.winFx-scrollLock .content {
 .winFx__podiumSlot--winner .winFx__podiumBase::before {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 55%),
-    linear-gradient(180deg, rgb(var(--win-accent-rgb)), rgba(var(--win-accent-rgb), 0.78));
+    linear-gradient(
+      180deg,
+      rgb(var(--win-accent-rgb)),
+      rgba(var(--win-accent-rgb), 0.78)
+    );
   border-color: rgba(var(--win-accent-rgb), 0.72);
 }
 
 .winFx__podiumRank {
   min-width: 0;
   height: auto;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   color: rgba(31, 43, 6, 0.94);
   background: transparent;
   font-size: 43px;
@@ -583,6 +620,13 @@ body.winFx-scrollLock .content {
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.42),
     0 6px 14px rgba(31, 43, 6, 0.12);
+}
+
+.winFx__podiumRankSuffix {
+  margin-top: 0.08em;
+  margin-left: 1px;
+  font-size: 0.34em;
+  line-height: 1;
 }
 
 .winFx__podiumSlot--winner .winFx__podiumRank {
@@ -598,20 +642,44 @@ body.winFx-scrollLock .content {
 }
 
 .winFx__podiumName {
-  max-width: calc(100% - 14px);
-  color: rgba(31, 43, 6, 0.62);
+  max-width: 112px;
+  padding: 1px 4px 6px;
+  color: rgba(246, 248, 247, 0.88);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.02em;
-  line-height: 1;
+  line-height: 1.25;
   text-align: center;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
+  filter:
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 5px 8px rgba(0, 0, 0, 0.22));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .winFx__podiumSlot--winner .winFx__podiumName {
-  color: rgba(31, 43, 6, 0.72);
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.68);
+}
+
+.winFx__podiumScoreChip {
+  max-width: calc(100% - 12px);
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: rgba(31, 43, 6, 0.68);
+  background: rgba(31, 43, 6, 0.07);
+  border: 1px solid rgba(31, 43, 6, 0.08);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .winFx__standings {
@@ -633,11 +701,21 @@ body.winFx-scrollLock .content {
   animation: rowIn 480ms ease-out forwards;
 }
 
-.winFx__row:nth-child(1) { animation-delay: 220ms; }
-.winFx__row:nth-child(2) { animation-delay: 290ms; }
-.winFx__row:nth-child(3) { animation-delay: 360ms; }
-.winFx__row:nth-child(4) { animation-delay: 430ms; }
-.winFx__row:nth-child(5) { animation-delay: 500ms; }
+.winFx__row:nth-child(1) {
+  animation-delay: 220ms;
+}
+.winFx__row:nth-child(2) {
+  animation-delay: 290ms;
+}
+.winFx__row:nth-child(3) {
+  animation-delay: 360ms;
+}
+.winFx__row:nth-child(4) {
+  animation-delay: 430ms;
+}
+.winFx__row:nth-child(5) {
+  animation-delay: 500ms;
+}
 
 .winFx__row--winner {
   background: rgba(var(--win-accent-rgb), 0.1);
@@ -737,6 +815,10 @@ body.winFx-scrollLock .content {
   font-size: 13px;
   font-weight: 900;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 }
 
 .winFx__btn--ghost {
@@ -749,6 +831,568 @@ body.winFx-scrollLock .content {
   background: var(--accent);
   color: var(--accent-ink);
   box-shadow: 0 10px 30px rgba(var(--win-accent-rgb), 0.16);
+}
+
+.winFx__btn--share {
+  grid-column: 1 / -1;
+  min-height: 46px;
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(var(--win-accent-rgb), 0.36);
+  color: #fff;
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(255, 255, 255, 0.22),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(var(--win-accent-rgb), 0.34),
+      rgba(var(--win-accent-rgb), 0.12)
+    ),
+    rgba(255, 255, 255, 0.055);
+  box-shadow:
+    0 14px 34px rgba(var(--win-accent-rgb), 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.winFx__btn--share::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.winFx__btn--share svg {
+  color: var(--accent);
+  filter: drop-shadow(0 0 10px rgba(var(--win-accent-rgb), 0.34));
+}
+
+.winFx__btn:disabled {
+  cursor: wait;
+  opacity: 0.78;
+}
+
+.winShareRenderHost {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 540px;
+  pointer-events: none;
+  opacity: 1;
+  z-index: -1;
+}
+
+.winShareCard {
+  --share-accent-rgb: 216, 255, 79;
+  --share-accent: rgb(var(--share-accent-rgb));
+  width: 540px;
+  min-height: 675px;
+  padding: 34px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(var(--share-accent-rgb), 0.22),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 20% 86%,
+      rgba(var(--share-accent-rgb), 0.08),
+      transparent 34%
+    ),
+    #061013;
+  color: #f6f8f7;
+  font-family: var(--ds-font-family);
+}
+
+.winShareCard--teams {
+  --share-accent-rgb: 122, 208, 255;
+}
+
+.winShareCard::before {
+  content: "";
+  position: absolute;
+}
+
+.winShareCard__shell {
+  min-height: 607px;
+  padding: 22px 18px 18px;
+  border-radius: 26px;
+  border: 2px solid rgba(var(--share-accent-rgb), 0.34);
+  background:
+    linear-gradient(180deg, rgba(25, 34, 42, 0.98), rgba(13, 19, 24, 0.98)),
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(var(--share-accent-rgb), 0.08),
+      transparent 54%
+    );
+  box-shadow:
+    0 0 0 1px rgba(var(--share-accent-rgb), 0.1),
+    0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.winShareCard__hero {
+  text-align: center;
+}
+
+.winShareCard__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--share-accent);
+}
+
+.winShareCard__meta span {
+  color: var(--share-accent);
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.winShareCard__hero h1 {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: 46px;
+  font-weight: 950;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.winShareCard__hero p {
+  margin: 11px 0 0;
+  color: rgba(246, 248, 247, 0.68);
+  font-size: 18px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.winShareCard__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.winShareStat {
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.035);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+}
+
+.winShareStat strong {
+  max-width: 100%;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 950;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winShareStat__value--accent {
+  color: var(--share-accent) !important;
+}
+
+.winShareStat span,
+.winShareCard__footer span,
+.winShareList__rank {
+  color: rgba(246, 248, 247, 0.68);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.winShareCard__standings {
+  margin-top: 16px;
+  padding: 16px 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.winShareCard__standings h2 {
+  margin: 0 14px 8px;
+  color: rgba(246, 248, 247, 0.72);
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.winSharePodium {
+  position: relative;
+  width: min(390px, calc(100% - 54px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 0;
+  padding: 32px 6px 14px;
+  margin: 0 auto;
+}
+
+.winSharePodium__slot {
+  --share-podium-height: 64px;
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  align-items: end;
+  align-self: end;
+  min-width: 0;
+}
+
+.winSharePodium__slot--1 {
+  --share-podium-height: 108px;
+  grid-column: 2;
+  z-index: 2;
+}
+
+.winSharePodium__slot--2 {
+  --share-podium-height: 86px;
+  grid-column: 1;
+  z-index: 1;
+}
+
+.winSharePodium__slot--3 {
+  --share-podium-height: 42px;
+  grid-column: 3;
+  z-index: 1;
+}
+
+.winSharePodium__avatarWrap {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: auto auto;
+  place-items: center;
+  gap: 4px;
+  margin-bottom: 1px;
+  min-width: 0;
+  max-width: calc(100% + 18px);
+}
+
+.winSharePodium__slot--2 .winSharePodium__avatarWrap {
+  transform: translateX(-8px);
+}
+
+.winSharePodium__slot--3 .winSharePodium__avatarWrap {
+  transform: translateX(8px);
+}
+
+.winShareAvatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 950;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.08);
+}
+
+.winSharePodium__slot--1 .winShareAvatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  font-size: 24px;
+}
+
+.winShareAvatar--team {
+  color: #0c4f72;
+  background: linear-gradient(180deg, #b9dffd, #6cc4ff);
+}
+
+.winShareAvatar svg {
+  width: 30px;
+  height: 30px;
+}
+
+.winShareAvatar--compact {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  font-size: 12px;
+  box-shadow: none;
+}
+
+.winShareAvatar--compact svg {
+  width: 18px;
+  height: 18px;
+}
+
+.winSharePodium__crown {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  color: var(--share-accent);
+  fill: rgba(var(--share-accent-rgb), 0.18);
+  transform: translateX(-50%) rotate(-6deg);
+}
+
+.winSharePodium__base {
+  position: relative;
+  width: 100%;
+  min-height: var(--share-podium-height);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 5px;
+  padding: 16px 7px 8px;
+  border-radius: 4px 4px 7px 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 38%),
+    linear-gradient(180deg, #f1f5f2, #d9dfdb);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  box-shadow:
+    inset -8px 0 0 rgba(0, 0, 0, 0.045),
+    inset 8px 0 0 rgba(255, 255, 255, 0.28),
+    inset 0 -10px 0 rgba(0, 0, 0, 0.035);
+}
+
+.winSharePodium__base::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -20px;
+  height: 20px;
+  border-radius: 4px 4px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 55%),
+    linear-gradient(
+      180deg,
+      var(--share-accent),
+      rgba(var(--share-accent-rgb), 0.68)
+  );
+  border: 1px solid rgba(var(--share-accent-rgb), 0.5);
+  border-bottom: 0;
+  transform: perspective(80px) rotateX(18deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.winSharePodium__slot--1 .winSharePodium__base {
+  width: calc(100% + 18px);
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      rgba(var(--share-accent-rgb), 0.14),
+      transparent 42%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), transparent 34%),
+    linear-gradient(180deg, #fbfdf9, #dfe8df);
+  box-shadow:
+    inset -8px 0 0 rgba(0, 0, 0, 0.035),
+    inset 8px 0 0 rgba(255, 255, 255, 0.28),
+    inset 0 -10px 0 rgba(0, 0, 0, 0.028),
+    0 0 20px rgba(var(--share-accent-rgb), 0.1);
+}
+
+.winSharePodium__slot--1 .winSharePodium__base::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 55%),
+    linear-gradient(
+      180deg,
+      var(--share-accent),
+      rgba(var(--share-accent-rgb), 0.78)
+    );
+  border-color: rgba(var(--share-accent-rgb), 0.72);
+}
+
+.winSharePodium__slot--2 .winSharePodium__base {
+  width: calc(100% + 18px);
+  justify-self: end;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.winSharePodium__slot--3 .winSharePodium__base {
+  width: calc(100% + 18px);
+  justify-self: start;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.winSharePodium__slot--2 .winSharePodium__base::before {
+  border-top-right-radius: 0;
+}
+
+.winSharePodium__slot--3 .winSharePodium__base::before {
+  border-top-left-radius: 0;
+}
+
+.winSharePodium__rank {
+  color: rgba(31, 43, 6, 0.94);
+  font-size: 38px;
+  font-weight: 950;
+  line-height: 0.9;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.winSharePodium__rankSuffix {
+  margin-top: 0.08em;
+  margin-left: 1px;
+  font-size: 0.34em;
+  line-height: 1;
+}
+
+.winSharePodium__slot--1 .winSharePodium__rank {
+  color: rgba(31, 43, 6, 0.94);
+  font-size: 46px;
+}
+
+.winSharePodium__name {
+  max-width: 96px;
+  padding: 1px 3px 5px;
+  color: rgba(246, 248, 247, 0.9);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
+  filter:
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 5px 8px rgba(0, 0, 0, 0.22));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winSharePodium__slot--1 .winSharePodium__name {
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.68);
+}
+
+.winSharePodium__scoreChip {
+  max-width: calc(100% - 10px);
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: rgba(31, 43, 6, 0.66);
+  background: rgba(31, 43, 6, 0.07);
+  border: 1px solid rgba(31, 43, 6, 0.08);
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winShareList {
+  margin-top: 10px;
+  padding: 10px 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.winShareList__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px;
+}
+
+.winShareList__row {
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.035);
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.winShareList__rank {
+  min-width: 30px;
+  min-height: 28px;
+  border-radius: 10px;
+  color: rgba(246, 248, 247, 0.66);
+  background: rgba(255, 255, 255, 0.055);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.winShareList__row strong {
+  min-width: 0;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winShareList__row b {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.winShareCard__footer {
+  min-height: 54px;
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.045);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+}
+
+.winShareCard__footer div {
+  display: grid;
+  gap: 2px;
+}
+
+.winShareCard__footer div:last-child {
+  text-align: right;
+}
+
+.winShareCard__footer div:nth-child(2) {
+  text-align: center;
+}
+
+.winShareCard__footer strong {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.winShareCard__footer div:last-child strong {
+  color: var(--share-accent);
+  font-size: 24px;
+}
+
+.winShareCard__footer div:nth-child(2) strong {
+  color: rgba(246, 248, 247, 0.78);
+  font-size: 15px;
+  letter-spacing: 0;
 }
 
 .confetti {
@@ -781,8 +1425,12 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes winVeil {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes cardGlow {
@@ -841,7 +1489,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes haloPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.72;
     transform: translateX(-50%) scale(1);
   }
@@ -852,7 +1501,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes medalHover {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -872,7 +1522,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes streakHeroPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 18px rgba(var(--win-accent-rgb), 0.06);
     transform: scale(1);
   }
@@ -961,7 +1612,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes winnerAvatarHop {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) scale(1);
   }
   34% {
@@ -973,7 +1625,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes winnerRowPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.04),
       0 0 0 rgba(var(--win-accent-rgb), 0);
@@ -1013,7 +1666,8 @@ body.winFx-scrollLock .content {
   }
   100% {
     opacity: 0;
-    transform: translate3d(var(--confetti-drift), 118vh, 0) rotate(var(--confetti-final-rotate));
+    transform: translate3d(var(--confetti-drift), 118vh, 0)
+      rotate(var(--confetti-final-rotate));
   }
 }
 
@@ -1102,7 +1756,9 @@ body.winFx-scrollLock .content {
   }
 
   .winFx__podiumName {
-    font-size: 9px;
+    max-width: 82px;
+    padding: 0 3px 3px;
+    font-size: 8px;
   }
 
   .winFx__playerStatsGrid {
