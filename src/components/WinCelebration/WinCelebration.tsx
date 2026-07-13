@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import type { ProfileStats, TeamStats } from "../../utils/profileStats";
@@ -9,6 +9,8 @@ import {
   Flag,
   Flame,
   Medal,
+  Check,
+  Share2,
   Shield,
   Star,
   Target,
@@ -41,6 +43,8 @@ const TEAM_ICON_COMPONENTS = {
   star: Star,
 } as const;
 
+type ShareStatus = "idle" | "copied" | "error";
+
 type Props = {
   isTeamGame?: boolean;
   winnerName?: string | null;
@@ -72,6 +76,8 @@ export function WinCelebration({
   onReplay,
   onBackToHome,
 }: Props) {
+  const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
+
   useEffect(() => {
     document.body.classList.add("winFx-scrollLock");
     return () => document.body.classList.remove("winFx-scrollLock");
@@ -133,6 +139,23 @@ export function WinCelebration({
     (winnerStats?.currentWinStreak ?? 0) > 1
       ? winnerStats?.currentWinStreak ?? 0
       : 0;
+  const winnerStanding =
+    standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
+  const canShareWin =
+    !isDraw &&
+    !isCompletedWithoutWinner &&
+    !isSingleParticipantCompletion &&
+    Boolean(winnerName || winnerStanding);
+  const shareTitle = `${winnerName ?? winnerStanding?.name ?? "Winner"} won ${gameName}`;
+  const shareText = canShareWin
+    ? buildWinShareText({
+        gameName,
+        winnerName: winnerName ?? winnerStanding?.name ?? "Winner",
+        isTeamGame,
+        winnerStats,
+        standings,
+      })
+    : "";
   const dialogLabel = isDraw
     ? `${gameName} ended in a draw`
     : isCompletedWithoutWinner
@@ -140,6 +163,31 @@ export function WinCelebration({
       : isSingleParticipantCompletion
         ? `${gameName} completed by ${winnerName}`
       : `${winnerName} wins ${gameName}`;
+
+  async function handleShareWin() {
+    if (!shareText) return;
+
+    setShareStatus("idle");
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareText);
+      setShareStatus("copied");
+      window.setTimeout(() => setShareStatus("idle"), 2200);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+      setShareStatus("error");
+      window.setTimeout(() => setShareStatus("idle"), 2200);
+    }
+  }
 
   return (
     <div
@@ -346,6 +394,26 @@ export function WinCelebration({
         ) : null}
 
         <div className="winFx__actions">
+          {canShareWin ? (
+            <button
+              type="button"
+              className="winFx__btn winFx__btn--share"
+              onClick={handleShareWin}
+            >
+              {shareStatus === "copied" ? (
+                <Check size={17} strokeWidth={2.6} aria-hidden="true" />
+              ) : (
+                <Share2 size={17} strokeWidth={2.6} aria-hidden="true" />
+              )}
+              <span>
+                {shareStatus === "copied"
+                  ? "Copied win"
+                  : shareStatus === "error"
+                    ? "Copy failed"
+                    : "Share win"}
+              </span>
+            </button>
+          ) : null}
           <button type="button" className="winFx__btn winFx__btn--ghost" onClick={onDismiss}>
             Continue
           </button>
@@ -377,6 +445,48 @@ export function WinCelebration({
       </div>
     </div>
   );
+}
+
+function buildWinShareText({
+  gameName,
+  winnerName,
+  isTeamGame,
+  winnerStats,
+  standings,
+}: {
+  gameName: string;
+  winnerName: string;
+  isTeamGame: boolean;
+  winnerStats: ProfileStats | TeamStats | null;
+  standings: Standing[];
+}) {
+  const winnerStanding =
+    standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
+  const subject = isTeamGame ? "team" : "player";
+  const lines = [
+    `${winnerName} just won ${gameName}.`,
+    winnerStanding
+      ? `Winning ${subject} score: ${winnerStanding.score}`
+      : null,
+    winnerStats
+      ? `Updated stats: ${winnerStats.wins} win${
+          winnerStats.wins === 1 ? "" : "s"
+        } · ${winnerStats.completedGames > 0 ? `${winnerStats.winRate}%` : "—"} win rate${
+          winnerStats.currentWinStreak > 1
+            ? ` · ${winnerStats.currentWinStreak}x streak`
+            : ""
+        }`
+      : null,
+    standings.length > 1
+      ? `Final standings: ${standings
+          .slice(0, 3)
+          .map((entry) => `#${entry.rank} ${entry.name} (${entry.score})`)
+          .join(" · ")}`
+      : null,
+    "Sent from Plink.",
+  ];
+
+  return lines.filter((line): line is string => Boolean(line)).join("\n");
 }
 
 function StandingAvatar({

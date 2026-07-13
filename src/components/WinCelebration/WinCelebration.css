@@ -737,6 +737,10 @@ body.winFx-scrollLock .content {
   font-size: 13px;
   font-weight: 900;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 }
 
 .winFx__btn--ghost {
@@ -749,6 +753,36 @@ body.winFx-scrollLock .content {
   background: var(--accent);
   color: var(--accent-ink);
   box-shadow: 0 10px 30px rgba(var(--win-accent-rgb), 0.16);
+}
+
+.winFx__btn--share {
+  grid-column: 1 / -1;
+  min-height: 46px;
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(var(--win-accent-rgb), 0.36);
+  color: #fff;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.22), transparent 34%),
+    linear-gradient(135deg, rgba(var(--win-accent-rgb), 0.34), rgba(var(--win-accent-rgb), 0.12)),
+    rgba(255, 255, 255, 0.055);
+  box-shadow:
+    0 14px 34px rgba(var(--win-accent-rgb), 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.winFx__btn--share::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.winFx__btn--share svg {
+  color: var(--accent);
+  filter: drop-shadow(0 0 10px rgba(var(--win-accent-rgb), 0.34));
 }
 
 .confetti {
