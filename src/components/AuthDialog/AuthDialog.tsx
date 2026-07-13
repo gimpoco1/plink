@@ -10,6 +10,7 @@ import {
   FunctionsFetchError,
   FunctionsHttpError,
   FunctionsRelayError,
+  type Provider,
   type Session,
   type User,
 } from "@supabase/supabase-js";
@@ -98,6 +99,40 @@ function areStringArraysEqual(left: string[], right: string[]) {
 function isExistingAccountSignUpResponse(user: User | null) {
   return !!user && !user.is_anonymous && (user.identities?.length ?? 0) === 0;
 }
+
+function GoogleBrandIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M23.49 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h6.45a5.52 5.52 0 0 1-2.39 3.62v3h3.88c2.27-2.09 3.55-5.18 3.55-8.65Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.88-3c-1.08.72-2.46 1.14-4.07 1.14-3.13 0-5.78-2.11-6.73-4.95H1.26v3.09A12 12 0 0 0 12 24Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.27 14.28A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.28V6.63H1.26a12 12 0 0 0 0 10.74l4.01-3.09Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.77c1.76 0 3.35.61 4.59 1.8l3.44-3.44C17.95 1.19 15.23 0 12 0A12 12 0 0 0 1.26 6.63l4.01 3.09c.95-2.84 3.6-4.95 6.73-4.95Z"
+      />
+    </svg>
+  );
+}
+
+// function AppleBrandIcon() {
+//   return (
+//     <svg viewBox="0 0 24 24" aria-hidden="true">
+//       <path
+//         fill="currentColor"
+//         d="M16.68 12.64c.02-2.05 1.67-3.03 1.75-3.08-.95-1.39-2.43-1.58-2.95-1.6-1.25-.13-2.45.73-3.09.73-.64 0-1.62-.71-2.66-.69-1.37.02-2.63.8-3.33 2.02-1.42 2.46-.36 6.11 1.02 8.1.67.97 1.47 2.06 2.52 2.02 1.01-.04 1.39-.65 2.61-.65 1.22 0 1.56.65 2.63.63 1.09-.02 1.78-.98 2.45-1.96.77-1.12 1.09-2.2 1.11-2.25-.02-.01-2.12-.81-2.14-3.29Zm-2-5.95c.56-.68.94-1.63.84-2.57-.81.03-1.79.54-2.37 1.22-.52.6-.98 1.56-.86 2.47.91.07 1.83-.46 2.39-1.12Z"
+//       />
+//     </svg>
+//   );
+// }
 
 export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
   function AuthDialog(
@@ -612,6 +647,37 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
       window.location.href = target
         ? `mailto:${encodeURIComponent(target)}`
         : "mailto:";
+    }
+
+    function getAuthRedirectUrl() {
+      if (typeof window === "undefined") return undefined;
+      return `${window.location.origin}${window.location.pathname}`;
+    }
+
+    async function signInWithProvider(provider: Provider) {
+      if (!supabase) {
+        setError("Supabase is not configured yet.");
+        return;
+      }
+
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setSignupConfirmationEmail(null);
+      setTransferToast(null);
+
+      try {
+        const { error: oauthError } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: getAuthRedirectUrl(),
+          },
+        });
+        if (oauthError) throw oauthError;
+      } catch (err) {
+        setBusy(false);
+        setError(getAuthErrorMessage(err, "Could not start sign-in."));
+      }
     }
 
     async function submit() {
@@ -2329,6 +2395,56 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
                           ? "Sign in"
                           : "Create account"}
                     </button>
+
+                    <div className="authDialog__divider" aria-hidden="true">
+                      <span>
+                        {mode === "signin"
+                          ? "or continue with"
+                          : "or register with"}
+                      </span>
+                    </div>
+
+                    <div
+                      className="authDialog__providerRow"
+                      aria-label="Social sign-in options"
+                    >
+                      <button
+                        className="authDialog__providerIconBtn"
+                        type="button"
+                        onClick={() => void signInWithProvider("google")}
+                        disabled={busy}
+                        aria-label={
+                          busy ? "Connecting to Google" : "Continue with Google"
+                        }
+                        title="Continue with Google"
+                      >
+                        <span
+                          className="authDialog__providerIcon authDialog__providerIcon--google"
+                          aria-hidden="true"
+                        >
+                          <GoogleBrandIcon />
+                        </span>
+                      </button>
+                      {/*
+                      <button
+                        className="authDialog__providerIconBtn"
+                        type="button"
+                        onClick={() => void signInWithProvider("apple")}
+                        disabled={busy}
+                        aria-label={
+                          busy ? "Connecting to iCloud" : "Continue with iCloud"
+                        }
+                        title="Continue with iCloud"
+                      >
+                        <span
+                          className="authDialog__providerIcon authDialog__providerIcon--apple"
+                          aria-hidden="true"
+                        >
+                          <AppleBrandIcon />
+                        </span>
+                      </button>
+                      */}
+                    </div>
                   </>
                 )}
                 <div className="authDialog__links" aria-label="Account links">

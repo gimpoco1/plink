@@ -584,6 +584,86 @@
   gap: 12px;
 }
 
+.authDialog__providerRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.authDialog__providerIconBtn {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
+    rgba(255, 255, 255, 0.03);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.authDialog__providerIconBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(216, 255, 79, 0.18);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent),
+    rgba(255, 255, 255, 0.035);
+}
+
+.authDialog__providerIconBtn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.authDialog__providerIcon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.authDialog__providerIcon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.authDialog__providerIcon--google {
+  color: unset;
+}
+
+.authDialog__providerIcon--apple {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.authDialog__divider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.authDialog__divider::before,
+.authDialog__divider::after {
+  content: "";
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .authDialog__accountOverview {
   display: grid;
   gap: 16px;
