@@ -5,19 +5,19 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Flame, Medal, Target, Trophy } from "lucide-react";
+import { Flame, Medal, SquareActivity, Trophy } from "lucide-react";
 import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
 import { StatsSkeleton } from "../components/HomeLockedState/StatsSkeleton";
 import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
 import { useEntitlementsContext } from "../hooks/useEntitlements";
 import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
-import { buildPlayerReports, buildTeamReports } from "../utils/advancedStats";
-import { avatarStyleFor } from "../utils/color";
 import {
-  formatAccountPlayerName,
-  getGameDisplayName,
-  getInitials,
-} from "../utils/text";
+  buildPlayerReports,
+  buildTeamReports,
+  type SubjectReport,
+} from "../utils/advancedStats";
+import { avatarStyleFor } from "../utils/color";
+import { formatAccountPlayerName, getInitials } from "../utils/text";
 import { StatsAdvancedCards } from "./StatsScreen/StatsAdvancedCards";
 import { StatsCharts } from "./StatsScreen/StatsCharts";
 import { StatsProPreview } from "./StatsScreen/StatsProPreview";
@@ -70,6 +70,7 @@ type StatsViewState = {
   compareEnabled: boolean;
   comparePlayerId: string | null;
   selectedTeamId: string | null;
+  compareTeamId: string | null;
   winsChartGame: string;
   rateChartGame: string;
 };
@@ -82,6 +83,7 @@ const DEFAULT_STATS_VIEW_STATE: StatsViewState = {
   compareEnabled: false,
   comparePlayerId: null,
   selectedTeamId: null,
+  compareTeamId: null,
   winsChartGame: ALL_CHART_GAMES,
   rateChartGame: ALL_CHART_GAMES,
 };
@@ -112,6 +114,8 @@ function readStatsViewState(): StatsViewState {
         typeof parsed.selectedTeamId === "string"
           ? parsed.selectedTeamId
           : null,
+      compareTeamId:
+        typeof parsed.compareTeamId === "string" ? parsed.compareTeamId : null,
       winsChartGame:
         typeof parsed.winsChartGame === "string"
           ? parsed.winsChartGame
@@ -161,6 +165,9 @@ export function StatsScreen({
   );
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(
     initialViewState.selectedTeamId,
+  );
+  const [compareTeamId, setCompareTeamId] = useState<string | null>(
+    initialViewState.compareTeamId,
   );
   const [winsChartGame, setWinsChartGame] = useState(
     initialViewState.winsChartGame,
@@ -274,6 +281,10 @@ export function StatsScreen({
     () => teamOptions.find((item) => item.id === selectedTeamId) ?? null,
     [selectedTeamId, teamOptions],
   );
+  const compareTeamOption = useMemo(
+    () => teamOptions.find((item) => item.id === compareTeamId) ?? null,
+    [compareTeamId, teamOptions],
+  );
 
   function handleStatsPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     const target = event.target as Node;
@@ -321,7 +332,13 @@ export function StatsScreen({
       setComparePlayerId(null);
       return;
     }
-    if (!compareEnabled || playerOptions.length < 2) return;
+    if (
+      !compareEnabled ||
+      activeKind !== "players" ||
+      playerOptions.length < 2
+    ) {
+      return;
+    }
     if (
       !comparePlayerId ||
       comparePlayerId === selectedPlayerId ||
@@ -331,7 +348,13 @@ export function StatsScreen({
         getDefaultComparePlayerId(playerOptions, selectedPlayerId),
       );
     }
-  }, [compareEnabled, comparePlayerId, playerOptions, selectedPlayerId]);
+  }, [
+    activeKind,
+    compareEnabled,
+    comparePlayerId,
+    playerOptions,
+    selectedPlayerId,
+  ]);
 
   useEffect(() => {
     if (!teamOptions.length) {
@@ -347,15 +370,39 @@ export function StatsScreen({
   }, [selectedTeamId, teamOptions]);
 
   useEffect(() => {
+    if (!teamOptions.length) {
+      setCompareTeamId(null);
+      return;
+    }
+    if (
+      compareTeamId &&
+      !teamOptions.some((item) => item.id === compareTeamId)
+    ) {
+      setCompareTeamId(null);
+      return;
+    }
+    if (!compareEnabled || activeKind !== "teams" || teamOptions.length < 2) {
+      return;
+    }
+    if (
+      !compareTeamId ||
+      compareTeamId === selectedTeamId ||
+      !teamOptions.some((item) => item.id === compareTeamId)
+    ) {
+      setCompareTeamId(getDefaultComparePlayerId(teamOptions, selectedTeamId));
+    }
+  }, [activeKind, compareEnabled, compareTeamId, selectedTeamId, teamOptions]);
+
+  useEffect(() => {
     setOpenPicker(null);
     setPickerSearch("");
   }, [activeKind]);
 
   useEffect(() => {
-    if ((activeKind !== "players" || isCompareLocked) && compareEnabled) {
+    if (isCompareLocked && compareEnabled) {
       setCompareEnabled(false);
     }
-  }, [activeKind, compareEnabled, isCompareLocked]);
+  }, [compareEnabled, isCompareLocked]);
 
   useEffect(() => {
     writeStatsViewState({
@@ -363,6 +410,7 @@ export function StatsScreen({
       selectedPlayerId,
       compareEnabled,
       comparePlayerId,
+      compareTeamId,
       selectedTeamId,
       winsChartGame,
       rateChartGame,
@@ -371,6 +419,7 @@ export function StatsScreen({
     activeKind,
     compareEnabled,
     comparePlayerId,
+    compareTeamId,
     rateChartGame,
     selectedPlayerId,
     selectedTeamId,
@@ -384,10 +433,21 @@ export function StatsScreen({
   );
   const compareReport = useMemo(
     () =>
-      compareEnabled && comparePlayerId
-        ? (playerReports.get(comparePlayerId) ?? null)
+      compareEnabled
+        ? activeKind === "players" && comparePlayerId
+          ? (playerReports.get(comparePlayerId) ?? null)
+          : activeKind === "teams" && compareTeamId
+            ? (teamReports.get(compareTeamId) ?? null)
+            : null
         : null,
-    [compareEnabled, comparePlayerId, playerReports],
+    [
+      activeKind,
+      compareEnabled,
+      comparePlayerId,
+      compareTeamId,
+      playerReports,
+      teamReports,
+    ],
   );
   const selectedTeamReport = useMemo(
     () => (selectedTeamId ? (teamReports.get(selectedTeamId) ?? null) : null),
@@ -402,10 +462,21 @@ export function StatsScreen({
   );
   const winsChartCompareReport = useMemo(
     () =>
-      compareEnabled && comparePlayerId
-        ? (winsChartPlayerReports.get(comparePlayerId) ?? null)
+      compareEnabled
+        ? activeKind === "players" && comparePlayerId
+          ? (winsChartPlayerReports.get(comparePlayerId) ?? null)
+          : activeKind === "teams" && compareTeamId
+            ? (winsChartTeamReports.get(compareTeamId) ?? null)
+            : null
         : null,
-    [compareEnabled, comparePlayerId, winsChartPlayerReports],
+    [
+      activeKind,
+      compareEnabled,
+      comparePlayerId,
+      compareTeamId,
+      winsChartPlayerReports,
+      winsChartTeamReports,
+    ],
   );
   const winsChartSelectedTeamReport = useMemo(
     () =>
@@ -423,10 +494,21 @@ export function StatsScreen({
   );
   const rateChartCompareReport = useMemo(
     () =>
-      compareEnabled && comparePlayerId
-        ? (rateChartPlayerReports.get(comparePlayerId) ?? null)
+      compareEnabled
+        ? activeKind === "players" && comparePlayerId
+          ? (rateChartPlayerReports.get(comparePlayerId) ?? null)
+          : activeKind === "teams" && compareTeamId
+            ? (rateChartTeamReports.get(compareTeamId) ?? null)
+            : null
         : null,
-    [compareEnabled, comparePlayerId, rateChartPlayerReports],
+    [
+      activeKind,
+      compareEnabled,
+      comparePlayerId,
+      compareTeamId,
+      rateChartPlayerReports,
+      rateChartTeamReports,
+    ],
   );
   const rateChartSelectedTeamReport = useMemo(
     () =>
@@ -437,6 +519,10 @@ export function StatsScreen({
   );
   const primaryReport =
     activeKind === "players" ? primaryPlayerReport : selectedTeamReport;
+  const compareTeamReport =
+    activeKind === "teams" && compareReport?.kind === "teams"
+      ? compareReport
+      : null;
   const chartGameOptions = useMemo(() => {
     const gameNames = new Set<string>();
     primaryReport?.gameBreakdown.forEach((game) => {
@@ -469,6 +555,12 @@ export function StatsScreen({
       .map((memberId) => profileById.get(memberId))
       .filter((profile): profile is PlayerProfile => Boolean(profile));
   }, [profileById, selectedTeamReport]);
+  const compareMemberProfiles = useMemo(() => {
+    if (!compareTeamReport) return [];
+    return compareTeamReport.memberIds
+      .map((memberId) => profileById.get(memberId))
+      .filter((profile): profile is PlayerProfile => Boolean(profile));
+  }, [compareTeamReport, profileById]);
 
   const pickerOptions = useMemo(() => {
     const query = pickerSearch.trim().toLowerCase();
@@ -488,17 +580,29 @@ export function StatsScreen({
     if (openPicker === "team") {
       return filterByQuery(teamOptions);
     }
+    if (openPicker === "teamCompare") {
+      return filterByQuery(
+        teamOptions.filter((item) => item.id !== selectedTeamId),
+      );
+    }
     return [];
-  }, [openPicker, pickerSearch, playerOptions, selectedPlayerId, teamOptions]);
+  }, [
+    openPicker,
+    pickerSearch,
+    playerOptions,
+    selectedPlayerId,
+    selectedTeamId,
+    teamOptions,
+  ]);
 
   const winsComparisonTrend = useMemo(
     () =>
-      activeKind === "players"
-        ? mergeCompareTrend(
-            winsChartPrimaryPlayerReport,
-            winsChartCompareReport,
-          )
-        : mergeCompareTrend(winsChartSelectedTeamReport, null),
+      mergeCompareTrend(
+        activeKind === "players"
+          ? winsChartPrimaryPlayerReport
+          : winsChartSelectedTeamReport,
+        winsChartCompareReport,
+      ),
     [
       activeKind,
       winsChartCompareReport,
@@ -508,12 +612,12 @@ export function StatsScreen({
   );
   const rateComparisonTrend = useMemo(
     () =>
-      activeKind === "players"
-        ? mergeCompareTrend(
-            rateChartPrimaryPlayerReport,
-            rateChartCompareReport,
-          )
-        : mergeCompareTrend(rateChartSelectedTeamReport, null),
+      mergeCompareTrend(
+        activeKind === "players"
+          ? rateChartPrimaryPlayerReport
+          : rateChartSelectedTeamReport,
+        rateChartCompareReport,
+      ),
     [
       activeKind,
       rateChartCompareReport,
@@ -609,11 +713,54 @@ export function StatsScreen({
     [compareReport, primaryReport],
   );
   const headToHeadSummary = useMemo(
-    () =>
-      activeKind === "players"
-        ? buildHeadToHeadSummary(primaryPlayerReport, compareReport)
-        : null,
-    [activeKind, compareReport, primaryPlayerReport],
+    () => buildHeadToHeadSummary(primaryReport, compareReport),
+    [compareReport, primaryReport],
+  );
+  const renderTeamReportCard = ({
+    report,
+    option,
+    memberProfiles,
+    eyebrow,
+  }: {
+    report: SubjectReport;
+    option: SelectableEntity | null;
+    memberProfiles: PlayerProfile[];
+    eyebrow: string;
+  }) => (
+    <section className="statsFocusCard">
+      <div className="statsFocusCard__identity">
+        {option ? <EntitySwatch option={option} /> : null}
+        <div className="statsFocusCard__copy">
+          <span className="statsEyebrow">{eyebrow}</span>
+          <h3>{getDisplayName(report)}</h3>
+          <p>
+            {memberProfiles.length} member
+            {memberProfiles.length === 1 ? "" : "s"} tracked across{" "}
+            {report.gamesPlayed} team sessions.
+          </p>
+        </div>
+      </div>
+      {memberProfiles.length ? (
+        <div className="statsFocusMembers">
+          {memberProfiles.map((profile) => (
+            <span key={profile.id} className="statsFocusMember">
+              <span
+                className="statsFocusMember__avatar"
+                style={avatarStyleFor(profile.avatarColor)}
+                aria-hidden="true"
+              >
+                {getInitials(profile.name)}
+              </span>
+              <span>
+                {profile.isAccountPlayer
+                  ? formatAccountPlayerName(profile.name)
+                  : profile.name}
+              </span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </section>
   );
 
   return (
@@ -694,9 +841,7 @@ export function StatsScreen({
 
             <div
               className={`statsPickerDock${
-                activeKind === "players" && compareEnabled
-                  ? " statsPickerDock--compare"
-                  : ""
+                compareEnabled ? " statsPickerDock--compare" : ""
               }`}
             >
               <div className="statsPickerSlot statsPickerSlot--primary">
@@ -753,22 +898,38 @@ export function StatsScreen({
                 ) : null}
               </div>
 
-              {activeKind === "players" && compareEnabled ? (
+              {compareEnabled ? (
                 <>
                   <div className="statsPickerDock__vs">VS</div>
                   <div className="statsPickerSlot statsPickerSlot--compare">
                     <PickerButton
-                      option={comparePlayerOption}
-                      placeholder="Choose player"
-                      isOpen={openPicker === "compare"}
+                      option={
+                        activeKind === "players"
+                          ? comparePlayerOption
+                          : compareTeamOption
+                      }
+                      placeholder={
+                        activeKind === "players"
+                          ? "Choose player"
+                          : "Choose team"
+                      }
+                      isOpen={
+                        openPicker ===
+                        (activeKind === "players" ? "compare" : "teamCompare")
+                      }
                       onClick={() => {
                         setPickerSearch("");
                         setOpenPicker((current) =>
-                          current === "compare" ? null : "compare",
+                          current ===
+                          (activeKind === "players" ? "compare" : "teamCompare")
+                            ? null
+                            : activeKind === "players"
+                              ? "compare"
+                              : "teamCompare",
                         );
                       }}
                     />
-                    {openPicker === "compare" ? (
+                    {openPicker === "compare" && activeKind === "players" ? (
                       <PickerPopover
                         kind="players"
                         options={pickerOptions}
@@ -781,12 +942,25 @@ export function StatsScreen({
                         onSearchChange={setPickerSearch}
                       />
                     ) : null}
+                    {openPicker === "teamCompare" && activeKind === "teams" ? (
+                      <PickerPopover
+                        kind="teams"
+                        options={pickerOptions}
+                        selectedId={compareTeamId}
+                        onSelect={(id) => {
+                          setCompareTeamId(id);
+                          setOpenPicker(null);
+                        }}
+                        search={pickerSearch}
+                        onSearchChange={setPickerSearch}
+                      />
+                    ) : null}
                   </div>
                 </>
               ) : null}
             </div>
 
-            {activeKind === "players" ? (
+            {activeKind === "players" || activeKind === "teams" ? (
               <label
                 className={`statsCompareToggle${
                   compareEnabled ? " statsCompareToggle--active" : ""
@@ -810,7 +984,10 @@ export function StatsScreen({
                   }}
                 />
                 <span className="statsCompareToggle__box" aria-hidden="true" />
-                <span>Compare with another player</span>
+                <span>
+                  Compare with another{" "}
+                  {activeKind === "players" ? "player" : "team"}
+                </span>
                 {isCompareLocked ? (
                   <span className="statsControlProBadge">PRO</span>
                 ) : null}
@@ -833,57 +1010,39 @@ export function StatsScreen({
             />
           ) : (
             <>
-              {activeKind === "teams" ? (
-                <section className="statsFocusCard">
-                  <div className="statsFocusCard__identity">
-                    {selectedTeamOption ? (
-                      <EntitySwatch option={selectedTeamOption} />
-                    ) : null}
-                    <div className="statsFocusCard__copy">
-                      <span className="statsEyebrow">Team report</span>
-                      <h3>{primaryName}</h3>
-                      <p>
-                        {selectedMemberProfiles.length} members tracked across{" "}
-                        {primaryReport.gamesPlayed} team sessions.
-                      </p>
-                    </div>
-                  </div>
-                  {selectedMemberProfiles.length ? (
-                    <div className="statsFocusMembers">
-                      {selectedMemberProfiles.map((profile) => (
-                        <span key={profile.id} className="statsFocusMember">
-                          <span
-                            className="statsFocusMember__avatar"
-                            style={avatarStyleFor(profile.avatarColor)}
-                            aria-hidden="true"
-                          >
-                            {getInitials(profile.name)}
-                          </span>
-                          <span>
-                            {profile.isAccountPlayer
-                              ? formatAccountPlayerName(profile.name)
-                              : profile.name}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </section>
+              {activeKind === "teams" && selectedTeamReport ? (
+                <div
+                  className={`statsFocusCardGrid${
+                    compareTeamReport ? " statsFocusCardGrid--compare" : ""
+                  }`}
+                >
+                  {renderTeamReportCard({
+                    report: selectedTeamReport,
+                    option: selectedTeamOption,
+                    memberProfiles: selectedMemberProfiles,
+                    eyebrow: "Primary team",
+                  })}
+                  {compareTeamReport
+                    ? renderTeamReportCard({
+                        report: compareTeamReport,
+                        option: compareTeamOption,
+                        memberProfiles: compareMemberProfiles,
+                        eyebrow: "Compared team",
+                      })
+                    : null}
+                </div>
               ) : null}
 
-              {activeKind === "players" &&
-              primaryPlayerReport &&
-              compareEnabled &&
-              compareReport ? (
+              {primaryReport && compareEnabled && compareReport ? (
                 <div className="statsCompareMetricGrid">
                   <ComparisonMetricCard
                     label="Wins"
                     leftName={primaryName}
                     rightName={compareName}
-                    leftValue={primaryPlayerReport.wins}
+                    leftValue={primaryReport.wins}
                     rightValue={compareReport?.wins ?? null}
                     winner={compareValues(
-                      primaryPlayerReport.wins,
+                      primaryReport.wins,
                       compareReport?.wins ?? null,
                     )}
                     icon={
@@ -894,16 +1053,20 @@ export function StatsScreen({
                     label="Win rate"
                     leftName={primaryName}
                     rightName={compareName}
-                    leftValue={`${primaryPlayerReport.winRate}%`}
+                    leftValue={`${primaryReport.winRate}%`}
                     rightValue={
                       compareReport ? `${compareReport.winRate}%` : null
                     }
                     winner={compareValues(
-                      primaryPlayerReport.winRate,
+                      primaryReport.winRate,
                       compareReport?.winRate ?? null,
                     )}
                     icon={
-                      <Target size={16} strokeWidth={2.2} aria-hidden="true" />
+                      <SquareActivity
+                        size={16}
+                        strokeWidth={2.2}
+                        aria-hidden="true"
+                      />
                     }
                   />
                   <ComparisonMetricCard
@@ -911,8 +1074,8 @@ export function StatsScreen({
                     leftName={primaryName}
                     rightName={compareName}
                     leftValue={
-                      primaryPlayerReport.currentWinStreak
-                        ? `${primaryPlayerReport.currentWinStreak}x`
+                      primaryReport.currentWinStreak
+                        ? `${primaryReport.currentWinStreak}x`
                         : "—"
                     }
                     rightValue={
@@ -923,7 +1086,7 @@ export function StatsScreen({
                         : null
                     }
                     winner={compareValues(
-                      primaryPlayerReport.currentWinStreak,
+                      primaryReport.currentWinStreak,
                       compareReport?.currentWinStreak ?? null,
                     )}
                     icon={
@@ -935,7 +1098,7 @@ export function StatsScreen({
                     leftName={primaryName}
                     rightName={compareName}
                     leftValue={formatAveragePlacement(
-                      primaryPlayerReport.averagePlacement,
+                      primaryReport.averagePlacement,
                     )}
                     rightValue={
                       compareReport
@@ -943,7 +1106,7 @@ export function StatsScreen({
                         : null
                     }
                     winner={compareValues(
-                      primaryPlayerReport.averagePlacement,
+                      primaryReport.averagePlacement,
                       compareReport?.averagePlacement ?? null,
                       "lower",
                     )}
@@ -968,7 +1131,11 @@ export function StatsScreen({
                     value={`${primaryReport.winRate}%`}
                     copy={`${primaryReport.completedGames} completed sessions`}
                     icon={
-                      <Target size={16} strokeWidth={2.2} aria-hidden="true" />
+                      <SquareActivity
+                        size={16}
+                        strokeWidth={2.2}
+                        aria-hidden="true"
+                      />
                     }
                   />
                   <MetricCard
