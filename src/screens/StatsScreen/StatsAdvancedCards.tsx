@@ -7,6 +7,7 @@ import type {
 } from "./statsUtils";
 
 type StatsAdvancedCardsProps = {
+  activeKind: "players" | "teams";
   streakSummary: StreakHistorySummary | null;
   headToHeadSummary: HeadToHeadSummary | null;
   isLocked: boolean;
@@ -14,6 +15,7 @@ type StatsAdvancedCardsProps = {
 };
 
 export function StatsAdvancedCards({
+  activeKind,
   streakSummary,
   headToHeadSummary,
   isLocked,
@@ -85,7 +87,8 @@ export function StatsAdvancedCards({
             </div>
           ) : (
             <p className="emptyMsg">
-              Compare two players to see their shared sessions.
+              Compare two {activeKind === "teams" ? "teams" : "players"} to
+              see their shared sessions.
             </p>
           )}
         </div>

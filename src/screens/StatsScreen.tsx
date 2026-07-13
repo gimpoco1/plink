@@ -1211,6 +1211,7 @@ export function StatsScreen({
                   </div>
 
                   <StatsAdvancedCards
+                    activeKind={activeKind}
                     streakSummary={streakHistorySummary}
                     headToHeadSummary={headToHeadSummary}
                     isLocked={false}

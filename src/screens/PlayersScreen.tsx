@@ -669,7 +669,7 @@ export function PlayersScreen({
                     className="teamBuilder__input teamBuilder__input--hero"
                     placeholder={
                       canUseTeams
-                        ? "Los Bandidos"
+                        ? "e.g. The Aces"
                         : "Team creation is available on Pro"
                     }
                     value={newTeamName}

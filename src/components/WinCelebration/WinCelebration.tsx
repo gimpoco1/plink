@@ -127,8 +127,11 @@ export function WinCelebration({
             ? "Lowest score wins"
             : `Target ${targetScore} points`;
   const heroWinStreak =
-    !isDraw && !isCompletedWithoutWinner && !isSingleParticipantCompletion
-      ? (winnerStats?.currentWinStreak ?? 0)
+    !isDraw &&
+    !isCompletedWithoutWinner &&
+    !isSingleParticipantCompletion &&
+    (winnerStats?.currentWinStreak ?? 0) > 1
+      ? winnerStats?.currentWinStreak ?? 0
       : 0;
   const dialogLabel = isDraw
     ? `${gameName} ended in a draw`
