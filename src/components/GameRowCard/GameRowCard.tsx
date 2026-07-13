@@ -138,6 +138,7 @@ export function GameRowCard({
   const participantCount = isTeamsGame
     ? game.teams.length
     : game.players.length;
+  const isSoloCompletion = complete && Boolean(winner) && participantCount === 1;
 
   return (
     <div
@@ -238,7 +239,7 @@ export function GameRowCard({
             </div>
           </div>
           <div className="gameRow__meta">
-            {winnerName ? (
+            {winnerName && !isSoloCompletion ? (
               <span className="gameRow__detail gameRow__winnerDetail">
                 <span className="gameRow__winnerIcon" aria-hidden="true">
                   <Trophy
@@ -258,7 +259,7 @@ export function GameRowCard({
                 Draw
               </span>
             ) : null}
-            {complete && !winner && !draw ? (
+            {complete && (isSoloCompletion || (!winner && !draw)) ? (
               <span className="gameRow__detail">
                 <span className="gameRow__statusDot" aria-hidden="true" />
                 Completed

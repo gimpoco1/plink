@@ -42,12 +42,12 @@
   height: 46%;
   border-radius: 999px;
   transform-origin: 50% 100%;
-  transform: translate(-50%, -100%) rotate(calc(var(--i) * 30deg));
+  transform: translate(-50%, -100%) rotate(var(--ray-rotate));
   background: linear-gradient(to top, rgba(var(--win-accent-rgb), 0), rgba(var(--win-accent-rgb), 0.95));
   filter: drop-shadow(0 0 12px rgba(var(--win-accent-rgb), 0.5));
   opacity: 0;
   animation: rayPulse 1200ms ease-out forwards;
-  animation-delay: calc(var(--i) * 22ms + 90ms);
+  animation-delay: var(--ray-delay);
 }
 
 .winFx__sparkles,
@@ -64,25 +64,23 @@
 
 .winFx__orb {
   position: absolute;
-  width: calc(120px + (var(--i) * 18px));
-  height: calc(120px + (var(--i) * 18px));
-  left: calc(8% + (var(--i) * 14%));
-  top: calc(12% + ((var(--i) * 11%) % 56%));
+  width: var(--orb-size);
+  height: var(--orb-size);
+  left: var(--orb-left);
+  top: var(--orb-top);
   border-radius: 999px;
   background: radial-gradient(circle, rgba(var(--win-accent-rgb), 0.14), rgba(var(--win-accent-rgb), 0));
   filter: blur(10px);
   opacity: 0;
   animation:
     orbAppear 900ms ease-out forwards,
-    orbFloat calc(5200ms + (var(--i) * 280ms)) ease-in-out calc(var(--i) * 100ms) infinite alternate;
+    orbFloat var(--orb-duration) ease-in-out var(--orb-delay) infinite alternate;
 }
 
 .sparkle {
-  --x: calc((var(--i) * 6.25%) + 5%);
-  --y: calc(((var(--i) * 37) % 70) + 10%);
   position: absolute;
-  left: var(--x);
-  top: var(--y);
+  left: var(--sparkle-x);
+  top: var(--sparkle-y);
   width: 8px;
   height: 8px;
   border-radius: 999px;
@@ -91,7 +89,7 @@
   opacity: 0;
   transform: scale(0.2);
   animation: sparkle 1000ms ease-out forwards;
-  animation-delay: calc(var(--i) * 80ms + 220ms);
+  animation-delay: var(--sparkle-delay);
 }
 
 .winFx__content {
@@ -190,7 +188,7 @@
 }
 
 .winFx__streakHero {
-  margin-top: 6px;
+  margin: 0 auto;
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
@@ -202,6 +200,13 @@
   animation:
     streakHeroIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both,
     streakHeroPulse 1800ms ease-in-out 900ms infinite;
+}
+
+.winFx__heroMeta {
+  margin-top: 10px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
 }
 
 .winFx__streakHeroCount {
@@ -222,10 +227,27 @@
 }
 
 .winFx__hint {
-  margin-top: 6px;
-  color: rgba(255, 255, 255, 0.7);
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.075);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.winFx__hero > .winFx__hint {
+  margin-top: 10px;
+}
+
+.winFx__hint svg {
+  color: var(--accent);
+  flex: 0 0 auto;
 }
 
 .winFx__summary {
@@ -237,11 +259,11 @@
 
 .winFx__playerStats {
   margin-bottom: 10px;
-  border-radius: 18px;
-  border: 1px solid rgba(var(--win-accent-rgb), 0.12);
+  border-radius: 16px;
+  border: 1px solid rgba(var(--win-accent-rgb), 0.16);
   background:
-    linear-gradient(180deg, rgba(var(--win-accent-rgb), 0.08), rgba(var(--win-accent-rgb), 0.02)),
-    rgba(255, 255, 255, 0.03);
+    linear-gradient(180deg, rgba(var(--win-accent-rgb), 0.07), transparent 55%),
+    rgba(255, 255, 255, 0.026);
   padding: 12px;
   animation: sectionLift 560ms ease-out 220ms both;
 }
@@ -260,23 +282,42 @@
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.winFx__playerStatsBadge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .winFx__playerStatsGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
 }
 
 .winFx__playerStat {
   min-width: 0;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: rgba(12, 18, 24, 0.34);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 64px;
+  padding: 10px 11px;
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent),
+    rgba(12, 18, 24, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.055);
   display: grid;
-  gap: 4px;
+  align-content: center;
+  gap: 6px;
 }
 
 .winFx__playerStat span {
@@ -289,9 +330,10 @@
 
 .winFx__playerStat strong {
   color: #fff;
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 900;
   letter-spacing: -0.04em;
+  line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -304,6 +346,263 @@
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.winFx__podium {
+  position: relative;
+  width: min(430px, calc(100% - 34px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 0;
+  padding: 34px 6px 18px;
+  margin: 0 auto 10px;
+}
+
+.winFx__podium--withList {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.winFx__podiumSlot {
+  --podium-height: 72px;
+  --podium-front: #f1f5f2;
+  --podium-front-low: #d9dfdb;
+  --podium-top: rgb(var(--win-accent-rgb));
+  --podium-top-dark: rgba(var(--win-accent-rgb), 0.68);
+  --podium-side: #cbd3ce;
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  align-items: end;
+  align-self: end;
+  grid-row: 1;
+  min-width: 0;
+  opacity: 0;
+  animation: podiumRise 620ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.winFx__podiumSlot--1 {
+  --podium-height: 112px;
+  grid-column: 2;
+  z-index: 2;
+  animation-delay: 180ms;
+}
+
+.winFx__podiumSlot--2 {
+  --podium-height: 92px;
+  grid-column: 1;
+  z-index: 1;
+  animation-delay: 300ms;
+}
+
+.winFx__podiumSlot--3 {
+  --podium-height: 42px;
+  grid-column: 3;
+  z-index: 1;
+  animation-delay: 360ms;
+}
+
+.winFx__podiumAvatarWrap {
+  position: relative;
+  z-index: 3;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  margin-bottom: 7px;
+}
+
+.winFx__podiumSlot--2 .winFx__podiumAvatarWrap {
+  transform: translateX(-10px);
+}
+
+.winFx__podiumSlot--3 .winFx__podiumAvatarWrap {
+  transform: translateX(10px);
+}
+
+.winFx__podiumSlot--1 .winFx__podiumAvatarWrap {
+  animation: winnerAvatarHop 1350ms cubic-bezier(0.34, 1.56, 0.64, 1) 900ms infinite;
+}
+
+.winFx__podium .winFx__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  font-size: 21px;
+  box-shadow:
+    0 12px 18px rgba(0, 0, 0, 0.24),
+    0 3px 0 rgba(0, 0, 0, 0.08);
+}
+
+.winFx__podiumSlot--1 .winFx__avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  font-size: 24px;
+  box-shadow:
+    0 14px 20px rgba(0, 0, 0, 0.25),
+    0 3px 0 rgba(0, 0, 0, 0.08);
+}
+
+.winFx__podium .winFx__avatar--team svg {
+  width: 30px;
+  height: 30px;
+}
+
+.winFx__podiumSlot--1 .winFx__avatar--team svg {
+  width: 36px;
+  height: 36px;
+}
+
+.winFx__crown {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  color: var(--accent);
+  fill: rgba(var(--win-accent-rgb), 0.2);
+  filter:
+    drop-shadow(0 6px 8px rgba(0, 0, 0, 0.28))
+    drop-shadow(0 0 10px rgba(var(--win-accent-rgb), 0.28));
+  transform: translateX(-50%) rotate(-6deg);
+  animation: crownDrop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 420ms both;
+}
+
+.winFx__podiumBase {
+  position: relative;
+  grid-row: 2;
+  width: 100%;
+  min-height: var(--podium-height);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  padding: 16px 8px 8px;
+  border-radius: 4px 4px 7px 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 38%),
+    linear-gradient(180deg, var(--podium-front), var(--podium-front-low));
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  box-shadow:
+    inset -8px 0 0 rgba(0, 0, 0, 0.045),
+    inset 0 -10px 0 rgba(0, 0, 0, 0.035),
+    0 16px 24px rgba(0, 0, 0, 0.2);
+}
+
+.winFx__podiumBase::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -20px;
+  height: 20px;
+  border-radius: 4px 4px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 55%),
+    linear-gradient(180deg, var(--podium-top), var(--podium-top-dark));
+  border: 1px solid rgba(var(--win-accent-rgb), 0.5);
+  border-bottom: 0;
+  transform: perspective(80px) rotateX(18deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.winFx__podiumBase::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 8px 0 0 rgba(255, 255, 255, 0.32);
+  pointer-events: none;
+}
+
+.winFx__podiumSlot--1 .winFx__podiumBase {
+  width: calc(100% + 34px);
+  z-index: 2;
+}
+
+.winFx__podiumSlot--2 .winFx__podiumBase {
+  width: calc(100% + 30px);
+  justify-self: end;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.winFx__podiumSlot--3 .winFx__podiumBase {
+  width: calc(100% + 30px);
+  justify-self: start;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.winFx__podiumSlot--2 .winFx__podiumBase::before {
+  border-top-right-radius: 0;
+}
+
+.winFx__podiumSlot--3 .winFx__podiumBase::before {
+  border-top-left-radius: 0;
+}
+
+.winFx__podiumSlot--winner .winFx__podiumBase {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(var(--win-accent-rgb), 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), transparent 34%),
+    linear-gradient(180deg, #fbfdf9, #dfe8df);
+  box-shadow:
+    inset -8px 0 0 rgba(0, 0, 0, 0.035),
+    inset 0 -10px 0 rgba(0, 0, 0, 0.028),
+    0 17px 26px rgba(0, 0, 0, 0.22),
+    0 0 26px rgba(var(--win-accent-rgb), 0.14);
+}
+
+.winFx__podiumSlot--winner .winFx__podiumBase::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 55%),
+    linear-gradient(180deg, rgb(var(--win-accent-rgb)), rgba(var(--win-accent-rgb), 0.78));
+  border-color: rgba(var(--win-accent-rgb), 0.72);
+}
+
+.winFx__podiumRank {
+  min-width: 0;
+  height: auto;
+  display: grid;
+  place-items: center;
+  color: rgba(31, 43, 6, 0.94);
+  background: transparent;
+  font-size: 43px;
+  font-weight: 950;
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.42),
+    0 6px 14px rgba(31, 43, 6, 0.12);
+}
+
+.winFx__podiumSlot--winner .winFx__podiumRank {
+  color: var(--ds-color-primary-fixed-dim);
+  font-size: 50px;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5),
+    0 7px 16px rgba(31, 43, 6, 0.16);
+}
+
+.winFx--teams .winFx__podiumSlot--winner .winFx__podiumRank {
+  color: rgb(var(--win-accent-rgb));
+}
+
+.winFx__podiumName {
+  max-width: calc(100% - 14px);
+  color: rgba(31, 43, 6, 0.62);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winFx__podiumSlot--winner .winFx__podiumName {
+  color: rgba(31, 43, 6, 0.72);
 }
 
 .winFx__standings {
@@ -446,15 +745,15 @@
 .confetti {
   position: absolute;
   top: -16px;
-  left: calc((var(--i) * 3.2%) + 2%);
+  left: var(--confetti-left);
   width: 9px;
   height: 16px;
   border-radius: 3px;
   background: var(--accent);
   opacity: 0;
-  transform: translate3d(0, 0, 0) rotate(calc(var(--i) * 13deg));
+  transform: translate3d(0, 0, 0) rotate(var(--confetti-rotate));
   animation: confettiFall 2400ms cubic-bezier(0.15, 0.65, 0.2, 1) forwards;
-  animation-delay: calc(var(--i) * 34ms + 160ms);
+  animation-delay: var(--confetti-delay);
 }
 
 @keyframes winPop {
@@ -510,14 +809,14 @@
 @keyframes rayPulse {
   0% {
     opacity: 0;
-    transform: translate(-50%, -90%) rotate(calc(var(--i) * 30deg)) scaleY(0.35);
+    transform: translate(-50%, -90%) rotate(var(--ray-rotate)) scaleY(0.35);
   }
   35% {
     opacity: 0.95;
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -105%) rotate(calc(var(--i) * 30deg)) scaleY(1.08);
+    transform: translate(-50%, -105%) rotate(var(--ray-rotate)) scaleY(1.08);
   }
 }
 
@@ -626,6 +925,44 @@
   }
 }
 
+@keyframes podiumRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes crownDrop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px) rotate(-16deg) scale(0.72);
+  }
+  62% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(2px) rotate(-5deg) scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) rotate(-8deg) scale(1);
+  }
+}
+
+@keyframes winnerAvatarHop {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  34% {
+    transform: translateY(-10px) scale(1.04);
+  }
+  52% {
+    transform: translateY(2px) scale(0.98);
+  }
+}
+
 @keyframes winnerRowPulse {
   0%, 100% {
     box-shadow:
@@ -667,7 +1004,7 @@
   }
   100% {
     opacity: 0;
-    transform: translate3d(calc((var(--i) - 15) * 0.9px), 118vh, 0) rotate(calc(420deg + (var(--i) * 12deg)));
+    transform: translate3d(var(--confetti-drift), 118vh, 0) rotate(var(--confetti-final-rotate));
   }
 }
 
@@ -690,8 +1027,85 @@
     grid-template-columns: 1fr;
   }
 
+  .winFx__podium {
+    width: min(360px, calc(100% - 24px));
+    padding: 30px 4px 16px;
+  }
+
+  .winFx__podiumSlot {
+    --podium-height: 62px;
+  }
+
+  .winFx__podiumSlot--1 {
+    --podium-height: 96px;
+  }
+
+  .winFx__podiumSlot--2 {
+    --podium-height: 80px;
+  }
+
+  .winFx__podiumSlot--3 {
+    --podium-height: 38px;
+  }
+
+  .winFx__podiumSlot--2 .winFx__podiumAvatarWrap {
+    transform: translateX(-6px);
+  }
+
+  .winFx__podiumSlot--3 .winFx__podiumAvatarWrap {
+    transform: translateX(6px);
+  }
+
+  .winFx__podium .winFx__avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 17px;
+    font-size: 18px;
+  }
+
+  .winFx__podiumSlot--1 .winFx__avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    font-size: 21px;
+  }
+
+  .winFx__podiumBase {
+    padding: 12px 6px 8px;
+    border-radius: 4px 4px 6px 6px;
+  }
+
+  .winFx__podiumSlot--1 .winFx__podiumBase {
+    width: calc(100% + 18px);
+  }
+
+  .winFx__podiumSlot--2 .winFx__podiumBase,
+  .winFx__podiumSlot--3 .winFx__podiumBase {
+    width: calc(100% + 14px);
+  }
+
+  .winFx__podiumRank {
+    font-size: 34px;
+  }
+
+  .winFx__podiumSlot--winner .winFx__podiumRank {
+    font-size: 39px;
+  }
+
+  .winFx__podiumName {
+    font-size: 9px;
+  }
+
   .winFx__playerStatsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .winFx__playerStat {
+    min-height: 58px;
+  }
+
+  .winFx__playerStat strong {
+    font-size: 18px;
   }
 }
 
@@ -699,6 +1113,10 @@
   .winFx,
   .winFx * {
     animation: none !important;
+  }
+
+  .winFx__podiumSlot {
+    opacity: 1;
   }
 
   .winFx__burst,

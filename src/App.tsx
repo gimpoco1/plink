@@ -48,7 +48,9 @@ import { findWinner, sortPlayers } from "./utils/ranking";
 import { getGameParticipants } from "./utils/gameParticipants";
 import {
   computeProfileStats,
+  computeTeamStats,
   createEmptyProfileStats,
+  createEmptyTeamStats,
 } from "./utils/profileStats";
 import { shouldSortLowToHigh } from "./utils/scoring";
 import {
@@ -210,6 +212,10 @@ export default function App() {
     }
   });
   const profileStats = useMemo(() => computeProfileStats(games), [games]);
+  const teamStats = useMemo(
+    () => computeTeamStats(games, teams, teamMembers),
+    [games, teams, teamMembers],
+  );
   const canViewSavedData = !!session;
   const visibleGames = canViewSavedData && !gamesReady ? [] : games;
   const visibleProfiles = canViewSavedData ? profiles : [];
@@ -507,14 +513,15 @@ export default function App() {
     const winner = findWinner(currentGame.players, currentGame);
     const isTeamsGame =
       currentGame.participantMode === "teams" && currentGame.teams.length > 0;
+    const participants = getGameParticipants(currentGame);
     const winningTeamName =
       winner && isTeamsGame
-        ? getGameParticipants(currentGame).find((participant) =>
+        ? participants.find((participant) =>
             participant.members.some((member) => member.id === winner.id),
           )?.name
         : null;
 
-    if (winner) {
+    if (winner && participants.length > 1) {
       items.push({
         label: winningTeamName ?? capitalizeFirst(winner.name),
         tone: "accent",
@@ -570,9 +577,24 @@ export default function App() {
   const currentWinnerStats = useMemo(() => {
     if (!currentGame) return null;
     const winner = findWinner(currentGame.players, currentGame);
+    const isTeamsGame =
+      currentGame.participantMode === "teams" && currentGame.teams.length > 0;
+    if (winner && isTeamsGame) {
+      const winningParticipant = getGameParticipants(currentGame).find(
+        (participant) =>
+          participant.members.some((member) => member.id === winner.id),
+      );
+      const winningTeam = winningParticipant?.teamId
+        ? currentGame.teams.find((team) => team.id === winningParticipant.teamId)
+        : null;
+      const teamStatsKey = winningTeam?.sourceTeamId ?? winningTeam?.id;
+      return teamStatsKey
+        ? (teamStats.get(teamStatsKey) ?? createEmptyTeamStats())
+        : null;
+    }
     if (!winner?.profileId) return null;
     return profileStats.get(winner.profileId) ?? createEmptyProfileStats();
-  }, [currentGame, profileStats]);
+  }, [currentGame, profileStats, teamStats]);
 
   async function handleEndCurrentGame() {
     if (!currentGame) return;

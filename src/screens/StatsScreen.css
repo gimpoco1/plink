@@ -458,6 +458,15 @@
   color: #0c4f72;
 }
 
+.statsFocusCardGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.statsFocusCardGrid--compare {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .statsFocusCard {
   display: grid;
   gap: 8px;
@@ -1525,6 +1534,10 @@
 
   .statsComparisonCard__row {
     gap: 6px;
+  }
+
+  .statsFocusCardGrid--compare {
+    grid-template-columns: 1fr;
   }
 
   .statsSelectorPanel,

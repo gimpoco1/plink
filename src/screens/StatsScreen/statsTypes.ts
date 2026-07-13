@@ -11,7 +11,7 @@ export type SelectableEntity = {
   isAccountPlayer?: boolean;
 };
 
-export type OpenPicker = "primary" | "compare" | "team" | null;
+export type OpenPicker = "primary" | "compare" | "team" | "teamCompare" | null;
 export type OpenChartGamePicker = "wins" | "rate" | null;
 
 export type CompareChartPoint = {
