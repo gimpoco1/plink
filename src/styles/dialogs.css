@@ -476,11 +476,6 @@
   line-height: 1.15;
 }
 
-.dialog--confirmFeature .dialog__detailCard:first-child .dialog__detailValue {
-  font-size: 18px;
-  line-height: 1.05;
-}
-
 .dialog--confirmFeature .dialog__message {
   color: var(--muted);
   font-size: 12px;
