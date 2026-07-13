@@ -449,7 +449,7 @@ export function WinCelebration({
                     ? "Creating card"
                   : shareStatus === "error"
                     ? "Share failed"
-                    : "Share card"}
+                    : "Share win"}
               </span>
             </button>
           ) : null}
