@@ -671,6 +671,12 @@ export const AuthDialog = forwardRef<AuthDialogHandle, Props>(
           provider,
           options: {
             redirectTo: getAuthRedirectUrl(),
+            queryParams:
+              provider === "google"
+                ? {
+                    prompt: "select_account",
+                  }
+                : undefined,
           },
         });
         if (oauthError) throw oauthError;
