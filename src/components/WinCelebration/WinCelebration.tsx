@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
-import type { ProfileStats } from "../../utils/profileStats";
+import type { ProfileStats, TeamStats } from "../../utils/profileStats";
 import type { WinCondition } from "../../types";
 import {
+  Crown,
   Dumbbell,
   Flag,
   Flame,
+  Medal,
   Shield,
   Star,
   Target,
@@ -25,6 +27,8 @@ type Standing = {
   rank: number;
   isWinner: boolean;
 };
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string | number>;
 
 const TEAM_ICON_COMPONENTS = {
   dumbbell: Dumbbell,
@@ -46,7 +50,7 @@ type Props = {
   startingScore: number;
   winCondition: WinCondition;
   manualEndOnly: boolean;
-  winnerStats: ProfileStats | null;
+  winnerStats: ProfileStats | TeamStats | null;
   standings: Standing[];
   onDismiss: () => void;
   onReplay: () => void;
@@ -79,10 +83,48 @@ export function WinCelebration({
 
   const isDraw = resultKind === "draw";
   const isCompletedWithoutWinner = resultKind === "completed";
+  const isSoloCompletion =
+    resultKind === "winner" && standings.length === 1 && !isTeamGame;
+  const podiumStandings = [standings[0], standings[1], standings[2]];
+  const listedStandings = standings.slice(3);
+  const statsLabels = isSoloCompletion
+    ? {
+        title: "Player stats",
+        total: "Completed",
+        rate: "Completion rate",
+        streak: "Session streak",
+        aria: "Updated player stats",
+      }
+    : isTeamGame
+      ? {
+          title: "Team stats",
+          total: "Team wins",
+          rate: "Win rate",
+          streak: "Win streak",
+          aria: "Updated team stats",
+        }
+    : {
+        title: "Winner stats",
+        total: "Total wins",
+        rate: "Win rate",
+        streak: "Win streak",
+        aria: "Updated winner stats",
+      };
+  const resultHint = isCompletedWithoutWinner
+    ? "Ended without a winner"
+    : manualEndOnly
+      ? "Ended manually"
+      : winCondition === "reach_zero"
+        ? `Started at ${startingScore}, reached 0`
+        : winCondition === "lowest"
+          ? "Lowest score wins"
+          : `Target ${targetScore} points`;
   const dialogLabel = isDraw
     ? `${gameName} ended in a draw`
     : isCompletedWithoutWinner
       ? `${gameName} ended without a winner`
+      : isSoloCompletion
+        ? `${gameName} completed by ${winnerName}`
       : `${winnerName} wins ${gameName}`;
 
   return (
@@ -95,17 +137,48 @@ export function WinCelebration({
       <div className="winFx__veil" />
       <div className="winFx__burst" aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
-          <span className="burstRay" key={i} style={{ ["--i" as never]: i }} />
+          <span
+            className="burstRay"
+            key={i}
+            style={
+              {
+                "--ray-rotate": `${i * 30}deg`,
+                "--ray-delay": `${i * 22 + 90}ms`,
+              } as CSSVarStyle
+            }
+          />
         ))}
       </div>
       <div className="winFx__sparkles" aria-hidden="true">
         {Array.from({ length: 16 }).map((_, i) => (
-          <span className="sparkle" key={i} style={{ ["--i" as never]: i }} />
+          <span
+            className="sparkle"
+            key={i}
+            style={
+              {
+                "--sparkle-x": `${i * 6.25 + 5}%`,
+                "--sparkle-y": `${((i * 37) % 70) + 10}%`,
+                "--sparkle-delay": `${i * 80 + 220}ms`,
+              } as CSSVarStyle
+            }
+          />
         ))}
       </div>
       <div className="winFx__orbs" aria-hidden="true">
         {Array.from({ length: 6 }).map((_, i) => (
-          <span className="winFx__orb" key={i} style={{ ["--i" as never]: i }} />
+          <span
+            className="winFx__orb"
+            key={i}
+            style={
+              {
+                "--orb-size": `${120 + i * 18}px`,
+                "--orb-left": `${8 + i * 14}%`,
+                "--orb-top": `${12 + ((i * 11) % 56)}%`,
+                "--orb-duration": `${5200 + i * 280}ms`,
+                "--orb-delay": `${i * 100}ms`,
+              } as CSSVarStyle
+            }
+          />
         ))}
       </div>
 
@@ -113,26 +186,14 @@ export function WinCelebration({
         <div className="winFx__hero">
           <div className="winFx__halo" aria-hidden="true" />
           <div className="winFx__medal" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="m7 3 3 5m7-5-3 5m-2 0-2 4.5 2 1.5 2-1.5L12 8Z"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <circle cx="12" cy="16.2" r="4.2" stroke="currentColor" strokeWidth="1.8" />
-              <path
-                d="m10.7 16.3.9 1 1.8-2"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Medal size={28} strokeWidth={2.25} />
           </div>
           <div className="winFx__eyebrow">
-            {isDraw ? "Draw" : isCompletedWithoutWinner ? "Finished" : "Winner"}
+            {isDraw
+              ? "Draw"
+              : isCompletedWithoutWinner || isSoloCompletion
+                ? "Finished"
+                : "Winner"}
           </div>
           <div className="winFx__name">
             {isDraw
@@ -142,90 +203,133 @@ export function WinCelebration({
                 : winnerName}
           </div>
           {!isDraw && !isCompletedWithoutWinner && winnerStats?.currentWinStreak ? (
-            <div className="winFx__streakHero" aria-label={`${winnerStats.currentWinStreak} win streak`}>
-              <span className="winFx__streakHeroCount">
-                {winnerStats.currentWinStreak}
-              </span>
-              <span className="winFx__streakHeroLabel">Win streak</span>
+            <div className="winFx__heroMeta">
+              <div
+                className="winFx__streakHero"
+                aria-label={`${winnerStats.currentWinStreak} ${statsLabels.streak.toLowerCase()}`}
+              >
+                <span className="winFx__streakHeroCount">
+                  {winnerStats.currentWinStreak}
+                </span>
+                <span className="winFx__streakHeroLabel">
+                  {statsLabels.streak}
+                </span>
+              </div>
+              <div className="winFx__hint">
+                <Target size={14} strokeWidth={2.4} aria-hidden="true" />
+                <span>{resultHint}</span>
+              </div>
             </div>
           ) : (
             <div className="winFx__title">{gameName}</div>
           )}
-          {!isDraw ? (
+          {!isDraw && (isCompletedWithoutWinner || !winnerStats?.currentWinStreak) ? (
             <div className="winFx__hint">
-              {isCompletedWithoutWinner
-                ? "Ended without a winner"
-                : manualEndOnly
-                ? "Ended manually"
-                : winCondition === "reach_zero"
-                ? `Started at ${startingScore}, reached 0`
-                : winCondition === "lowest"
-                  ? "Lowest score wins"
-                  : `Target ${targetScore} points`}
+              <Target size={14} strokeWidth={2.4} aria-hidden="true" />
+              <span>{resultHint}</span>
             </div>
           ) : null}
         </div>
 
         {!isDraw && !isCompletedWithoutWinner && winnerStats ? (
-          <section className="winFx__playerStats" aria-label="Updated winner stats">
+          <section className="winFx__playerStats" aria-label={statsLabels.aria}>
             <div className="winFx__playerStatsHeader">
-              <div className="winFx__playerStatsTitle">Updated player stats</div>
+              <div className="winFx__playerStatsTitle">{statsLabels.title}</div>
+              <div className="winFx__playerStatsBadge">Updated</div>
             </div>
             <div className="winFx__playerStatsGrid">
               <div className="winFx__playerStat">
-                <span>Total wins</span>
                 <strong>{winnerStats.wins}</strong>
+                <span>{statsLabels.total}</span>
               </div>
               <div className="winFx__playerStat">
-                <span>Win rate</span>
                 <strong>{winnerStats.completedGames > 0 ? `${winnerStats.winRate}%` : "—"}</strong>
+                <span>{statsLabels.rate}</span>
               </div>
               <div className="winFx__playerStat">
-                <span>Sessions</span>
                 <strong>{winnerStats.gamesPlayed}</strong>
+                <span>Sessions</span>
               </div>
               <div className="winFx__playerStat">
-                <span>Top game</span>
                 <strong>{winnerStats.topWonGame?.name ?? "—"}</strong>
+                <span>Top game</span>
               </div>
             </div>
           </section>
         ) : null}
 
-        <section className="winFx__summary" aria-label="Final standings">
-          <div className="winFx__summaryTitle">Final standings</div>
-          <div className="winFx__standings">
-            {standings.map((entry) => (
+        {!isSoloCompletion ? (
+          <section className="winFx__summary" aria-label="Final standings">
+            <div className="winFx__summaryTitle">Final standings</div>
+            {podiumStandings.length > 0 ? (
               <div
-                key={entry.id}
-                className={`winFx__row${entry.isWinner ? " winFx__row--winner" : ""}`}
+                className={`winFx__podium${
+                  listedStandings.length > 0 ? " winFx__podium--withList" : ""
+                }`}
+                aria-label="Top three"
               >
-                <div className="winFx__rowLeft">
-                  <div className="winFx__rank">#{entry.rank}</div>
-                  {isTeamGame && entry.icon ? (
-                    <div className="winFx__avatar winFx__avatar--team" aria-hidden="true">
-                      <TeamIconGlyph icon={entry.icon} />
+                {podiumStandings.map((entry, index) => (
+                  <div
+                    key={entry?.id ?? `empty-podium-${index + 1}`}
+                    aria-label={
+                      entry
+                        ? `${entry.name}, rank ${entry.rank}, score ${entry.score}`
+                        : `No rank ${index + 1} player`
+                    }
+                    className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
+                      entry?.isWinner ? " winFx__podiumSlot--winner" : ""
+                    }${
+                      entry ? "" : " winFx__podiumSlot--empty"
+                    }`}
+                  >
+                    {entry ? (
+                      <div className="winFx__podiumAvatarWrap">
+                        {entry.isWinner ? (
+                          <Crown
+                            className="winFx__crown"
+                            size={30}
+                            strokeWidth={2.2}
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
+                      </div>
+                    ) : null}
+                    <div className="winFx__podiumBase">
+                      <div className="winFx__podiumRank">
+                        {entry?.rank ?? index + 1}
+                      </div>
+                      {entry ? (
+                        <div className="winFx__podiumName">{entry.name}</div>
+                      ) : null}
                     </div>
-                  ) : (
-                    <div
-                      className="winFx__avatar"
-                      style={avatarStyleFor(entry.avatarColor)}
-                      aria-hidden="true"
-                    >
-                      {entry.initials}
-                    </div>
-                  )}
-                  <div className="winFx__player">
-                    <strong>{entry.name}</strong>
-                    {entry.isWinner ? <span>Champion</span> : null}
-                    {isDraw && entry.rank === 1 ? <span>Draw</span> : null}
                   </div>
-                </div>
-                <div className="winFx__score">{entry.score}</div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            ) : null}
+            {listedStandings.length > 0 ? (
+              <div className="winFx__standings">
+                {listedStandings.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={`winFx__row${entry.isWinner ? " winFx__row--winner" : ""}`}
+                  >
+                    <div className="winFx__rowLeft">
+                      <div className="winFx__rank">#{entry.rank}</div>
+                      <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
+                      <div className="winFx__player">
+                        <strong>{entry.name}</strong>
+                        {entry.isWinner ? <span>Champion</span> : null}
+                        {isDraw && entry.rank === 1 ? <span>Draw</span> : null}
+                      </div>
+                    </div>
+                    <div className="winFx__score">{entry.score}</div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         <div className="winFx__actions">
           <button type="button" className="winFx__btn winFx__btn--ghost" onClick={onDismiss}>
@@ -242,9 +346,47 @@ export function WinCelebration({
 
       <div className="winFx__confetti" aria-hidden="true">
         {Array.from({ length: 30 }).map((_, i) => (
-          <span className="confetti" key={i} style={{ ["--i" as never]: i }} />
+          <span
+            className="confetti"
+            key={i}
+            style={
+              {
+                "--confetti-left": `${i * 3.2 + 2}%`,
+                "--confetti-rotate": `${i * 13}deg`,
+                "--confetti-delay": `${i * 34 + 160}ms`,
+                "--confetti-drift": `${(i - 15) * 0.9}px`,
+                "--confetti-final-rotate": `${420 + i * 12}deg`,
+              } as CSSVarStyle
+            }
+          />
         ))}
       </div>
+    </div>
+  );
+}
+
+function StandingAvatar({
+  entry,
+  isTeamGame,
+}: {
+  entry: Standing;
+  isTeamGame: boolean;
+}) {
+  if (isTeamGame && entry.icon) {
+    return (
+      <div className="winFx__avatar winFx__avatar--team" aria-hidden="true">
+        <TeamIconGlyph icon={entry.icon} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="winFx__avatar"
+      style={avatarStyleFor(entry.avatarColor)}
+      aria-hidden="true"
+    >
+      {entry.initials}
     </div>
   );
 }

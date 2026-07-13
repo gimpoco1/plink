@@ -26,7 +26,7 @@ import { PlayerCard } from "../components/PlayerCard/PlayerCard";
 import { TeamScoreCard } from "../components/TeamScoreCard/TeamScoreCard";
 import { GameTimer } from "../components/GameTimer/GameTimer";
 import { GameDiceTray } from "../components/GameDiceTray/GameDiceTray";
-import type { ProfileStats } from "../utils/profileStats";
+import type { ProfileStats, TeamStats } from "../utils/profileStats";
 import "./GameScreen.css";
 
 type Props = {
@@ -76,7 +76,7 @@ type Props = {
     teamName: string,
   ) => Promise<void> | void;
   onOpenTeamsTab: () => void;
-  winnerStats: ProfileStats | null;
+  winnerStats: ProfileStats | TeamStats | null;
   onReplayGame: () => void;
   onBackToHome: () => void;
   onEndGame: () => void;
@@ -309,7 +309,7 @@ export function GameScreen({
           startingScore={game.startingScore}
           winCondition={game.winCondition}
           manualEndOnly={game.manualEndOnly}
-          winnerStats={isTeamGame ? null : winnerStats}
+          winnerStats={winnerStats}
           standings={finalStandings.map(({ entry, rank, isWinner }) => ({
             id: entry.id,
             name: !isTeamGame

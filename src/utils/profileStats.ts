@@ -31,6 +31,12 @@ export type ProfileStats = {
 };
 
 export type TeamStats = {
+  gamesPlayed: number;
+  completedGames: number;
+  inProgressGames: number;
+  wins: number;
+  winRate: number;
+  currentWinStreak: number;
   topWonGame: GameResultSummary | null;
   gameResults: GameResultSummary[];
   sessionResults: SessionResultSummary[];
@@ -50,8 +56,14 @@ export function createEmptyProfileStats(): ProfileStats {
   };
 }
 
-function createEmptyTeamStats(): TeamStats {
+export function createEmptyTeamStats(): TeamStats {
   return {
+    gamesPlayed: 0,
+    completedGames: 0,
+    inProgressGames: 0,
+    wins: 0,
+    winRate: 0,
+    currentWinStreak: 0,
     topWonGame: null,
     gameResults: [],
     sessionResults: [],
@@ -257,7 +269,10 @@ export function computeTeamStats(
   const winCountsByTeam = new Map<string, Map<string, number>>();
   const topWinsByGame = new Map<string, number>();
   const sessionResultsByTeam = new Map<string, SessionResultSummary[]>();
-  const savedTeamIds = new Set(teams.map((team) => team.id));
+  const completedHistoryByTeam = new Map<
+    string,
+    Array<{ won: boolean; order: number }>
+  >();
   const memberIdsBySavedTeamId = new Map<string, Set<string>>();
 
   teamMembers.forEach((member) => {
@@ -267,9 +282,7 @@ export function computeTeamStats(
   });
 
   function resolveSavedTeamId(game: Game, gameTeam: Game["teams"][number]) {
-    if (gameTeam.sourceTeamId && savedTeamIds.has(gameTeam.sourceTeamId)) {
-      return gameTeam.sourceTeamId;
-    }
+    if (gameTeam.sourceTeamId) return gameTeam.sourceTeamId;
 
     const gameProfileIds = new Set(
       game.players
@@ -295,7 +308,7 @@ export function computeTeamStats(
     const matchingTeamByName = teams.find(
       (team) => team.name.trim().toLowerCase() === normalizedGameTeamName,
     );
-    return matchingTeamByName?.id ?? null;
+    return matchingTeamByName?.id ?? gameTeam.id;
   }
 
   games.forEach((game) => {
@@ -313,6 +326,10 @@ export function computeTeamStats(
 
       const current = stats.get(savedTeamId) ?? createEmptyTeamStats();
       const playedGames = playedGamesByTeam.get(savedTeamId) ?? new Set<string>();
+
+      current.gamesPlayed += 1;
+      if (isComplete) current.completedGames += 1;
+      else current.inProgressGames += 1;
 
       playedGames.add(normalizedGameName);
       playedGamesByTeam.set(savedTeamId, playedGames);
@@ -337,6 +354,7 @@ export function computeTeamStats(
       sessionResultsByTeam.set(savedTeamId, sessions);
 
       if (winningTeamId === team.id) {
+        current.wins += 1;
         const teamWins =
           winCountsByTeam.get(savedTeamId) ?? new Map<string, number>();
         const nextGameWins = (teamWins.get(normalizedGameName) ?? 0) + 1;
@@ -360,6 +378,20 @@ export function computeTeamStats(
             teamWins: nextGameWins,
           };
         }
+      }
+
+      current.winRate =
+        current.completedGames > 0
+          ? Math.round((current.wins / current.completedGames) * 100)
+          : 0;
+
+      if (isComplete) {
+        const history = completedHistoryByTeam.get(savedTeamId) ?? [];
+        history.push({
+          won: winningTeamId === team.id,
+          order: game.endedAt ?? game.updatedAt ?? game.createdAt,
+        });
+        completedHistoryByTeam.set(savedTeamId, history);
       }
 
       stats.set(savedTeamId, current);
@@ -400,6 +432,19 @@ export function computeTeamStats(
     current.sessionResults = [
       ...(sessionResultsByTeam.get(teamId) ?? []),
     ].sort((a, b) => b.order - a.order);
+
+    const history = (completedHistoryByTeam.get(teamId) ?? []).sort(
+      (a, b) => a.order - b.order,
+    );
+    let currentStreak = 0;
+    for (const entry of history) {
+      if (entry.won) {
+        currentStreak += 1;
+      } else {
+        currentStreak = 0;
+      }
+    }
+    current.currentWinStreak = currentStreak;
   });
 
   return stats;
