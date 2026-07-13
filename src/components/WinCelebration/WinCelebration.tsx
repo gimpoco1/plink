@@ -83,16 +83,16 @@ export function WinCelebration({
 
   const isDraw = resultKind === "draw";
   const isCompletedWithoutWinner = resultKind === "completed";
-  const isSoloCompletion =
-    resultKind === "winner" && standings.length === 1 && !isTeamGame;
+  const isSingleParticipantCompletion =
+    resultKind === "winner" && standings.length === 1;
   const podiumStandings = [standings[0], standings[1], standings[2]];
   const listedStandings = standings.slice(3);
-  const statsLabels = isSoloCompletion
+  const statsLabels = isSingleParticipantCompletion && !isTeamGame
     ? {
         title: "Player stats",
-        total: "Completed",
-        rate: "Completion rate",
-        streak: "Session streak",
+        total: "Total wins",
+        rate: "Win rate",
+        streak: "Win streak",
         aria: "Updated player stats",
       }
     : isTeamGame
@@ -110,20 +110,26 @@ export function WinCelebration({
         streak: "Win streak",
         aria: "Updated winner stats",
       };
-  const resultHint = isCompletedWithoutWinner
-    ? "Ended without a winner"
-    : manualEndOnly
-      ? "Ended manually"
-      : winCondition === "reach_zero"
-        ? `Started at ${startingScore}, reached 0`
-        : winCondition === "lowest"
-          ? "Lowest score wins"
-          : `Target ${targetScore} points`;
+  const resultHint = isSingleParticipantCompletion
+    ? "Session completed"
+    : isCompletedWithoutWinner
+      ? "Ended without a winner"
+      : manualEndOnly
+        ? "Ended manually"
+        : winCondition === "reach_zero"
+          ? `Started at ${startingScore}, reached 0`
+          : winCondition === "lowest"
+            ? "Lowest score wins"
+            : `Target ${targetScore} points`;
+  const heroWinStreak =
+    !isDraw && !isCompletedWithoutWinner && !isSingleParticipantCompletion
+      ? (winnerStats?.currentWinStreak ?? 0)
+      : 0;
   const dialogLabel = isDraw
     ? `${gameName} ended in a draw`
     : isCompletedWithoutWinner
       ? `${gameName} ended without a winner`
-      : isSoloCompletion
+      : isSingleParticipantCompletion
         ? `${gameName} completed by ${winnerName}`
       : `${winnerName} wins ${gameName}`;
 
@@ -191,7 +197,7 @@ export function WinCelebration({
           <div className="winFx__eyebrow">
             {isDraw
               ? "Draw"
-              : isCompletedWithoutWinner || isSoloCompletion
+              : isCompletedWithoutWinner || isSingleParticipantCompletion
                 ? "Finished"
                 : "Winner"}
           </div>
@@ -202,14 +208,14 @@ export function WinCelebration({
                 ? "No winner"
                 : winnerName}
           </div>
-          {!isDraw && !isCompletedWithoutWinner && winnerStats?.currentWinStreak ? (
+          {heroWinStreak ? (
             <div className="winFx__heroMeta">
               <div
                 className="winFx__streakHero"
-                aria-label={`${winnerStats.currentWinStreak} ${statsLabels.streak.toLowerCase()}`}
+                aria-label={`${heroWinStreak} ${statsLabels.streak.toLowerCase()}`}
               >
                 <span className="winFx__streakHeroCount">
-                  {winnerStats.currentWinStreak}
+                  {heroWinStreak}
                 </span>
                 <span className="winFx__streakHeroLabel">
                   {statsLabels.streak}
@@ -258,7 +264,7 @@ export function WinCelebration({
           </section>
         ) : null}
 
-        {!isSoloCompletion ? (
+        {!isSingleParticipantCompletion ? (
           <section className="winFx__summary" aria-label="Final standings">
             <div className="winFx__summaryTitle">Final standings</div>
             {podiumStandings.length > 0 ? (

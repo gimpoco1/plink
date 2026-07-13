@@ -374,20 +374,26 @@ export function StatsScreen({
       setCompareTeamId(null);
       return;
     }
-    if (
-      compareTeamId &&
-      !teamOptions.some((item) => item.id === compareTeamId)
-    ) {
-      setCompareTeamId(null);
+    if (teamOptions.length < 2) {
+      if (compareTeamId) setCompareTeamId(null);
+      if (activeKind === "teams" && compareEnabled) {
+        setCompareEnabled(false);
+      }
       return;
     }
-    if (!compareEnabled || activeKind !== "teams" || teamOptions.length < 2) {
+    const hasValidCompareTeam =
+      Boolean(compareTeamId) &&
+      teamOptions.some((item) => item.id === compareTeamId);
+    if (!compareEnabled || activeKind !== "teams") {
+      if (compareTeamId && !hasValidCompareTeam) {
+        setCompareTeamId(null);
+      }
       return;
     }
     if (
       !compareTeamId ||
-      compareTeamId === selectedTeamId ||
-      !teamOptions.some((item) => item.id === compareTeamId)
+      !hasValidCompareTeam ||
+      compareTeamId === selectedTeamId
     ) {
       setCompareTeamId(getDefaultComparePlayerId(teamOptions, selectedTeamId));
     }
