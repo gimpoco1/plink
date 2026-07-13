@@ -17,7 +17,73 @@
       name="description"
       content="Plink helps you track game sessions, players, scores, and stats across casual rounds."
     />
-    <title>Plink</title>
+    <title>Plink | Score Tracker for Card Games and Casual Matches</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --fallback-bg: #0b1015;
+        --fallback-text: #f4f6ef;
+        --fallback-accent: #d8ff4f;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 15% -10%, rgba(216, 255, 79, 0.08), transparent 34%),
+          var(--fallback-bg);
+        color: var(--fallback-text);
+        font-family:
+          "Nunito",
+          ui-rounded,
+          "SF Pro Rounded",
+          -apple-system,
+          system-ui,
+          sans-serif;
+      }
+
+      .bootSplash {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .bootSplash__inner {
+        display: grid;
+        justify-items: center;
+      }
+
+      .bootSplash__mark {
+        width: 92px;
+        height: 92px;
+        display: grid;
+        place-items: center;
+        animation: bootSplashPulse 1.7s ease-in-out infinite;
+      }
+
+      .bootSplash__mark img {
+        width: 92px;
+        height: 92px;
+        display: block;
+        filter:
+          drop-shadow(0 0 22px rgba(216, 255, 79, 0.12))
+          drop-shadow(0 14px 30px rgba(0, 0, 0, 0.24));
+      }
+
+      @keyframes bootSplashPulse {
+        0%,
+        100% {
+          transform: translateY(0) scale(0.96);
+          opacity: 0.84;
+        }
+
+        50% {
+          transform: translateY(-6px) scale(1);
+          opacity: 1;
+        }
+      }
+    </style>
     <script
       async
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2202905815952205"
@@ -26,6 +92,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="site-fallback" class="bootSplash" aria-hidden="true">
+      <div class="bootSplash__inner">
+        <div class="bootSplash__mark">
+          <img src="/favicon.png" alt="" />
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

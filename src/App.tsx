@@ -67,7 +67,18 @@ import {
   LOCAL_SESSIONS_HINT_DISMISSED_KEY,
   PLAYERS_VIEW_STORAGE_KEY,
 } from "./constants";
-import { CircleUser } from "lucide-react";
+import {
+  ArrowDownUp,
+  Boxes,
+  CircleUser,
+  Dices,
+  Flag,
+  GitCompareArrows,
+  RotateCcw,
+  Target,
+  Timer,
+  Trophy,
+} from "lucide-react";
 import {
   areLocalPlayersEqual,
   loadLocalPlayers,
@@ -488,7 +499,11 @@ export default function App() {
   const gameMetaItems = useMemo(() => {
     if (!currentGame) return [];
 
-    const items: Array<{ label: string; tone?: "accent" | "muted" }> = [];
+    const items: Array<{
+      label: string;
+      tone?: "accent" | "muted";
+      icon?: React.ReactNode;
+    }> = [];
     const winner = findWinner(currentGame.players, currentGame);
     const isTeamsGame =
       currentGame.participantMode === "teams" && currentGame.teams.length > 0;
@@ -501,30 +516,40 @@ export default function App() {
 
     if (winner) {
       items.push({
-        label: `Winner ${winningTeamName ?? capitalizeFirst(winner.name)}`,
+        label: winningTeamName ?? capitalizeFirst(winner.name),
         tone: "accent",
+        icon: <Trophy size={14} strokeWidth={2.45} />,
       });
     }
 
     items.push({
       label: currentGame.manualEndOnly
         ? currentGame.targetScore > 0
-          ? `Manual finish · ref ${currentGame.targetScore}`
-          : "Manual finish"
+          ? `Ref ${currentGame.targetScore}`
+          : "Manual"
         : currentGame.winCondition === "reach_zero"
-          ? `Start ${currentGame.startingScore} · reach 0`
+          ? `${currentGame.startingScore} to 0`
           : currentGame.winCondition === "lowest"
-            ? currentGame.winByTwo
-              ? `Lowest wins · ${currentGame.targetScore} · win by 2`
-              : `Lowest wins · ${currentGame.targetScore}`
-            : currentGame.winByTwo
-              ? `Target ${currentGame.targetScore} · win by 2`
-              : `Target ${currentGame.targetScore} pts`,
-      tone: "accent",
+            ? `Low ${currentGame.targetScore}`
+            : `${currentGame.targetScore} pts`,
+      tone: "muted",
+      icon: currentGame.manualEndOnly ? (
+        <Flag size={14} strokeWidth={2.35} />
+      ) : currentGame.winCondition === "reach_zero" ? (
+        <RotateCcw size={14} strokeWidth={2.35} />
+      ) : currentGame.winCondition === "lowest" ? (
+        <ArrowDownUp size={14} strokeWidth={2.35} />
+      ) : (
+        <Target size={14} strokeWidth={2.45} />
+      ),
     });
 
-    if (currentGame.timerEnabled) {
-      items.push({ label: "Timer on", tone: "muted" });
+    if (currentGame.winByTwo) {
+      items.push({
+        label: "Win by 2",
+        tone: "muted",
+        icon: <GitCompareArrows size={14} strokeWidth={2.35} />,
+      });
     }
 
     return items;
@@ -618,11 +643,11 @@ export default function App() {
       hasCompletedInitialViewRestore &&
       view !== "home" &&
       gamesReady &&
-      !currentGameId
+      !currentGame
     ) {
       setView("home");
     }
-  }, [currentGameId, gamesReady, hasCompletedInitialViewRestore, view]);
+  }, [currentGame, gamesReady, hasCompletedInitialViewRestore, view]);
 
   useEffect(() => {
     if (
@@ -663,6 +688,21 @@ export default function App() {
 
   const isResolvingInitialGameView =
     wantsRestoredGameView && !hasCompletedInitialViewRestore;
+  const isResumingActiveGameView =
+    view !== "home" &&
+    !currentGame &&
+    (authLoading ||
+      !gamesReady ||
+      !hasCompletedInitialViewRestore ||
+      currentGameId !== null);
+  const isAppBootLoading =
+    authLoading ||
+    isResolvingInitialGameView ||
+    (canViewSavedData &&
+      (!gamesReady ||
+        !profilesReady ||
+        !teamsReady ||
+        entitlements.isLoading));
 
   useEffect(() => {
     if (!shouldSaveGamePlayersOnSignIn || !session || !currentGame) return;
@@ -847,38 +887,73 @@ export default function App() {
     const result = await confirmRef.current?.choose({
       title: "New game details",
       details: [
-        { label: "Name", value: details.label },
+        {
+          label: "Name",
+          value: details.label,
+          icon: <Boxes size={16} strokeWidth={2.15} />,
+        },
         {
           label:
             input.winCondition === "reach_zero"
               ? "Starting score"
               : input.manualEndOnly
                 ? "Reference target"
-                : "Points to win",
+                : "Target",
           value: String(
             input.winCondition === "reach_zero"
               ? input.startingScore
               : input.targetScore,
           ),
+          icon: input.manualEndOnly ? (
+            <Flag size={16} strokeWidth={2.15} />
+          ) : input.winCondition === "reach_zero" ? (
+            <RotateCcw size={16} strokeWidth={2.15} />
+          ) : (
+            <Target size={16} strokeWidth={2.25} />
+          ),
+          size: "compact",
         },
         {
-          label: "Win mode",
-          value: input.manualEndOnly
-            ? input.winByTwo
-              ? "Manual finish, win by 2"
-              : "Manual finish"
-            : input.winCondition === "reach_zero"
-              ? "First to zero wins"
-              : input.winCondition === "lowest"
-                ? input.winByTwo
-                  ? "Lowest score wins by 2"
-                  : "Lowest score wins"
-                : input.winByTwo
-                  ? "Highest score wins by 2"
-                  : "Highest score wins",
+          label: "Timer",
+          value: input.timerEnabled ? timerValue : "No timer",
+          icon: <Timer size={16} strokeWidth={2.2} />,
+          size: "compact",
         },
-        { label: "Timer", value: timerValue },
-        { label: "Dice", value: input.diceEnabled ? "On" : "Off" },
+        {
+          label: "Dice",
+          value: input.diceEnabled ? "Dice on" : "No dice",
+          icon: <Dices size={16} strokeWidth={2.2} />,
+          size: "compact",
+        },
+      ],
+      settingChips: [
+        {
+          label: input.manualEndOnly
+            ? "Manual finish"
+            : input.winCondition === "reach_zero"
+              ? "Reach zero"
+              : input.winCondition === "lowest"
+                ? "Lowest wins"
+                : "Highest wins",
+          icon: input.manualEndOnly ? (
+            <Flag size={14} strokeWidth={2.2} />
+          ) : input.winCondition === "reach_zero" ? (
+            <RotateCcw size={14} strokeWidth={2.2} />
+          ) : input.winCondition === "lowest" ? (
+            <ArrowDownUp size={14} strokeWidth={2.2} />
+          ) : (
+            <Target size={14} strokeWidth={2.25} />
+          ),
+          size: input.winByTwo ? "default" : "wide",
+        },
+        ...(input.winByTwo
+          ? [
+              {
+                label: "Win by 2",
+                icon: <GitCompareArrows size={14} strokeWidth={2.2} />,
+              },
+            ]
+          : []),
       ],
       players: input.participantMode === "teams" ? [] : details.players,
       teams: details.teams,
@@ -1250,11 +1325,14 @@ export default function App() {
 
   return (
     <EntitlementsProvider value={entitlements}>
-      <div
-        className="app"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
+      {isAppBootLoading || isResumingActiveGameView ? (
+        <AppLoadingScreen />
+      ) : (
+        <div
+          className="app"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
         <div
           className={`appBackdrop${authDialogOpen ? " appBackdrop--hidden" : ""}`}
           aria-hidden="true"
@@ -1732,7 +1810,7 @@ export default function App() {
               setShouldSaveGamePlayersOnSignIn(true);
               authDialogRef.current?.open();
             }}
-            onAddPlayer={() => managePlayersDialogRef.current?.open()}
+            onAddPlayer={() => managePlayersDialogRef.current?.openWithCreate()}
             onSave={(input) => {
               updateGameSettings(currentGame.id, input);
             }}
@@ -1796,7 +1874,20 @@ export default function App() {
             </div>
           ) : null}
         </AnimatePresence>
-      </div>
+        </div>
+      )}
     </EntitlementsProvider>
+  );
+}
+
+function AppLoadingScreen() {
+  return (
+    <div className="appLoading" role="status" aria-live="polite" aria-label="Loading">
+      <div className="appLoading__inner">
+        <div className="appLoading__mark" aria-hidden="true">
+          <img src="/favicon.png" alt="" className="appLoading__img" />
+        </div>
+      </div>
+    </div>
   );
 }

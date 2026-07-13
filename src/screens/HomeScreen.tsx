@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type {
   Game,
   GameTeam,
@@ -21,12 +21,21 @@ import { getInitials } from "../utils/text";
 import { isGameComplete } from "../utils/ranking";
 import "./HomeScreen.css";
 import {
+  BarChart3,
+  ArrowDownUp,
+  Cloud,
+  Dices,
   Dumbbell,
   Flag,
   Flame,
+  GitCompareArrows,
+  History,
+  RotateCcw,
   Shield,
+  Sparkles,
   Star,
   Target,
+  Timer,
   Trophy,
   Users,
   Zap,
@@ -54,6 +63,13 @@ type QuickSetup = {
     members: Array<{ name: string; avatarColor: string; profileId?: string }>;
   }>;
   uses: number;
+};
+
+type QuickSetupFact = {
+  key: string;
+  label: string;
+  icon: ReactNode;
+  tone?: "accent" | "default";
 };
 
 const TEAM_ICON_COMPONENTS = {
@@ -222,7 +238,6 @@ export function HomeScreen({
   }, [resumableGame]);
 
   const quickSetups = useMemo(() => {
-    if (!isAuthenticated) return [];
     const setups = new Map<string, QuickSetup>();
 
     for (const game of games) {
@@ -293,7 +308,7 @@ export function HomeScreen({
     return [...setups.values()]
       .sort((a, b) => b.uses - a.uses || a.label.localeCompare(b.label))
       .slice(0, 3);
-  }, [games, isAuthenticated, profilesById]);
+  }, [games, profilesById]);
 
   function nextSuggestionName(baseName: string) {
     const normalized = baseName
@@ -352,40 +367,76 @@ export function HomeScreen({
   }
 
   function getSuggestionFacts(setup: QuickSetup) {
-    const parts = [
-      setup.manualEndOnly
-        ? setup.targetScore > 0
-          ? `${setup.targetScore} ref`
-          : "manual end"
-        : setup.winCondition === "reach_zero"
-          ? `${setup.startingScore} start`
-          : `${setup.targetScore} pts`,
+    const parts: QuickSetupFact[] = [
+      {
+        key: "primary",
+        label: setup.manualEndOnly
+          ? setup.targetScore > 0
+            ? `${setup.targetScore} ref`
+            : "manual"
+          : setup.winCondition === "reach_zero"
+            ? `${setup.startingScore} start`
+            : `${setup.targetScore} pts`,
+        icon: setup.manualEndOnly ? (
+          <Flag size={11} strokeWidth={2.35} aria-hidden="true" />
+        ) : setup.winCondition === "reach_zero" ? (
+          <RotateCcw size={11} strokeWidth={2.35} aria-hidden="true" />
+        ) : (
+          <Target size={11} strokeWidth={2.45} aria-hidden="true" />
+        ),
+        tone: "accent",
+      },
     ];
 
     if (setup.winCondition === "lowest") {
-      parts.push("lowest wins");
+      parts.push({
+        key: "lowest",
+        label: "lowest wins",
+        icon: <ArrowDownUp size={11} strokeWidth={2.35} aria-hidden="true" />,
+      });
     } else if (setup.winCondition === "reach_zero") {
-      parts.push("reach zero");
+      parts.push({
+        key: "reach-zero",
+        label: "reach zero",
+        icon: <RotateCcw size={11} strokeWidth={2.35} aria-hidden="true" />,
+      });
     }
 
     if (setup.winByTwo) {
-      parts.push("win by 2");
+      parts.push({
+        key: "win-by-two",
+        label: "win by 2",
+        icon: (
+          <GitCompareArrows size={11} strokeWidth={2.35} aria-hidden="true" />
+        ),
+      });
     }
 
     if (setup.manualEndOnly && setup.targetScore > 0) {
-      parts.push("manual end");
+      parts.push({
+        key: "manual-end",
+        label: "manual end",
+        icon: <Flag size={11} strokeWidth={2.35} aria-hidden="true" />,
+      });
     }
 
     if (setup.timerEnabled) {
-      parts.push(
-        setup.timerMode === "stopwatch"
-          ? "stopwatch"
-          : formatTimerText(setup.timerSeconds, "long"),
-      );
+      parts.push({
+        key: "timer",
+        label:
+          setup.timerMode === "stopwatch"
+            ? "stopwatch"
+            : formatTimerText(setup.timerSeconds, "long"),
+        icon: <Timer size={11} strokeWidth={2.35} aria-hidden="true" />,
+      });
     }
 
     if (setup.diceEnabled) {
-      parts.push("dice");
+      parts.push({
+        key: "dice",
+        label: "dice",
+        icon: <Dices size={11} strokeWidth={2.35} aria-hidden="true" />,
+      });
     }
 
     return parts;
@@ -497,7 +548,12 @@ export function HomeScreen({
       {quickSetups.length > 0 ? (
         <section className="quickSetups" aria-label="Games you play often">
           <div className="quickSetups__head">
-            <div className="homeList__title">Games you play often</div>
+            <div>
+              <div className="quickSetups__title">Games you play often</div>
+              <p className="quickSetups__copy">
+                Start a new game from your usual setups.
+              </p>
+            </div>
           </div>
           <div className="quickSetups__grid">
             {quickSetups.map((setup, index) => (
@@ -521,10 +577,20 @@ export function HomeScreen({
                     <div className="quickSetupCard__facts" aria-hidden="true">
                       {getSuggestionFacts(setup).map((fact) => (
                         <span
-                          key={`${setup.key}-${fact}`}
-                          className="quickSetupCard__fact"
+                          key={`${setup.key}-${fact.key}`}
+                          className={`quickSetupCard__fact${
+                            fact.tone === "accent"
+                              ? " quickSetupCard__fact--accent"
+                              : ""
+                          }`}
                         >
-                          {fact}
+                          <span
+                            className="quickSetupCard__factIcon"
+                            aria-hidden="true"
+                          >
+                            {fact.icon}
+                          </span>
+                          <span>{fact.label}</span>
                         </span>
                       ))}
                     </div>
@@ -589,6 +655,88 @@ export function HomeScreen({
                 </div>
               </button>
             ))}
+          </div>
+        </section>
+      ) : null}
+
+      {!isAuthenticated && quickSetups.length === 0 ? (
+        <section className="homeInfo" aria-label="About Plink">
+          <div className="homeInfo__panel">
+            <div className="homeInfo__panelGlow" aria-hidden="true" />
+
+            <div className="homeInfo__hero">
+              <div className="homeInfo__intro">
+                <div className="homeInfo__eyebrow">How Plink helps</div>
+                <h2 className="homeInfo__title">
+                  Built for real game nights, not disposable counters.
+                </h2>
+                <p className="homeInfo__copy">
+                  Reuse sessions, track teams, save progress, and check history
+                  without starting from scratch every round.
+                </p>
+              </div>
+
+              <aside className="homeInfo__spotlight" aria-label="Why Plink">
+                <div className="homeInfo__spotlightBadge">
+                  <Sparkles size={14} strokeWidth={2.4} aria-hidden="true" />
+                  <span>Made for repeat play</span>
+                </div>
+                <div className="homeInfo__spotlightValue">
+                  Set up once.
+                  <br />
+                  Keep the good parts.
+                </div>
+                <p className="homeInfo__spotlightCopy">
+                  Reuse lineups and pick up where you left off.
+                </p>
+              </aside>
+            </div>
+
+            <div className="homeInfo__features">
+              <article className="homeInfoFeature">
+                <div className="homeInfoFeature__icon">
+                  <History size={18} strokeWidth={2.35} aria-hidden="true" />
+                </div>
+                <div className="homeInfoFeature__body">
+                  <h3>Recurring sessions</h3>
+                  <p>
+                    Reuse common setups and continue unfinished games.
+                  </p>
+                </div>
+              </article>
+
+              <article className="homeInfoFeature">
+                <div className="homeInfoFeature__icon">
+                  <Cloud size={18} strokeWidth={2.35} aria-hidden="true" />
+                </div>
+                <div className="homeInfoFeature__body">
+                  <h3>Guest mode or sync</h3>
+                  <p>
+                    Start locally, or sign in later to sync across devices.
+                  </p>
+                </div>
+              </article>
+
+              <article className="homeInfoFeature">
+                <div className="homeInfoFeature__icon">
+                  <BarChart3 size={18} strokeWidth={2.35} aria-hidden="true" />
+                </div>
+                <div className="homeInfoFeature__body">
+                  <h3>History that matters</h3>
+                  <p>
+                    Review wins, streaks, and past results after each match.
+                  </p>
+                </div>
+              </article>
+            </div>
+
+            <div className="homeInfoLinks" aria-label="Helpful site links">
+              <a href="/about.html">About</a>
+              <a href="/faq.html">FAQ</a>
+              <a href="/privacy.html">Privacy Policy</a>
+              <a href="/support.html">Support</a>
+              <a href="/terms.html">Terms of Use</a>
+            </div>
           </div>
         </section>
       ) : null}

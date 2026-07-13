@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState, type ReactNode } from "react";
 import { DEFAULT_TEAM_ICON } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
@@ -32,6 +32,15 @@ type ConfirmPlayer = {
 type ConfirmDetail = {
   label: string;
   value: string;
+  icon?: ReactNode;
+  size?: "default" | "wide" | "compact";
+};
+
+type ConfirmSettingChip = {
+  label: string;
+  icon?: ReactNode;
+  tone?: "accent" | "default";
+  size?: "default" | "wide";
 };
 
 type ConfirmTeam = {
@@ -55,6 +64,7 @@ type ConfirmOptions = {
   eyebrow?: string;
   highlights?: string[];
   details?: ConfirmDetail[];
+  settingChips?: ConfirmSettingChip[];
   players?: ConfirmPlayer[];
   teams?: ConfirmTeam[];
   layout?: "default" | "feature";
@@ -113,6 +123,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       eyebrow: "",
       highlights: [],
       details: [],
+      settingChips: [],
       players: [],
       teams: [],
       layout: "default",
@@ -154,6 +165,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             eyebrow: resolveEyebrow(next),
             highlights: next.highlights ?? [],
             details: next.details ?? [],
+            settingChips: next.settingChips ?? [],
             players: next.players ?? [],
             teams: next.teams ?? [],
             layout: next.layout ?? "default",
@@ -177,6 +189,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             eyebrow: resolveEyebrow(next),
             highlights: next.highlights ?? [],
             details: next.details ?? [],
+            settingChips: next.settingChips ?? [],
             players: next.players ?? [],
             teams: next.teams ?? [],
             layout: next.layout ?? "default",
@@ -202,6 +215,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             eyebrow: next.eyebrow ?? "Edit",
             highlights: [],
             details: [],
+            settingChips: [],
             players: [],
             teams: [],
             layout: "default",
@@ -258,7 +272,32 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             {options.bodyTitle ? (
               <div className="dialog__bodyTitle">{options.bodyTitle}</div>
             ) : null}
-            {options.details?.length ? (
+            {options.layout === "feature" && options.details?.length ? (
+              <div className="dialog__detailCards" aria-label="Game details">
+                {options.details.map((detail) => (
+                  <div
+                    key={`${detail.label}-${detail.value}`}
+                    className={`dialog__detailCard${
+                      detail.size === "wide"
+                        ? " dialog__detailCard--wide"
+                        : detail.size === "compact"
+                          ? " dialog__detailCard--compact"
+                          : ""
+                    }`}
+                  >
+                    {detail.icon ? (
+                      <span className="dialog__detailCardIcon" aria-hidden="true">
+                        {detail.icon}
+                      </span>
+                    ) : null}
+                    <span className="dialog__detailCardCopy">
+                      <span className="dialog__detailLabel">{detail.label}</span>
+                      <span className="dialog__detailValue">{detail.value}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : options.details?.length ? (
               <div className="dialog__detailList" aria-label="Game details">
                 {options.details.map((detail) => (
                   <div
@@ -268,6 +307,31 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                     <span className="dialog__detailLabel">{detail.label}</span>
                     <span className="dialog__detailValue">{detail.value}</span>
                   </div>
+                ))}
+              </div>
+            ) : null}
+            {options.settingChips?.length ? (
+              <div className="dialog__settingChips" aria-label="Game settings">
+                {options.settingChips.map((chip) => (
+                  <span
+                    key={chip.label}
+                    className={`dialog__settingChip${
+                      chip.tone === "accent"
+                        ? " dialog__settingChip--accent"
+                        : ""
+                    }${
+                      chip.size === "wide"
+                        ? " dialog__settingChip--wide"
+                        : ""
+                    }`}
+                  >
+                    {chip.icon ? (
+                      <span className="dialog__settingChipIcon" aria-hidden="true">
+                        {chip.icon}
+                      </span>
+                    ) : null}
+                    <span>{chip.label}</span>
+                  </span>
                 ))}
               </div>
             ) : null}

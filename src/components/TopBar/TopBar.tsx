@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Ellipsis, Plus, Undo2 } from "lucide-react";
 import "./TopBar.css";
+
+type MetaItem = {
+  label: string;
+  tone?: "accent" | "muted";
+  icon?: ReactNode;
+};
 
 type Props = {
   accentTone?: "default" | "team";
@@ -15,7 +21,7 @@ type Props = {
   authLabel?: string;
   authIcon?: React.ReactNode;
   authAriaLabel?: string;
-  metaItems?: Array<{ label: string; tone?: "accent" | "muted" }>;
+  metaItems?: MetaItem[];
   onBack?: () => void;
   onLogoClick?: () => void;
   onPrimaryAction?: () => void;
@@ -135,10 +141,17 @@ export function TopBar({
             <div className="brand__meta">
               {metaItems.map((item) => (
                 <span
-                  key={item.label}
-                  className={`metaChip metaChip--${item.tone ?? "muted"}`}
+                  key={`${item.label}-${item.tone ?? "muted"}`}
+                  className={`metaChip metaChip--${item.tone ?? "muted"}${
+                    item.icon ? " metaChip--withIcon" : ""
+                  }`}
                 >
-                  {item.label}
+                  {item.icon ? (
+                    <span className="metaChip__icon" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                  ) : null}
+                  <span>{item.label}</span>
                 </span>
               ))}
             </div>

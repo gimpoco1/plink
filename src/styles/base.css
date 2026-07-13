@@ -39,6 +39,49 @@ input {
   isolation: isolate;
 }
 
+.appLoading {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.appLoading__inner {
+  display: grid;
+  justify-items: center;
+}
+
+.appLoading__mark {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  animation: appLoadingPulse 1.7s ease-in-out infinite;
+}
+
+.appLoading__img {
+  width: 92px;
+  height: 92px;
+  display: block;
+  filter:
+    drop-shadow(0 0 22px rgba(216, 255, 79, 0.12))
+    drop-shadow(0 14px 30px rgba(0, 0, 0, 0.24));
+}
+
+@keyframes appLoadingPulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.96);
+    opacity: 0.84;
+  }
+
+  50% {
+    transform: translateY(-6px) scale(1);
+    opacity: 1;
+  }
+}
+
 .appView {
   flex: 1;
   min-height: 0;
@@ -171,6 +214,10 @@ input {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .appLoading__mark {
+    animation: none;
+  }
+
   *,
   *::before,
   *::after {

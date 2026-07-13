@@ -49,6 +49,7 @@ const TEAM_ICON_COMPONENTS = {
 
 export type ManagePlayersDialogHandle = {
   open: () => void;
+  openWithCreate: () => void;
   close: () => void;
 };
 
@@ -131,6 +132,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
     const [search, setSearch] = useState("");
     const [saveForLater, setSaveForLater] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [showRosterImmediately, setShowRosterImmediately] = useState(false);
     const [stagedProfileIds, setStagedProfileIds] = useState<Set<string>>(
       new Set(),
     );
@@ -457,6 +459,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
       setSearch("");
       setSaveForLater(isAuthenticated);
       setIsCreating(false);
+      setShowRosterImmediately(false);
       setEditingPlayerId(null);
       setEditingName("");
       setEditingColor(AVATAR_COLORS[0]?.value ?? "#64748b");
@@ -470,11 +473,23 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
       dialogRef.current?.showModal();
     }
 
+    function openWithCreate() {
+      resetState();
+      setIsCreating(true);
+      setShowRosterImmediately(true);
+      dialogRef.current?.showModal();
+      queueMicrotask(() => nameInputRef.current?.focus());
+    }
+
     function close() {
       dialogRef.current?.close();
     }
 
-    useImperativeHandle(ref, () => ({ open, close }), [isAuthenticated]);
+    useImperativeHandle(
+      ref,
+      () => ({ open, openWithCreate, close }),
+      [isAuthenticated],
+    );
 
     function toggleProfile(profileId: string) {
       setStagedProfileIds((prev) => {
@@ -1023,6 +1038,7 @@ export const ManagePlayersDialog = forwardRef<ManagePlayersDialogHandle, Props>(
                     variant="dark"
                     className="managePlayersDialog__savedPicker"
                     listMaxHeight="170px"
+                    showListImmediately={showRosterImmediately}
                     searchValue={search}
                     onSearchChange={setSearch}
                     listTitle={isAuthenticated ? "Saved players" : "Add players"}

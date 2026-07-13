@@ -38,7 +38,7 @@ export function SessionsScreen({
   onDelete,
 }: SessionsScreenProps) {
   const { isLoading, isPro, maxSessions } = useEntitlementsContext();
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("active");
+  const [filter, setFilter] = useState<"all" | "inProgress" | "completed">("inProgress");
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
   const remainingSessions =
     maxSessions === null ? null : Math.max(0, maxSessions - games.length);
@@ -61,7 +61,7 @@ export function SessionsScreen({
   const sessions = useMemo(() => {
     const filtered = games.filter((game) => {
       const completed = isGameComplete(game);
-      if (filter === "active") return !completed;
+      if (filter === "inProgress") return !completed;
       if (filter === "completed") return completed;
       return true;
     });
@@ -138,7 +138,7 @@ export function SessionsScreen({
               role="group"
               aria-label="Filter sessions"
             >
-              {(["all", "active", "completed"] as const).map((value) => (
+              {(["all", "inProgress", "completed"] as const).map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -147,7 +147,9 @@ export function SessionsScreen({
                 >
                   {value === "completed"
                     ? "Done"
-                    : value[0].toUpperCase() + value.slice(1)}
+                    : value === "inProgress"
+                      ? "In Progress"
+                      : value[0].toUpperCase() + value.slice(1)}
                 </button>
               ))}
             </div>

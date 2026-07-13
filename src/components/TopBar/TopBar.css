@@ -223,6 +223,27 @@
   white-space: nowrap;
 }
 
+.metaChip--withIcon {
+  gap: 7px;
+  padding: 0 11px 0 9px;
+  letter-spacing: 0.04em;
+}
+
+.metaChip__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  opacity: 0.96;
+}
+
+.metaChip__icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
 .metaChip--muted {
   color: var(--muted);
   background: rgba(255, 255, 255, 0.04);
@@ -232,6 +253,21 @@
   color: var(--topbar-accent);
   background: rgba(var(--topbar-accent-rgb), 0.1);
   border-color: rgba(var(--topbar-accent-rgb), 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.metaChip--accent.metaChip--withIcon {
+  background:
+    linear-gradient(180deg, rgba(var(--topbar-accent-rgb), 0.16), rgba(var(--topbar-accent-rgb), 0.08)),
+    rgba(var(--topbar-accent-rgb), 0.08);
+}
+
+.metaChip--muted.metaChip--withIcon {
+  color: rgba(217, 228, 235, 0.88);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .topbarMenu {
@@ -278,6 +314,15 @@
     font-size: 9px;
     padding: 0 8px;
     min-height: 22px;
+  }
+  .metaChip--withIcon {
+    gap: 6px;
+    padding: 0 9px 0 7px;
+  }
+  .metaChip__icon,
+  .metaChip__icon svg {
+    width: 12px;
+    height: 12px;
   }
 }
 
