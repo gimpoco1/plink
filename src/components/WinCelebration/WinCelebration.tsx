@@ -106,6 +106,7 @@ export function WinCelebration({
     resultKind === "winner" && standings.length === 1;
   const podiumStandings = [standings[0], standings[1], standings[2]];
   const listedStandings = standings.slice(3);
+  const rankCounts = getRankCounts(standings);
   const statsLabels = isSingleParticipantCompletion && !isTeamGame
     ? {
         title: "Player stats",
@@ -218,6 +219,7 @@ export function WinCelebration({
       window.setTimeout(() => setShareStatus("idle"), 2200);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
+        setShareStatus("idle");
         return;
       }
       setShareStatus("error");
@@ -366,43 +368,57 @@ export function WinCelebration({
                 }`}
                 aria-label="Top three"
               >
-                {podiumStandings.map((entry, index) => (
-                  <div
-                    key={entry?.id ?? `empty-podium-${index + 1}`}
-                    aria-label={
-                      entry
-                        ? `${entry.name}, rank ${entry.rank}, score ${entry.score}`
-                        : `No rank ${index + 1} player`
-                    }
-                    className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
-                      entry?.isWinner ? " winFx__podiumSlot--winner" : ""
-                    }${
-                      entry ? "" : " winFx__podiumSlot--empty"
-                    }`}
-                  >
-                    {entry ? (
-                      <div className="winFx__podiumAvatarWrap">
-                        {entry.isWinner ? (
-                          <Crown
-                            className="winFx__crown"
-                            size={30}
-                            strokeWidth={2.2}
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
-                      </div>
-                    ) : null}
-                    <div className="winFx__podiumBase">
-                      <div className="winFx__podiumRank">
-                        {entry?.rank ?? index + 1}
-                      </div>
+                {podiumStandings.map((entry, index) => {
+                  const isTied = entry ? isTiedRank(entry, rankCounts) : false;
+                  const rank = entry?.rank ?? index + 1;
+                  return (
+                    <div
+                      key={entry?.id ?? `empty-podium-${index + 1}`}
+                      aria-label={
+                        entry
+                          ? `${entry.name}, rank ${entry.rank}, score ${entry.score}${
+                              isTied ? ", tied score" : ""
+                            }`
+                          : `No rank ${index + 1} player`
+                      }
+                      className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
+                        entry?.isWinner ? " winFx__podiumSlot--winner" : ""
+                      }${
+                        entry ? "" : " winFx__podiumSlot--empty"
+                      }`}
+                    >
                       {entry ? (
-                        <div className="winFx__podiumName">{entry.name}</div>
+                        <div className="winFx__podiumAvatarWrap">
+                          {entry.isWinner ? (
+                            <Crown
+                              className="winFx__crown"
+                              size={30}
+                              strokeWidth={2.2}
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
+                          <div className="winFx__podiumName">{entry.name}</div>
+                        </div>
                       ) : null}
+                      <div className="winFx__podiumBase">
+                        <div className="winFx__podiumRank">
+                          <span className="winFx__podiumRankNumber">
+                            {rank}
+                          </span>
+                          <span className="winFx__podiumRankSuffix">
+                            {getOrdinalSuffix(rank)}
+                          </span>
+                        </div>
+                        {entry ? (
+                          <div className="winFx__podiumScoreChip">
+                            {formatPodiumScore(entry.score, isTied)}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : null}
             {listedStandings.length > 0 ? (
@@ -419,6 +435,9 @@ export function WinCelebration({
                         <strong>{entry.name}</strong>
                         {entry.isWinner ? <span>Champion</span> : null}
                         {isDraw && entry.rank === 1 ? <span>Draw</span> : null}
+                        {isTiedRank(entry, rankCounts) ? (
+                          <span>{formatTieScore(entry.score)}</span>
+                        ) : null}
                       </div>
                     </div>
                     <div className="winFx__score">{entry.score}</div>
@@ -538,6 +557,46 @@ function buildWinShareText({
   return lines.filter((line): line is string => Boolean(line)).join("\n");
 }
 
+function getRankCounts(standings: Standing[]) {
+  return standings.reduce((counts, entry) => {
+    counts.set(entry.rank, (counts.get(entry.rank) ?? 0) + 1);
+    return counts;
+  }, new Map<number, number>());
+}
+
+function isTiedRank(entry: Standing, rankCounts: Map<number, number>) {
+  return (rankCounts.get(entry.rank) ?? 0) > 1;
+}
+
+function formatTieScore(score: number) {
+  return `Tied · ${formatScore(score)}`;
+}
+
+function formatPodiumScore(score: number, isTied: boolean) {
+  return isTied ? formatTieScore(score) : formatScore(score);
+}
+
+function formatScore(score: number) {
+  return `${score} pt${Math.abs(score) === 1 ? "" : "s"}`;
+}
+
+function getOrdinalSuffix(rank: number) {
+  const absoluteRank = Math.abs(rank);
+  const tens = absoluteRank % 100;
+  if (tens >= 11 && tens <= 13) return "th";
+
+  switch (absoluteRank % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
 function WinShareCard({
   cardRef,
   gameName,
@@ -560,10 +619,9 @@ function WinShareCard({
   }).format(new Date());
   const winnerStanding =
     standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
-  const podiumEntries = [2, 1, 3].map(
-    (rank) => standings.find((entry) => entry.rank === rank) ?? null,
-  );
-  const lowerStandings = standings.filter((entry) => entry.rank > 3);
+  const rankCounts = getRankCounts(standings);
+  const podiumEntries = [standings[1], standings[0], standings[2]];
+  const lowerStandings = standings.slice(3);
 
   return (
     <div className="winShareRenderHost" aria-hidden="true">
@@ -606,17 +664,18 @@ function WinShareCard({
             <h2>Final standings</h2>
             <div className="winSharePodium">
               {podiumEntries.map((entry, index) => {
-                const rank = index === 0 ? 2 : index === 1 ? 1 : 3;
+                const slotRank = index === 0 ? 2 : index === 1 ? 1 : 3;
+                const isTied = entry ? isTiedRank(entry, rankCounts) : false;
                 return (
                   <div
-                    key={entry?.id ?? `share-empty-${rank}`}
-                    className={`winSharePodium__slot winSharePodium__slot--${rank}${
-                      rank === 1 ? " winSharePodium__slot--winner" : ""
+                    key={entry?.id ?? `share-empty-${slotRank}`}
+                    className={`winSharePodium__slot winSharePodium__slot--${slotRank}${
+                      slotRank === 1 ? " winSharePodium__slot--winner" : ""
                     }${entry ? "" : " winSharePodium__slot--empty"}`}
                   >
                     {entry ? (
                       <div className="winSharePodium__avatarWrap">
-                        {rank === 1 ? (
+                        {entry.rank === 1 ? (
                           <Crown
                             className="winSharePodium__crown"
                             size={30}
@@ -625,13 +684,23 @@ function WinShareCard({
                           />
                         ) : null}
                         <ShareAvatar entry={entry} isTeamGame={isTeamGame} />
+                        <div className="winSharePodium__name">
+                          {entry.name}
+                        </div>
                       </div>
                     ) : null}
                     <div className="winSharePodium__base">
-                      <div className="winSharePodium__rank">{rank}</div>
+                      <div className="winSharePodium__rank">
+                        <span className="winSharePodium__rankNumber">
+                          {entry?.rank ?? slotRank}
+                        </span>
+                        <span className="winSharePodium__rankSuffix">
+                          {getOrdinalSuffix(entry?.rank ?? slotRank)}
+                        </span>
+                      </div>
                       {entry ? (
-                        <div className="winSharePodium__name">
-                          {entry.name}
+                        <div className="winSharePodium__scoreChip">
+                          {formatPodiumScore(entry.score, isTied)}
                         </div>
                       ) : null}
                     </div>
