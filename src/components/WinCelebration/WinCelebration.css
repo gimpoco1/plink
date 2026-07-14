@@ -24,8 +24,16 @@ body.winFx-scrollLock .content {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(1200px 700px at 50% 12%, rgba(var(--win-accent-rgb), 0.28), transparent 60%),
-    radial-gradient(900px 560px at 50% 82%, rgba(var(--win-accent-rgb), 0.08), transparent 72%),
+    radial-gradient(
+      1200px 700px at 50% 12%,
+      rgba(var(--win-accent-rgb), 0.28),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 560px at 50% 82%,
+      rgba(var(--win-accent-rgb), 0.08),
+      transparent 72%
+    ),
     rgba(3, 8, 15, 0.8);
   backdrop-filter: blur(12px) saturate(1.05);
   animation: winVeil 420ms ease-out both;
@@ -49,7 +57,11 @@ body.winFx-scrollLock .content {
   border-radius: 999px;
   transform-origin: 50% 100%;
   transform: translate(-50%, -100%) rotate(var(--ray-rotate));
-  background: linear-gradient(to top, rgba(var(--win-accent-rgb), 0), rgba(var(--win-accent-rgb), 0.95));
+  background: linear-gradient(
+    to top,
+    rgba(var(--win-accent-rgb), 0),
+    rgba(var(--win-accent-rgb), 0.95)
+  );
   filter: drop-shadow(0 0 12px rgba(var(--win-accent-rgb), 0.5));
   opacity: 0;
   animation: rayPulse 1200ms ease-out forwards;
@@ -75,7 +87,11 @@ body.winFx-scrollLock .content {
   left: var(--orb-left);
   top: var(--orb-top);
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(var(--win-accent-rgb), 0.14), rgba(var(--win-accent-rgb), 0));
+  background: radial-gradient(
+    circle,
+    rgba(var(--win-accent-rgb), 0.14),
+    rgba(var(--win-accent-rgb), 0)
+  );
   filter: blur(10px);
   opacity: 0;
   animation:
@@ -111,7 +127,11 @@ body.winFx-scrollLock .content {
   border-radius: 28px;
   background:
     linear-gradient(180deg, rgba(25, 34, 42, 0.98), rgba(13, 19, 24, 0.98)),
-    radial-gradient(900px 280px at 50% 0%, rgba(var(--win-accent-rgb), 0.12), transparent 68%);
+    radial-gradient(
+      900px 280px at 50% 0%,
+      rgba(var(--win-accent-rgb), 0.12),
+      transparent 68%
+    );
   box-shadow:
     0 0 0 1px rgba(var(--win-accent-rgb), 0.16),
     0 30px 90px rgba(0, 0, 0, 0.52),
@@ -137,8 +157,12 @@ body.winFx-scrollLock .content {
   height: 140px;
   border-radius: 999px;
   transform: translateX(-50%);
-  background:
-    radial-gradient(circle, rgba(var(--win-accent-rgb), 0.22), rgba(var(--win-accent-rgb), 0.02) 55%, rgba(var(--win-accent-rgb), 0) 72%);
+  background: radial-gradient(
+    circle,
+    rgba(var(--win-accent-rgb), 0.22),
+    rgba(var(--win-accent-rgb), 0.02) 55%,
+    rgba(var(--win-accent-rgb), 0) 72%
+  );
   filter: blur(2px);
   opacity: 0;
   animation:
@@ -453,8 +477,12 @@ body.winFx-scrollLock .content {
   z-index: 3;
   grid-row: 1;
   display: grid;
+  grid-template-rows: auto auto;
   place-items: center;
-  margin-bottom: 7px;
+  gap: 3px;
+  margin-bottom: 3px;
+  min-width: 0;
+  max-width: calc(100% + 22px);
 }
 
 .winFx__podiumSlot--2 .winFx__podiumAvatarWrap {
@@ -466,7 +494,8 @@ body.winFx-scrollLock .content {
 }
 
 .winFx__podiumSlot--1 .winFx__podiumAvatarWrap {
-  animation: winnerAvatarHop 1350ms cubic-bezier(0.34, 1.56, 0.64, 1) 900ms infinite;
+  animation: winnerAvatarHop 1350ms cubic-bezier(0.34, 1.56, 0.64, 1) 900ms
+    infinite;
 }
 
 .winFx__podium .winFx__avatar {
@@ -505,8 +534,7 @@ body.winFx-scrollLock .content {
   left: 50%;
   color: var(--accent);
   fill: rgba(var(--win-accent-rgb), 0.2);
-  filter:
-    drop-shadow(0 6px 8px rgba(0, 0, 0, 0.28))
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.28))
     drop-shadow(0 0 10px rgba(var(--win-accent-rgb), 0.28));
   transform: translateX(-50%) rotate(-6deg);
   animation: crownDrop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 420ms both;
@@ -520,7 +548,7 @@ body.winFx-scrollLock .content {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 3px;
+  gap: 6px;
   padding: 16px 8px 8px;
   border-radius: 4px 4px 7px 7px;
   background:
@@ -588,7 +616,11 @@ body.winFx-scrollLock .content {
 
 .winFx__podiumSlot--winner .winFx__podiumBase {
   background:
-    radial-gradient(circle at 50% 35%, rgba(var(--win-accent-rgb), 0.14), transparent 42%),
+    radial-gradient(
+      circle at 50% 35%,
+      rgba(var(--win-accent-rgb), 0.14),
+      transparent 42%
+    ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.88), transparent 34%),
     linear-gradient(180deg, #fbfdf9, #dfe8df);
   box-shadow:
@@ -601,13 +633,20 @@ body.winFx-scrollLock .content {
 .winFx__podiumSlot--winner .winFx__podiumBase::before {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 55%),
-    linear-gradient(180deg, rgb(var(--win-accent-rgb)), rgba(var(--win-accent-rgb), 0.78));
+    linear-gradient(
+      180deg,
+      rgb(var(--win-accent-rgb)),
+      rgba(var(--win-accent-rgb), 0.78)
+    );
   border-color: rgba(var(--win-accent-rgb), 0.72);
 }
 
 .winFx__podiumRank {
   min-width: 0;
   height: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -620,6 +659,13 @@ body.winFx-scrollLock .content {
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.42),
     0 6px 14px rgba(31, 43, 6, 0.12);
+}
+
+.winFx__podiumRankSuffix {
+  margin-top: 0.08em;
+  margin-left: 1px;
+  font-size: 0.34em;
+  line-height: 1;
 }
 
 .winFx__podiumRankSuffix {
@@ -648,7 +694,7 @@ body.winFx-scrollLock .content {
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.02em;
-  line-height: 1;
+  line-height: 1.25;
   text-align: center;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5))
@@ -656,6 +702,11 @@ body.winFx-scrollLock .content {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.winFx__podiumName > span,
+.winSharePodium__name > span {
+  display: inline-block;
 }
 
 .winFx__podiumSlot--winner .winFx__podiumName {
@@ -700,11 +751,21 @@ body.winFx-scrollLock .content {
   animation: rowIn 480ms ease-out forwards;
 }
 
-.winFx__row:nth-child(1) { animation-delay: 220ms; }
-.winFx__row:nth-child(2) { animation-delay: 290ms; }
-.winFx__row:nth-child(3) { animation-delay: 360ms; }
-.winFx__row:nth-child(4) { animation-delay: 430ms; }
-.winFx__row:nth-child(5) { animation-delay: 500ms; }
+.winFx__row:nth-child(1) {
+  animation-delay: 220ms;
+}
+.winFx__row:nth-child(2) {
+  animation-delay: 290ms;
+}
+.winFx__row:nth-child(3) {
+  animation-delay: 360ms;
+}
+.winFx__row:nth-child(4) {
+  animation-delay: 430ms;
+}
+.winFx__row:nth-child(5) {
+  animation-delay: 500ms;
+}
 
 .winFx__row--winner {
   background: rgba(var(--win-accent-rgb), 0.1);
@@ -1461,8 +1522,12 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes winVeil {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes cardGlow {
@@ -1521,7 +1586,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes haloPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.72;
     transform: translateX(-50%) scale(1);
   }
@@ -1532,7 +1598,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes medalHover {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -1552,7 +1619,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes streakHeroPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 18px rgba(var(--win-accent-rgb), 0.06);
     transform: scale(1);
   }
@@ -1641,7 +1709,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes winnerAvatarHop {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) scale(1);
   }
   34% {
@@ -1653,7 +1722,8 @@ body.winFx-scrollLock .content {
 }
 
 @keyframes winnerRowPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.04),
       0 0 0 rgba(var(--win-accent-rgb), 0);
@@ -1693,7 +1763,8 @@ body.winFx-scrollLock .content {
   }
   100% {
     opacity: 0;
-    transform: translate3d(var(--confetti-drift), 118vh, 0) rotate(var(--confetti-final-rotate));
+    transform: translate3d(var(--confetti-drift), 118vh, 0)
+      rotate(var(--confetti-final-rotate));
   }
 }
 

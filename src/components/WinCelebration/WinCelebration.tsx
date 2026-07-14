@@ -1,6 +1,7 @@
 import {
   RefObject,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -50,6 +51,63 @@ const TEAM_ICON_COMPONENTS = {
 } as const;
 
 type ShareStatus = "idle" | "preparing" | "copied" | "error";
+
+const PODIUM_NAME_MAX_FONT_SIZE = 12;
+const PODIUM_NAME_MIN_FONT_SIZE = 8;
+const PODIUM_NAME_FIT_BUFFER = 2;
+
+function FittedPodiumName({
+  name,
+  className,
+}: {
+  name: string;
+  className: string;
+}) {
+  const nameRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    function fitName() {
+      const element = nameRef.current;
+      const text = textRef.current;
+      if (!element || !text) return;
+
+      element.style.width = "";
+      element.style.fontSize = `${PODIUM_NAME_MAX_FONT_SIZE}px`;
+      const labelWidth = element.clientWidth;
+      element.style.width = `${labelWidth}px`;
+
+      const styles = window.getComputedStyle(element);
+      const horizontalPadding =
+        Number.parseFloat(styles.paddingLeft) +
+        Number.parseFloat(styles.paddingRight);
+      const availableWidth =
+        element.clientWidth - horizontalPadding - PODIUM_NAME_FIT_BUFFER;
+      const requiredWidth = text.getBoundingClientRect().width;
+      const fittedSize =
+        requiredWidth > availableWidth
+          ? (PODIUM_NAME_MAX_FONT_SIZE * availableWidth) / requiredWidth
+          : PODIUM_NAME_MAX_FONT_SIZE;
+
+      element.style.fontSize = `${Math.max(
+        PODIUM_NAME_MIN_FONT_SIZE,
+        Math.min(PODIUM_NAME_MAX_FONT_SIZE, fittedSize),
+      )}px`;
+    }
+
+    fitName();
+    window.addEventListener("resize", fitName);
+    void document.fonts?.ready.then(fitName);
+
+    return () => window.removeEventListener("resize", fitName);
+  }, [name]);
+
+  return (
+    <div ref={nameRef} className={className} title={name}>
+      <span ref={textRef}>{name}</span>
+    </div>
+  );
+}
 
 type Props = {
   isTeamGame?: boolean;
@@ -383,7 +441,10 @@ export function WinCelebration({
                           />
                         ) : null}
                         <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
-                        <div className="winFx__podiumName">{entry.name}</div>
+                        <FittedPodiumName
+                          className="winFx__podiumName"
+                          name={entry.name}
+                        />
                       </div>
                     ) : null}
                     <div className="winFx__podiumBase">
@@ -420,6 +481,9 @@ export function WinCelebration({
                         <strong>{entry.name}</strong>
                         {entry.isWinner ? <span>Champion</span> : null}
                         {isDraw && entry.rank === 1 ? <span>Draw</span> : null}
+                        {isTiedRank(entry, rankCounts) ? (
+                          <span>{formatTieScore(entry.score)}</span>
+                        ) : null}
                       </div>
                     </div>
                     <div className="winFx__score">{entry.score}</div>
@@ -738,7 +802,10 @@ function WinShareCard({
                           />
                         ) : null}
                         <ShareAvatar entry={entry} isTeamGame={isTeamGame} />
-                        <div className="winSharePodium__name">{entry.name}</div>
+                        <FittedPodiumName
+                          className="winSharePodium__name"
+                          name={entry.name}
+                        />
                       </div>
                     ) : null}
                     <div className="winSharePodium__base">
@@ -820,6 +887,40 @@ function ShareStat({
   );
 }
 
+function ShareAvatar({
+  entry,
+  isTeamGame,
+  compact = false,
+}: {
+  entry: Standing;
+  isTeamGame: boolean;
+  compact?: boolean;
+}) {
+  const className = `winShareAvatar${compact ? " winShareAvatar--compact" : ""}`;
+  if (isTeamGame && entry.icon) {
+    return (
+      <div className={`${className} winShareAvatar--team`}>
+        <TeamIconGlyph icon={entry.icon} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={className} style={avatarStyleFor(entry.avatarColor)}>
+      {entry.initials}
+    </div>
+  );
+}
+function toShareFileName(value: string) {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 48) || "plink"
+  );
+}
+
 function StandingAvatar({
   entry,
   isTeamGame,
@@ -853,36 +954,3 @@ function TeamIconGlyph({ icon }: { icon?: string }) {
     ] ?? Dumbbell;
   return <Icon size={18} strokeWidth={2.25} aria-hidden="true" />;
 }
-
-const ShareAvatar = ({
-  entry,
-  isTeamGame,
-  compact = false,
-}: {
-  entry: Standing;
-  isTeamGame: boolean;
-  compact?: boolean;
-}) => {
-  if (isTeamGame && entry.icon) {
-    return (
-      <div
-        className={`winShareAvatar winShareAvatar--team${
-          compact ? " winShareAvatar--compact" : ""
-        }`}
-        aria-hidden="true"
-      >
-        <TeamIconGlyph icon={entry.icon} />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`winShareAvatar${compact ? " winShareAvatar--compact" : ""}`}
-      style={avatarStyleFor(entry.avatarColor)}
-      aria-hidden="true"
-    >
-      {entry.initials}
-    </div>
-  );
-};
