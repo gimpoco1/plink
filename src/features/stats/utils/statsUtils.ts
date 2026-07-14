@@ -1,11 +1,11 @@
-import type { Game } from "../../types";
-import type { ReportStatusKind, SubjectReport } from "../../utils/advancedStats";
-import { formatAccountPlayerName, getGameDisplayName } from "../../utils/text";
+import type { Game } from "../../../types";
+import type { ReportStatusKind, SubjectReport } from "../../../utils/advancedStats";
+import { formatAccountPlayerName, getGameDisplayName } from "../../../utils/text";
 import {
   ALL_CHART_GAMES,
   type CompareChartPoint,
   type SelectableEntity,
-} from "./statsTypes";
+} from "../types/statsTypes";
 
 export function getDisplayName(report: SubjectReport) {
   if (report.kind === "players" && report.isAccountPlayer) {

@@ -1,10 +1,10 @@
 import { Check, CircleX, Lock, Minus, Swords, Trophy } from "lucide-react";
-import { STATUS_LABELS } from "./statsTypes";
+import { STATUS_LABELS } from "../types/statsTypes";
 import type {
   HeadToHeadSummary,
   StreakHistorySummary,
   StreakSubjectSummary,
-} from "./statsUtils";
+} from "../utils/statsUtils";
 
 type StatsAdvancedCardsProps = {
   activeKind: "players" | "teams";

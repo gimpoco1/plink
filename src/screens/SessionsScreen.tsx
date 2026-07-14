@@ -8,7 +8,7 @@ import { useEntitlementsContext } from "../hooks/useEntitlements";
 import { isGameComplete } from "../utils/ranking";
 import { getGameDisplayName } from "../utils/text";
 import "../components/GameRowCard/GameRowCard.css";
-import "./SessionsScreen.css";
+import "../features/sessions/styles/SessionsScreen.css";
 
 type SessionsScreenProps = {
   games: Game[];

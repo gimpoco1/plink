@@ -31,7 +31,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Classic Italian card game, commonly played to 31.",
-    rulesNote: "Tressette scoring can vary by table, but matches are commonly played to 31 points.",
+    rulesNote:
+      "Tressette scoring can vary by table, but matches are commonly played to 31 points.",
     rulesSummary: [
       "Players or teams score points from cards won in each hand.",
       "Use your usual table scoring for cards, declarations, and bonus points.",
@@ -52,7 +53,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Best of 7 style match. Add 1 point for each hand won.",
-    rulesNote: "In Briscola, each hand is usually decided by card points, with 61 points winning the hand.",
+    rulesNote:
+      "In Briscola, each hand is usually decided by card points, with 61 points winning the hand.",
     rulesSummary: [
       "A deck hand has 120 total card points.",
       "The player or team with more than 60 card points wins the hand.",
@@ -73,7 +75,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Best of 7 style match. Add 1 point for each hand won.",
-    rulesNote: "Scopa points are usually counted at the end of each hand using your table's scoring rules.",
+    rulesNote:
+      "Scopa points are usually counted at the end of each hand using your table's scoring rules.",
     rulesSummary: [
       "Common scoring includes cards, coins, settebello, primiera, and scopas.",
       "Decide the hand winner using your usual table rules.",
@@ -94,7 +97,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Longer card match preset with the standard high target.",
-    rulesNote: "Burraco scoring is cumulative and is commonly played to a high target such as 2005.",
+    rulesNote:
+      "Burraco scoring is cumulative and is commonly played to a high target such as 2005.",
     rulesSummary: [
       "Count each side's points after every deal using your usual Burraco scoring.",
       "Bonuses and penalties can vary by table or rule set.",
@@ -115,7 +119,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "A familiar points target for Rummy-style rounds.",
-    rulesNote: "Rummy 500 is commonly played as a cumulative race to 500 points.",
+    rulesNote:
+      "Rummy 500 is commonly played as a cumulative race to 500 points.",
     rulesSummary: [
       "Players score from melds and cards laid off.",
       "Points left in hand are usually subtracted.",
@@ -136,7 +141,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Track cumulative points across hands.",
-    rulesNote: "UNO is often played by scoring opponents' remaining cards after someone goes out.",
+    rulesNote:
+      "UNO is often played by scoring opponents' remaining cards after someone goes out.",
     rulesSummary: [
       "When a player goes out, count points from opponents' remaining cards.",
       "Number cards count face value; action card values depend on your rule set.",
@@ -157,7 +163,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Count down from 501, lowest score wins.",
-    rulesNote: "Darts 501 starts each player at 501 and counts down to exactly zero.",
+    rulesNote:
+      "Darts 501 starts each player at 501 and counts down to exactly zero.",
     rulesSummary: [
       "Start each player at 501.",
       "Subtract the points scored each turn.",
@@ -178,7 +185,8 @@ export const GAME_PRESETS: GamePreset[] = [
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Simple race to 21 for casual matches.",
-    rulesNote: "Cornhole is commonly played as a race to 21 using cancellation scoring.",
+    rulesNote:
+      "Cornhole is commonly played as a race to 21 using cancellation scoring.",
     rulesSummary: [
       "Bags on the board and in the hole score by your usual rules.",
       "Only the difference between players or teams usually counts each round.",

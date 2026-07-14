@@ -1,4 +1,4 @@
-import type { ReportStatusKind } from "../../utils/advancedStats";
+import type { ReportStatusKind } from "../../../utils/advancedStats";
 
 export const ALL_CHART_GAMES = "__all__";
 
