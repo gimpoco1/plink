@@ -691,7 +691,7 @@ body.winFx-scrollLock .content {
   max-width: 112px;
   padding: 1px 4px 6px;
   color: rgba(246, 248, 247, 0.88);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.02em;
   line-height: 1.25;
@@ -1302,6 +1302,9 @@ body.winFx-scrollLock .content {
       rgba(var(--share-accent-rgb), 0.78)
     );
   border-color: rgba(var(--share-accent-rgb), 0.72);
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+  transform: scaleY(0.95);
+  transform-origin: 50% 100%;
 }
 
 .winSharePodium__slot--2 .winSharePodium__base {
@@ -1324,6 +1327,8 @@ body.winFx-scrollLock .content {
 
 .winSharePodium__slot--3 .winSharePodium__base::before {
   border-top-left-radius: 0;
+  transform: skewX(24deg) scaleY(0.95);
+  transform-origin: 50% 100%;
 }
 
 .winSharePodium__rank {
@@ -1352,7 +1357,7 @@ body.winFx-scrollLock .content {
   max-width: 112px;
   padding: 1px 4px 6px;
   color: rgba(246, 248, 247, 0.88);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.02em;
   line-height: 1.25;
@@ -1855,7 +1860,7 @@ body.winFx-scrollLock .content {
   .winFx__podiumName {
     max-width: 82px;
     padding: 0 3px 3px;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .winFx__playerStatsGrid {

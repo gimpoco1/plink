@@ -52,7 +52,7 @@ const TEAM_ICON_COMPONENTS = {
 
 type ShareStatus = "idle" | "preparing" | "copied" | "error";
 
-const PODIUM_NAME_MAX_FONT_SIZE = 12;
+const PODIUM_NAME_MAX_FONT_SIZE = 13;
 const PODIUM_NAME_MIN_FONT_SIZE = 8;
 const PODIUM_NAME_FIT_BUFFER = 2;
 
