@@ -44,7 +44,7 @@ import {
   formatPlayerName,
   getGameDisplayName,
 } from "./utils/text";
-import { findWinner, sortPlayers } from "./utils/ranking";
+import { findWinner, isGameComplete, sortPlayers } from "./utils/ranking";
 import { getGameParticipants } from "./utils/gameParticipants";
 import {
   computeProfileStats,
@@ -89,6 +89,17 @@ import {
   type LocalPlayer,
 } from "./storage/localPlayers";
 type PresetDraftIntent = "edit" | "teams-detour" | null;
+
+function getGameStatsOrder(game: Game) {
+  return game.endedAt ?? game.updatedAt ?? game.createdAt;
+}
+
+function getGamesThroughSession(games: Game[], currentGame: Game) {
+  const cutoff = getGameStatsOrder(currentGame);
+  return games.filter(
+    (game) => game.id === currentGame.id || getGameStatsOrder(game) <= cutoff,
+  );
+}
 
 export default function App() {
   const reduceMotion = useReducedMotion();
@@ -211,11 +222,6 @@ export default function App() {
       return "";
     }
   });
-  const profileStats = useMemo(() => computeProfileStats(games), [games]);
-  const teamStats = useMemo(
-    () => computeTeamStats(games, teams, teamMembers),
-    [games, teams, teamMembers],
-  );
   const canViewSavedData = !!session;
   const visibleGames = canViewSavedData && !gamesReady ? [] : games;
   const visibleProfiles = canViewSavedData ? profiles : [];
@@ -577,6 +583,13 @@ export default function App() {
   const currentWinnerStats = useMemo(() => {
     if (!currentGame) return null;
     const winner = findWinner(currentGame.players, currentGame);
+    const snapshotGames = getGamesThroughSession(games, currentGame);
+    const snapshotProfileStats = computeProfileStats(snapshotGames);
+    const snapshotTeamStats = computeTeamStats(
+      snapshotGames,
+      teams,
+      teamMembers,
+    );
     const isTeamsGame =
       currentGame.participantMode === "teams" && currentGame.teams.length > 0;
     if (winner && isTeamsGame) {
@@ -589,12 +602,22 @@ export default function App() {
         : null;
       const teamStatsKey = winningTeam?.sourceTeamId ?? winningTeam?.id;
       return teamStatsKey
-        ? (teamStats.get(teamStatsKey) ?? createEmptyTeamStats())
+        ? (snapshotTeamStats.get(teamStatsKey) ?? createEmptyTeamStats())
         : null;
     }
     if (!winner?.profileId) return null;
-    return profileStats.get(winner.profileId) ?? createEmptyProfileStats();
-  }, [currentGame, profileStats, teamStats]);
+    return (
+      snapshotProfileStats.get(winner.profileId) ?? createEmptyProfileStats()
+    );
+  }, [currentGame, games, teamMembers, teams]);
+
+  const currentGameIsLatestCompleted = useMemo(() => {
+    if (!currentGame || !isGameComplete(currentGame)) return true;
+    const currentOrder = getGameStatsOrder(currentGame);
+    return games.every(
+      (game) => !isGameComplete(game) || getGameStatsOrder(game) <= currentOrder,
+    );
+  }, [currentGame, games]);
 
   async function handleEndCurrentGame() {
     if (!currentGame) return;
@@ -1677,6 +1700,7 @@ export default function App() {
                 }}
                 onOpenTeamsTab={openTeamsTabFromGame}
                 winnerStats={currentWinnerStats}
+                isLatestCompletedGame={currentGameIsLatestCompleted}
                 onReplayGame={() => {
                   if (!guardSessionCreation()) {
                     return;

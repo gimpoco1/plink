@@ -976,7 +976,10 @@ export function useGames(session: Session | null, authLoading = false) {
         winByTwo: input.winByTwo,
         manualEndOnly: input.manualEndOnly,
       };
-      const hasWinner = hasGameEnded(g.players, nextGame);
+      const hasWinner = hasGameEnded(g.players, {
+        ...nextGame,
+        endedAt: undefined,
+      });
       return {
         ...g,
         name,

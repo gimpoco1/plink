@@ -15,7 +15,7 @@ import {
   sortPlayers,
 } from "../utils/ranking";
 import { getGameParticipants } from "../utils/gameParticipants";
-import { shouldSortLowToHigh } from "../utils/scoring";
+import { hasGameEnded, shouldSortLowToHigh } from "../utils/scoring";
 import { WinCelebration } from "../components/WinCelebration/WinCelebration";
 import { useDelayedRanking } from "../hooks/useDelayedRanking";
 import {
@@ -77,6 +77,7 @@ type Props = {
   ) => Promise<void> | void;
   onOpenTeamsTab: () => void;
   winnerStats: ProfileStats | TeamStats | null;
+  isLatestCompletedGame: boolean;
   onReplayGame: () => void;
   onBackToHome: () => void;
   onEndGame: () => void;
@@ -105,6 +106,7 @@ export function GameScreen({
   onDeleteSavedTeam,
   onOpenTeamsTab,
   winnerStats,
+  isLatestCompletedGame,
   onReplayGame,
   onBackToHome,
   onEndGame,
@@ -262,20 +264,25 @@ export function GameScreen({
 
   const showWinSummary = !!outcomeKey && dismissedOutcomeKey !== outcomeKey;
   const referenceReached = useMemo(() => {
+    const hasReferenceTarget =
+      game.winCondition === "reach_zero"
+        ? game.startingScore > game.targetScore
+        : game.targetScore > 0;
+
     if (
       !game.manualEndOnly ||
       gameComplete ||
-      game.targetScore <= 0 ||
+      !hasReferenceTarget ||
       !game.players.length
     ) {
       return false;
     }
 
-    if (game.winCondition === "reach_zero" || game.scoreDirection === "down") {
-      return game.players.some((player) => player.score <= game.targetScore);
-    }
-
-    return game.players.some((player) => player.score >= game.targetScore);
+    return hasGameEnded(game.players, {
+      ...game,
+      manualEndOnly: false,
+      endedAt: undefined,
+    });
   }, [game, gameComplete]);
 
   useEffect(() => {
@@ -308,8 +315,11 @@ export function GameScreen({
           targetScore={game.targetScore}
           startingScore={game.startingScore}
           winCondition={game.winCondition}
+          winByTwo={game.winByTwo}
           manualEndOnly={game.manualEndOnly}
+          completedAt={game.endedAt ?? game.updatedAt ?? game.createdAt}
           winnerStats={winnerStats}
+          isLatestCompletedGame={isLatestCompletedGame}
           standings={finalStandings.map(({ entry, rank, isWinner }) => ({
             id: entry.id,
             name: !isTeamGame
