@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import {
+  Check,
   Copy,
   Crosshair,
   Pencil,
@@ -261,7 +262,9 @@ export function GameRowCard({
             ) : null}
             {complete && (isSoloCompletion || (!winner && !draw)) ? (
               <span className="gameRow__detail">
-                <span className="gameRow__statusDot" aria-hidden="true" />
+                <span className="gameRow__statusCheck" aria-hidden="true">
+                  <Check size={12} strokeWidth={3} />
+                </span>
                 Completed
               </span>
             ) : null}

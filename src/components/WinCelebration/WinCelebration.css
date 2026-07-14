@@ -136,7 +136,7 @@ body.winFx-scrollLock .content {
     0 0 0 1px rgba(var(--win-accent-rgb), 0.16),
     0 30px 90px rgba(0, 0, 0, 0.52),
     0 0 90px rgba(var(--win-accent-rgb), 0.12);
-  padding: 14px;
+  padding: 18px;
   margin: auto 0;
   animation:
     winPop 700ms cubic-bezier(0.22, 1, 0.36, 1) both,
@@ -211,21 +211,49 @@ body.winFx-scrollLock .content {
   text-shadow: 0 0 24px var(--accent-glow);
 }
 
-.winFx__title {
-  margin-top: 6px;
-  color: #fff;
-  font-size: 14px;
+.winFx__titleBlock {
+  width: min(100%, 430px);
+  margin: 10px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.winFx__sessionMeta {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: rgba(246, 248, 247, 0.68);
+  font-size: 12px;
   font-weight: 850;
-  letter-spacing: 0.01em;
-  opacity: 0.9;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.winFx__sessionMeta svg {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.winFx__sessionGame {
+  color: rgba(246, 248, 247, 0.9);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.winFx__sessionDivider {
+  width: 1px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .winFx__streakHero {
-  margin: 0 auto;
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 6px 11px;
   border-radius: 999px;
   background: rgba(var(--win-accent-rgb), 0.1);
   border: 1px solid rgba(var(--win-accent-rgb), 0.24);
@@ -236,7 +264,7 @@ body.winFx-scrollLock .content {
 }
 
 .winFx__heroMeta {
-  margin-top: 10px;
+  margin-top: 14px;
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -244,7 +272,7 @@ body.winFx-scrollLock .content {
 
 .winFx__streakHeroCount {
   color: var(--accent);
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 950;
   letter-spacing: -0.06em;
   line-height: 1;
@@ -253,7 +281,7 @@ body.winFx-scrollLock .content {
 
 .winFx__streakHeroLabel {
   color: #fff;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 850;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -288,6 +316,7 @@ body.winFx-scrollLock .content {
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.035);
   padding: 12px;
+  margin-bottom: 10px;
 }
 
 .winFx__playerStats {
@@ -322,6 +351,7 @@ body.winFx-scrollLock .content {
   min-height: 24px;
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   padding: 4px 8px;
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.72);
@@ -331,6 +361,13 @@ body.winFx-scrollLock .content {
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.winFx__playerStatsBadgeLabel {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  opacity: 0.72;
 }
 
 .winFx__playerStatsGrid {
@@ -520,8 +557,7 @@ body.winFx-scrollLock .content {
   border: 1px solid rgba(255, 255, 255, 0.66);
   box-shadow:
     inset -8px 0 0 rgba(0, 0, 0, 0.045),
-    inset 0 -10px 0 rgba(0, 0, 0, 0.035),
-    0 16px 24px rgba(0, 0, 0, 0.2);
+    inset 0 -10px 0 rgba(0, 0, 0, 0.035);
 }
 
 .winFx__podiumBase::before {
@@ -533,7 +569,7 @@ body.winFx-scrollLock .content {
   height: 20px;
   border-radius: 4px 4px 0 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 55%),
     linear-gradient(180deg, var(--podium-top), var(--podium-top-dark));
   border: 1px solid rgba(var(--win-accent-rgb), 0.5);
   border-bottom: 0;
@@ -611,6 +647,9 @@ body.winFx-scrollLock .content {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   color: rgba(31, 43, 6, 0.94);
   background: transparent;
   font-size: 43px;
@@ -620,6 +659,13 @@ body.winFx-scrollLock .content {
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.42),
     0 6px 14px rgba(31, 43, 6, 0.12);
+}
+
+.winFx__podiumRankSuffix {
+  margin-top: 0.08em;
+  margin-left: 1px;
+  font-size: 0.34em;
+  line-height: 1;
 }
 
 .winFx__podiumRankSuffix {
@@ -645,18 +691,22 @@ body.winFx-scrollLock .content {
   max-width: 112px;
   padding: 1px 4px 6px;
   color: rgba(246, 248, 247, 0.88);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.02em;
   line-height: 1.25;
   text-align: center;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
-  filter:
-    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5))
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5))
     drop-shadow(0 5px 8px rgba(0, 0, 0, 0.22));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.winFx__podiumName > span,
+.winSharePodium__name > span {
+  display: inline-block;
 }
 
 .winFx__podiumSlot--winner .winFx__podiumName {
@@ -668,10 +718,10 @@ body.winFx-scrollLock .content {
   max-width: calc(100% - 12px);
   padding: 3px 7px;
   border-radius: 999px;
-  color: rgba(31, 43, 6, 0.68);
+  color: rgba(31, 43, 6, 0.94);
   background: rgba(31, 43, 6, 0.07);
   border: 1px solid rgba(31, 43, 6, 0.08);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 950;
   letter-spacing: 0.04em;
   line-height: 1;
@@ -818,7 +868,8 @@ body.winFx-scrollLock .content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
+  line-height: 1;
 }
 
 .winFx__btn--ghost {
@@ -867,8 +918,14 @@ body.winFx-scrollLock .content {
 }
 
 .winFx__btn--share svg {
+  flex: 0 0 auto;
   color: var(--accent);
   filter: drop-shadow(0 0 10px rgba(var(--win-accent-rgb), 0.34));
+}
+
+.winFx__btn--share span {
+  display: inline-block;
+  line-height: 1;
 }
 
 .winFx__btn:disabled {
@@ -889,6 +946,8 @@ body.winFx-scrollLock .content {
 .winShareCard {
   --share-accent-rgb: 216, 255, 79;
   --share-accent: rgb(var(--share-accent-rgb));
+  position: relative;
+  isolation: isolate;
   width: 540px;
   min-height: 675px;
   padding: 34px;
@@ -913,14 +972,14 @@ body.winFx-scrollLock .content {
 }
 
 .winShareCard::before {
-  content: "";
-  position: absolute;
+  content: none;
 }
 
 .winShareCard__shell {
   min-height: 607px;
   padding: 22px 18px 18px;
   border-radius: 26px;
+  overflow: hidden;
   border: 2px solid rgba(var(--share-accent-rgb), 0.34);
   background:
     linear-gradient(180deg, rgba(25, 34, 42, 0.98), rgba(13, 19, 24, 0.98)),
@@ -930,8 +989,8 @@ body.winFx-scrollLock .content {
       transparent 54%
     );
   box-shadow:
-    0 0 0 1px rgba(var(--share-accent-rgb), 0.1),
-    0 20px 60px rgba(0, 0, 0, 0.3);
+    inset 0 0 0 1px rgba(var(--share-accent-rgb), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .winShareCard__hero {
@@ -963,19 +1022,42 @@ body.winFx-scrollLock .content {
   letter-spacing: -0.04em;
 }
 
-.winShareCard__hero p {
-  margin: 11px 0 0;
+.winShareCard__sessionMeta {
+  max-width: 100%;
+  margin: 13px auto 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   color: rgba(246, 248, 247, 0.68);
-  font-size: 18px;
+  font-size: 12px;
   font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.winShareCard__sessionMeta svg {
+  color: var(--share-accent);
+  flex: 0 0 auto;
+}
+
+.winShareCard__sessionGame {
+  color: rgba(246, 248, 247, 0.9);
+  font-weight: 950;
   text-transform: uppercase;
+}
+
+.winShareCard__sessionDivider {
+  width: 1px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .winShareCard__stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 18px;
 }
 
 .winShareStat {
@@ -1035,17 +1117,17 @@ body.winFx-scrollLock .content {
 
 .winSharePodium {
   position: relative;
-  width: min(390px, calc(100% - 54px));
+  width: min(380px, calc(100% - 64px));
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr) minmax(0, 1fr);
   align-items: end;
   gap: 0;
-  padding: 32px 6px 14px;
+  padding: 34px 6px 16px;
   margin: 0 auto;
 }
 
 .winSharePodium__slot {
-  --share-podium-height: 64px;
+  --share-podium-height: 72px;
   display: grid;
   grid-template-rows: auto auto;
   justify-items: center;
@@ -1055,13 +1137,13 @@ body.winFx-scrollLock .content {
 }
 
 .winSharePodium__slot--1 {
-  --share-podium-height: 108px;
+  --share-podium-height: 112px;
   grid-column: 2;
   z-index: 2;
 }
 
 .winSharePodium__slot--2 {
-  --share-podium-height: 86px;
+  --share-podium-height: 92px;
   grid-column: 1;
   z-index: 1;
 }
@@ -1078,18 +1160,19 @@ body.winFx-scrollLock .content {
   display: grid;
   grid-template-rows: auto auto;
   place-items: center;
-  gap: 4px;
-  margin-bottom: 1px;
+  gap: 3px;
+  margin-bottom: 3px;
   min-width: 0;
-  max-width: calc(100% + 18px);
+  max-width: calc(100% + 22px);
+  transform: translateY(2px);
 }
 
 .winSharePodium__slot--2 .winSharePodium__avatarWrap {
-  transform: translateX(-8px);
+  transform: translate(-10px, 2px);
 }
 
 .winSharePodium__slot--3 .winSharePodium__avatarWrap {
-  transform: translateX(8px);
+  transform: translate(10px, 2px);
 }
 
 .winShareAvatar {
@@ -1150,8 +1233,8 @@ body.winFx-scrollLock .content {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 5px;
-  padding: 16px 7px 8px;
+  gap: 6px;
+  padding: 16px 8px 8px;
   border-radius: 4px 4px 7px 7px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 38%),
@@ -1159,8 +1242,8 @@ body.winFx-scrollLock .content {
   border: 1px solid rgba(255, 255, 255, 0.66);
   box-shadow:
     inset -8px 0 0 rgba(0, 0, 0, 0.045),
-    inset 8px 0 0 rgba(255, 255, 255, 0.28),
-    inset 0 -10px 0 rgba(0, 0, 0, 0.035);
+    inset 0 -10px 0 rgba(0, 0, 0, 0.035),
+    0 16px 24px rgba(0, 0, 0, 0.2);
 }
 
 .winSharePodium__base::before {
@@ -1177,7 +1260,7 @@ body.winFx-scrollLock .content {
       180deg,
       var(--share-accent),
       rgba(var(--share-accent-rgb), 0.68)
-  );
+    );
   border: 1px solid rgba(var(--share-accent-rgb), 0.5);
   border-bottom: 0;
   transform: perspective(80px) rotateX(18deg);
@@ -1185,8 +1268,18 @@ body.winFx-scrollLock .content {
   pointer-events: none;
 }
 
+.winSharePodium__base::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 8px 0 0 rgba(255, 255, 255, 0.32);
+  pointer-events: none;
+}
+
 .winSharePodium__slot--1 .winSharePodium__base {
-  width: calc(100% + 18px);
+  width: calc(100% + 34px);
+  z-index: 2;
   background:
     radial-gradient(
       circle at 50% 35%,
@@ -1197,9 +1290,7 @@ body.winFx-scrollLock .content {
     linear-gradient(180deg, #fbfdf9, #dfe8df);
   box-shadow:
     inset -8px 0 0 rgba(0, 0, 0, 0.035),
-    inset 8px 0 0 rgba(255, 255, 255, 0.28),
-    inset 0 -10px 0 rgba(0, 0, 0, 0.028),
-    0 0 20px rgba(var(--share-accent-rgb), 0.1);
+    inset 0 -10px 0 rgba(0, 0, 0, 0.028);
 }
 
 .winSharePodium__slot--1 .winSharePodium__base::before {
@@ -1214,14 +1305,14 @@ body.winFx-scrollLock .content {
 }
 
 .winSharePodium__slot--2 .winSharePodium__base {
-  width: calc(100% + 18px);
+  width: calc(100% + 30px);
   justify-self: end;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
 
 .winSharePodium__slot--3 .winSharePodium__base {
-  width: calc(100% + 18px);
+  width: calc(100% + 30px);
   justify-self: start;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
@@ -1258,17 +1349,16 @@ body.winFx-scrollLock .content {
 }
 
 .winSharePodium__name {
-  max-width: 96px;
-  padding: 1px 3px 5px;
-  color: rgba(246, 248, 247, 0.9);
-  font-size: 9px;
+  max-width: 112px;
+  padding: 1px 4px 6px;
+  color: rgba(246, 248, 247, 0.88);
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.02em;
-  line-height: 1.2;
+  line-height: 1.25;
   text-align: center;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.62);
-  filter:
-    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5))
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5))
     drop-shadow(0 5px 8px rgba(0, 0, 0, 0.22));
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1281,13 +1371,13 @@ body.winFx-scrollLock .content {
 }
 
 .winSharePodium__scoreChip {
-  max-width: calc(100% - 10px);
-  padding: 2px 6px;
+  max-width: calc(100% - 12px);
+  padding: 3px 7px;
   border-radius: 999px;
-  color: rgba(31, 43, 6, 0.66);
+  color: rgba(31, 43, 6, 0.94);
   background: rgba(31, 43, 6, 0.07);
   border: 1px solid rgba(31, 43, 6, 0.08);
-  font-size: 7px;
+  font-size: 9px;
   font-weight: 950;
   letter-spacing: 0.04em;
   line-height: 1;
@@ -1354,7 +1444,7 @@ body.winFx-scrollLock .content {
 .winShareCard__footer {
   min-height: 54px;
   margin-top: 12px;
-  padding: 8px 20px;
+  padding: 8px 14px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.045);
@@ -1369,11 +1459,18 @@ body.winFx-scrollLock .content {
   gap: 2px;
 }
 
+.winShareCard__footer div:first-child {
+  justify-self: start;
+  text-align: center;
+}
+
 .winShareCard__footer div:last-child {
+  justify-self: end;
   text-align: right;
 }
 
 .winShareCard__footer div:nth-child(2) {
+  justify-self: center;
   text-align: center;
 }
 
@@ -1678,7 +1775,7 @@ body.winFx-scrollLock .content {
 
   .winFx__content {
     max-height: calc(100dvh - 28px);
-    padding: 12px;
+    padding: 18px;
     border-radius: 22px;
   }
 
@@ -1758,7 +1855,7 @@ body.winFx-scrollLock .content {
   .winFx__podiumName {
     max-width: 82px;
     padding: 0 3px 3px;
-    font-size: 8px;
+    font-size: 12px;
   }
 
   .winFx__playerStatsGrid {

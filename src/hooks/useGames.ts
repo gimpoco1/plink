@@ -976,7 +976,13 @@ export function useGames(session: Session | null, authLoading = false) {
         winByTwo: input.winByTwo,
         manualEndOnly: input.manualEndOnly,
       };
-      const hasWinner = hasGameEnded(g.players, nextGame);
+      const wasAlreadyEnded = g.endedAt !== undefined;
+      const hasWinner =
+        wasAlreadyEnded ||
+        hasGameEnded(g.players, {
+          ...nextGame,
+          endedAt: undefined,
+        });
       return {
         ...g,
         name,
@@ -990,7 +996,7 @@ export function useGames(session: Session | null, authLoading = false) {
         diceEnabled: input.diceEnabled,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
-        completionMode: undefined,
+        completionMode: wasAlreadyEnded ? g.completionMode : undefined,
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });

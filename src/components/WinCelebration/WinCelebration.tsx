@@ -1,9 +1,10 @@
 import {
+  RefObject,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
-  type RefObject,
 } from "react";
 import { toBlob } from "html-to-image";
 import { DEFAULT_TEAM_ICON } from "../../constants";
@@ -16,9 +17,8 @@ import {
   Flag,
   Flame,
   Medal,
-  Check,
-  Share2,
   Shield,
+  Share2,
   Star,
   Target,
   Trophy,
@@ -52,6 +52,63 @@ const TEAM_ICON_COMPONENTS = {
 
 type ShareStatus = "idle" | "preparing" | "copied" | "error";
 
+const PODIUM_NAME_MAX_FONT_SIZE = 12;
+const PODIUM_NAME_MIN_FONT_SIZE = 8;
+const PODIUM_NAME_FIT_BUFFER = 2;
+
+function FittedPodiumName({
+  name,
+  className,
+}: {
+  name: string;
+  className: string;
+}) {
+  const nameRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    function fitName() {
+      const element = nameRef.current;
+      const text = textRef.current;
+      if (!element || !text) return;
+
+      element.style.width = "";
+      element.style.fontSize = `${PODIUM_NAME_MAX_FONT_SIZE}px`;
+      const labelWidth = element.clientWidth;
+      element.style.width = `${labelWidth}px`;
+
+      const styles = window.getComputedStyle(element);
+      const horizontalPadding =
+        Number.parseFloat(styles.paddingLeft) +
+        Number.parseFloat(styles.paddingRight);
+      const availableWidth =
+        element.clientWidth - horizontalPadding - PODIUM_NAME_FIT_BUFFER;
+      const requiredWidth = text.getBoundingClientRect().width;
+      const fittedSize =
+        requiredWidth > availableWidth
+          ? (PODIUM_NAME_MAX_FONT_SIZE * availableWidth) / requiredWidth
+          : PODIUM_NAME_MAX_FONT_SIZE;
+
+      element.style.fontSize = `${Math.max(
+        PODIUM_NAME_MIN_FONT_SIZE,
+        Math.min(PODIUM_NAME_MAX_FONT_SIZE, fittedSize),
+      )}px`;
+    }
+
+    fitName();
+    window.addEventListener("resize", fitName);
+    void document.fonts?.ready.then(fitName);
+
+    return () => window.removeEventListener("resize", fitName);
+  }, [name]);
+
+  return (
+    <div ref={nameRef} className={className} title={name}>
+      <span ref={textRef}>{name}</span>
+    </div>
+  );
+}
+
 type Props = {
   isTeamGame?: boolean;
   winnerName?: string | null;
@@ -60,8 +117,11 @@ type Props = {
   targetScore: number;
   startingScore: number;
   winCondition: WinCondition;
+  winByTwo: boolean;
   manualEndOnly: boolean;
+  completedAt: number;
   winnerStats: ProfileStats | TeamStats | null;
+  isLatestCompletedGame: boolean;
   standings: Standing[];
   onDismiss: () => void;
   onReplay: () => void;
@@ -76,8 +136,11 @@ export function WinCelebration({
   targetScore,
   startingScore,
   winCondition,
+  winByTwo,
   manualEndOnly,
+  completedAt,
   winnerStats,
+  isLatestCompletedGame,
   standings,
   onDismiss,
   onReplay,
@@ -99,7 +162,6 @@ export function WinCelebration({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onDismiss]);
-
   const isDraw = resultKind === "draw";
   const isCompletedWithoutWinner = resultKind === "completed";
   const isSingleParticipantCompletion =
@@ -107,29 +169,30 @@ export function WinCelebration({
   const podiumStandings = [standings[0], standings[1], standings[2]];
   const listedStandings = standings.slice(3);
   const rankCounts = getRankCounts(standings);
-  const statsLabels = isSingleParticipantCompletion && !isTeamGame
-    ? {
-        title: "Player stats",
-        total: "Total wins",
-        rate: "Win rate",
-        streak: "Win streak",
-        aria: "Updated player stats",
-      }
-    : isTeamGame
+  const statsLabels =
+    isSingleParticipantCompletion && !isTeamGame
       ? {
-          title: "Team stats",
-          total: "Team wins",
+          title: "Player stats",
+          total: "Total wins",
           rate: "Win rate",
           streak: "Win streak",
-          aria: "Updated team stats",
+          aria: "Updated player stats",
         }
-    : {
-        title: "Winner stats",
-        total: "Total wins",
-        rate: "Win rate",
-        streak: "Win streak",
-        aria: "Updated winner stats",
-      };
+      : isTeamGame
+        ? {
+            title: "Team stats",
+            total: "Team wins",
+            rate: "Win rate",
+            streak: "Win streak",
+            aria: "Updated team stats",
+          }
+        : {
+            title: "Winner stats",
+            total: "Total wins",
+            rate: "Win rate",
+            streak: "Win streak",
+            aria: "Updated winner stats",
+          };
   const resultHint = isSingleParticipantCompletion
     ? "Session completed"
     : isCompletedWithoutWinner
@@ -137,17 +200,37 @@ export function WinCelebration({
       : manualEndOnly
         ? "Ended manually"
         : winCondition === "reach_zero"
-          ? `Started at ${startingScore}, reached 0`
+          ? `Started at ${startingScore}, reached 0${
+              winByTwo ? " · Win by 2" : ""
+            }`
           : winCondition === "lowest"
-            ? "Lowest score wins"
-            : `Target ${targetScore} points`;
+            ? `Lowest score wins${winByTwo ? " · Win by 2" : ""}`
+            : `Target ${targetScore} points${winByTwo ? " · Win by 2" : ""}`;
+  const targetLabel = manualEndOnly
+    ? targetScore > 0
+      ? `Reference ${targetScore} point${Math.abs(targetScore) === 1 ? "" : "s"}${
+          winByTwo ? " · Win by 2" : ""
+        }`
+      : "Manual end"
+    : winCondition === "reach_zero"
+      ? `Start ${startingScore}, reach ${targetScore}${
+          winByTwo ? " · Win by 2" : ""
+        }`
+      : winCondition === "lowest"
+        ? `Lowest score wins${winByTwo ? " · Win by 2" : ""}`
+        : `Target ${targetScore} point${Math.abs(targetScore) === 1 ? "" : "s"}${
+            winByTwo ? " · Win by 2" : ""
+          }`;
   const heroWinStreak =
     !isDraw &&
     !isCompletedWithoutWinner &&
     !isSingleParticipantCompletion &&
     (winnerStats?.currentWinStreak ?? 0) > 1
-      ? winnerStats?.currentWinStreak ?? 0
+      ? (winnerStats?.currentWinStreak ?? 0)
       : 0;
+  const statsBadgeDate = isLatestCompletedGame
+    ? null
+    : formatStatsSnapshotDate(completedAt);
   const winnerStanding =
     standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
   const canShareWin =
@@ -155,30 +238,22 @@ export function WinCelebration({
     !isCompletedWithoutWinner &&
     !isSingleParticipantCompletion &&
     Boolean(winnerName || winnerStanding);
-  const shareTitle = `${winnerName ?? winnerStanding?.name ?? "Winner"} won ${gameName}`;
   const shareText = canShareWin
     ? buildWinShareText({
         gameName,
         winnerName: winnerName ?? winnerStanding?.name ?? "Winner",
+        targetLabel,
         isTeamGame,
         winnerStats,
         standings,
       })
     : "";
-  const dialogLabel = isDraw
-    ? `${gameName} ended in a draw`
-    : isCompletedWithoutWinner
-      ? `${gameName} ended without a winner`
-      : isSingleParticipantCompletion
-        ? `${gameName} completed by ${winnerName}`
-      : `${winnerName} wins ${gameName}`;
 
   async function handleShareWin() {
-    if (!shareText) return;
+    if (!canShareWin) return;
 
     setShareStatus("preparing");
     try {
-      await document.fonts?.ready;
       const imageBlob = shareCardRef.current
         ? await toBlob(shareCardRef.current, {
             cacheBust: true,
@@ -187,45 +262,47 @@ export function WinCelebration({
           })
         : null;
       const imageFile = imageBlob
-        ? new File([imageBlob], `${toShareFileName(gameName)}-win-card.png`, {
-            type: "image/png",
-          })
+        ? new File([imageBlob], "plink-win.png", { type: "image/png" })
         : null;
-
-      if (
-        imageFile &&
+      const canShareImage =
+        Boolean(imageFile) &&
         typeof navigator.share === "function" &&
         typeof navigator.canShare === "function" &&
-        navigator.canShare({ files: [imageFile] })
-      ) {
-        await navigator.share({
-          files: [imageFile],
-        });
+        navigator.canShare({ files: [imageFile as File] });
+
+      if (imageFile && canShareImage) {
+        await navigator.share({ files: [imageFile] });
         setShareStatus("idle");
         return;
       }
 
       if (typeof navigator.share === "function") {
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-        });
+        await navigator.share({ text: shareText });
         setShareStatus("idle");
         return;
       }
 
       await navigator.clipboard.writeText(shareText);
       setShareStatus("copied");
-      window.setTimeout(() => setShareStatus("idle"), 2200);
+      window.setTimeout(() => setShareStatus("idle"), 1800);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         setShareStatus("idle");
         return;
       }
+      console.error("Unable to share win", error);
       setShareStatus("error");
       window.setTimeout(() => setShareStatus("idle"), 2200);
     }
   }
+
+  const dialogLabel = isDraw
+    ? `${gameName} ended in a draw`
+    : isCompletedWithoutWinner
+      ? `${gameName} ended without a winner`
+      : isSingleParticipantCompletion
+        ? `${gameName} completed by ${winnerName}`
+        : `${winnerName} wins ${gameName}`;
 
   return (
     <div
@@ -302,62 +379,35 @@ export function WinCelebration({
                 ? "No winner"
                 : winnerName}
           </div>
+          <div className="winFx__titleBlock">
+            <div className="winFx__sessionMeta">
+              <span className="winFx__sessionGame">{gameName}</span>
+              <span className="winFx__sessionDivider" aria-hidden="true" />
+              <Target size={13} strokeWidth={2.5} aria-hidden="true" />
+              <span>{targetLabel}</span>
+            </div>
+          </div>
           {heroWinStreak ? (
             <div className="winFx__heroMeta">
               <div
                 className="winFx__streakHero"
                 aria-label={`${heroWinStreak} ${statsLabels.streak.toLowerCase()}`}
               >
-                <span className="winFx__streakHeroCount">
-                  {heroWinStreak}
-                </span>
+                <span className="winFx__streakHeroCount">{heroWinStreak}</span>
                 <span className="winFx__streakHeroLabel">
                   {statsLabels.streak}
                 </span>
               </div>
-              <div className="winFx__hint">
-                <Target size={14} strokeWidth={2.4} aria-hidden="true" />
-                <span>{resultHint}</span>
-              </div>
             </div>
-          ) : (
-            <div className="winFx__title">{gameName}</div>
-          )}
-          {!isDraw && (isCompletedWithoutWinner || !winnerStats?.currentWinStreak) ? (
+          ) : null}
+          {!isDraw &&
+          (isCompletedWithoutWinner || !winnerStats?.currentWinStreak) ? (
             <div className="winFx__hint">
               <Target size={14} strokeWidth={2.4} aria-hidden="true" />
               <span>{resultHint}</span>
             </div>
           ) : null}
         </div>
-
-        {!isDraw && !isCompletedWithoutWinner && winnerStats ? (
-          <section className="winFx__playerStats" aria-label={statsLabels.aria}>
-            <div className="winFx__playerStatsHeader">
-              <div className="winFx__playerStatsTitle">{statsLabels.title}</div>
-              <div className="winFx__playerStatsBadge">Updated</div>
-            </div>
-            <div className="winFx__playerStatsGrid">
-              <div className="winFx__playerStat">
-                <strong>{winnerStats.wins}</strong>
-                <span>{statsLabels.total}</span>
-              </div>
-              <div className="winFx__playerStat">
-                <strong>{winnerStats.completedGames > 0 ? `${winnerStats.winRate}%` : "—"}</strong>
-                <span>{statsLabels.rate}</span>
-              </div>
-              <div className="winFx__playerStat">
-                <strong>{winnerStats.gamesPlayed}</strong>
-                <span>Sessions</span>
-              </div>
-              <div className="winFx__playerStat">
-                <strong>{winnerStats.topWonGame?.name ?? "—"}</strong>
-                <span>Top game</span>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
         {!isSingleParticipantCompletion ? (
           <section className="winFx__summary" aria-label="Final standings">
             <div className="winFx__summaryTitle">Final standings</div>
@@ -368,57 +418,53 @@ export function WinCelebration({
                 }`}
                 aria-label="Top three"
               >
-                {podiumStandings.map((entry, index) => {
-                  const isTied = entry ? isTiedRank(entry, rankCounts) : false;
-                  const rank = entry?.rank ?? index + 1;
-                  return (
-                    <div
-                      key={entry?.id ?? `empty-podium-${index + 1}`}
-                      aria-label={
-                        entry
-                          ? `${entry.name}, rank ${entry.rank}, score ${entry.score}${
-                              isTied ? ", tied score" : ""
-                            }`
-                          : `No rank ${index + 1} player`
-                      }
-                      className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
-                        entry?.isWinner ? " winFx__podiumSlot--winner" : ""
-                      }${
-                        entry ? "" : " winFx__podiumSlot--empty"
-                      }`}
-                    >
+                {podiumStandings.map((entry, index) => (
+                  <div
+                    key={entry?.id ?? `empty-podium-${index + 1}`}
+                    aria-label={
+                      entry
+                        ? `${entry.name}, rank ${entry.rank}, score ${entry.score}`
+                        : `No rank ${index + 1} player`
+                    }
+                    className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
+                      entry?.isWinner ? " winFx__podiumSlot--winner" : ""
+                    }${entry ? "" : " winFx__podiumSlot--empty"}`}
+                  >
+                    {entry ? (
+                      <div className="winFx__podiumAvatarWrap">
+                        {entry.isWinner ? (
+                          <Crown
+                            className="winFx__crown"
+                            size={30}
+                            strokeWidth={2.2}
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
+                        <FittedPodiumName
+                          className="winFx__podiumName"
+                          name={entry.name}
+                        />
+                      </div>
+                    ) : null}
+                    <div className="winFx__podiumBase">
+                      <div className="winFx__podiumRank">
+                        {entry?.rank ?? index + 1}
+                        <span className="winFx__podiumRankSuffix">
+                          {getOrdinalSuffix(entry?.rank ?? index + 1)}
+                        </span>
+                      </div>
                       {entry ? (
-                        <div className="winFx__podiumAvatarWrap">
-                          {entry.isWinner ? (
-                            <Crown
-                              className="winFx__crown"
-                              size={30}
-                              strokeWidth={2.2}
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                          <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
-                          <div className="winFx__podiumName">{entry.name}</div>
+                        <div className="winFx__podiumScoreChip">
+                          {formatPodiumScore(
+                            entry.score,
+                            isTiedRank(entry, rankCounts),
+                          )}
                         </div>
                       ) : null}
-                      <div className="winFx__podiumBase">
-                        <div className="winFx__podiumRank">
-                          <span className="winFx__podiumRankNumber">
-                            {rank}
-                          </span>
-                          <span className="winFx__podiumRankSuffix">
-                            {getOrdinalSuffix(rank)}
-                          </span>
-                        </div>
-                        {entry ? (
-                          <div className="winFx__podiumScoreChip">
-                            {formatPodiumScore(entry.score, isTied)}
-                          </div>
-                        ) : null}
-                      </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             ) : null}
             {listedStandings.length > 0 ? (
@@ -447,6 +493,47 @@ export function WinCelebration({
             ) : null}
           </section>
         ) : null}
+        {!isDraw && !isCompletedWithoutWinner && winnerStats ? (
+          <section className="winFx__playerStats" aria-label={statsLabels.aria}>
+            <div className="winFx__playerStatsHeader">
+              <div className="winFx__playerStatsTitle">{statsLabels.title}</div>
+              <div className="winFx__playerStatsBadge">
+                {statsBadgeDate ? (
+                  <>
+                    <span className="winFx__playerStatsBadgeLabel">
+                      Last updated:
+                    </span>
+                    <span>{statsBadgeDate}</span>
+                  </>
+                ) : (
+                  "Latest"
+                )}
+              </div>
+            </div>
+            <div className="winFx__playerStatsGrid">
+              <div className="winFx__playerStat">
+                <strong>{winnerStats.wins}</strong>
+                <span>{statsLabels.total}</span>
+              </div>
+              <div className="winFx__playerStat">
+                <strong>
+                  {winnerStats.completedGames > 0
+                    ? `${winnerStats.winRate}%`
+                    : "—"}
+                </strong>
+                <span>{statsLabels.rate}</span>
+              </div>
+              <div className="winFx__playerStat">
+                <strong>{winnerStats.gamesPlayed}</strong>
+                <span>Sessions</span>
+              </div>
+              <div className="winFx__playerStat">
+                <strong>{winnerStats.topWonGame?.name ?? "—"}</strong>
+                <span>Top game</span>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <div className="winFx__actions">
           {canShareWin ? (
@@ -456,29 +543,37 @@ export function WinCelebration({
               onClick={handleShareWin}
               disabled={shareStatus === "preparing"}
             >
-              {shareStatus === "copied" ? (
-                <Check size={17} strokeWidth={2.6} aria-hidden="true" />
-              ) : (
-                <Share2 size={17} strokeWidth={2.6} aria-hidden="true" />
-              )}
+              <Share2 size={18} strokeWidth={2.5} aria-hidden="true" />
               <span>
-                {shareStatus === "copied"
-                  ? "Copied win"
-                  : shareStatus === "preparing"
-                    ? "Creating card"
-                  : shareStatus === "error"
-                    ? "Share failed"
-                    : "Share win"}
+                {shareStatus === "preparing"
+                  ? "Creating card"
+                  : shareStatus === "copied"
+                    ? "Copied"
+                    : shareStatus === "error"
+                      ? "Share failed"
+                      : "Share win"}
               </span>
             </button>
           ) : null}
-          <button type="button" className="winFx__btn winFx__btn--ghost" onClick={onDismiss}>
+          <button
+            type="button"
+            className="winFx__btn winFx__btn--ghost"
+            onClick={onDismiss}
+          >
             Continue
           </button>
-          <button type="button" className="winFx__btn winFx__btn--ghost" onClick={onBackToHome}>
+          <button
+            type="button"
+            className="winFx__btn winFx__btn--ghost"
+            onClick={onBackToHome}
+          >
             Back to sessions
           </button>
-          <button type="button" className="winFx__btn winFx__btn--primary" onClick={onReplay}>
+          <button
+            type="button"
+            className="winFx__btn winFx__btn--primary"
+            onClick={onReplay}
+          >
             Play again
           </button>
         </div>
@@ -506,6 +601,8 @@ export function WinCelebration({
           cardRef={shareCardRef}
           gameName={gameName}
           winnerName={winnerName ?? winnerStanding?.name ?? "Winner"}
+          targetLabel={targetLabel}
+          completedAt={completedAt}
           isTeamGame={isTeamGame}
           winnerStats={winnerStats}
           standings={standings}
@@ -518,12 +615,14 @@ export function WinCelebration({
 function buildWinShareText({
   gameName,
   winnerName,
+  targetLabel,
   isTeamGame,
   winnerStats,
   standings,
 }: {
   gameName: string;
   winnerName: string;
+  targetLabel: string;
   isTeamGame: boolean;
   winnerStats: ProfileStats | TeamStats | null;
   standings: Standing[];
@@ -533,9 +632,8 @@ function buildWinShareText({
   const subject = isTeamGame ? "team" : "player";
   const lines = [
     `${winnerName} just won ${gameName}.`,
-    winnerStanding
-      ? `Winning ${subject} score: ${winnerStanding.score}`
-      : null,
+    targetLabel,
+    winnerStanding ? `Winning ${subject} score: ${winnerStanding.score}` : null,
     winnerStats
       ? `Updated stats: ${winnerStats.wins} win${
           winnerStats.wins === 1 ? "" : "s"
@@ -580,6 +678,14 @@ function formatScore(score: number) {
   return `${score} pt${Math.abs(score) === 1 ? "" : "s"}`;
 }
 
+function formatStatsSnapshotDate(timestamp: number) {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(timestamp));
+}
+
 function getOrdinalSuffix(rank: number) {
   const absoluteRank = Math.abs(rank);
   const tens = absoluteRank % 100;
@@ -601,6 +707,8 @@ function WinShareCard({
   cardRef,
   gameName,
   winnerName,
+  targetLabel,
+  completedAt,
   isTeamGame,
   winnerStats,
   standings,
@@ -608,6 +716,8 @@ function WinShareCard({
   cardRef: RefObject<HTMLDivElement>;
   gameName: string;
   winnerName: string;
+  targetLabel: string;
+  completedAt: number;
   isTeamGame: boolean;
   winnerStats: ProfileStats | TeamStats | null;
   standings: Standing[];
@@ -616,7 +726,7 @@ function WinShareCard({
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(new Date());
+  }).format(new Date(completedAt));
   const winnerStanding =
     standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
   const rankCounts = getRankCounts(standings);
@@ -635,7 +745,15 @@ function WinShareCard({
               <span>Winner</span>
             </div>
             <h1>{winnerName}</h1>
-            <p>{gameName}</p>
+            <div className="winShareCard__sessionMeta">
+              <span className="winShareCard__sessionGame">{gameName}</span>
+              <span
+                className="winShareCard__sessionDivider"
+                aria-hidden="true"
+              />
+              <Target size={14} strokeWidth={2.5} aria-hidden="true" />
+              <span>{targetLabel}</span>
+            </div>
           </header>
 
           <div className="winShareCard__stats">
@@ -684,9 +802,10 @@ function WinShareCard({
                           />
                         ) : null}
                         <ShareAvatar entry={entry} isTeamGame={isTeamGame} />
-                        <div className="winSharePodium__name">
-                          {entry.name}
-                        </div>
+                        <FittedPodiumName
+                          className="winSharePodium__name"
+                          name={entry.name}
+                        />
                       </div>
                     ) : null}
                     <div className="winSharePodium__base">
@@ -793,11 +912,13 @@ function ShareAvatar({
   );
 }
 function toShareFileName(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 48) || "plink";
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 48) || "plink"
+  );
 }
 
 function StandingAvatar({
