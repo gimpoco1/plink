@@ -267,8 +267,8 @@ export function WinCelebration({
       const canShareImage =
         Boolean(imageFile) &&
         typeof navigator.share === "function" &&
-        (typeof navigator.canShare !== "function" ||
-          navigator.canShare({ files: [imageFile as File] }));
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [imageFile as File] });
 
       if (imageFile && canShareImage) {
         await navigator.share({ files: [imageFile] });
