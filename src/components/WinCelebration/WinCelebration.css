@@ -1302,6 +1302,8 @@ body.winFx-scrollLock .content {
       rgba(var(--share-accent-rgb), 0.78)
     );
   border-color: rgba(var(--share-accent-rgb), 0.72);
+  transform: skewX(24deg) scaleY(0.95);
+  transform-origin: 50% 100%;
 }
 
 .winSharePodium__slot--2 .winSharePodium__base {
@@ -1324,6 +1326,8 @@ body.winFx-scrollLock .content {
 
 .winSharePodium__slot--3 .winSharePodium__base::before {
   border-top-left-radius: 0;
+  transform: skewX(24deg) scaleY(0.95);
+  transform-origin: 50% 100%;
 }
 
 .winSharePodium__rank {
