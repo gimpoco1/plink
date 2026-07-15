@@ -58,7 +58,12 @@ export function AuthPlanDetails() {
         </div>
       </div>
 
-      {!isPro ? (
+      {!isPro && isNativeIOS ? (
+        <div className="authDialog__planSupport">
+          Pro purchases are being prepared for Apple In-App Purchase. This iOS
+          build does not open web checkout.
+        </div>
+      ) : !isPro ? (
         <>
           <div
             className="authDialog__planOptions"
@@ -152,11 +157,6 @@ export function AuthPlanDetails() {
             ) : null}
           </div>
         </>
-      ) : !isPro ? (
-        <div className="authDialog__planSupport">
-          Pro purchases are being prepared for Apple In-App Purchase. This iOS
-          build does not open web checkout.
-        </div>
       ) : (
         <>
           <div className="authDialog__planSupport">

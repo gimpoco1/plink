@@ -977,8 +977,9 @@ export function useAuthDialogModel(
       return;
     }
     if (isNativeIOSApp()) {
-      setError(
-        "Pro purchases require Apple In-App Purchase in the iOS app. Use the Plink website until StoreKit billing is available.",
+      setError(null);
+      showTransferToast(
+        "Pro upgrades aren't available in the app yet. You can upgrade in your browser.",
       );
       return;
     }
