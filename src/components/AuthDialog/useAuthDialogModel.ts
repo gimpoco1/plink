@@ -17,6 +17,12 @@ import {
 import { AVATAR_COLORS } from "../../constants";
 import { useEntitlementsContext } from "../../hooks/useEntitlements";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
+import {
+  getAuthRedirectUrl,
+  isNativeApp,
+  isNativeIOSApp,
+  openExternalUrl,
+} from "../../lib/nativePlatform";
 import type { BackupSelection } from "../../storage/backupFile";
 import type { Game, PlayerProfile, ToastState, ToastTone } from "../../types";
 import { formatPlayerName } from "../../utils/text";
@@ -126,6 +132,8 @@ export function useAuthDialogModel(
     string | null
   >(null);
   const [busy, setBusy] = useState(false);
+  const [confirmingAccountDeletion, setConfirmingAccountDeletion] =
+    useState(false);
   const [hasStripeBillingProfile, setHasStripeBillingProfile] = useState(false);
   const [showTransferTools, setShowTransferTools] = useState(false);
   const [showDeviceImport, setShowDeviceImport] = useState(false);
@@ -342,6 +350,7 @@ export function useAuthDialogModel(
     setShowPlanDetails(false);
     setSelectedBillingPeriod("monthly");
     setEditingAccountPlayer(false);
+    setConfirmingAccountDeletion(false);
     setShowDevicePlayersImport(false);
     setLocalSessionSearch("");
     setAccountDraftName(accountPlayerName);
@@ -451,6 +460,33 @@ export function useAuthDialogModel(
     const timeout = window.setTimeout(() => setTransferToast(null), 5200);
     return () => window.clearTimeout(timeout);
   }, [transferToast]);
+
+  useEffect(() => {
+    function handleNativeAuthError(event: Event) {
+      const message =
+        event instanceof CustomEvent && typeof event.detail === "string"
+          ? event.detail
+          : "Authentication failed.";
+      setBusy(false);
+      setError(message);
+      setNotice(null);
+      showDialog();
+    }
+
+    window.addEventListener("plink:auth-error", handleNativeAuthError);
+    return () => {
+      window.removeEventListener("plink:auth-error", handleNativeAuthError);
+    };
+  }, [onOpenChange]);
+
+  useEffect(() => {
+    if (!session || !busy || recoveryMode) return;
+    setBusy(false);
+    if (dialogRef.current?.open) {
+      onOpenChange?.(false);
+      dialogRef.current.close();
+    }
+  }, [busy, onOpenChange, recoveryMode, session]);
 
   useEffect(() => {
     if (!userId || !supabase) {
@@ -576,11 +612,6 @@ export function useAuthDialogModel(
       : "mailto:";
   }
 
-  function getAuthRedirectUrl() {
-    if (typeof window === "undefined") return undefined;
-    return `${window.location.origin}${window.location.pathname}`;
-  }
-
   async function signInWithProvider(provider: Provider) {
     if (!supabase) {
       setError("Supabase is not configured yet.");
@@ -594,10 +625,11 @@ export function useAuthDialogModel(
     setTransferToast(null);
 
     try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: getAuthRedirectUrl(),
+          skipBrowserRedirect: isNativeApp(),
           queryParams:
             provider === "google"
               ? {
@@ -607,6 +639,9 @@ export function useAuthDialogModel(
         },
       });
       if (oauthError) throw oauthError;
+      if (isNativeApp() && data.url) {
+        await openExternalUrl(data.url);
+      }
     } catch (err) {
       setBusy(false);
       setError(getAuthErrorMessage(err, "Could not start sign-in."));
@@ -649,6 +684,7 @@ export function useAuthDialogModel(
           email: trimmedEmail,
           password,
           options: {
+            emailRedirectTo: getAuthRedirectUrl(),
             data: {
               name: trimmedAccountName,
               full_name: trimmedAccountName,
@@ -700,7 +736,7 @@ export function useAuthDialogModel(
     setTransferToast(null);
 
     try {
-      const redirectTo = `${window.location.origin}${window.location.pathname}`;
+      const redirectTo = getAuthRedirectUrl("recovery");
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         trimmedEmail,
         {
@@ -825,15 +861,9 @@ export function useAuthDialogModel(
     setTransferToast({ message, tone });
   }
 
-  function openUrl(url: string) {
+  async function openUrl(url: string) {
     try {
-      const parsedUrl = new URL(url, window.location.origin);
-      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-        showTransferToast("This link is not valid.", "error");
-        return;
-      }
-
-      window.location.assign(parsedUrl.toString());
+      await openExternalUrl(url);
     } catch {
       showTransferToast("This link is not valid.", "error");
     }
@@ -901,6 +931,12 @@ export function useAuthDialogModel(
       setError("Sign in before starting a subscription.");
       return;
     }
+    if (isNativeIOSApp()) {
+      setError(
+        "Pro purchases require Apple In-App Purchase in the iOS app. Use the Plink website until StoreKit billing is available.",
+      );
+      return;
+    }
 
     setBusy(true);
     setError(null);
@@ -916,7 +952,7 @@ export function useAuthDialogModel(
         },
         "Checkout is not available yet.",
       );
-      openUrl(url);
+      await openUrl(url);
     } catch (err) {
       setError(getBillingErrorMessage(err, "Checkout is not available yet."));
     } finally {
@@ -927,6 +963,12 @@ export function useAuthDialogModel(
   async function restoreSubscription() {
     if (!session) {
       setError("Sign in before opening the billing portal.");
+      return;
+    }
+    if (isNativeIOSApp()) {
+      setError(
+        "Subscription management is not available in this iOS build yet.",
+      );
       return;
     }
 
@@ -941,10 +983,52 @@ export function useAuthDialogModel(
         { origin: window.location.origin },
         "Billing portal is not available yet.",
       );
-      openUrl(url);
+      await openUrl(url);
     } catch (err) {
       setError(
         getBillingErrorMessage(err, "Billing portal is not available yet."),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!supabase || !session) {
+      setError("Sign in before deleting your account.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    setTransferToast(null);
+
+    try {
+      const { error: invokeError } = await supabase.functions.invoke(
+        "delete-account",
+        { body: {} },
+      );
+      if (invokeError) {
+        throw new Error(
+          await getInvokeErrorMessage(
+            invokeError,
+            "Your account could not be deleted.",
+          ),
+        );
+      }
+
+      await supabase.auth.signOut({ scope: "local" });
+      setConfirmingAccountDeletion(false);
+      if (dialogRef.current?.open) {
+        onOpenChange?.(false);
+        dialogRef.current.close();
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Your account could not be deleted.",
       );
     } finally {
       setBusy(false);
@@ -1089,8 +1173,10 @@ export function useAuthDialogModel(
     backupInputRef,
     billingPeriodOptionRefs,
     busy,
+    confirmingAccountDeletion,
     confirmNewPassword,
     deviceImportRef,
+    deleteAccount,
     dialogRef,
     editingAccountPlayer,
     email,
@@ -1104,6 +1190,7 @@ export function useAuthDialogModel(
     includeGames,
     includeProfiles,
     isAwaitingSignupConfirmation,
+    isNativeIOS: isNativeIOSApp(),
     isPro,
     localGames,
     localProfiles,
@@ -1132,6 +1219,7 @@ export function useAuthDialogModel(
     setAccountDraftName,
     setAccountName,
     setConfirmNewPassword,
+    setConfirmingAccountDeletion,
     setEditingAccountPlayer,
     setEmail,
     setError,

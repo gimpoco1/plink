@@ -39,6 +39,11 @@ input {
   isolation: isolate;
 }
 
+.is-native-app .app {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+}
+
 .appLoading {
   min-height: 100vh;
   min-height: 100dvh;

@@ -25,6 +25,17 @@ function GoogleBrandIcon() {
   );
 }
 
+function AppleBrandIcon() {
+  return (
+    <svg viewBox="0 0 384 512" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-72.4-19.2-30.4.5-58.8 17.7-74.5 46.1-31.5 54.6-8 135.1 22.6 179.3 15.3 22.1 33.6 47 57.6 46.1 22.9-.9 31.5-14.7 59-14.7 27.5 0 36 14.7 60.2 14.2 24.8-.4 40.5-22.3 55.9-44.6 17.6-25.7 24.9-50.5 25.3-51.8-.5-.2-49.6-19-49.8-75.6ZM294.5 100.5c12.7-15.1 21.3-36.2 19-57.5-18.3.7-40.4 12.2-53.2 27.3-11.5 13.3-21.5 34.8-18.8 55.7 20.4 1.6 40.3-10.3 53-25.5Z"
+      />
+    </svg>
+  );
+}
+
 export function AuthSignedOutPanel() {
   const {
     accountName,
@@ -237,7 +248,7 @@ export function AuthSignedOutPanel() {
               aria-label="Social sign-in options"
             >
               <button
-                className="authDialog__providerIconBtn"
+                className="authDialog__providerBtn"
                 type="button"
                 onClick={() => void signInWithProvider("google")}
                 disabled={busy}
@@ -252,17 +263,17 @@ export function AuthSignedOutPanel() {
                 >
                   <GoogleBrandIcon />
                 </span>
+                <span>Continue with Google</span>
               </button>
-              {/*
               <button
-                className="authDialog__providerIconBtn"
+                className="authDialog__providerBtn authDialog__providerBtn--apple"
                 type="button"
                 onClick={() => void signInWithProvider("apple")}
                 disabled={busy}
                 aria-label={
-                  busy ? "Connecting to iCloud" : "Continue with iCloud"
+                  busy ? "Connecting to Apple" : "Continue with Apple"
                 }
-                title="Continue with iCloud"
+                title="Continue with Apple"
               >
                 <span
                   className="authDialog__providerIcon authDialog__providerIcon--apple"
@@ -270,8 +281,8 @@ export function AuthSignedOutPanel() {
                 >
                   <AppleBrandIcon />
                 </span>
+                <span>Continue with Apple</span>
               </button>
-              */}
             </div>
           </>
         )}

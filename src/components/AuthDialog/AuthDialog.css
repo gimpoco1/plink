@@ -585,16 +585,15 @@
 }
 
 .authDialog__providerRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
   gap: 10px;
 }
 
-.authDialog__providerIconBtn {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+.authDialog__providerBtn {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
@@ -602,6 +601,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
+  color: var(--text);
+  font-weight: 850;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -609,7 +611,7 @@
     background-color 120ms ease;
 }
 
-.authDialog__providerIconBtn:hover:not(:disabled) {
+.authDialog__providerBtn:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: rgba(216, 255, 79, 0.18);
   background:
@@ -617,7 +619,7 @@
     rgba(255, 255, 255, 0.035);
 }
 
-.authDialog__providerIconBtn:disabled {
+.authDialog__providerBtn:disabled {
   cursor: wait;
   opacity: 0.7;
 }
@@ -642,7 +644,19 @@
 }
 
 .authDialog__providerIcon--apple {
-  color: rgba(255, 255, 255, 0.92);
+  color: #0b1015;
+}
+
+.authDialog__providerBtn--apple {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #0b1015;
+}
+
+.authDialog__providerBtn--apple:hover:not(:disabled) {
+  border-color: #f1f1f1;
+  background: #f1f1f1;
+  color: #0b1015;
 }
 
 .authDialog__divider {
@@ -1280,6 +1294,55 @@
 
 .authDialog__signOutBtn {
   gap: 8px;
+}
+
+.authDialog__deleteAccountBtn {
+  gap: 8px;
+  color: var(--neg);
+}
+
+.authDialog__deleteAccount {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(251, 113, 133, 0.28);
+  border-radius: 18px;
+  background: rgba(251, 113, 133, 0.08);
+}
+
+.authDialog__deleteAccountCopy {
+  display: flex;
+  gap: 10px;
+  color: var(--neg);
+}
+
+.authDialog__deleteAccountCopy svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.authDialog__deleteAccountCopy strong {
+  color: var(--text);
+}
+
+.authDialog__deleteAccountCopy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.authDialog__deleteAccountActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 440px) {
+  .authDialog__deleteAccountActions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .authDialog__links {

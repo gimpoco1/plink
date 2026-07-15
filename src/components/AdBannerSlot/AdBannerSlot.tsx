@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useEntitlementsContext } from "../../hooks/useEntitlements";
+import { isNativeApp } from "../../lib/nativePlatform";
 import "./AdBannerSlot.css";
 
 type AdBannerSlotProps = {
@@ -51,7 +52,7 @@ const showPlaceholder =
 export function AdBannerSlot({ slotId, placement }: AdBannerSlotProps) {
   const { shouldShowAds } = useEntitlementsContext();
 
-  if (!showAdSlots || !shouldShowAds) return null;
+  if (isNativeApp() || !showAdSlots || !shouldShowAds) return null;
 
   const adRef = useRef<HTMLModElement | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
