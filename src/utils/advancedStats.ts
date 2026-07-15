@@ -1,8 +1,15 @@
 import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
 import { getGameParticipants } from "./gameParticipants";
-import { computeRanks, findWinner, isGameComplete, isGameDraw, sortPlayers } from "./ranking";
+import {
+  computeRanks,
+  findWinner,
+  isGameComplete,
+  isGameDraw,
+  sortPlayers,
+} from "./ranking";
 import { shouldSortLowToHigh } from "./scoring";
 import { getGameDisplayName, getGameSessionLabel } from "./text";
+import { areSetsEqual } from "./sets";
 
 export type ReportKind = "players" | "teams";
 export type ReportStatusKind =
@@ -217,15 +224,10 @@ function buildTeamResolver(teams: GameTeam[], teamMembers: TeamMember[]) {
     memberIdsBySavedTeamId.set(member.teamId, next);
   });
 
-  function areSetsEqual<T>(left: Set<T>, right: Set<T>) {
-    if (left.size !== right.size) return false;
-    for (const value of left) {
-      if (!right.has(value)) return false;
-    }
-    return true;
-  }
-
-  return function resolveSavedTeamId(game: Game, gameTeam: Game["teams"][number]) {
+  return function resolveSavedTeamId(
+    game: Game,
+    gameTeam: Game["teams"][number],
+  ) {
     if (gameTeam.sourceTeamId && savedTeamIds.has(gameTeam.sourceTeamId)) {
       return gameTeam.sourceTeamId;
     }
@@ -234,7 +236,8 @@ function buildTeamResolver(teams: GameTeam[], teamMembers: TeamMember[]) {
       game.players
         .filter(
           (player): player is typeof player & { profileId: string } =>
-            player.teamId === gameTeam.id && typeof player.profileId === "string",
+            player.teamId === gameTeam.id &&
+            typeof player.profileId === "string",
         )
         .map((player) => player.profileId),
     );
@@ -300,7 +303,10 @@ export function buildPlayerReports(
     });
   });
 
-  const breakdownByProfileId = new Map<string, Map<string, ReportGameBreakdown>>();
+  const breakdownByProfileId = new Map<
+    string,
+    Map<string, ReportGameBreakdown>
+  >();
 
   games.forEach((game) => {
     const winner = findWinner(game.players, game);
@@ -379,7 +385,8 @@ export function buildPlayerReports(
   reports.forEach((report, profileId) => {
     finalizeReport(
       report,
-      breakdownByProfileId.get(profileId) ?? new Map<string, ReportGameBreakdown>(),
+      breakdownByProfileId.get(profileId) ??
+        new Map<string, ReportGameBreakdown>(),
       dateFormat,
       dateTimeFormat,
     );

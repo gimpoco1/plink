@@ -579,8 +579,6 @@
 }
 
 .managePlayersDialog__identity {
-  display: grid;
-  gap: 8px;
   min-width: 0;
   flex: 1;
 }
@@ -591,6 +589,12 @@
   align-items: center;
   width: 100%;
   gap: 8px;
+  min-width: 0;
+}
+
+.managePlayersDialog__identityCopy {
+  display: grid;
+  gap: 1px;
   min-width: 0;
 }
 

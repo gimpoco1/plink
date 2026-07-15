@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type PropsWithChildren,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
@@ -39,27 +32,6 @@ export type EntitlementsState = {
   hasUnlimitedSessions: boolean;
   maxSessions: number | null;
 };
-
-const fallbackState: EntitlementsState = {
-  isLoading: false,
-  plan: "free",
-  source: "default",
-  isPro: false,
-  subscriptionStatus: null,
-  subscriptionBillingPeriod: null,
-  subscriptionCurrentPeriodEnd: null,
-  subscriptionStartedAt: null,
-  subscriptionCancelAtPeriodEnd: false,
-  subscriptionCancelAt: null,
-  subscriptionCanceledAt: null,
-  shouldShowAds: true,
-  canUseTeams: false,
-  canSeeAdvancedStats: false,
-  hasUnlimitedSessions: false,
-  maxSessions: FREE_SESSION_LIMIT,
-};
-
-const EntitlementsContext = createContext<EntitlementsState>(fallbackState);
 
 function normalizePlan(value: unknown): SubscriptionPlan | null {
   if (value === "pro" || value === "free") return value;
@@ -110,14 +82,17 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     useState<SubscriptionBillingPeriod | null>(null);
   const [subscriptionCurrentPeriodEnd, setSubscriptionCurrentPeriodEnd] =
     useState<string | null>(null);
-  const [subscriptionStartedAt, setSubscriptionStartedAt] =
-    useState<string | null>(null);
+  const [subscriptionStartedAt, setSubscriptionStartedAt] = useState<
+    string | null
+  >(null);
   const [subscriptionCancelAtPeriodEnd, setSubscriptionCancelAtPeriodEnd] =
     useState(false);
-  const [subscriptionCancelAt, setSubscriptionCancelAt] =
-    useState<string | null>(null);
-  const [subscriptionCanceledAt, setSubscriptionCanceledAt] =
-    useState<string | null>(null);
+  const [subscriptionCancelAt, setSubscriptionCancelAt] = useState<
+    string | null
+  >(null);
+  const [subscriptionCanceledAt, setSubscriptionCanceledAt] = useState<
+    string | null
+  >(null);
   const [hasSubscriptionRecord, setHasSubscriptionRecord] = useState(false);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const accountPlan = getAccountPlan(session);
@@ -303,17 +278,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
   ]);
 }
 
-export function EntitlementsProvider({
-  value,
-  children,
-}: PropsWithChildren<{ value: EntitlementsState }>) {
-  return (
-    <EntitlementsContext.Provider value={value}>
-      {children}
-    </EntitlementsContext.Provider>
-  );
-}
-
-export function useEntitlementsContext() {
-  return useContext(EntitlementsContext);
-}
+export {
+  EntitlementsProvider,
+  useEntitlementsContext,
+} from "./EntitlementsContext";

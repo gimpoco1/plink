@@ -1,34 +1,11 @@
 import { useMemo, useState } from "react";
 import type { Player, WinCondition } from "../../types";
-import {
-  MAX_ABS_SCORE,
-  QUICK_DELTAS,
-  DEFAULT_TEAM_ICON,
-} from "../../constants";
+import { MAX_ABS_SCORE, QUICK_DELTAS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
-import {
-  Dumbbell,
-  Flag,
-  Flame,
-  Shield,
-  Star,
-  Target,
-  Trophy,
-  Zap,
-} from "lucide-react";
+import { TeamIcon } from "../TeamIcon/TeamIcon";
+import { Trophy } from "lucide-react";
 import "./TeamScoreCard.css";
-
-const TEAM_ICON_COMPONENTS = {
-  dumbbell: Dumbbell,
-  trophy: Trophy,
-  shield: Shield,
-  flag: Flag,
-  target: Target,
-  zap: Zap,
-  flame: Flame,
-  star: Star,
-} as const;
 
 type Props = {
   id: string;
@@ -93,10 +70,6 @@ export function TeamScoreCard({
         );
   const negDeltas = QUICK_DELTAS.filter((delta) => delta < 0).reverse();
   const posDeltas = QUICK_DELTAS.filter((delta) => delta > 0).reverse();
-  const TeamIcon =
-    TEAM_ICON_COMPONENTS[
-      (icon ?? DEFAULT_TEAM_ICON) as keyof typeof TEAM_ICON_COMPONENTS
-    ] ?? Dumbbell;
   const overflowCount = Math.max(0, members.length - 5);
 
   return (
@@ -117,7 +90,7 @@ export function TeamScoreCard({
             </div>
           ) : null}
           <div className="avatar teamScoreCard__teamIcon" aria-hidden="true">
-            <TeamIcon size={28} strokeWidth={2.35} />
+            <TeamIcon icon={icon} size={28} strokeWidth={2.35} />
           </div>
           <div className="teamScoreCard__identity">
             <div className="who">
