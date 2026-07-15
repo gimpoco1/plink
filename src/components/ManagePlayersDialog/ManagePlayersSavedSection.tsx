@@ -9,7 +9,6 @@ export function ManagePlayersSavedSection() {
     filteredProfiles,
     isAuthenticated,
     isCreating,
-    nameInputRef,
     newPlayerValidationMessage,
     onOpenTeamsTab,
     pendingName,
@@ -28,7 +27,6 @@ export function ManagePlayersSavedSection() {
 
   function openComposer() {
     setIsCreating(true);
-    queueMicrotask(() => nameInputRef.current?.focus());
   }
 
   return (

@@ -35,6 +35,7 @@ export const supabase: SupabaseClient | null =
               persistSession: true,
               storageKey: SUPABASE_AUTH_STORAGE_KEY,
               storage: getBrowserStorage(),
+              flowType: "pkce",
             }
           : undefined,
       })

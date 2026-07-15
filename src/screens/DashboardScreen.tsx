@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type TouchEvent,
+  type UIEvent,
+} from "react";
 import type { HomeTab } from "../types";
 import { HomeTabBar } from "../components/HomeTabBar/HomeTabBar";
 import { HomeScreen } from "./HomeScreen";
@@ -25,6 +32,19 @@ export function DashboardScreen(props: DashboardScreenProps) {
     }
   });
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const tabWindowRef = useRef<HTMLDivElement | null>(null);
+  const tabScrollPositionsRef = useRef<Record<HomeTab, number>>({
+    home: 0,
+    sessions: 0,
+    stats: 0,
+    players: 0,
+  });
+
+  useLayoutEffect(() => {
+    const tabWindow = tabWindowRef.current;
+    if (!tabWindow) return;
+    tabWindow.scrollTop = tabScrollPositionsRef.current[props.activeTab];
+  }, [props.activeTab]);
 
   useEffect(() => {
     try {
@@ -138,6 +158,11 @@ export function DashboardScreen(props: DashboardScreenProps) {
     touchStartRef.current = null;
   }
 
+  function rememberTabScrollPosition(event: UIEvent<HTMLDivElement>) {
+    tabScrollPositionsRef.current[props.activeTab] =
+      event.currentTarget.scrollTop;
+  }
+
   function renderActiveTab() {
     switch (props.activeTab) {
       case "sessions":
@@ -243,7 +268,10 @@ export function DashboardScreen(props: DashboardScreenProps) {
       <main className="homeScreen">
         <div className="tabSlider" data-active={props.activeTab}>
           <div
+            key={props.activeTab}
+            ref={tabWindowRef}
             className="tabWindow"
+            onScroll={rememberTabScrollPosition}
             onTouchStart={startTouch}
             onTouchMove={moveTouch}
             onTouchEnd={endTouch}

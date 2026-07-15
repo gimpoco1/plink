@@ -7,6 +7,7 @@ export function AuthPlanDetails() {
     busy,
     handleBillingPeriodRadioKeyDown,
     hasStripeBillingProfile,
+    isNativeIOS,
     isPro,
     restoreSubscription,
     selectedBillingPeriod,
@@ -16,7 +17,7 @@ export function AuthPlanDetails() {
   } = useAuthDialogContext();
   return (
     <div id="auth-plan-details" className="authDialog__planBody">
-      {!isPro ? (
+      {!isPro && !isNativeIOS ? (
         <div className="authDialog__planHero authDialog__planHero--copyOnly">
           <div className="authDialog__planHeroCopy">
             <strong>Need more than the basics?</strong>
@@ -57,7 +58,12 @@ export function AuthPlanDetails() {
         </div>
       </div>
 
-      {!isPro ? (
+      {!isPro && isNativeIOS ? (
+        <div className="authDialog__planSupport">
+          Pro purchases are being prepared for Apple In-App Purchase. This iOS
+          build does not open web checkout.
+        </div>
+      ) : !isPro ? (
         <>
           <div
             className="authDialog__planOptions"
@@ -156,7 +162,7 @@ export function AuthPlanDetails() {
           <div className="authDialog__planSupport">
             Thanks for supporting Plink.
           </div>
-          {source === "subscription" ? (
+          {source === "subscription" && !isNativeIOS ? (
             <div className="authDialog__planActions">
               <button
                 className="btn btn--ghost btn--wide"

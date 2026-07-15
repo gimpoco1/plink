@@ -5,6 +5,7 @@ import {
   loadPersistedSupabaseSession,
   supabase,
 } from "../lib/supabase";
+import { PASSWORD_RECOVERY_EVENT } from "../lib/nativePlatform";
 
 export function useAuthSession() {
   const [session, setSession] = useState<Session | null>(() =>
@@ -72,9 +73,16 @@ export function useAuthSession() {
       }
     }
 
+    function handlePasswordRecovery() {
+      setPasswordRecoveryRequestedAt(Date.now());
+      void refreshSession();
+    }
+
     window.addEventListener("focus", handleWindowFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("storage", handleStorage);
+    window.addEventListener("plink:app-resumed", handleWindowFocus);
+    window.addEventListener(PASSWORD_RECOVERY_EVENT, handlePasswordRecovery);
 
     return () => {
       alive = false;
@@ -82,6 +90,11 @@ export function useAuthSession() {
       window.removeEventListener("focus", handleWindowFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("plink:app-resumed", handleWindowFocus);
+      window.removeEventListener(
+        PASSWORD_RECOVERY_EVENT,
+        handlePasswordRecovery,
+      );
     };
   }, []);
 

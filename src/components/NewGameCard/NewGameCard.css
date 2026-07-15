@@ -204,6 +204,13 @@
   pointer-events: auto;
 }
 
+.newGamePanel--addingPlayer .newGamePanel__body {
+  transition:
+    padding-bottom 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 180ms ease,
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .newGamePanel__body > .homeForm {
   min-height: 0;
 }
@@ -1194,7 +1201,7 @@
 }
 
 .participantPicker__list {
-  max-height: min(208px, 26vh);
+  max-height: 208px;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 6px;

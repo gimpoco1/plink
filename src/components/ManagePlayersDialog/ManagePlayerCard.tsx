@@ -189,7 +189,12 @@ function PlayerIdentity({
   return (
     <div className="managePlayersDialog__identity">
       <div className="managePlayersDialog__identityTop">
-        <span className="managePlayersDialog__name">{displayName}</span>
+        <div className="managePlayersDialog__identityCopy">
+          <span className="managePlayersDialog__name">{displayName}</span>
+          {isTaken ? (
+            <span className="managePlayersDialog__meta">In game</span>
+          ) : null}
+        </div>
         <div className="managePlayersDialog__actionsRow">
           {profile && !player ? (
             isTaken ? (
@@ -242,9 +247,6 @@ function PlayerIdentity({
           ) : null}
         </div>
       </div>
-      {isTaken ? (
-        <span className="managePlayersDialog__meta">In game</span>
-      ) : null}
     </div>
   );
 }

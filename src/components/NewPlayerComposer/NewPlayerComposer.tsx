@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { AVATAR_COLORS } from "../../constants";
+import { useMobileKeyboardCenteredInput } from "../../hooks/useMobileKeyboardCenteredInput";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import "./NewPlayerComposer.css";
@@ -48,6 +49,8 @@ export function NewPlayerComposer({
   onSaveAsProfileChange,
 }: Props) {
   const canAdd = !disabled && name.trim().length > 0 && !validationMessage;
+  const { inputRef: nameInputRef, visibilityTargetRef } =
+    useMobileKeyboardCenteredInput(isOpen && !disabled);
 
   if (!isOpen && showTrigger) {
     return (
@@ -61,7 +64,10 @@ export function NewPlayerComposer({
   if (!isOpen) return null;
 
   return (
-    <div className={`newPlayerComposer${className ? ` ${className}` : ""}`}>
+    <div
+      ref={visibilityTargetRef}
+      className={`newPlayerComposer${className ? ` ${className}` : ""}`}
+    >
       <div className="newPlayerComposer__header">
         <span>Player name</span>
       </div>
@@ -76,9 +82,9 @@ export function NewPlayerComposer({
               {name.trim() ? getInitials(name) : "+"}
             </div>
             <input
+              ref={nameInputRef}
               id={inputId}
               className="input input--sm newPlayerComposer__input"
-              autoFocus
               placeholder="e.g. John"
               value={name}
               disabled={disabled}
