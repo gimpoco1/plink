@@ -86,7 +86,6 @@ export function useManagePlayersDialogModel(
     onOpenTeamsTab,
   } = props;
   const dialogRef = useRef<HTMLDialogElement | null>(null);
-  const nameInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingName, setPendingName] = useState("");
   const [selectedColor, setSelectedColor] = useState<
     (typeof AVATAR_COLORS)[number]["value"]
@@ -299,7 +298,6 @@ export function useManagePlayersDialogModel(
     setIsCreating(true);
     setShowRosterImmediately(true);
     dialogRef.current?.showModal();
-    queueMicrotask(() => nameInputRef.current?.focus());
   }
 
   function close() {
@@ -392,7 +390,6 @@ export function useManagePlayersDialogModel(
     isCreating,
     isPlayersGame,
     isTeamsGame,
-    nameInputRef,
     newPlayerValidationMessage,
     onDeletePlayer,
     onDeleteProfile,

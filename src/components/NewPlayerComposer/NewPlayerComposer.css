@@ -75,7 +75,7 @@
   padding: 2px 0 0;
   display: grid;
   gap: 11px;
-  animation: fadeIn 0.2s ease-out;
+  scroll-margin-bottom: 14px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -415,17 +415,6 @@
   border-color: rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.035);
   color: var(--text);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 .saveProfileOption {

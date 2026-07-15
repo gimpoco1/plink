@@ -1,5 +1,5 @@
 .rosterPicker {
-  --roster-picker-max-height: min(208px, 26vh);
+  --roster-picker-max-height: 208px;
   --roster-picker-ink: #11180f;
   --roster-picker-placeholder: rgba(17, 24, 10, 0.54);
   --roster-picker-surface: rgba(17, 24, 10, 0.08);

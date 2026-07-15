@@ -45,6 +45,7 @@ export function AuthSignedOutPanel() {
     isAwaitingSignupConfirmation,
     mode,
     notice,
+    oauthProvider,
     openEmailApp,
     password,
     sendPasswordReset,
@@ -228,7 +229,7 @@ export function AuthSignedOutPanel() {
                 (mode === "signup" && !formatPlayerName(accountName))
               }
             >
-              {busy
+              {busy && !oauthProvider
                 ? mode === "signin"
                   ? "Signing in..."
                   : "Creating account..."
@@ -253,7 +254,9 @@ export function AuthSignedOutPanel() {
                 onClick={() => void signInWithProvider("google")}
                 disabled={busy}
                 aria-label={
-                  busy ? "Connecting to Google" : "Continue with Google"
+                  oauthProvider === "google"
+                    ? "Connecting to Google"
+                    : "Continue with Google"
                 }
                 title="Continue with Google"
               >
@@ -263,7 +266,11 @@ export function AuthSignedOutPanel() {
                 >
                   <GoogleBrandIcon />
                 </span>
-                <span>Continue with Google</span>
+                <span>
+                  {oauthProvider === "google"
+                    ? "Connecting to Google..."
+                    : "Continue with Google"}
+                </span>
               </button>
               <button
                 className="authDialog__providerBtn authDialog__providerBtn--apple"
@@ -271,7 +278,9 @@ export function AuthSignedOutPanel() {
                 onClick={() => void signInWithProvider("apple")}
                 disabled={busy}
                 aria-label={
-                  busy ? "Connecting to Apple" : "Continue with Apple"
+                  oauthProvider === "apple"
+                    ? "Connecting to Apple"
+                    : "Continue with Apple"
                 }
                 title="Continue with Apple"
               >
@@ -281,7 +290,11 @@ export function AuthSignedOutPanel() {
                 >
                   <AppleBrandIcon />
                 </span>
-                <span>Continue with Apple</span>
+                <span>
+                  {oauthProvider === "apple"
+                    ? "Connecting to Apple..."
+                    : "Continue with Apple"}
+                </span>
               </button>
             </div>
           </>

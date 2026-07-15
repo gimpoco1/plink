@@ -25,6 +25,12 @@ body {
   height: 100dvh;
 }
 
+html.is-native-app,
+html.is-native-app body,
+html.is-native-app #root {
+  background-color: var(--bg);
+}
+
 button,
 input {
   font: inherit;
@@ -40,6 +46,7 @@ input {
 }
 
 .is-native-app .app {
+  background-color: var(--bg);
   padding-right: env(safe-area-inset-right);
   padding-left: env(safe-area-inset-left);
 }

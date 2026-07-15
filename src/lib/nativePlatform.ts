@@ -2,6 +2,8 @@ import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 
 export const NATIVE_AUTH_CALLBACK_URL = "plink://auth/callback";
+export const NATIVE_AUTH_COMPLETED_EVENT = "plink:native-auth-completed";
+export const NATIVE_BROWSER_DISMISSED_EVENT = "plink:native-browser-dismissed";
 export const PASSWORD_RECOVERY_EVENT = "plink:password-recovery";
 
 export function isNativeApp() {

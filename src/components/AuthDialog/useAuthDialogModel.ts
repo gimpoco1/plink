@@ -14,10 +14,12 @@ import {
   type Session,
   type User,
 } from "@supabase/supabase-js";
+import { Browser } from "@capacitor/browser";
 import { AVATAR_COLORS } from "../../constants";
 import { useEntitlementsContext } from "../../hooks/useEntitlements";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
 import {
+  NATIVE_AUTH_COMPLETED_EVENT,
   getAuthRedirectUrl,
   isNativeApp,
   isNativeIOSApp,
@@ -109,6 +111,7 @@ export function useAuthDialogModel(
     subscriptionStatus,
   } = useEntitlementsContext();
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const nativeOAuthPendingRef = useRef(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
   const deviceImportRef = useRef<HTMLDivElement | null>(null);
   const planSectionRef = useRef<HTMLElement | null>(null);
@@ -132,6 +135,7 @@ export function useAuthDialogModel(
     string | null
   >(null);
   const [busy, setBusy] = useState(false);
+  const [oauthProvider, setOauthProvider] = useState<Provider | null>(null);
   const [confirmingAccountDeletion, setConfirmingAccountDeletion] =
     useState(false);
   const [hasStripeBillingProfile, setHasStripeBillingProfile] = useState(false);
@@ -338,6 +342,9 @@ export function useAuthDialogModel(
   }
 
   function resetDialogState() {
+    nativeOAuthPendingRef.current = false;
+    setBusy(false);
+    setOauthProvider(null);
     setNotice(null);
     setTransferToast(null);
     setError(null);
@@ -462,25 +469,57 @@ export function useAuthDialogModel(
   }, [transferToast]);
 
   useEffect(() => {
+    function resetNativeOAuth() {
+      nativeOAuthPendingRef.current = false;
+      setOauthProvider(null);
+      setBusy(false);
+    }
+
     function handleNativeAuthError(event: Event) {
       const message =
         event instanceof CustomEvent && typeof event.detail === "string"
           ? event.detail
           : "Authentication failed.";
-      setBusy(false);
+      resetNativeOAuth();
       setError(message);
       setNotice(null);
       showDialog();
     }
 
+    function handleNativeAuthCompleted() {
+      if (!nativeOAuthPendingRef.current) return;
+      resetNativeOAuth();
+      if (dialogRef.current?.open) {
+        onOpenChange?.(false);
+        dialogRef.current.close();
+      }
+    }
+
+    const browserListener = isNativeApp()
+      ? Browser.addListener("browserFinished", () => {
+          if (nativeOAuthPendingRef.current) resetNativeOAuth();
+        })
+      : null;
+
     window.addEventListener("plink:auth-error", handleNativeAuthError);
+    window.addEventListener(
+      NATIVE_AUTH_COMPLETED_EVENT,
+      handleNativeAuthCompleted,
+    );
     return () => {
       window.removeEventListener("plink:auth-error", handleNativeAuthError);
+      window.removeEventListener(
+        NATIVE_AUTH_COMPLETED_EVENT,
+        handleNativeAuthCompleted,
+      );
+      void browserListener?.then((handle) => handle.remove());
     };
   }, [onOpenChange]);
 
   useEffect(() => {
     if (!session || !busy || recoveryMode) return;
+    nativeOAuthPendingRef.current = false;
+    setOauthProvider(null);
     setBusy(false);
     if (dialogRef.current?.open) {
       onOpenChange?.(false);
@@ -618,6 +657,9 @@ export function useAuthDialogModel(
       return;
     }
 
+    const native = isNativeApp();
+    nativeOAuthPendingRef.current = native;
+    setOauthProvider(provider);
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -629,7 +671,7 @@ export function useAuthDialogModel(
         provider,
         options: {
           redirectTo: getAuthRedirectUrl(),
-          skipBrowserRedirect: isNativeApp(),
+          skipBrowserRedirect: native,
           queryParams:
             provider === "google"
               ? {
@@ -639,10 +681,13 @@ export function useAuthDialogModel(
         },
       });
       if (oauthError) throw oauthError;
-      if (isNativeApp() && data.url) {
+      if (native) {
+        if (!data.url) throw new Error("The sign-in page could not be opened.");
         await openExternalUrl(data.url);
       }
     } catch (err) {
+      nativeOAuthPendingRef.current = false;
+      setOauthProvider(null);
       setBusy(false);
       setError(getAuthErrorMessage(err, "Could not start sign-in."));
     }
@@ -1198,6 +1243,7 @@ export function useAuthDialogModel(
     mode,
     newPassword,
     notice,
+    oauthProvider,
     onOpenChange,
     onUpdateProfile,
     openEmailApp,

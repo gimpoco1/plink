@@ -5,19 +5,19 @@ const config: CapacitorConfig = {
   appName: "Plink",
   webDir: "dist",
   ios: {
-    contentInset: "automatic",
+    contentInset: "never",
     preferredContentMode: "mobile",
   },
   plugins: {
     SplashScreen: {
-      launchAutoHide: true,
-      launchShowDuration: 1200,
-      backgroundColor: "#0b1015",
+      launchAutoHide: false,
+      backgroundColor: "#0b1519",
       showSpinner: false,
     },
     StatusBar: {
-      style: "LIGHT",
+      style: "DARK",
       overlaysWebView: false,
+      backgroundColor: "#0b1015",
     },
     Keyboard: {
       resize: "native",

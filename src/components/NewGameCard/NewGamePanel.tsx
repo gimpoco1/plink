@@ -13,11 +13,16 @@ export function NewGamePanel() {
     hasMounted,
     bodyContentHeight,
     bodyInnerRef,
+    isAddingPlayer,
     reduceMotion,
     staggerVariants,
   } = useNewGameCardContext();
   return (
-    <motion.div className={`newGamePanel${open ? " newGamePanel--open" : ""}`}>
+    <motion.div
+      className={`newGamePanel${open ? " newGamePanel--open" : ""}${
+        isAddingPlayer ? " newGamePanel--addingPlayer" : ""
+      }`}
+    >
       <motion.button
         className={`btn btn--primary btn--xl homeHero__action newGamePanel__trigger${open ? " newGamePanel__trigger--open" : ""}`}
         type="button"

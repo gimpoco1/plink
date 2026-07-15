@@ -1,4 +1,7 @@
+import { useEffect } from "react";
+import { SplashScreen } from "@capacitor/splash-screen";
 import DotGrid from "../../../components/DotGrid/DotGrid";
+import { isNativeApp } from "../../../lib/nativePlatform";
 import { useAppContext } from "../context/AppContext";
 import { AppDialogs } from "../components/AppDialogs";
 import { AppLoadingScreen } from "../components/AppLoadingScreen";
@@ -14,7 +17,14 @@ export function AppView() {
     isAppBootLoading,
     isResumingActiveGameView,
   } = useAppContext();
-  if (isAppBootLoading || isResumingActiveGameView) {
+  const isLoading = isAppBootLoading || isResumingActiveGameView;
+
+  useEffect(() => {
+    if (!isNativeApp() || isLoading) return;
+    void SplashScreen.hide({ fadeOutDuration: 0 });
+  }, [isLoading]);
+
+  if (isLoading) {
     return <AppLoadingScreen />;
   }
 

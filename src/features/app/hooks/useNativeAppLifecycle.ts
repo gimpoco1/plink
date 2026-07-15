@@ -1,9 +1,12 @@
 import { useEffect } from "react";
 import { App as CapacitorApp, type URLOpenListenerEvent } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
+import { Keyboard } from "@capacitor/keyboard";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import {
   NATIVE_AUTH_CALLBACK_URL,
+  NATIVE_AUTH_COMPLETED_EVENT,
+  NATIVE_BROWSER_DISMISSED_EVENT,
   PASSWORD_RECOVERY_EVENT,
   isNativeApp,
 } from "../../../lib/nativePlatform";
@@ -33,6 +36,11 @@ function reportAuthError(message: string) {
   );
 }
 
+async function closeAuthBrowser() {
+  await Browser.close().catch(() => undefined);
+  window.dispatchEvent(new Event(NATIVE_BROWSER_DISMISSED_EVENT));
+}
+
 async function handleAuthCallback(event: URLOpenListenerEvent) {
   if (!supabase) return;
 
@@ -54,7 +62,7 @@ async function handleAuthCallback(event: URLOpenListenerEvent) {
   const authError = params.get("error_description") ?? params.get("error");
   if (authError) {
     reportAuthError(authError);
-    await Browser.close().catch(() => undefined);
+    await closeAuthBrowser();
     return;
   }
 
@@ -66,7 +74,7 @@ async function handleAuthCallback(event: URLOpenListenerEvent) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       reportAuthError(error.message);
-      await Browser.close().catch(() => undefined);
+      await closeAuthBrowser();
       return;
     }
   } else if (accessToken && refreshToken) {
@@ -76,20 +84,36 @@ async function handleAuthCallback(event: URLOpenListenerEvent) {
     });
     if (error) {
       reportAuthError(error.message);
-      await Browser.close().catch(() => undefined);
+      await closeAuthBrowser();
       return;
     }
   } else {
     reportAuthError("The sign-in callback did not contain a session.");
-    await Browser.close().catch(() => undefined);
+    await closeAuthBrowser();
     return;
   }
 
   if (params.get("flow") === "recovery" || params.get("type") === "recovery") {
     window.dispatchEvent(new Event(PASSWORD_RECOVERY_EVENT));
+  } else {
+    window.dispatchEvent(new Event(NATIVE_AUTH_COMPLETED_EVENT));
   }
 
-  await Browser.close().catch(() => undefined);
+  await closeAuthBrowser();
+}
+
+async function configureNativeStatusBar(forceWebViewResize = false) {
+  await StatusBar.setStyle({ style: Style.Dark });
+  await StatusBar.setBackgroundColor({ color: "#0b1015" });
+
+  // A full-screen SFSafariViewController can reset the WKWebView frame when it
+  // is dismissed while the StatusBar plugin still believes overlay is off.
+  // Toggling the value forces Capacitor to calculate the non-overlaid frame
+  // again instead of returning early with a stale frame.
+  if (forceWebViewResize) {
+    await StatusBar.setOverlaysWebView({ overlay: true });
+  }
+  await StatusBar.setOverlaysWebView({ overlay: false });
 }
 
 export function useNativeAppLifecycle() {
@@ -97,18 +121,46 @@ export function useNativeAppLifecycle() {
     if (!isNativeApp()) return;
 
     document.documentElement.classList.add("is-native-app");
-    void StatusBar.setStyle({ style: Style.Light });
-    void StatusBar.setOverlaysWebView({ overlay: false });
+    void configureNativeStatusBar();
 
     let disposed = false;
+    let statusBarRestoreTimeout: number | undefined;
+
+    function restoreStatusBarLayout() {
+      if (disposed) return;
+      window.clearTimeout(statusBarRestoreTimeout);
+      void configureNativeStatusBar(true);
+      statusBarRestoreTimeout = window.setTimeout(() => {
+        if (!disposed) void configureNativeStatusBar(true);
+      }, 150);
+    }
+
+    function setKeyboardOpen(isOpen: boolean) {
+      document.documentElement.classList.toggle(
+        "native-keyboard-open",
+        isOpen,
+      );
+    }
+
     const listenerHandles = Promise.all([
       CapacitorApp.addListener("appUrlOpen", (event) => {
         void handleAuthCallback(event);
       }),
       CapacitorApp.addListener("appStateChange", ({ isActive }) => {
-        if (isActive) window.dispatchEvent(new Event("plink:app-resumed"));
+        if (!isActive) return;
+        restoreStatusBarLayout();
+        window.dispatchEvent(new Event("plink:app-resumed"));
       }),
+      Browser.addListener("browserFinished", restoreStatusBarLayout),
+      Keyboard.addListener("keyboardWillShow", () => setKeyboardOpen(true)),
+      Keyboard.addListener("keyboardDidShow", () => setKeyboardOpen(true)),
+      Keyboard.addListener("keyboardDidHide", () => setKeyboardOpen(false)),
     ]);
+
+    window.addEventListener(
+      NATIVE_BROWSER_DISMISSED_EVENT,
+      restoreStatusBarLayout,
+    );
 
     void CapacitorApp.getLaunchUrl().then((launchUrl) => {
       if (!disposed && launchUrl?.url) {
@@ -118,6 +170,12 @@ export function useNativeAppLifecycle() {
 
     return () => {
       disposed = true;
+      window.clearTimeout(statusBarRestoreTimeout);
+      window.removeEventListener(
+        NATIVE_BROWSER_DISMISSED_EVENT,
+        restoreStatusBarLayout,
+      );
+      document.documentElement.classList.remove("native-keyboard-open");
       document.documentElement.classList.remove("is-native-app");
       void listenerHandles.then((handles) => {
         handles.forEach((handle) => void handle.remove());
