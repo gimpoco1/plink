@@ -58,11 +58,28 @@ Deno.serve(async (request) => {
     const admin = createAdminClient();
     const { data: existingSubscription } = await admin
       .from("subscriptions")
-      .select("customer_id")
+      .select("customer_id,provider,plan,status")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existingSubscription?.customer_id) {
+    if (
+      existingSubscription?.plan === "pro" &&
+      (existingSubscription.status === "active" ||
+        existingSubscription.status === "trialing")
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "This account already has an active subscription. Manage that subscription before starting another one.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (
+      existingSubscription?.provider === "stripe" &&
+      existingSubscription.customer_id
+    ) {
       const existingStripeSubscriptions = await stripe.subscriptions.list({
         customer: existingSubscription.customer_id,
         status: "all",
@@ -91,9 +108,15 @@ Deno.serve(async (request) => {
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
       client_reference_id: user.id,
-      customer: existingSubscription?.customer_id ?? undefined,
+      customer:
+        existingSubscription?.provider === "stripe"
+          ? existingSubscription.customer_id ?? undefined
+          : undefined,
       customer_email:
-        existingSubscription?.customer_id || !user.email ? undefined : user.email,
+        existingSubscription?.provider === "stripe" &&
+        existingSubscription.customer_id
+          ? undefined
+          : user.email,
       metadata: {
         user_id: user.id,
         billing_period: billingPeriod,

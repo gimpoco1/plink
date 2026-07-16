@@ -42,8 +42,9 @@ export function AuthAccountPanel() {
               <strong>Permanently delete this account?</strong>
               <p>
                 Cloud sessions, players, teams, and account access will be
-                removed. Any active Stripe subscription will be cancelled.
-                This cannot be undone.
+                removed. Web subscriptions will be cancelled. Apple
+                subscriptions must be cancelled separately in App Store
+                settings. This cannot be undone.
               </p>
             </div>
           </div>

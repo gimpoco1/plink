@@ -16,6 +16,7 @@ import {
 } from "@supabase/supabase-js";
 import { Browser } from "@capacitor/browser";
 import { AVATAR_COLORS } from "../../constants";
+import { useAppleSubscription } from "../../features/billing/useAppleSubscription";
 import { useEntitlementsContext } from "../../hooks/useEntitlements";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
 import {
@@ -107,9 +108,11 @@ export function useAuthDialogModel(
     subscriptionCancelAt,
     subscriptionCancelAtPeriodEnd,
     subscriptionCurrentPeriodEnd,
+    subscriptionProvider,
     subscriptionStartedAt,
     subscriptionStatus,
   } = useEntitlementsContext();
+  const appleSubscription = useAppleSubscription(session);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const nativeOAuthPendingRef = useRef(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
@@ -373,6 +376,17 @@ export function useAuthDialogModel(
     }
   }
 
+  function showNativePurchaseResult(message: string, tone: ToastTone) {
+    const revealResult = () => {
+      showDialog();
+      showTransferToast(message, tone);
+    };
+
+    revealResult();
+    window.requestAnimationFrame(revealResult);
+    window.setTimeout(revealResult, 250);
+  }
+
   function scrollToLocalImportSection() {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -517,17 +531,6 @@ export function useAuthDialogModel(
   }, [onOpenChange]);
 
   useEffect(() => {
-    if (!session || !busy || recoveryMode) return;
-    nativeOAuthPendingRef.current = false;
-    setOauthProvider(null);
-    setBusy(false);
-    if (dialogRef.current?.open) {
-      onOpenChange?.(false);
-      dialogRef.current.close();
-    }
-  }, [busy, onOpenChange, recoveryMode, session]);
-
-  useEffect(() => {
     if (!userId || !supabase) {
       setHasStripeBillingProfile(false);
       return;
@@ -540,12 +543,16 @@ export function useAuthDialogModel(
       try {
         const { data, error: loadError } = await client
           .from("subscriptions")
-          .select("customer_id")
+          .select("customer_id,provider")
           .eq("user_id", userId)
           .maybeSingle();
 
         if (!alive) return;
-        if (loadError || !data?.customer_id) {
+        if (
+          loadError ||
+          data?.provider !== "stripe" ||
+          !data.customer_id
+        ) {
           setHasStripeBillingProfile(false);
           return;
         }
@@ -977,10 +984,48 @@ export function useAuthDialogModel(
       return;
     }
     if (isNativeIOSApp()) {
+      let purchaseResult: ToastState = {
+        message: "The purchase could not be completed.",
+        tone: "error",
+      };
+      setBusy(true);
       setError(null);
-      showTransferToast(
-        "Pro upgrades aren't available in the app yet. You can upgrade in your browser.",
-      );
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await appleSubscription.purchase(selectedBillingPeriod);
+        if (result.status === "cancelled") {
+          purchaseResult = {
+            message: "Purchase cancelled.",
+            tone: "default",
+          };
+        } else if (result.status === "pending") {
+          purchaseResult = {
+            message:
+              "Your purchase is waiting for approval. Pro will unlock automatically once Apple approves it.",
+            tone: "default",
+          };
+        } else {
+          purchaseResult = {
+            message: "Welcome to Plink Pro!",
+            tone: "success",
+          };
+        }
+      } catch (err) {
+        purchaseResult = {
+          message: getBillingErrorMessage(
+            err,
+            "The purchase could not be completed.",
+          ),
+          tone: "error",
+        };
+      } finally {
+        setBusy(false);
+        showNativePurchaseResult(
+          purchaseResult.message,
+          purchaseResult.tone,
+        );
+      }
       return;
     }
 
@@ -1008,13 +1053,30 @@ export function useAuthDialogModel(
 
   async function restoreSubscription() {
     if (!session) {
-      setError("Sign in before opening the billing portal.");
+      setError("Sign in before managing a subscription.");
       return;
     }
     if (isNativeIOSApp()) {
-      setError(
-        "Subscription management is not available in this iOS build yet.",
-      );
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await appleSubscription.restore();
+        showTransferToast(
+          result?.active
+            ? "Your Plink Pro purchase has been restored."
+            : "No active Plink Pro purchase was found for this Apple Account.",
+          result?.active ? "success" : "default",
+        );
+      } catch (err) {
+        showTransferToast(
+          getBillingErrorMessage(err, "Purchases could not be restored."),
+          "error",
+        );
+      } finally {
+        setBusy(false);
+      }
       return;
     }
 
@@ -1036,6 +1098,35 @@ export function useAuthDialogModel(
       );
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function manageSubscription() {
+    try {
+      if (subscriptionProvider === "apple" && isNativeIOSApp()) {
+        await appleSubscription.showManageSubscriptions();
+        return;
+      }
+
+      if (subscriptionProvider === "apple") {
+        await openExternalUrl("https://apps.apple.com/account/subscriptions");
+        return;
+      }
+
+      if (isNativeIOSApp()) {
+        await openExternalUrl("https://plinkscore.com");
+        return;
+      }
+
+      await restoreSubscription();
+    } catch (err) {
+      showTransferToast(
+        getBillingErrorMessage(
+          err,
+          "Subscription settings could not be opened.",
+        ),
+        "error",
+      );
     }
   }
 
@@ -1233,6 +1324,9 @@ export function useAuthDialogModel(
     handleBillingPeriodRadioKeyDown,
     hasFilteredLocalGames,
     hasStripeBillingProfile,
+    appleProductsByPeriod: appleSubscription.productsByPeriod,
+    appleProductsError: appleSubscription.productsError,
+    appleProductsLoading: appleSubscription.isLoadingProducts,
     includeGames,
     includeProfiles,
     isAwaitingSignupConfirmation,
@@ -1251,7 +1345,9 @@ export function useAuthDialogModel(
     password,
     planSectionRef,
     recoveryMode,
+    reloadAppleProducts: appleSubscription.reloadProducts,
     renewalLabel,
+    manageSubscription,
     restoreSubscription,
     runDownloadBackupFile,
     runImportFromDevice,
@@ -1298,6 +1394,7 @@ export function useAuthDialogModel(
     signupConfirmationEmail,
     sinceLabel,
     source,
+    subscriptionProvider,
     startUpgradeFlow,
     submit,
     submitNewPassword,

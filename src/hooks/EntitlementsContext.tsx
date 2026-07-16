@@ -7,6 +7,7 @@ const fallbackState: EntitlementsState = {
   source: "default",
   isPro: false,
   subscriptionStatus: null,
+  subscriptionProvider: null,
   subscriptionBillingPeriod: null,
   subscriptionCurrentPeriodEnd: null,
   subscriptionStartedAt: null,

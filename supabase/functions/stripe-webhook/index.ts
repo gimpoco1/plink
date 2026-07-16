@@ -34,10 +34,7 @@ function getStripeSubscriptionId(
 function getStripeSubscriptionCurrentPeriodEnd(
   subscription: Stripe.Subscription,
 ) {
-  const timestamp =
-    subscription.current_period_end ??
-    subscription.items.data[0]?.current_period_end ??
-    null;
+  const timestamp = subscription.current_period_end ?? null;
 
   return timestamp ? new Date(timestamp * 1000).toISOString() : null;
 }
@@ -110,10 +107,21 @@ async function upsertStripeSubscription(
   const { data: existingSubscription } = await admin
     .from("subscriptions")
     .select(
-      "subscription_id,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
+      "provider,plan,subscription_id,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
     )
     .eq("user_id", userId)
     .maybeSingle();
+
+  const hasActiveAppleSubscription =
+    existingSubscription?.provider === "apple" &&
+    existingSubscription.plan === "pro" &&
+    ACTIVE_SUBSCRIPTION_STATUSES.has(existingSubscription.status);
+  if (hasActiveAppleSubscription) {
+    console.warn(
+      `Ignored Stripe event ${eventType} because user ${userId} has an active Apple subscription.`,
+    );
+    return;
+  }
 
   const shouldPreserveExistingStatus =
     eventType === "customer.subscription.created" &&
@@ -125,6 +133,7 @@ async function upsertStripeSubscription(
   const { error } = await admin.from("subscriptions").upsert(
     {
       user_id: userId,
+      provider: "stripe",
       customer_id: customerId,
       subscription_id: subscription.id,
       price_id: shouldPreserveExistingStatus
@@ -147,6 +156,9 @@ async function upsertStripeSubscription(
       canceled_at: shouldPreserveExistingStatus
         ? existingSubscription?.canceled_at ?? canceledAt
         : canceledAt,
+      apple_original_transaction_id: null,
+      apple_latest_transaction_id: null,
+      apple_environment: null,
     },
     { onConflict: "user_id" },
   );

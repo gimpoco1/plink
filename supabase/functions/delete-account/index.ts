@@ -19,13 +19,13 @@ Deno.serve(async (request) => {
     const admin = createAdminClient();
     const { data: subscription, error: subscriptionError } = await admin
       .from("subscriptions")
-      .select("subscription_id")
+      .select("provider,subscription_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (subscriptionError) throw subscriptionError;
 
-    if (subscription?.subscription_id) {
+    if (subscription?.provider === "stripe" && subscription.subscription_id) {
       try {
         const stripeSubscription = await stripe.subscriptions.retrieve(
           subscription.subscription_id,
