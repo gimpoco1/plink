@@ -25,7 +25,9 @@ Deno.serve(async (request) => {
 
     if (subscriptionError) throw subscriptionError;
 
-    if (subscription?.provider === "stripe" && subscription.subscription_id) {
+    const subscriptionProvider = subscription?.provider ?? "stripe";
+
+    if (subscriptionProvider === "stripe" && subscription?.subscription_id) {
       try {
         const stripeSubscription = await stripe.subscriptions.retrieve(
           subscription.subscription_id,

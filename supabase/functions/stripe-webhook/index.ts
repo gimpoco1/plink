@@ -76,12 +76,15 @@ async function upsertStripeSubscription(
   admin: ReturnType<typeof createAdminClient>,
   subscription: Stripe.Subscription,
   eventType: Stripe.Event.Type,
+  expectedUserId?: string,
 ) {
-  const userId = await findSubscriptionOwner(admin, {
-    userId: subscription.metadata.user_id,
-    customerId: getStripeCustomerId(subscription.customer),
-    subscriptionId: subscription.id,
-  });
+  const userId =
+    expectedUserId ??
+    (await findSubscriptionOwner(admin, {
+      userId: subscription.metadata.user_id,
+      customerId: getStripeCustomerId(subscription.customer),
+      subscriptionId: subscription.id,
+    }));
 
   if (!userId) {
     console.warn(
@@ -117,6 +120,14 @@ async function upsertStripeSubscription(
     existingSubscription.plan === "pro" &&
     ACTIVE_SUBSCRIPTION_STATUSES.has(existingSubscription.status);
   if (hasActiveAppleSubscription) {
+    if (subscription.status !== "canceled") {
+      await stripe.subscriptions.cancel(subscription.id);
+      console.warn(
+        `Canceled Stripe subscription ${subscription.id} from event ${eventType} because user ${userId} has an active Apple subscription.`,
+      );
+      return;
+    }
+
     console.warn(
       `Ignored Stripe event ${eventType} because user ${userId} has an active Apple subscription.`,
     );
@@ -168,7 +179,7 @@ async function upsertStripeSubscription(
   }
 }
 
-async function upsertCheckoutSession(
+async function syncCheckoutSessionSubscription(
   admin: ReturnType<typeof createAdminClient>,
   session: Stripe.Checkout.Session,
 ) {
@@ -181,51 +192,12 @@ async function upsertCheckoutSession(
     customerId: getStripeCustomerId(session.customer),
     subscriptionId: getStripeSubscriptionId(session.subscription),
   });
-
   if (!userId) {
     throw new Error(
       `Unable to resolve checkout session owner for Stripe session ${session.id}.`,
     );
   }
 
-  const customerId = getStripeCustomerId(session.customer);
-  const subscriptionId = getStripeSubscriptionId(session.subscription);
-  const billingPeriod = normalizeBillingPeriod(session.metadata?.billing_period);
-  const { data: existingSubscription } = await admin
-    .from("subscriptions")
-    .select(
-      "plan,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
-    )
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  const { error } = await admin.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      customer_id: customerId,
-      subscription_id: subscriptionId,
-      plan: existingSubscription?.plan ?? "pro",
-      status: existingSubscription?.status ?? "inactive",
-      billing_period: existingSubscription?.billing_period ?? billingPeriod,
-      current_period_end: existingSubscription?.current_period_end ?? null,
-      price_id: existingSubscription?.price_id ?? null,
-      cancel_at_period_end:
-        existingSubscription?.cancel_at_period_end ?? false,
-      cancel_at: existingSubscription?.cancel_at ?? null,
-      canceled_at: existingSubscription?.canceled_at ?? null,
-    },
-    { onConflict: "user_id" },
-  );
-
-  if (error) {
-    throw error;
-  }
-}
-
-async function syncCheckoutSessionSubscription(
-  admin: ReturnType<typeof createAdminClient>,
-  session: Stripe.Checkout.Session,
-) {
   const subscriptionId = getStripeSubscriptionId(session.subscription);
   if (!subscriptionId) {
     throw new Error(
@@ -238,6 +210,7 @@ async function syncCheckoutSessionSubscription(
     admin,
     subscription,
     "customer.subscription.updated",
+    userId,
   );
 }
 
@@ -279,7 +252,6 @@ Deno.serve(async (request) => {
       case "checkout.session.completed":
         {
           const session = event.data.object as Stripe.Checkout.Session;
-          await upsertCheckoutSession(admin, session);
           await syncCheckoutSessionSubscription(admin, session);
         }
         break;
