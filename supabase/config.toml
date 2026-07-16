@@ -1,2 +1,5 @@
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.apple-subscription-webhook]
+verify_jwt = false

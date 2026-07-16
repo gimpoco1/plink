@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { SUBSCRIPTION_SYNCED_EVENT } from "../features/billing/appleSubscriptionSync";
 import { supabase } from "../lib/supabase";
 
 export type SubscriptionPlan = "free" | "pro";
 export type SubscriptionBillingPeriod = "monthly" | "yearly";
+export type SubscriptionProvider = "stripe" | "apple";
 type SubscriptionStatus =
   | "active"
   | "trialing"
@@ -20,6 +22,7 @@ export type EntitlementsState = {
   source: EntitlementSource;
   isPro: boolean;
   subscriptionStatus: SubscriptionStatus | null;
+  subscriptionProvider: SubscriptionProvider | null;
   subscriptionBillingPeriod: SubscriptionBillingPeriod | null;
   subscriptionCurrentPeriodEnd: string | null;
   subscriptionStartedAt: string | null;
@@ -61,6 +64,12 @@ function normalizeBillingPeriod(
   return null;
 }
 
+function normalizeSubscriptionProvider(
+  value: unknown,
+): SubscriptionProvider | null {
+  return value === "stripe" || value === "apple" ? value : null;
+}
+
 function getAccountPlan(session: Session | null): SubscriptionPlan | null {
   if (!session) return null;
 
@@ -78,6 +87,8 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     useState<SubscriptionPlan | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] =
     useState<SubscriptionStatus | null>(null);
+  const [subscriptionProvider, setSubscriptionProvider] =
+    useState<SubscriptionProvider | null>(null);
   const [subscriptionBillingPeriod, setSubscriptionBillingPeriod] =
     useState<SubscriptionBillingPeriod | null>(null);
   const [subscriptionCurrentPeriodEnd, setSubscriptionCurrentPeriodEnd] =
@@ -104,6 +115,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     if (envOverridePlan || !userId || !supabase) {
       setSubscriptionPlan(null);
       setSubscriptionStatus(null);
+      setSubscriptionProvider(null);
       setSubscriptionBillingPeriod(null);
       setSubscriptionCurrentPeriodEnd(null);
       setSubscriptionStartedAt(null);
@@ -123,7 +135,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
         const { data, error } = await client
           .from("subscriptions")
           .select(
-            "plan,status,billing_period,current_period_end,created_at,cancel_at_period_end,cancel_at,canceled_at",
+            "plan,status,provider,billing_period,current_period_end,created_at,cancel_at_period_end,cancel_at,canceled_at",
           )
           .eq("user_id", userId)
           .maybeSingle();
@@ -134,6 +146,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
           if (alive) {
             setSubscriptionPlan(null);
             setSubscriptionStatus(null);
+            setSubscriptionProvider(null);
             setSubscriptionBillingPeriod(null);
             setSubscriptionCurrentPeriodEnd(null);
             setSubscriptionStartedAt(null);
@@ -148,6 +161,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
 
         const normalizedPlan = normalizePlan(data.plan);
         const normalizedStatus = normalizeSubscriptionStatus(data.status);
+        const normalizedProvider = normalizeSubscriptionProvider(data.provider);
         const normalizedBillingPeriod = normalizeBillingPeriod(
           data.billing_period,
         );
@@ -161,6 +175,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
 
         setSubscriptionPlan(effectivePlan);
         setSubscriptionStatus(normalizedStatus);
+        setSubscriptionProvider(normalizedProvider);
         setSubscriptionBillingPeriod(normalizedBillingPeriod);
         setSubscriptionCurrentPeriodEnd(
           typeof data.current_period_end === "string"
@@ -183,6 +198,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
         if (alive) {
           setSubscriptionPlan(null);
           setSubscriptionStatus(null);
+          setSubscriptionProvider(null);
           setSubscriptionBillingPeriod(null);
           setSubscriptionCurrentPeriodEnd(null);
           setSubscriptionStartedAt(null);
@@ -219,6 +235,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     void refreshSubscription();
     const intervalId = window.setInterval(refreshSubscription, 5000);
     window.addEventListener("focus", refreshSubscription);
+    window.addEventListener(SUBSCRIPTION_SYNCED_EVENT, refreshSubscription);
     document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
@@ -229,6 +246,10 @@ export function useEntitlements(session: Session | null): EntitlementsState {
         client.removeChannel(channel);
       }
       window.removeEventListener("focus", refreshSubscription);
+      window.removeEventListener(
+        SUBSCRIPTION_SYNCED_EVENT,
+        refreshSubscription,
+      );
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [envOverridePlan, userId]);
@@ -250,6 +271,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       source,
       isPro,
       subscriptionStatus,
+      subscriptionProvider,
       subscriptionBillingPeriod,
       subscriptionCurrentPeriodEnd,
       subscriptionStartedAt,
@@ -274,6 +296,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     subscriptionCurrentPeriodEnd,
     subscriptionStartedAt,
     subscriptionPlan,
+    subscriptionProvider,
     subscriptionStatus,
   ]);
 }

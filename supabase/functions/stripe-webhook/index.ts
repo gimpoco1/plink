@@ -34,10 +34,7 @@ function getStripeSubscriptionId(
 function getStripeSubscriptionCurrentPeriodEnd(
   subscription: Stripe.Subscription,
 ) {
-  const timestamp =
-    subscription.current_period_end ??
-    subscription.items.data[0]?.current_period_end ??
-    null;
+  const timestamp = subscription.current_period_end ?? null;
 
   return timestamp ? new Date(timestamp * 1000).toISOString() : null;
 }
@@ -79,12 +76,15 @@ async function upsertStripeSubscription(
   admin: ReturnType<typeof createAdminClient>,
   subscription: Stripe.Subscription,
   eventType: Stripe.Event.Type,
+  expectedUserId?: string,
 ) {
-  const userId = await findSubscriptionOwner(admin, {
-    userId: subscription.metadata.user_id,
-    customerId: getStripeCustomerId(subscription.customer),
-    subscriptionId: subscription.id,
-  });
+  const userId =
+    expectedUserId ??
+    (await findSubscriptionOwner(admin, {
+      userId: subscription.metadata.user_id,
+      customerId: getStripeCustomerId(subscription.customer),
+      subscriptionId: subscription.id,
+    }));
 
   if (!userId) {
     console.warn(
@@ -110,10 +110,29 @@ async function upsertStripeSubscription(
   const { data: existingSubscription } = await admin
     .from("subscriptions")
     .select(
-      "subscription_id,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
+      "provider,plan,subscription_id,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
     )
     .eq("user_id", userId)
     .maybeSingle();
+
+  const hasActiveAppleSubscription =
+    existingSubscription?.provider === "apple" &&
+    existingSubscription.plan === "pro" &&
+    ACTIVE_SUBSCRIPTION_STATUSES.has(existingSubscription.status);
+  if (hasActiveAppleSubscription) {
+    if (subscription.status !== "canceled") {
+      await stripe.subscriptions.cancel(subscription.id);
+      console.warn(
+        `Canceled Stripe subscription ${subscription.id} from event ${eventType} because user ${userId} has an active Apple subscription.`,
+      );
+      return;
+    }
+
+    console.warn(
+      `Ignored Stripe event ${eventType} because user ${userId} has an active Apple subscription.`,
+    );
+    return;
+  }
 
   const shouldPreserveExistingStatus =
     eventType === "customer.subscription.created" &&
@@ -125,6 +144,7 @@ async function upsertStripeSubscription(
   const { error } = await admin.from("subscriptions").upsert(
     {
       user_id: userId,
+      provider: "stripe",
       customer_id: customerId,
       subscription_id: subscription.id,
       price_id: shouldPreserveExistingStatus
@@ -147,60 +167,9 @@ async function upsertStripeSubscription(
       canceled_at: shouldPreserveExistingStatus
         ? existingSubscription?.canceled_at ?? canceledAt
         : canceledAt,
-    },
-    { onConflict: "user_id" },
-  );
-
-  if (error) {
-    throw error;
-  }
-}
-
-async function upsertCheckoutSession(
-  admin: ReturnType<typeof createAdminClient>,
-  session: Stripe.Checkout.Session,
-) {
-  const userId = await findSubscriptionOwner(admin, {
-    userId:
-      session.metadata?.user_id ??
-      (typeof session.client_reference_id === "string"
-        ? session.client_reference_id
-        : null),
-    customerId: getStripeCustomerId(session.customer),
-    subscriptionId: getStripeSubscriptionId(session.subscription),
-  });
-
-  if (!userId) {
-    throw new Error(
-      `Unable to resolve checkout session owner for Stripe session ${session.id}.`,
-    );
-  }
-
-  const customerId = getStripeCustomerId(session.customer);
-  const subscriptionId = getStripeSubscriptionId(session.subscription);
-  const billingPeriod = normalizeBillingPeriod(session.metadata?.billing_period);
-  const { data: existingSubscription } = await admin
-    .from("subscriptions")
-    .select(
-      "plan,status,billing_period,current_period_end,price_id,cancel_at_period_end,cancel_at,canceled_at",
-    )
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  const { error } = await admin.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      customer_id: customerId,
-      subscription_id: subscriptionId,
-      plan: existingSubscription?.plan ?? "pro",
-      status: existingSubscription?.status ?? "inactive",
-      billing_period: existingSubscription?.billing_period ?? billingPeriod,
-      current_period_end: existingSubscription?.current_period_end ?? null,
-      price_id: existingSubscription?.price_id ?? null,
-      cancel_at_period_end:
-        existingSubscription?.cancel_at_period_end ?? false,
-      cancel_at: existingSubscription?.cancel_at ?? null,
-      canceled_at: existingSubscription?.canceled_at ?? null,
+      apple_original_transaction_id: null,
+      apple_latest_transaction_id: null,
+      apple_environment: null,
     },
     { onConflict: "user_id" },
   );
@@ -214,6 +183,21 @@ async function syncCheckoutSessionSubscription(
   admin: ReturnType<typeof createAdminClient>,
   session: Stripe.Checkout.Session,
 ) {
+  const userId = await findSubscriptionOwner(admin, {
+    userId:
+      session.metadata?.user_id ??
+      (typeof session.client_reference_id === "string"
+        ? session.client_reference_id
+        : null),
+    customerId: getStripeCustomerId(session.customer),
+    subscriptionId: getStripeSubscriptionId(session.subscription),
+  });
+  if (!userId) {
+    throw new Error(
+      `Unable to resolve checkout session owner for Stripe session ${session.id}.`,
+    );
+  }
+
   const subscriptionId = getStripeSubscriptionId(session.subscription);
   if (!subscriptionId) {
     throw new Error(
@@ -226,6 +210,7 @@ async function syncCheckoutSessionSubscription(
     admin,
     subscription,
     "customer.subscription.updated",
+    userId,
   );
 }
 
@@ -267,7 +252,6 @@ Deno.serve(async (request) => {
       case "checkout.session.completed":
         {
           const session = event.data.object as Stripe.Checkout.Session;
-          await upsertCheckoutSession(admin, session);
           await syncCheckoutSessionSubscription(admin, session);
         }
         break;

@@ -99,7 +99,9 @@ Before archiving, select an iPhone simulator or connected iPhone and click
 4. Tab switching and independent tab scrolling.
 5. Manage Players editing and removal.
 6. Google and Apple sign-in, including cancelling the sign-in flow.
-7. Backgrounding the app and returning to it.
+7. App Store subscription prices, purchase, restore, and management using a
+   Sandbox Apple Account.
+8. Backgrounding the app and returning to it.
 
 Fix any issue, rerun `npm run ios:sync`, and repeat this smoke test before
 creating the archive.
@@ -185,6 +187,7 @@ Please test:
 - Manage Players editing, removal, and the "In game" label
 - Home, Sessions, Stats, and Players tab switching and scroll positions
 - Google and Apple sign-in, successful return, and cancellation
+- App Store subscription prices, purchase, restore, and management
 - Background/resume and a full app restart
 
 When reporting a problem, include:
@@ -446,6 +449,8 @@ Current functions:
 - `create-checkout-session`
 - `create-customer-portal-session`
 - `stripe-webhook`
+- `sync-apple-subscription`
+- `apple-subscription-webhook`
 
 Deploy a single function:
 
@@ -453,11 +458,14 @@ Deploy a single function:
 supabase functions deploy create-checkout-session
 supabase functions deploy create-customer-portal-session
 supabase functions deploy stripe-webhook
+supabase functions deploy sync-apple-subscription
+supabase functions deploy apple-subscription-webhook --no-verify-jwt
 ```
 
 Important:
 
-- `stripe-webhook` must have JWT verification disabled in `supabase/config.toml`
+- `stripe-webhook` and `apple-subscription-webhook` must have JWT verification
+  disabled in `supabase/config.toml`
 - after changing `supabase/config.toml`, redeploy the affected function
 
 ## Function Secrets
@@ -496,6 +504,7 @@ Useful DB checks after billing changes:
 ```sql
 select
   user_id,
+  provider,
   plan,
   status,
   billing_period,
@@ -506,12 +515,135 @@ select
   subscription_id,
   price_id,
   customer_id,
+  apple_original_transaction_id,
+  apple_latest_transaction_id,
+  apple_environment,
   created_at,
   updated_at
 from public.subscriptions
 order by updated_at desc
 limit 20;
 ```
+
+## Apple In-App Subscriptions
+
+The native iOS build uses StoreKit 2. The browser build continues to use
+Stripe. Apple purchases are verified by a Supabase Edge Function against the
+App Store Server API before Pro access is granted.
+
+Plink uses these App Store product IDs:
+
+```text
+com.plinkscore.app.pro.monthly
+com.plinkscore.app.pro.yearly
+```
+
+Both products provide the same Pro access, so place both in the same
+subscription group and at the same subscription level. Their different
+durations do not make one a higher tier than the other.
+
+### One-time App Store Connect setup
+
+1. Open **Apps > Plink > Subscriptions** in App Store Connect.
+2. Confirm the monthly and yearly products are complete and **Ready to
+   Submit**.
+3. Click **Edit Level** and put both products at **Level 1**.
+4. Complete the subscription-group localization.
+5. Add the required review screenshot and review notes to each product.
+6. For the first subscription submission, open the new app version and add
+   both products under **In-App Purchases and Subscriptions** before submitting
+   the version for review.
+7. Confirm the Paid Apps agreement, bank account, and required tax forms are
+   active under **Business**.
+
+### Create the App Store Server API key
+
+1. In App Store Connect, open **Users and Access > Integrations > In-App
+   Purchase**.
+2. Generate an In-App Purchase key.
+3. Record the **Issuer ID** and **Key ID**.
+4. Download the `.p8` private key immediately. Apple only allows it to be
+   downloaded once.
+5. Store the file in a password manager or secure secrets store. Never add it
+   to this repository, `.env.local`, Vite variables, or Xcode Cloud variables.
+
+### Configure Supabase
+
+First apply the Apple subscription database fields:
+
+```bash
+supabase db push
+```
+
+In **Supabase Dashboard > Project Settings > Edge Functions > Secrets**, add:
+
+```text
+APPLE_IAP_ISSUER_ID=<App Store Connect issuer ID>
+APPLE_IAP_KEY_ID=<App Store Connect key ID>
+APPLE_IAP_PRIVATE_KEY=<the complete contents of the downloaded .p8 file>
+APPLE_APP_BUNDLE_ID=com.plinkscore.app
+```
+
+Paste the private key with its `BEGIN PRIVATE KEY` and `END PRIVATE KEY`
+lines. These are server secrets; do not prefix them with `VITE_`.
+
+Deploy the Apple functions and the billing functions changed alongside them:
+
+```bash
+supabase functions deploy sync-apple-subscription
+supabase functions deploy apple-subscription-webhook --no-verify-jwt
+supabase functions deploy create-checkout-session
+supabase functions deploy stripe-webhook --no-verify-jwt
+supabase functions deploy delete-account
+```
+
+### Configure App Store Server Notifications
+
+In **App Store Connect > Apps > Plink > App Information > App Store Server
+Notifications**, use Version 2 and enter this URL for both production and
+sandbox:
+
+```text
+https://<your-project-ref>.supabase.co/functions/v1/apple-subscription-webhook
+```
+
+Use **Send Test Notification** and confirm the delivery receives HTTP `200`.
+The webhook keeps Pro status current after renewals, billing failures,
+cancellations, refunds, and revocations.
+
+### Build and test purchases
+
+1. Run `npm run ios:sync` after every web-code change.
+2. Open `ios/App/App.xcodeproj` and select the **App** target.
+3. Under **Signing & Capabilities**, confirm **In-App Purchase** is present.
+4. Create a Sandbox Apple Account in App Store Connect under **Users and
+   Access > Sandbox**.
+5. Test on a physical iPhone or through TestFlight. Sign into Plink before
+   purchasing so the transaction is tied to the correct Plink account.
+6. Test monthly purchase, yearly purchase, cancellation, pending purchase,
+   **Restore purchases**, and **Manage subscription**.
+7. Confirm `public.subscriptions.provider` is `apple`, `plan` is `pro`, and the
+   Apple transaction columns are populated.
+
+Use Sandbox or TestFlight for end-to-end server verification. Xcode StoreKit
+configuration files create a local StoreKit environment that is useful for UI
+testing, but those local transactions are not available to the App Store
+Server API and therefore cannot unlock server-backed Pro access.
+
+### Apple purchase troubleshooting
+
+- **Connecting to App Store never changes:** verify product IDs, agreements,
+  product availability, bundle ID, and that the device can reach the App
+  Store.
+- **Purchase succeeds but Pro stays locked:** inspect
+  `sync-apple-subscription` logs, verify all four Apple secrets, and apply the
+  database migration.
+- **Restore says no purchase:** use the Apple Account that originally bought
+  the subscription and the Plink account linked when it was purchased.
+- **Renewals do not update:** inspect the Version 2 notification delivery and
+  the `apple-subscription-webhook` logs.
+- **Products are missing in a new TestFlight build:** confirm the products are
+  attached to the app version and available in the current storefront.
 
 ## Stripe Billing Setup
 
