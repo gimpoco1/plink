@@ -150,6 +150,7 @@ export function GameScreen(props: GameScreenProps) {
                       targetScore={game.targetScore}
                       startingScore={game.startingScore}
                       winCondition={game.winCondition}
+                      quickScoreValues={game.quickScoreValues}
                       onDelta={(_participantId, delta) => {
                         const targetPlayerId = participant.members[0]?.id;
                         if (!targetPlayerId) return;
@@ -197,6 +198,7 @@ export function GameScreen(props: GameScreenProps) {
                           targetScore={game.targetScore}
                           startingScore={game.startingScore}
                           winCondition={game.winCondition}
+                          quickScoreValues={game.quickScoreValues}
                           onDelta={(playerId, delta) => {
                             onUpdateScore(playerId, delta);
                             onTriggerPulse(playerId, delta);

@@ -47,6 +47,7 @@ export type ScoreHistoryEntry = {
 export type ScoreDirection = "up" | "down";
 export type WinCondition = "reach_target" | "reach_zero" | "lowest";
 export type CompletionMode = "winner" | "no_winner" | "draw";
+export type QuickScoreValues = [number, number];
 
 export type Game = {
   id: string;
@@ -60,6 +61,7 @@ export type Game = {
   manualEndOnly: boolean;
   timerEnabled: boolean;
   diceEnabled: boolean;
+  quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   teams: GameTeam[];

@@ -8,6 +8,7 @@ import {
 } from "../constants";
 import { uid } from "../utils/id";
 import { loadPlayers } from "./playersStorage";
+import { sanitizeQuickScoreValues } from "../utils/scoring";
 
 function sanitizeScoreHistory(input: unknown): Game["scoreHistory"] {
   if (!Array.isArray(input)) return [];
@@ -142,6 +143,7 @@ export function sanitizeGames(input: unknown): Game[] {
         manualEndOnly: obj.manualEndOnly === true,
         timerEnabled,
         diceEnabled: obj.diceEnabled === true,
+        quickScoreValues: sanitizeQuickScoreValues(obj.quickScoreValues),
         timerMode,
         timerSeconds,
         teams: sanitizeTeams(obj.teams),
@@ -233,6 +235,7 @@ export function migrateSingleGameToGamesIfNeeded(): {
     manualEndOnly: false,
     timerEnabled: false,
     diceEnabled: false,
+    quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,
     teams: [],

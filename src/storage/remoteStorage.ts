@@ -1,14 +1,19 @@
 import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
 import { supabase } from "../lib/supabase";
 import { DEFAULT_TEAM_ICON } from "../constants";
+import { sanitizeQuickScoreValues } from "../utils/scoring";
 
 const GAMES_TABLE = "games";
 const PROFILES_TABLE = "player_profiles";
 const TEAMS_TABLE = "teams";
 const TEAM_MEMBERS_TABLE = "team_members";
 const GAME_SELECT_COLUMNS =
+  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
+const GAME_SELECT_COLUMNS_WITHOUT_QUICK_SCORES =
   "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const GAME_SELECT_COLUMNS_WITHOUT_DICE =
+  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
+const GAME_SELECT_COLUMNS_WITHOUT_DICE_OR_QUICK_SCORES =
   "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
   "id,user_id,name,score_direction,starting_score,target_score,win_condition,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
@@ -29,6 +34,8 @@ type GameRow = {
   win_by_two?: boolean | null;
   manual_end_only?: boolean | null;
   dice_enabled?: boolean | null;
+  quick_score_value_1?: number | null;
+  quick_score_value_2?: number | null;
   completion_mode?: Game["completionMode"] | null;
   target_points?: number;
   is_low_score_wins?: boolean;
@@ -86,6 +93,8 @@ function gameToRow(userId: string, game: Game): GameRow {
     win_by_two: game.winByTwo,
     manual_end_only: game.manualEndOnly,
     dice_enabled: game.diceEnabled,
+    quick_score_value_1: game.quickScoreValues[0],
+    quick_score_value_2: game.quickScoreValues[1],
     completion_mode: game.completionMode ?? null,
     timer_enabled: game.timerEnabled,
     timer_mode: game.timerMode,
@@ -181,6 +190,10 @@ function rowToGame(row: GameRow): Game {
     winByTwo: row.win_by_two === true,
     manualEndOnly: row.manual_end_only === true,
     diceEnabled: row.dice_enabled === true,
+    quickScoreValues: sanitizeQuickScoreValues([
+      row.quick_score_value_1,
+      row.quick_score_value_2,
+    ]),
     completionMode:
       row.completion_mode === "winner" ||
       row.completion_mode === "no_winner" ||
@@ -217,6 +230,14 @@ function isMissingGameRuleColumn(error: unknown) {
 
 function isMissingDiceEnabledColumn(error: unknown) {
   return getErrorMessage(error).includes("dice_enabled");
+}
+
+function isMissingQuickScoreColumn(error: unknown) {
+  const message = getErrorMessage(error);
+  return (
+    message.includes("quick_score_value_1") ||
+    message.includes("quick_score_value_2")
+  );
 }
 
 function isMissingTeamsColumn(error: unknown) {
@@ -331,34 +352,70 @@ function isMissingTeamIconColumn(error: unknown) {
 
 export async function loadRemoteGames(userId: string): Promise<Game[]> {
   if (!supabase) return [];
-  const result = await supabase
-    .from(GAMES_TABLE)
-    .select(GAME_SELECT_COLUMNS)
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
-  if (!result.error) {
-    return (result.data ?? []).map((row) => rowToGame(row as GameRow));
-  }
-  if (isMissingDiceEnabledColumn(result.error)) {
-    const noDiceResult = await supabase
+  const client = supabase;
+  const selectGames = (columns: string) =>
+    client
       .from(GAMES_TABLE)
-      .select(GAME_SELECT_COLUMNS_WITHOUT_DICE)
+      .select(columns)
       .eq("user_id", userId)
       .order("updated_at", { ascending: false });
+  const result = await selectGames(GAME_SELECT_COLUMNS);
+  if (!result.error) {
+    return (result.data ?? []).map((row) =>
+      rowToGame(row as unknown as GameRow),
+    );
+  }
+  const quickScoreColumnsMissing = isMissingQuickScoreColumn(result.error);
+  let modernError = result.error;
+  if (quickScoreColumnsMissing) {
+    const noQuickScoreResult = await selectGames(
+      GAME_SELECT_COLUMNS_WITHOUT_QUICK_SCORES,
+    );
+    if (!noQuickScoreResult.error) {
+      return (noQuickScoreResult.data ?? []).map((row) =>
+        rowToGame(row as unknown as GameRow),
+      );
+    }
+    modernError = noQuickScoreResult.error;
+  }
+  if (isMissingDiceEnabledColumn(modernError)) {
+    const noDiceResult = await selectGames(
+      quickScoreColumnsMissing
+        ? GAME_SELECT_COLUMNS_WITHOUT_DICE_OR_QUICK_SCORES
+        : GAME_SELECT_COLUMNS_WITHOUT_DICE,
+    );
     if (!noDiceResult.error) {
-      return (noDiceResult.data ?? []).map((row) => rowToGame(row as GameRow));
+      return (noDiceResult.data ?? []).map((row) =>
+        rowToGame(row as unknown as GameRow),
+      );
+    }
+    if (
+      !quickScoreColumnsMissing &&
+      isMissingQuickScoreColumn(noDiceResult.error)
+    ) {
+      const legacyQuickScoreResult = await selectGames(
+        GAME_SELECT_COLUMNS_WITHOUT_DICE_OR_QUICK_SCORES,
+      );
+      if (!legacyQuickScoreResult.error) {
+        return (legacyQuickScoreResult.data ?? []).map((row) =>
+          rowToGame(row as unknown as GameRow),
+        );
+      }
+      if (!isMissingGameRuleColumn(legacyQuickScoreResult.error)) {
+        throw legacyQuickScoreResult.error;
+      }
     }
     if (!isMissingGameRuleColumn(noDiceResult.error)) {
       throw noDiceResult.error;
     }
   }
   if (
-    !isMissingScoreHistoryColumn(result.error) &&
-    !isMissingGameRuleColumn(result.error) &&
-    !isMissingTeamsColumn(result.error) &&
-    !isMissingParticipantModeColumn(result.error)
+    !isMissingScoreHistoryColumn(modernError) &&
+    !isMissingGameRuleColumn(modernError) &&
+    !isMissingTeamsColumn(modernError) &&
+    !isMissingParticipantModeColumn(modernError)
   ) {
-    throw result.error;
+    throw modernError;
   }
 
   const legacyResult = await supabase
@@ -374,13 +431,37 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
   if (!supabase) return;
   const rows = games.map((game) => gameToLegacyCompatibleRow(userId, game));
   if (rows.length > 0) {
+    let quickScoreColumnsUnavailable = false;
     let { error } = await supabase
       .from(GAMES_TABLE)
       .upsert(rows, { onConflict: "id" });
+    if (error && isMissingQuickScoreColumn(error)) {
+      quickScoreColumnsUnavailable = true;
+      const rowsWithoutQuickScores = rows.map(
+        ({ quick_score_value_1, quick_score_value_2, ...row }) => row,
+      );
+      const retryResult = await supabase
+        .from(GAMES_TABLE)
+        .upsert(rowsWithoutQuickScores, { onConflict: "id" });
+      error = retryResult.error;
+    }
     if (error && isMissingLegacyCompatibilityColumn(error)) {
       const message = getErrorMessage(error);
       const fallbackRows = rows.map((row) => {
-        const { target_points, is_low_score_wins, ...modernRow } = row;
+        const {
+          target_points,
+          is_low_score_wins,
+          quick_score_value_1,
+          quick_score_value_2,
+          ...modernRowWithoutQuickScores
+        } = row;
+        const modernRow = quickScoreColumnsUnavailable
+          ? modernRowWithoutQuickScores
+          : {
+              ...modernRowWithoutQuickScores,
+              quick_score_value_1,
+              quick_score_value_2,
+            };
         if (message.includes("target_points") && message.includes("is_low_score_wins")) {
           return modernRow;
         }
@@ -396,7 +477,14 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
     }
     if (error) {
       if (isMissingDiceEnabledColumn(error)) {
-        const noDiceRows = rows.map(({ dice_enabled, ...row }) => row);
+        const noDiceRows = rows.map(
+          ({
+            dice_enabled,
+            quick_score_value_1,
+            quick_score_value_2,
+            ...row
+          }) => row,
+        );
         const { error: noDiceError } = await supabase
           .from(GAMES_TABLE)
           .upsert(noDiceRows, { onConflict: "id" });
@@ -407,7 +495,14 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
         );
       }
       if (isMissingParticipantModeColumn(error)) {
-        const legacyRows = rows.map(({ participant_mode, ...row }) => row);
+        const legacyRows = rows.map(
+          ({
+            participant_mode,
+            quick_score_value_1,
+            quick_score_value_2,
+            ...row
+          }) => row,
+        );
         const { error: legacyError } = await supabase
           .from(GAMES_TABLE)
           .upsert(legacyRows, { onConflict: "id" });
@@ -432,6 +527,8 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
               win_by_two,
               manual_end_only,
               dice_enabled,
+              quick_score_value_1,
+              quick_score_value_2,
               completion_mode,
               ...row
             }) => row,
@@ -452,6 +549,8 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
             win_by_two,
             manual_end_only,
             dice_enabled,
+            quick_score_value_1,
+            quick_score_value_2,
             completion_mode,
             ...row
           } = gameToLegacyCompatibleRow(userId, game);

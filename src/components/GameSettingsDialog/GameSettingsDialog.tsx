@@ -1,10 +1,12 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { ScoreDirection, WinCondition } from "../../types";
+import { MAX_ABS_SCORE } from "../../constants";
 import { ArrowDownUp, Dices, Flag, Timer, Trophy } from "lucide-react";
 import {
   SettingsAuthCard,
   SettingsModeButton,
   SettingsRequirement,
+  QuickScoreSettings,
   TimerSettings,
 } from "./GameSettingsParts";
 import "./GameSettingsDialog.css";
@@ -41,6 +43,12 @@ export const GameSettingsDialog = forwardRef<
   const [manualEndOnly, setManualEndOnly] = useState(game.manualEndOnly);
   const [timerEnabled, setTimerEnabled] = useState(game.timerEnabled);
   const [diceEnabled, setDiceEnabled] = useState(game.diceEnabled);
+  const [quickScoreSmallRaw, setQuickScoreSmallRaw] = useState(
+    String(game.quickScoreValues[0]),
+  );
+  const [quickScoreLargeRaw, setQuickScoreLargeRaw] = useState(
+    String(game.quickScoreValues[1]),
+  );
   const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
     game.timerMode,
   );
@@ -66,6 +74,8 @@ export const GameSettingsDialog = forwardRef<
     setManualEndOnly(game.manualEndOnly);
     setTimerEnabled(game.timerEnabled);
     setDiceEnabled(game.diceEnabled);
+    setQuickScoreSmallRaw(String(game.quickScoreValues[0]));
+    setQuickScoreLargeRaw(String(game.quickScoreValues[1]));
     setTimerMode(game.timerMode);
     setTimerMinutes(String(Math.max(1, Math.round(game.timerSeconds / 60))));
     setTimerSecondsRaw(String(Math.max(0, game.timerSeconds % 60)));
@@ -81,6 +91,14 @@ export const GameSettingsDialog = forwardRef<
   const parsedScore = Number.parseInt(scoreRaw, 10);
   const parsedTimerMinutes = Number.parseInt(timerMinutes, 10);
   const parsedTimerSeconds = Number.parseInt(timerSecondsRaw, 10);
+  const parsedQuickScoreSmall = Number.parseInt(quickScoreSmallRaw, 10);
+  const parsedQuickScoreLarge = Number.parseInt(quickScoreLargeRaw, 10);
+  const quickScoreValuesValid =
+    Number.isFinite(parsedQuickScoreSmall) &&
+    Number.isFinite(parsedQuickScoreLarge) &&
+    parsedQuickScoreSmall > 0 &&
+    parsedQuickScoreLarge > parsedQuickScoreSmall &&
+    parsedQuickScoreLarge <= MAX_ABS_SCORE;
   const parsedTimerTotalSeconds = (() => {
     const mins = Number.isFinite(parsedTimerMinutes)
       ? Math.max(0, parsedTimerMinutes)
@@ -99,6 +117,7 @@ export const GameSettingsDialog = forwardRef<
     name.trim().length > 0 &&
     Number.isFinite(parsedScore) &&
     (manualEndOnly || parsedScore > 0) &&
+    quickScoreValuesValid &&
     !ruleNeedsMorePlayers &&
     (!timerEnabled || timerMode === "stopwatch" || parsedTimerTotalSeconds > 0);
 
@@ -119,6 +138,7 @@ export const GameSettingsDialog = forwardRef<
             manualEndOnly,
             timerEnabled,
             diceEnabled,
+            quickScoreValues: [parsedQuickScoreSmall, parsedQuickScoreLarge],
             timerMode,
             timerSeconds:
               timerMode === "countdown"
@@ -183,6 +203,18 @@ export const GameSettingsDialog = forwardRef<
               inputMode="numeric"
             />
           </label>
+
+          <QuickScoreSettings
+            smallValue={quickScoreSmallRaw}
+            largeValue={quickScoreLargeRaw}
+            isValid={quickScoreValuesValid}
+            onSmallValueChange={(value) =>
+              setQuickScoreSmallRaw(value.replace(/[^\d]/g, ""))
+            }
+            onLargeValueChange={(value) =>
+              setQuickScoreLargeRaw(value.replace(/[^\d]/g, ""))
+            }
+          />
 
           <div className="settingsModeGrid" aria-label="Game rules">
             <SettingsModeButton

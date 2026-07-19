@@ -1,3 +1,5 @@
+import type { QuickScoreValues } from "../../types";
+
 export type GamePreset = {
   id: string;
   name: string;
@@ -9,6 +11,7 @@ export type GamePreset = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
+  quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   description: string;
@@ -28,6 +31,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Classic Italian card game, commonly played to 31.",
@@ -50,6 +54,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Best of 7 style match. Add 1 point for each hand won.",
@@ -72,6 +77,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Best of 7 style match. Add 1 point for each hand won.",
@@ -94,6 +100,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [50, 100],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Longer card match preset with the standard high target.",
@@ -116,6 +123,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [10, 50],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "A familiar points target for Rummy-style rounds.",
@@ -138,6 +146,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [10, 50],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Track cumulative points across hands.",
@@ -160,6 +169,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [20, 60],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Count down from 501, lowest score wins.",
@@ -182,6 +192,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: true,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Simple race to 21 for casual matches.",
@@ -204,6 +215,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: true,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Fast game preset for point-by-point scoring.",
@@ -225,6 +237,7 @@ export const GAME_PRESETS: GamePreset[] = [
     winByTwo: true,
     manualEndOnly: false,
     timerEnabled: false,
+    quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,
     description: "Standard set target for team score tracking.",

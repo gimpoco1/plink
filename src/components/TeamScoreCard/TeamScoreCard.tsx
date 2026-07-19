@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
-import type { Player, WinCondition } from "../../types";
-import { MAX_ABS_SCORE, QUICK_DELTAS } from "../../constants";
+import type {
+  Player,
+  QuickScoreValues,
+  WinCondition,
+} from "../../types";
+import { MAX_ABS_SCORE } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
@@ -19,6 +23,7 @@ type Props = {
   targetScore: number;
   startingScore: number;
   winCondition: WinCondition;
+  quickScoreValues: QuickScoreValues;
   onDelta: (id: string, delta: number) => void;
 };
 
@@ -34,6 +39,7 @@ export function TeamScoreCard({
   targetScore,
   startingScore,
   winCondition,
+  quickScoreValues,
   onDelta,
 }: Props) {
   const currentScore =
@@ -68,8 +74,8 @@ export function TeamScoreCard({
           100,
           Math.max(0, (currentScore / Math.max(1, targetScore)) * 100),
         );
-  const negDeltas = QUICK_DELTAS.filter((delta) => delta < 0).reverse();
-  const posDeltas = QUICK_DELTAS.filter((delta) => delta > 0).reverse();
+  const negDeltas = quickScoreValues.map((value) => -value);
+  const posDeltas = [...quickScoreValues].reverse();
   const overflowCount = Math.max(0, members.length - 5);
 
   return (

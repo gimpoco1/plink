@@ -144,6 +144,7 @@ export function getGameImportSignature(game: Game) {
     manualEndOnly: game.manualEndOnly,
     timerEnabled: game.timerEnabled,
     diceEnabled: game.diceEnabled,
+    quickScoreValues: game.quickScoreValues,
     timerMode: game.timerMode,
     timerSeconds: game.timerSeconds,
     completionMode: game.completionMode ?? null,

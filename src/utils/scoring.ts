@@ -1,5 +1,29 @@
-import type { Game, Player } from "../types";
+import { DEFAULT_QUICK_SCORE_VALUES, MAX_ABS_SCORE } from "../constants";
+import type { Game, Player, QuickScoreValues } from "../types";
 import { getGameParticipants } from "./gameParticipants";
+
+export function sanitizeQuickScoreValues(input: unknown): QuickScoreValues {
+  if (!Array.isArray(input) || input.length < 2) {
+    return [...DEFAULT_QUICK_SCORE_VALUES];
+  }
+
+  const values = input.slice(0, 2).map((value) =>
+    typeof value === "number" && Number.isFinite(value)
+      ? Math.trunc(value)
+      : Number.NaN,
+  );
+  const valid = values.every(
+    (value) => value > 0 && value <= MAX_ABS_SCORE,
+  );
+
+  if (!valid || values[0] === values[1]) {
+    return [...DEFAULT_QUICK_SCORE_VALUES];
+  }
+
+  return values[0] < values[1]
+    ? [values[0], values[1]]
+    : [values[1], values[0]];
+}
 
 export function shouldSortLowToHigh(game: Pick<Game, "scoreDirection" | "winCondition">) {
   return game.scoreDirection === "down" || game.winCondition === "lowest";
