@@ -3,6 +3,7 @@ import type { ManagePlayersDialogHandle } from "../../../components/ManagePlayer
 import type {
   Game,
   GameTeam,
+  PastLinkedPlayer,
   Player,
   PlayerProfile,
   TeamMember,
@@ -16,6 +17,8 @@ export type GameScreenProps = {
   teamMembers: TeamMember[];
   isAuthenticated: boolean;
   canUseTeams: boolean;
+  canManageGame: boolean;
+  canManageLifecycle: boolean;
   managePlayersDialogRef: RefObject<ManagePlayersDialogHandle>;
   pulseById: Record<string, "pos" | "neg" | undefined>;
   onTriggerPulse: (playerId: string, delta: number) => void;
@@ -37,8 +40,19 @@ export type GameScreenProps = {
       saveForLater: boolean;
     }>,
   ) => void;
-  onUpdateScore: (playerId: string, delta: number) => void;
+  onUpdateScore: (
+    playerId: string,
+    delta: number,
+  ) => boolean | Promise<boolean>;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
+  pastLinkedPlayers: PastLinkedPlayer[];
+  onAddPastLinkedPlayer: (
+    collaboratorUserId: string,
+  ) => Promise<boolean> | boolean;
+  onMergePlayers?: (
+    linkedPlayerId: string,
+    rosterPlayerId: string,
+  ) => Promise<void> | void;
   onUpdatePlayer: (
     playerId: string,
     updates: Partial<
@@ -53,6 +67,7 @@ export type GameScreenProps = {
   onDeleteTeam: (teamId: string, teamName: string) => Promise<void> | void;
   onDeleteSavedTeam: (teamId: string, teamName: string) => Promise<void> | void;
   onOpenTeamsTab: () => void;
+  onInviteOthers?: () => void;
   winnerStats: ProfileStats | TeamStats | null;
   isLatestCompletedGame: boolean;
   onReplayGame: () => void;

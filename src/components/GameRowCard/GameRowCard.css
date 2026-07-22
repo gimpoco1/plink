@@ -237,6 +237,11 @@
   color: #7ad0ff;
 }
 
+.gameRow__modeBadge--shared {
+  background: rgba(216, 255, 79, 0.1);
+  color: var(--accent);
+}
+
 @media (max-width: 560px) {
   .gameRow__meta {
     flex-wrap: wrap;

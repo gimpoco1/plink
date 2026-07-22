@@ -17,6 +17,7 @@ export type GameSettingsDialogProps = {
   onAddPlayer?: () => void;
   onSave: (input: {
     name: string;
+    collaboratorsCanManage: boolean;
     scoreDirection: ScoreDirection;
     startingScore: number;
     targetScore: number;

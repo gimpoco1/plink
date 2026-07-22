@@ -1,40 +1,8 @@
 import { AlertTriangle, Check, Eye, EyeOff, Mail } from "lucide-react";
+import { FaApple } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import { formatPlayerName } from "../../utils/text";
 import { useAuthDialogContext } from "./AuthDialogContext";
-
-function GoogleBrandIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M23.49 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h6.45a5.52 5.52 0 0 1-2.39 3.62v3h3.88c2.27-2.09 3.55-5.18 3.55-8.65Z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.88-3c-1.08.72-2.46 1.14-4.07 1.14-3.13 0-5.78-2.11-6.73-4.95H1.26v3.09A12 12 0 0 0 12 24Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.27 14.28A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.28V6.63H1.26a12 12 0 0 0 0 10.74l4.01-3.09Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 4.77c1.76 0 3.35.61 4.59 1.8l3.44-3.44C17.95 1.19 15.23 0 12 0A12 12 0 0 0 1.26 6.63l4.01 3.09c.95-2.84 3.6-4.95 6.73-4.95Z"
-      />
-    </svg>
-  );
-}
-
-function AppleBrandIcon() {
-  return (
-    <svg viewBox="0 0 384 512" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-72.4-19.2-30.4.5-58.8 17.7-74.5 46.1-31.5 54.6-8 135.1 22.6 179.3 15.3 22.1 33.6 47 57.6 46.1 22.9-.9 31.5-14.7 59-14.7 27.5 0 36 14.7 60.2 14.2 24.8-.4 40.5-22.3 55.9-44.6 17.6-25.7 24.9-50.5 25.3-51.8-.5-.2-49.6-19-49.8-75.6ZM294.5 100.5c12.7-15.1 21.3-36.2 19-57.5-18.3.7-40.4 12.2-53.2 27.3-11.5 13.3-21.5 34.8-18.8 55.7 20.4 1.6 40.3-10.3 53-25.5Z"
-      />
-    </svg>
-  );
-}
 
 export function AuthSignedOutPanel() {
   const {
@@ -258,18 +226,14 @@ export function AuthSignedOutPanel() {
                     ? "Connecting to Google"
                     : "Continue with Google"
                 }
+                aria-busy={oauthProvider === "google"}
                 title="Continue with Google"
               >
                 <span
                   className="authDialog__providerIcon authDialog__providerIcon--google"
                   aria-hidden="true"
                 >
-                  <GoogleBrandIcon />
-                </span>
-                <span>
-                  {oauthProvider === "google"
-                    ? "Connecting to Google..."
-                    : "Continue with Google"}
+                  <FcGoogle />
                 </span>
               </button>
               <button
@@ -282,18 +246,14 @@ export function AuthSignedOutPanel() {
                     ? "Connecting to Apple"
                     : "Continue with Apple"
                 }
+                aria-busy={oauthProvider === "apple"}
                 title="Continue with Apple"
               >
                 <span
                   className="authDialog__providerIcon authDialog__providerIcon--apple"
                   aria-hidden="true"
                 >
-                  <AppleBrandIcon />
-                </span>
-                <span>
-                  {oauthProvider === "apple"
-                    ? "Connecting to Apple..."
-                    : "Continue with Apple"}
+                  <FaApple />
                 </span>
               </button>
             </div>

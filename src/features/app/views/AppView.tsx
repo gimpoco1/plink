@@ -8,10 +8,12 @@ import { AppLoadingScreen } from "../components/AppLoadingScreen";
 import { AppRoutes } from "./AppRoutes";
 import { AppToast } from "../components/AppToast";
 import { AppTopBar } from "../components/AppTopBar";
+import { GameStartSplash } from "../components/GameStartSplash";
 
 export function AppView() {
   const {
     authDialogOpen,
+    gameStartSplashCue,
     handleTouchEnd,
     handleTouchStart,
     isAppBootLoading,
@@ -54,6 +56,9 @@ export function AppView() {
       </div>
       <AppTopBar />
       <AppRoutes />
+      {gameStartSplashCue ? (
+        <GameStartSplash key={gameStartSplashCue.token} />
+      ) : null}
       <AppDialogs />
       <AppToast />
     </div>

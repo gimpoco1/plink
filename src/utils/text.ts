@@ -22,7 +22,11 @@ export function formatAccountPlayerName(raw: string): string {
 }
 
 export function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
+  const cleanName = name
+    .trim()
+    .replace(/\s*\(You\)\s*$/i, "")
+    .replace(/\s*#\d+\s*$/, "");
+  const parts = cleanName.split(/\s+/);
   if (parts.length === 0 || !parts[0]) return "?";
   if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
   const first = parts[0].slice(0, 1);

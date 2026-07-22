@@ -77,5 +77,6 @@ export type HomeScreenProps = {
     },
   ) => void | Promise<void>;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
+  onJoinGame: (code: string) => Promise<void>;
   onEnter: (gameId: string) => void;
 };

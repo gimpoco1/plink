@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "lucide-react";
 import type { Player, QuickScoreValues, WinCondition } from "../../types";
 import { MAX_ABS_SCORE } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
@@ -17,10 +18,13 @@ type Props = {
   pulse?: "pos" | "neg";
   isWinner?: boolean;
   isAccountPlayer?: boolean;
+  isLinkedPlayer?: boolean;
+  isGameOwner?: boolean;
   targetScore: number;
   startingScore: number;
   winCondition: WinCondition;
   quickScoreValues: QuickScoreValues;
+  canDelete?: boolean;
   onDelta: (playerId: string, delta: number) => void;
   onDelete: (playerId: string) => void;
 };
@@ -32,10 +36,13 @@ export function PlayerCard({
   pulse,
   isWinner,
   isAccountPlayer,
+  isLinkedPlayer,
+  isGameOwner,
   targetScore,
   startingScore,
   winCondition,
   quickScoreValues,
+  canDelete = true,
   onDelta,
   onDelete,
 }: Props) {
@@ -46,6 +53,9 @@ export function PlayerCard({
   const displayName = isAccountPlayer
     ? formatAccountPlayerName(player.name)
     : capitalizeFirst(player.name);
+  const linkedNameParts = isLinkedPlayer
+    ? displayName.match(/^(.*\s)?(\S+)$/)
+    : null;
   const initials = getInitials(player.name);
   const scoreClass =
     currentScore > 0
@@ -82,6 +92,7 @@ export function PlayerCard({
   return (
     <SwipeableCard
       actionWidth={92}
+      disabled={!canDelete}
       cardClassName={`playerCard${
         isWinner
           ? " card--winner"
@@ -89,28 +100,30 @@ export function PlayerCard({
             ? " card--leader"
             : ""
       }`}
-      renderActions={({ closeSwipe }) => (
-        <button
-          className="swipeDelete"
-          type="button"
-          onClick={() => {
-            closeSwipe();
-            onDelete(player.id);
-          }}
-          aria-label={`Delete ${player.name}`}
-        >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M9 3h6m-8 4h10m-9 0 .7 13h6.6L16 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Remove
-        </button>
-      )}
+      renderActions={({ closeSwipe }) =>
+        canDelete ? (
+          <button
+            className="swipeDelete"
+            type="button"
+            onClick={() => {
+              closeSwipe();
+              onDelete(player.id);
+            }}
+            aria-label={`Delete ${player.name}`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M9 3h6m-8 4h10m-9 0 .7 13h6.6L16 7"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Remove
+          </button>
+        ) : null
+      }
     >
       {({ isSwiping, isOpen, closeSwipe }) => (
         <>
@@ -130,7 +143,29 @@ export function PlayerCard({
               </div>
               <div className="who">
                 <div className="who__nameRow">
-                  <div className="who__name">{displayName}</div>
+                  <div className="who__name">
+                    {linkedNameParts ? (
+                      <>
+                        {linkedNameParts[1] ?? ""}
+                        <span className="who__linkedNameTail">
+                          {linkedNameParts[2]}
+                          <span
+                            className="who__linkedPlayer"
+                            aria-label="Joined with an invitation code"
+                            title="Joined with an invitation code"
+                          >
+                            <Link
+                              size={17}
+                              strokeWidth={2.5}
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </span>
+                      </>
+                    ) : (
+                      displayName
+                    )}
+                  </div>
                   {isWinner ? (
                     <div className="winnerMark" aria-label="Winner">
                       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -145,6 +180,9 @@ export function PlayerCard({
                     </div>
                   ) : null}
                 </div>
+                {isGameOwner ? (
+                  <span className="who__ownerTag">Game owner</span>
+                ) : null}
               </div>
             </div>
 

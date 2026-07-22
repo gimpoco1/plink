@@ -1,17 +1,22 @@
+import { Link } from "lucide-react";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRosterPicker";
 import { useManagePlayersDialogContext } from "./ManagePlayersDialogContext";
 import { ManagePlayerCard } from "./ManagePlayerCard";
+import { ManagePastLinkedPlayersSection } from "./ManagePastLinkedPlayersSection";
 import { ManagePlayersQueue } from "./ManagePlayersQueue";
 
 export function ManagePlayersSavedSection() {
   const {
+    close,
     filteredProfiles,
     isAuthenticated,
     isCreating,
     newPlayerValidationMessage,
     onOpenTeamsTab,
+    onInviteOthers,
     pendingName,
+    pastLinkedPlayers,
     profiles,
     saveForLater,
     search,
@@ -36,6 +41,11 @@ export function ManagePlayersSavedSection() {
         className="managePlayersDialog__savedPicker"
         listMaxHeight="170px"
         showListImmediately={showRosterImmediately}
+        listTriggerLabel={
+          pastLinkedPlayers.length > 0
+            ? "Add saved or new player"
+            : "Add players"
+        }
         searchValue={search}
         onSearchChange={setSearch}
         listTitle={isAuthenticated ? "Saved players" : "Add players"}
@@ -79,6 +89,20 @@ export function ManagePlayersSavedSection() {
           <ManagePlayerCard key={profile.id} kind="saved" profile={profile} />
         ))}
       </SearchableRosterPicker>
+      <ManagePastLinkedPlayersSection />
+      {onInviteOthers ? (
+        <button
+          className="managePlayersDialog__inviteOthers"
+          type="button"
+          onClick={() => {
+            close();
+            onInviteOthers();
+          }}
+        >
+          <Link size={16} strokeWidth={2.4} aria-hidden="true" />
+          Share invite code
+        </button>
+      ) : null}
       <ManagePlayersQueue />
     </section>
   );

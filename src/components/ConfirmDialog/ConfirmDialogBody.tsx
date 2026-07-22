@@ -1,3 +1,4 @@
+import { ArrowRight, Check } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
@@ -9,6 +10,8 @@ type Props = {
   promptValue: string;
   isPrompt: boolean;
   onPromptValueChange: (value: string) => void;
+  selectedPlayerId: string;
+  onPlayerSelect: (playerId: string) => void;
 };
 
 export function ConfirmDialogBody({
@@ -17,6 +20,8 @@ export function ConfirmDialogBody({
   promptValue,
   isPrompt,
   onPromptValueChange,
+  selectedPlayerId,
+  onPlayerSelect,
 }: Props) {
   const hasRoster = Boolean(options.players?.length || options.teams?.length);
   return (
@@ -39,7 +44,14 @@ export function ConfirmDialogBody({
                   {chip.icon}
                 </span>
               ) : null}
-              <span>{chip.label}</span>
+              <span className="dialog__settingChipCopy">
+                <span className="dialog__settingChipLabel">{chip.label}</span>
+                {chip.description ? (
+                  <span className="dialog__settingChipDescription">
+                    {chip.description}
+                  </span>
+                ) : null}
+              </span>
             </span>
           ))}
         </div>
@@ -54,12 +66,32 @@ export function ConfirmDialogBody({
         </div>
       ) : null}
       {options.message && hasRoster ? (
-        <p className="dialog__message">{options.message}</p>
+        <p
+          className={`dialog__message${
+            options.messageCase === "normal"
+              ? " dialog__message--normal"
+              : ""
+          }`}
+        >
+          {options.message}
+        </p>
       ) : null}
       <ConfirmTeams options={options} />
-      <ConfirmPlayers options={options} />
+      <ConfirmPlayers
+        options={options}
+        selectedPlayerId={selectedPlayerId}
+        onPlayerSelect={onPlayerSelect}
+      />
       {options.message && !hasRoster ? (
-        <p className="dialog__message">{options.message}</p>
+        <p
+          className={`dialog__message${
+            options.messageCase === "normal"
+              ? " dialog__message--normal"
+              : ""
+          }`}
+        >
+          {options.message}
+        </p>
       ) : null}
       {isPrompt ? (
         <input
@@ -93,30 +125,61 @@ function ConfirmDetails({ options }: { options: ConfirmOptions }) {
       </div>
     );
   }
+  if (options.detailFlow) {
+    return (
+      <div className="dialog__detailFlow" aria-label="Merge workflow">
+        {options.details.map((detail, index) => (
+          <div
+            className="dialog__detailFlowPart"
+            key={`${detail.label}-${detail.value}`}
+          >
+            <DetailCard detail={detail} />
+            {index < options.details!.length - 1 ? (
+              <span className="dialog__detailFlowArrow" aria-hidden="true">
+                <ArrowRight size={22} strokeWidth={2.6} />
+              </span>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="dialog__detailCards" aria-label="Game details">
       {options.details.map((detail) => (
-        <div
+        <DetailCard
+          detail={detail}
           key={`${detail.label}-${detail.value}`}
-          className={`dialog__detailCard${
-            detail.size === "wide"
-              ? " dialog__detailCard--wide"
-              : detail.size === "compact"
-                ? " dialog__detailCard--compact"
-                : ""
-          }`}
-        >
-          {detail.icon ? (
-            <span className="dialog__detailCardIcon" aria-hidden="true">
-              {detail.icon}
-            </span>
-          ) : null}
-          <span className="dialog__detailCardCopy">
-            <span className="dialog__detailLabel">{detail.label}</span>
-            <span className="dialog__detailValue">{detail.value}</span>
-          </span>
-        </div>
+        />
       ))}
+    </div>
+  );
+}
+
+function DetailCard({
+  detail,
+}: {
+  detail: NonNullable<ConfirmOptions["details"]>[number];
+}) {
+  return (
+    <div
+      className={`dialog__detailCard${
+        detail.size === "wide"
+          ? " dialog__detailCard--wide"
+          : detail.size === "compact"
+            ? " dialog__detailCard--compact"
+            : ""
+      }`}
+    >
+      {detail.icon ? (
+        <span className="dialog__detailCardIcon" aria-hidden="true">
+          {detail.icon}
+        </span>
+      ) : null}
+      <span className="dialog__detailCardCopy">
+        <span className="dialog__detailLabel">{detail.label}</span>
+        <span className="dialog__detailValue">{detail.value}</span>
+      </span>
     </div>
   );
 }
@@ -156,25 +219,86 @@ function ConfirmTeams({ options }: { options: ConfirmOptions }) {
   );
 }
 
-function ConfirmPlayers({ options }: { options: ConfirmOptions }) {
+function ConfirmPlayers({
+  options,
+  selectedPlayerId,
+  onPlayerSelect,
+}: {
+  options: ConfirmOptions;
+  selectedPlayerId: string;
+  onPlayerSelect: (playerId: string) => void;
+}) {
   if (!options.players?.length) return null;
+  const selectable = options.selectablePlayers === true;
   return (
-    <div className="dialog__playerList" aria-label="Players">
-      {options.players.map((player) => (
-        <div
-          key={`${player.name}-${player.avatarColor}`}
-          className="dialog__playerItem"
-        >
-          <span
-            className="dialog__playerAvatar"
-            style={avatarStyleFor(player.avatarColor)}
-            aria-hidden="true"
-          >
-            {getInitials(player.name)}
-          </span>
-          <span className="dialog__playerName">{player.name}</span>
+    <div className="dialog__playerSection">
+      {options.playersTitle ? (
+        <div className="dialog__playerSectionTitle">
+          {options.playersTitle}
         </div>
-      ))}
+      ) : null}
+      <div
+        className={`dialog__playerList${
+          selectable ? " dialog__playerList--selectable" : ""
+        }`}
+        aria-label="Players"
+      >
+        {options.players.map((player) => {
+          const selected = selectable && player.id === selectedPlayerId;
+          const className = `dialog__playerItem${
+            player.label ? " dialog__playerItem--identity" : ""
+          }${selected ? " dialog__playerItem--selected" : ""}`;
+          const content = (
+            <>
+              <span
+                className="dialog__playerAvatar"
+                style={avatarStyleFor(player.avatarColor)}
+                aria-hidden="true"
+              >
+                {getInitials(player.name)}
+              </span>
+              <span className="dialog__playerCopy">
+                {player.label ? (
+                  <span className="dialog__playerLabel">{player.label}</span>
+                ) : null}
+                <span className="dialog__playerName">{player.name}</span>
+                {player.description ? (
+                  <span className="dialog__playerDescription">
+                    {player.description}
+                  </span>
+                ) : null}
+              </span>
+              {selectable ? (
+                <span
+                  className="dialog__playerCheck"
+                  aria-hidden="true"
+                >
+                  {selected ? <Check size={15} strokeWidth={3} /> : null}
+                </span>
+              ) : null}
+            </>
+          );
+
+          return selectable && player.id ? (
+            <button
+              key={player.id}
+              className={className}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onPlayerSelect(player.id!)}
+            >
+              {content}
+            </button>
+          ) : (
+            <div
+              key={`${player.id ?? player.name}-${player.avatarColor}`}
+              className={className}
+            >
+              {content}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

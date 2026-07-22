@@ -7,6 +7,8 @@ export type Player = {
   avatarColor: string;
   profileId?: string;
   teamId?: string;
+  joinedViaInvite?: boolean;
+  isGameOwner?: boolean;
 };
 
 export type GameTeam = {
@@ -33,11 +35,22 @@ export type PlayerProfile = {
   updatedAt: number;
 };
 
+export type PastLinkedPlayer = {
+  userId: string;
+  profileId: string;
+  name: string;
+  avatarColor: string;
+  lastLinkedAt: number;
+};
+
 export type ScoreHistoryEntry = {
   id: string;
   playerId: string;
   playerName: string;
   avatarColor: string;
+  updatedByPlayerId?: string;
+  updatedByPlayerName?: string;
+  updatedByAvatarColor?: string;
   delta: number;
   scoreBefore: number;
   scoreAfter: number;
@@ -51,6 +64,12 @@ export type QuickScoreValues = [number, number];
 
 export type Game = {
   id: string;
+  ownerId?: string;
+  accessRole?: "owner" | "collaborator";
+  isShared?: boolean;
+  linkedPlayerIdForCurrentUser?: string;
+  hasCollaborators?: boolean;
+  collaboratorsCanManage: boolean;
   name: string;
   participantMode?: "players" | "teams";
   scoreDirection: ScoreDirection;

@@ -92,6 +92,30 @@
   gap: 10px;
 }
 
+.dialog__detailFlow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+}
+
+.dialog__detailFlowPart {
+  display: contents;
+}
+
+.dialog__detailFlowArrow {
+  width: 30px;
+  height: 30px;
+  align-self: center;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(216, 255, 79, 0.11);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(216, 255, 79, 0.2);
+}
+
 .dialog__detailCard {
   min-width: 0;
   padding: 10px 12px;
@@ -248,6 +272,22 @@
   display: block;
 }
 
+.dialog__settingChipCopy {
+  display: inline-flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dialog__settingChipDescription {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: none;
+}
+
 .dialog__message {
   margin: 0;
   color: var(--text);
@@ -259,6 +299,18 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
+}
+
+.dialog__playerSection {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog__playerSectionTitle {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
 }
 
 .dialog__teamList {
@@ -369,6 +421,87 @@
   line-height: 1.2;
 }
 
+.dialog__playerCopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.dialog__playerLabel {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.dialog__playerDescription {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.dialog__playerItem--identity {
+  min-height: 78px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
+    rgba(255, 255, 255, 0.025);
+}
+
+.dialog__playerItem--identity .dialog__playerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+}
+
+.dialog__playerList--selectable {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dialog__playerList--selectable .dialog__playerItem {
+  appearance: none;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dialog__playerItem--selected {
+  border-color: rgba(216, 255, 79, 0.5);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.09), transparent),
+    rgba(216, 255, 79, 0.045);
+  box-shadow: inset 0 0 0 1px rgba(216, 255, 79, 0.1);
+}
+
+.dialog__playerItem--selected .dialog__playerLabel {
+  color: var(--accent);
+}
+
+.dialog__playerCheck {
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--bg);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dialog__playerItem--selected .dialog__playerCheck {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
 .dialog__actions {
   margin-top: 16px;
   display: flex;
@@ -381,6 +514,17 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   align-items: stretch;
+}
+
+.dialog__actions--selection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.dialog__actions--selection .btn {
+  width: 100%;
+  min-width: 0;
 }
 
 .dialog__actionBtn {
@@ -529,6 +673,10 @@
   height: 16px;
 }
 
+.dialog--confirmFeature .dialog__settingChipDescription {
+  color: var(--muted);
+}
+
 .dialog--confirmFeature .dialog__playerList {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
@@ -564,6 +712,14 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.dialog--confirmFeature .dialog__playerItem--selected {
+  border-color: rgba(216, 255, 79, 0.5);
+  background:
+    linear-gradient(180deg, rgba(216, 255, 79, 0.09), transparent),
+    rgba(216, 255, 79, 0.045);
+  box-shadow: inset 0 0 0 1px rgba(216, 255, 79, 0.1);
+}
+
 .dialog--confirmFeature .dialog__playerAvatar {
   width: 30px;
   height: 30px;
@@ -576,8 +732,40 @@
   font-weight: 800;
 }
 
+.dialog--confirmFeature .dialog__playerItem--identity {
+  min-height: 78px;
+  padding: 12px;
+  border-radius: 16px;
+}
+
+.dialog--confirmFeature .dialog__playerItem--identity .dialog__playerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  font-size: 14px;
+}
+
+.dialog--confirmFeature .dialog__playerItem--identity .dialog__playerName {
+  font-size: 15px;
+}
+
+.dialog--confirmFeature .dialog__message--normal {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.4;
+  text-transform: none;
+}
+
 .dialog--confirmFeature .dialog__actions {
   margin-top: 22px;
+}
+
+.dialog__detailFlow ~ .dialog__message {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
 }
 
 @media (max-width: 560px) {
@@ -603,8 +791,20 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  .dialog--confirmFeature .dialog__playerList--selectable {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog__playerList--selectable .dialog__playerItem--identity {
+    min-height: 76px;
+  }
+
   .dialog__actions--decision {
     grid-template-columns: 1fr;
+  }
+
+  .dialog__actions--selection {
+    grid-template-columns: 1fr 1fr;
   }
 
   .dialog__actionBtn--cancel {

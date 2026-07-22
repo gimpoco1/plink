@@ -1,20 +1,24 @@
-import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
+import type {
+  Game,
+  GameTeam,
+  PastLinkedPlayer,
+  PlayerProfile,
+  TeamMember,
+} from "../types";
 import { supabase } from "../lib/supabase";
 import { DEFAULT_TEAM_ICON } from "../constants";
 import { sanitizeQuickScoreValues } from "../utils/scoring";
 
 const GAMES_TABLE = "games";
+const GAME_COLLABORATORS_TABLE = "game_collaborators";
 const PROFILES_TABLE = "player_profiles";
 const TEAMS_TABLE = "teams";
 const TEAM_MEMBERS_TABLE = "team_members";
+export const GAME_REMOVAL_NOTIFICATIONS_TABLE =
+  "game_removal_notifications";
+export const GAME_JOIN_NOTIFICATIONS_TABLE = "game_join_notifications";
 const GAME_SELECT_COLUMNS =
-  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
-const GAME_SELECT_COLUMNS_WITHOUT_QUICK_SCORES =
-  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
-const GAME_SELECT_COLUMNS_WITHOUT_DICE =
-  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
-const GAME_SELECT_COLUMNS_WITHOUT_DICE_OR_QUICK_SCORES =
-  "id,user_id,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
+  "id,user_id,is_shared,collaborators_can_manage,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
   "id,user_id,name,score_direction,starting_score,target_score,win_condition,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
 const PROFILE_SELECT_COLUMNS =
@@ -25,6 +29,8 @@ const LEGACY_PROFILE_SELECT_COLUMNS =
 type GameRow = {
   id: string;
   user_id: string;
+  is_shared?: boolean | null;
+  collaborators_can_manage?: boolean | null;
   name: string;
   participant_mode?: Game["participantMode"] | null;
   score_direction: Game["scoreDirection"];
@@ -80,10 +86,84 @@ type TeamMemberRow = {
   created_at: number;
 };
 
+type PastLinkedPlayerRow = {
+  collaborator_user_id: string;
+  profile_id: string;
+  player_name: string;
+  avatar_color: string;
+  last_linked_at: number;
+};
+
+export type GameRemovalNotification = {
+  id: string;
+  userId: string;
+  gameId: string;
+  gameName: string;
+  createdAt: number;
+};
+
+export type GameJoinNotification = {
+  id: string;
+  userId: string;
+  gameId: string;
+  gameName: string;
+  playerName: string;
+  createdAt: number;
+};
+
+export function parseRemoteGameJoinNotification(
+  input: unknown,
+): GameJoinNotification | null {
+  if (!input || typeof input !== "object") return null;
+  const row = input as Record<string, unknown>;
+  if (
+    typeof row.id !== "string" ||
+    typeof row.user_id !== "string" ||
+    typeof row.game_id !== "string" ||
+    typeof row.game_name !== "string" ||
+    typeof row.player_name !== "string" ||
+    typeof row.created_at !== "number"
+  ) {
+    return null;
+  }
+  return {
+    id: row.id,
+    userId: row.user_id,
+    gameId: row.game_id,
+    gameName: row.game_name,
+    playerName: row.player_name,
+    createdAt: row.created_at,
+  };
+}
+
+export function parseRemoteGameRemovalNotification(
+  input: unknown,
+): GameRemovalNotification | null {
+  if (!input || typeof input !== "object") return null;
+  const row = input as Record<string, unknown>;
+  if (
+    typeof row.id !== "string" ||
+    typeof row.user_id !== "string" ||
+    typeof row.game_id !== "string" ||
+    typeof row.game_name !== "string" ||
+    typeof row.created_at !== "number"
+  ) {
+    return null;
+  }
+  return {
+    id: row.id,
+    userId: row.user_id,
+    gameId: row.game_id,
+    gameName: row.game_name,
+    createdAt: row.created_at,
+  };
+}
+
 function gameToRow(userId: string, game: Game): GameRow {
   return {
     id: game.id,
-    user_id: userId,
+    user_id: game.ownerId ?? userId,
+    collaborators_can_manage: game.collaboratorsCanManage,
     name: game.name,
     participant_mode: game.participantMode ?? "players",
     score_direction: game.scoreDirection,
@@ -115,7 +195,9 @@ function gameToLegacyCompatibleRow(
   return {
     ...gameToRow(userId, game),
     target_points:
-      game.winCondition === "reach_zero" ? game.startingScore : game.targetScore,
+      game.winCondition === "reach_zero"
+        ? game.startingScore
+        : game.targetScore,
     is_low_score_wins:
       game.winCondition === "lowest" || game.winCondition === "reach_zero",
   };
@@ -123,7 +205,11 @@ function gameToLegacyCompatibleRow(
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== "object") return "";
-  const value = error as { details?: unknown; hint?: unknown; message?: unknown };
+  const value = error as {
+    details?: unknown;
+    hint?: unknown;
+    message?: unknown;
+  };
   return [value.message, value.details, value.hint]
     .filter((part): part is string => typeof part === "string")
     .join(" ")
@@ -152,11 +238,11 @@ function sanitizeRemoteTeams(
     ? teams
         .filter(
           (team): team is Game["teams"][number] =>
-          !!team &&
-          typeof team === "object" &&
-          typeof team.id === "string" &&
-          typeof team.name === "string" &&
-          typeof team.createdAt === "number",
+            !!team &&
+            typeof team === "object" &&
+            typeof team.id === "string" &&
+            typeof team.name === "string" &&
+            typeof team.createdAt === "number",
         )
         .map((team) => ({
           ...team,
@@ -168,7 +254,7 @@ function sanitizeRemoteTeams(
     : [];
 }
 
-function rowToGame(row: GameRow): Game {
+function rowToGame(row: GameRow, currentUserId?: string): Game {
   const scoreDirection = row.score_direction === "down" ? "down" : "up";
   const startingScore =
     typeof row.starting_score === "number" ? row.starting_score : 0;
@@ -181,6 +267,11 @@ function rowToGame(row: GameRow): Game {
 
   return {
     id: row.id,
+    ownerId: row.user_id,
+    accessRole:
+      currentUserId && row.user_id !== currentUserId ? "collaborator" : "owner",
+    isShared: row.is_shared === true,
+    collaboratorsCanManage: row.collaborators_can_manage === true,
     name: row.name,
     participantMode: row.participant_mode === "teams" ? "teams" : "players",
     scoreDirection,
@@ -214,6 +305,25 @@ function rowToGame(row: GameRow): Game {
   };
 }
 
+export function parseRemoteGameChange(
+  input: unknown,
+  currentUserId: string,
+): Game | null {
+  if (!input || typeof input !== "object") return null;
+  const row = input as Record<string, unknown>;
+  if (
+    typeof row.id !== "string" ||
+    typeof row.user_id !== "string" ||
+    typeof row.name !== "string" ||
+    !Array.isArray(row.players) ||
+    typeof row.created_at !== "number" ||
+    typeof row.updated_at !== "number"
+  ) {
+    return null;
+  }
+  return rowToGame(input as GameRow, currentUserId);
+}
+
 function isMissingScoreHistoryColumn(error: unknown) {
   return getErrorMessage(error).includes("score_history");
 }
@@ -224,7 +334,8 @@ function isMissingGameRuleColumn(error: unknown) {
     message.includes("win_by_two") ||
     message.includes("manual_end_only") ||
     message.includes("dice_enabled") ||
-    message.includes("completion_mode")
+    message.includes("completion_mode") ||
+    message.includes("collaborators_can_manage")
   );
 }
 
@@ -240,6 +351,14 @@ function isMissingQuickScoreColumn(error: unknown) {
   );
 }
 
+function isMissingSharedGameColumn(error: unknown) {
+  return getErrorMessage(error).includes("is_shared");
+}
+
+function isMissingCollaboratorManagementColumn(error: unknown) {
+  return getErrorMessage(error).includes("collaborators_can_manage");
+}
+
 function isMissingTeamsColumn(error: unknown) {
   return getErrorMessage(error).includes("teams");
 }
@@ -251,16 +370,14 @@ function isMissingParticipantModeColumn(error: unknown) {
 function isMissingLegacyRequiredColumnValue(error: unknown) {
   const message = getErrorMessage(error);
   return (
-    message.includes("target_points") &&
-    message.includes("not-null constraint")
+    message.includes("target_points") && message.includes("not-null constraint")
   );
 }
 
 function isMissingLegacyCompatibilityColumn(error: unknown) {
   const message = getErrorMessage(error);
   return (
-    message.includes("target_points") ||
-    message.includes("is_low_score_wins")
+    message.includes("target_points") || message.includes("is_low_score_wins")
   );
 }
 
@@ -350,65 +467,87 @@ function isMissingTeamIconColumn(error: unknown) {
   return getErrorMessage(error).includes("icon");
 }
 
+async function attachCollaborationMetadata(
+  userId: string,
+  games: Game[],
+) {
+  if (!supabase || !games.some((game) => game.isShared)) {
+    return games;
+  }
+
+  const { data, error } = await supabase
+    .from(GAME_COLLABORATORS_TABLE)
+    .select("game_id,user_id,player_id");
+  if (error) return games;
+
+  const collaboratorGameIds = new Set(
+    (data ?? []).map((row) => row.game_id as string),
+  );
+  const playerIdByGameId = new Map<string, string>();
+  (data ?? []).forEach((row) => {
+    if (row.user_id === userId) {
+      playerIdByGameId.set(row.game_id as string, row.player_id as string);
+    }
+  });
+  return games.map((game) => {
+    const linkedPlayerId = playerIdByGameId.get(game.id);
+    return {
+      ...game,
+      linkedPlayerIdForCurrentUser: linkedPlayerId,
+      hasCollaborators: collaboratorGameIds.has(game.id),
+    };
+  });
+}
+
 export async function loadRemoteGames(userId: string): Promise<Game[]> {
   if (!supabase) return [];
-  const client = supabase;
-  const selectGames = (columns: string) =>
-    client
-      .from(GAMES_TABLE)
-      .select(columns)
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false });
-  const result = await selectGames(GAME_SELECT_COLUMNS);
-  if (!result.error) {
-    return (result.data ?? []).map((row) =>
-      rowToGame(row as unknown as GameRow),
-    );
-  }
-  const quickScoreColumnsMissing = isMissingQuickScoreColumn(result.error);
-  let modernError = result.error;
-  if (quickScoreColumnsMissing) {
-    const noQuickScoreResult = await selectGames(
-      GAME_SELECT_COLUMNS_WITHOUT_QUICK_SCORES,
-    );
-    if (!noQuickScoreResult.error) {
-      return (noQuickScoreResult.data ?? []).map((row) =>
-        rowToGame(row as unknown as GameRow),
+  const omittedColumns = new Set<string>();
+  let ownerOnly = false;
+  let modernError: unknown = null;
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const columns = GAME_SELECT_COLUMNS.split(",")
+      .filter((column) => !omittedColumns.has(column))
+      .join(",");
+    const query = supabase.from(GAMES_TABLE).select(columns);
+    const result = ownerOnly
+      ? await query
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+      : await query.order("updated_at", { ascending: false });
+
+    if (!result.error) {
+      return attachCollaborationMetadata(
+        userId,
+        (result.data ?? []).map((row) =>
+          rowToGame(row as unknown as GameRow, userId),
+        ),
       );
     }
-    modernError = noQuickScoreResult.error;
+
+    modernError = result.error;
+    if (isMissingQuickScoreColumn(modernError)) {
+      omittedColumns.add("quick_score_value_1");
+      omittedColumns.add("quick_score_value_2");
+      continue;
+    }
+    if (isMissingCollaboratorManagementColumn(modernError)) {
+      omittedColumns.add("collaborators_can_manage");
+      continue;
+    }
+    if (isMissingSharedGameColumn(modernError)) {
+      omittedColumns.add("is_shared");
+      omittedColumns.add("collaborators_can_manage");
+      ownerOnly = true;
+      continue;
+    }
+    if (isMissingDiceEnabledColumn(modernError)) {
+      omittedColumns.add("dice_enabled");
+      continue;
+    }
+    break;
   }
-  if (isMissingDiceEnabledColumn(modernError)) {
-    const noDiceResult = await selectGames(
-      quickScoreColumnsMissing
-        ? GAME_SELECT_COLUMNS_WITHOUT_DICE_OR_QUICK_SCORES
-        : GAME_SELECT_COLUMNS_WITHOUT_DICE,
-    );
-    if (!noDiceResult.error) {
-      return (noDiceResult.data ?? []).map((row) =>
-        rowToGame(row as unknown as GameRow),
-      );
-    }
-    if (
-      !quickScoreColumnsMissing &&
-      isMissingQuickScoreColumn(noDiceResult.error)
-    ) {
-      const legacyQuickScoreResult = await selectGames(
-        GAME_SELECT_COLUMNS_WITHOUT_DICE_OR_QUICK_SCORES,
-      );
-      if (!legacyQuickScoreResult.error) {
-        return (legacyQuickScoreResult.data ?? []).map((row) =>
-          rowToGame(row as unknown as GameRow),
-        );
-      }
-      if (!isMissingGameRuleColumn(legacyQuickScoreResult.error)) {
-        throw legacyQuickScoreResult.error;
-      }
-    }
-    if (!isMissingGameRuleColumn(noDiceResult.error)) {
-      throw noDiceResult.error;
-    }
-  }
+
   if (
     !isMissingScoreHistoryColumn(modernError) &&
     !isMissingGameRuleColumn(modernError) &&
@@ -424,12 +563,408 @@ export async function loadRemoteGames(userId: string): Promise<Game[]> {
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (legacyResult.error) throw legacyResult.error;
-  return (legacyResult.data ?? []).map((row) => rowToGame(row as GameRow));
+  return attachCollaborationMetadata(
+    userId,
+    (legacyResult.data ?? []).map((row) => rowToGame(row as GameRow, userId)),
+  );
 }
 
-export async function saveRemoteGames(userId: string, games: Game[]) {
+export async function loadRemoteGameRemovalNotifications(userId: string) {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from(GAME_REMOVAL_NOTIFICATIONS_TABLE)
+    .select("id,user_id,game_id,game_name,created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? [])
+    .map(parseRemoteGameRemovalNotification)
+    .filter(
+      (notification): notification is GameRemovalNotification =>
+        notification !== null,
+    );
+}
+
+export async function dismissRemoteGameRemovalNotification(
+  userId: string,
+  notificationId: string,
+) {
   if (!supabase) return;
-  const rows = games.map((game) => gameToLegacyCompatibleRow(userId, game));
+  const { error } = await supabase
+    .from(GAME_REMOVAL_NOTIFICATIONS_TABLE)
+    .delete()
+    .eq("id", notificationId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function loadRemoteGameJoinNotifications(userId: string) {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from(GAME_JOIN_NOTIFICATIONS_TABLE)
+    .select("id,user_id,game_id,game_name,player_name,created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? [])
+    .map(parseRemoteGameJoinNotification)
+    .filter(
+      (notification): notification is GameJoinNotification =>
+        notification !== null,
+    );
+}
+
+export async function dismissRemoteGameJoinNotification(
+  userId: string,
+  notificationId: string,
+) {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from(GAME_JOIN_NOTIFICATIONS_TABLE)
+    .delete()
+    .eq("id", notificationId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function createRemoteGameInvite(gameId: string) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const { data, error } = await supabase.rpc("create_game_invite", {
+    p_game_id: gameId,
+  });
+  if (error) throw error;
+  if (typeof data !== "string" || !data) {
+    throw new Error("Could not create an invitation code.");
+  }
+  return data;
+}
+
+export async function rotateRemoteGameInvite(gameId: string) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const { data, error } = await supabase.rpc("rotate_game_invite", {
+    p_game_id: gameId,
+  });
+  if (error) throw error;
+  if (typeof data !== "string" || !data) {
+    throw new Error("Could not generate a new invitation code.");
+  }
+  return data;
+}
+
+export async function joinRemoteGame(code: string) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const { data, error } = await supabase.rpc("join_game_by_code", {
+    p_code: code,
+  });
+  if (error) throw error;
+  if (typeof data !== "string" || !data) {
+    throw new Error("Could not join that game.");
+  }
+  return data;
+}
+
+export async function applyRemoteSharedScoreDelta(
+  userId: string,
+  gameId: string,
+  playerId: string,
+  delta: number,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("apply_shared_game_score_delta", {
+      p_game_id: gameId,
+      p_player_id: playerId,
+      p_delta: Math.trunc(delta),
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function resetRemoteSharedGame(
+  userId: string,
+  gameId: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("reset_shared_game_scores", { p_game_id: gameId })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function finishRemoteSharedGame(
+  userId: string,
+  gameId: string,
+  completionMode: NonNullable<Game["completionMode"]>,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("finish_shared_game", {
+      p_game_id: gameId,
+      p_completion_mode: completionMode,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function updateRemoteSharedGameSettings(
+  userId: string,
+  gameId: string,
+  settings: Pick<
+    Game,
+    | "name"
+    | "scoreDirection"
+    | "startingScore"
+    | "targetScore"
+    | "winCondition"
+    | "winByTwo"
+    | "manualEndOnly"
+    | "timerEnabled"
+    | "diceEnabled"
+    | "timerMode"
+    | "timerSeconds"
+    | "collaboratorsCanManage"
+  >,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("update_shared_game_settings_v2", {
+      p_game_id: gameId,
+      p_name: settings.name,
+      p_score_direction: settings.scoreDirection,
+      p_starting_score: settings.startingScore,
+      p_target_score: settings.targetScore,
+      p_win_condition: settings.winCondition,
+      p_win_by_two: settings.winByTwo,
+      p_manual_end_only: settings.manualEndOnly,
+      p_timer_enabled: settings.timerEnabled,
+      p_dice_enabled: settings.diceEnabled,
+      p_timer_mode: settings.timerMode,
+      p_timer_seconds: settings.timerSeconds,
+      p_collaborators_can_manage: settings.collaboratorsCanManage,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function renameRemoteSharedGame(
+  userId: string,
+  gameId: string,
+  name: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("rename_shared_game", { p_game_id: gameId, p_name: name })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function addRemoteSharedGamePlayer(
+  userId: string,
+  gameId: string,
+  player: Pick<PlayerProfile, "name" | "avatarColor"> & {
+    id: string;
+    profileId?: string;
+  },
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("add_shared_game_player", {
+      p_game_id: gameId,
+      p_player_id: player.id,
+      p_name: player.name,
+      p_avatar_color: player.avatarColor,
+      p_profile_id: player.profileId ?? null,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function loadRemotePastLinkedPlayers(
+  gameId: string,
+): Promise<PastLinkedPlayer[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc("list_past_linked_players", {
+    p_game_id: gameId,
+  });
+  if (error) throw error;
+  return ((data ?? []) as PastLinkedPlayerRow[]).map((row) => ({
+    userId: row.collaborator_user_id,
+    profileId: row.profile_id,
+    name: row.player_name,
+    avatarColor: row.avatar_color,
+    lastLinkedAt: row.last_linked_at,
+  }));
+}
+
+export async function addRemotePastLinkedPlayerToGame(
+  userId: string,
+  gameId: string,
+  collaboratorUserId: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("add_past_linked_player_to_game", {
+      p_game_id: gameId,
+      p_collaborator_user_id: collaboratorUserId,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function replayRemoteSharedGame(
+  userId: string,
+  gameId: string,
+  newGameId: string,
+  name: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("replay_shared_game", {
+      p_game_id: gameId,
+      p_new_game_id: newGameId,
+      p_name: name,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  const game = rowToGame(result.data as GameRow, userId);
+  return {
+    ...game,
+    hasCollaborators: game.isShared === true,
+  };
+}
+
+export async function updateRemoteSharedGamePlayer(
+  userId: string,
+  gameId: string,
+  player: Game["players"][number],
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("update_shared_game_player", {
+      p_game_id: gameId,
+      p_player_id: player.id,
+      p_name: player.name,
+      p_avatar_color: player.avatarColor,
+      p_profile_id: player.profileId ?? null,
+      p_team_id: player.teamId ?? null,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function setRemoteSharedCollaboratorManagement(
+  userId: string,
+  gameId: string,
+  enabled: boolean,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("set_shared_game_collaborator_management", {
+      p_game_id: gameId,
+      p_enabled: enabled,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function deleteRemoteSharedGame(
+  userId: string,
+  gameId: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const { error } = await supabase
+    .from(GAMES_TABLE)
+    .delete()
+    .eq("id", gameId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function removeRemoteSharedGamePlayer(
+  userId: string,
+  gameId: string,
+  playerId: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("remove_shared_game_player", {
+      p_game_id: gameId,
+      p_player_id: playerId,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function mergeRemoteSharedGamePlayers(
+  userId: string,
+  gameId: string,
+  linkedPlayerId: string,
+  rosterPlayerId: string,
+  keepPlayer: "linked" | "local",
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("merge_shared_game_players", {
+      p_game_id: gameId,
+      p_linked_player_id: linkedPlayerId,
+      p_roster_player_id: rosterPlayerId,
+      p_keep_player: keepPlayer,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  const game = rowToGame(result.data as GameRow, userId);
+  if (keepPlayer === "linked") {
+    return { ...game, hasCollaborators: true };
+  }
+  const collaboratorResult = await supabase
+    .from(GAME_COLLABORATORS_TABLE)
+    .select("game_id", { count: "exact", head: true })
+    .eq("game_id", gameId);
+  if (collaboratorResult.error) throw collaboratorResult.error;
+  return {
+    ...game,
+    hasCollaborators: (collaboratorResult.count ?? 0) > 0,
+  };
+}
+
+export async function saveRemoteGames(
+  userId: string,
+  games: Game[],
+  changedGameIds?: ReadonlySet<string>,
+) {
+  if (!supabase) return;
+  const ownedGames = games.filter(
+    (game) =>
+      !game.isShared && (!game.ownerId || game.ownerId === userId),
+  );
+  const gamesToUpsert = changedGameIds
+    ? ownedGames.filter((game) => changedGameIds.has(game.id))
+    : ownedGames;
+  const rows = gamesToUpsert.map((game) =>
+    gameToLegacyCompatibleRow(userId, game),
+  );
   if (rows.length > 0) {
     let quickScoreColumnsUnavailable = false;
     let { error } = await supabase
@@ -462,7 +997,10 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
               quick_score_value_1,
               quick_score_value_2,
             };
-        if (message.includes("target_points") && message.includes("is_low_score_wins")) {
+        if (
+          message.includes("target_points") &&
+          message.includes("is_low_score_wins")
+        ) {
           return modernRow;
         }
         if (message.includes("target_points")) {
@@ -508,7 +1046,7 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
           .upsert(legacyRows, { onConflict: "id" });
         if (legacyError) throw legacyError;
       } else if (isMissingLegacyRequiredColumnValue(error)) {
-        const legacyRows = games.map((game) =>
+        const legacyRows = gamesToUpsert.map((game) =>
           gameToLegacyCompatibleRow(userId, game),
         );
         const { error: legacyConstraintError } = await supabase
@@ -530,6 +1068,7 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
               quick_score_value_1,
               quick_score_value_2,
               completion_mode,
+              collaborators_can_manage,
               ...row
             }) => row,
           );
@@ -541,9 +1080,10 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
       } else if (
         !isMissingScoreHistoryColumn(error) &&
         !isMissingGameRuleColumn(error)
-      ) throw error;
+      )
+        throw error;
       else {
-        const legacyRows = games.map((game) => {
+        const legacyRows = gamesToUpsert.map((game) => {
           const {
             score_history,
             win_by_two,
@@ -552,6 +1092,7 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
             quick_score_value_1,
             quick_score_value_2,
             completion_mode,
+            collaborators_can_manage,
             ...row
           } = gameToLegacyCompatibleRow(userId, game);
           return row;
@@ -564,13 +1105,22 @@ export async function saveRemoteGames(userId: string, games: Game[]) {
     }
   }
 
-  const { data, error: loadError } = await supabase
+  let { data, error: loadError } = await supabase
     .from(GAMES_TABLE)
     .select("id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("is_shared", false);
+  if (loadError && isMissingSharedGameColumn(loadError)) {
+    const legacyResult = await supabase
+      .from(GAMES_TABLE)
+      .select("id")
+      .eq("user_id", userId);
+    data = legacyResult.data;
+    loadError = legacyResult.error;
+  }
   if (loadError) throw loadError;
 
-  const nextIds = new Set(games.map((game) => game.id));
+  const nextIds = new Set(ownedGames.map((game) => game.id));
   const staleIds = (data ?? [])
     .map((row) => (row as { id: string }).id)
     .filter((id) => !nextIds.has(id));
@@ -709,7 +1259,9 @@ export async function saveRemoteTeams(userId: string, teams: GameTeam[]) {
   }
 }
 
-export async function loadRemoteTeamMembers(userId: string): Promise<TeamMember[]> {
+export async function loadRemoteTeamMembers(
+  userId: string,
+): Promise<TeamMember[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from(TEAM_MEMBERS_TABLE)
@@ -756,9 +1308,7 @@ export async function saveRemoteTeamMembers(
   if (deleteError) throw deleteError;
 
   if (rows.length > 0) {
-    const { error } = await supabase
-      .from(TEAM_MEMBERS_TABLE)
-      .insert(rows);
+    const { error } = await supabase.from(TEAM_MEMBERS_TABLE).insert(rows);
     if (error) throw error;
   }
 }

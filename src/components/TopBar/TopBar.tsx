@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Ellipsis, Plus, Undo2 } from "lucide-react";
+import {
+  Ellipsis,
+  Flag,
+  History,
+  Link,
+  Plus,
+  RotateCcw,
+  Settings,
+  Undo2,
+  Users,
+} from "lucide-react";
 import "./TopBar.css";
 
 type MetaItem = {
@@ -26,12 +36,13 @@ type Props = {
   onLogoClick?: () => void;
   onPrimaryAction?: () => void;
   onOpenAuth?: () => void;
-  onAddPlayer: () => void;
+  onAddPlayer?: () => void;
   onAddPlayerLabel?: string;
+  onShareGame?: () => void;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
   onEndGame?: () => void;
-  onResetGame: () => void;
+  onResetGame?: () => void;
   onRename?: () => void;
 };
 
@@ -55,6 +66,7 @@ export function TopBar({
   onOpenAuth,
   onAddPlayer,
   onAddPlayerLabel = "Manage players",
+  onShareGame,
   onOpenSettings,
   onOpenHistory,
   onEndGame,
@@ -176,7 +188,7 @@ export function TopBar({
               <div className="topbarMenu__panel" role="menu">
                 {onOpenSettings ? (
                   <button
-                    className="topbarMenu__item"
+                    className="topbarMenu__item topbarMenu__item--withIcon"
                     type="button"
                     role="menuitem"
                     onClick={() => {
@@ -184,12 +196,13 @@ export function TopBar({
                       onOpenSettings();
                     }}
                   >
-                    Game settings
+                    <Settings size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span>Game settings</span>
                   </button>
                 ) : null}
                 {onOpenHistory ? (
                   <button
-                    className="topbarMenu__item"
+                    className="topbarMenu__item topbarMenu__item--withIcon"
                     type="button"
                     role="menuitem"
                     onClick={() => {
@@ -197,35 +210,60 @@ export function TopBar({
                       onOpenHistory();
                     }}
                   >
-                    Game history
+                    <History size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span>Game history</span>
                   </button>
                 ) : null}
-                <button
-                  className="topbarMenu__item"
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onAddPlayer();
-                  }}
-                >
-                  {onAddPlayerLabel}
-                </button>
-                <button
-                  className="topbarMenu__item topbarMenu__item--danger"
-                  type="button"
-                  role="menuitem"
-                  disabled={!showReset}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onResetGame();
-                  }}
-                >
-                  Reset scores
-                </button>
+                {onShareGame ? (
+                  <button
+                    className="topbarMenu__item topbarMenu__item--withIcon"
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onShareGame();
+                    }}
+                  >
+                    <Link size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span>Invite players</span>
+                  </button>
+                ) : null}
+                {onAddPlayer ? (
+                  <button
+                    className="topbarMenu__item topbarMenu__item--withIcon"
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onAddPlayer();
+                    }}
+                  >
+                    <Users size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span>{onAddPlayerLabel}</span>
+                  </button>
+                ) : null}
+                {onResetGame ? (
+                  <button
+                    className="topbarMenu__item topbarMenu__item--withIcon topbarMenu__item--danger"
+                    type="button"
+                    role="menuitem"
+                    disabled={!showReset}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onResetGame();
+                    }}
+                  >
+                    <RotateCcw
+                      size={16}
+                      strokeWidth={2.3}
+                      aria-hidden="true"
+                    />
+                    <span>Reset scores</span>
+                  </button>
+                ) : null}
                 {onEndGame ? (
                   <button
-                    className="topbarMenu__item topbarMenu__item--finish"
+                    className="topbarMenu__item topbarMenu__item--withIcon topbarMenu__item--finish"
                     type="button"
                     role="menuitem"
                     onClick={() => {
@@ -233,7 +271,8 @@ export function TopBar({
                       onEndGame();
                     }}
                   >
-                    End game
+                    <Flag size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span>End game</span>
                   </button>
                 ) : null}
               </div>

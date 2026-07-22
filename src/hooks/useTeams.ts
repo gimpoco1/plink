@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import {
+  createForegroundRefreshHandlers,
+  createRealtimeReconnectHandler,
+} from "../utils/foregroundRefresh";
 import type { GameTeam, TeamMember, ToastState } from "../types";
 import { DEFAULT_TEAM_ICON } from "../constants";
 import { supabase } from "../lib/supabase";
@@ -174,9 +178,10 @@ export function useTeams(session: Session | null) {
       }
     }
 
-    function refreshWhenVisible() {
-      if (document.visibilityState === "visible") void refreshRemoteTeams();
-    }
+    const {
+      refreshOnFocus,
+      refreshWhenVisible,
+    } = createForegroundRefreshHandlers(() => void refreshRemoteTeams());
 
     let teamsChannel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
       null;
@@ -197,7 +202,9 @@ export function useTeams(session: Session | null) {
           void refreshRemoteTeams();
         },
       );
-      void teamsChannel.subscribe();
+      void teamsChannel.subscribe(
+        createRealtimeReconnectHandler(() => void refreshRemoteTeams()),
+      );
 
       membersChannel = supabase.channel(`team-members:${userId}`);
       membersChannel.on(
@@ -214,13 +221,11 @@ export function useTeams(session: Session | null) {
       void membersChannel.subscribe();
     }
 
-    const intervalId = window.setInterval(refreshRemoteTeams, 5000);
-    window.addEventListener("focus", refreshRemoteTeams);
+    window.addEventListener("focus", refreshOnFocus);
     document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       alive = false;
-      window.clearInterval(intervalId);
       if (teamsChannel) {
         void teamsChannel.unsubscribe();
         supabase?.removeChannel(teamsChannel);
@@ -229,7 +234,7 @@ export function useTeams(session: Session | null) {
         void membersChannel.unsubscribe();
         supabase?.removeChannel(membersChannel);
       }
-      window.removeEventListener("focus", refreshRemoteTeams);
+      window.removeEventListener("focus", refreshOnFocus);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [remoteUserId, teamMembers, teams, userId]);

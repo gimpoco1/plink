@@ -13,7 +13,7 @@ export function HomeGuestPreview({ onOpenAuth }: GuestPreviewProps) {
           <span>Guest mode</span>
         </div>
         <p className="guestBanner__copy">
-          Your games are only saved on this device right now. Sign in to keep
+          Your games are only available on this device right now. Sign in to keep
           sessions, players, and stats in your account.
         </p>
       </div>

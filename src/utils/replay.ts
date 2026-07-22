@@ -1,0 +1,38 @@
+import type { Game, Player, PlayerProfile } from "../types";
+
+function getReplayNameKey(name: string) {
+  return name.trim().replace(/\s+#\d+$/i, "").toLocaleLowerCase();
+}
+
+export function getSavedReplayProfile(
+  player: Player,
+  profiles: PlayerProfile[],
+): PlayerProfile | undefined {
+  const matchingId = player.profileId
+    ? profiles.find((profile) => profile.id === player.profileId)
+    : undefined;
+  if (matchingId) return matchingId;
+
+  const nameKey = getReplayNameKey(player.name);
+  const matchingNames = profiles.filter(
+    (profile) => getReplayNameKey(profile.name) === nameKey,
+  );
+  return matchingNames.length === 1 ? matchingNames[0] : undefined;
+}
+
+export function getUnsavedReplayPlayers(
+  game: Game,
+  profiles: PlayerProfile[],
+): Player[] {
+  if (!game.isShared) return [];
+  const linkedPlayersCarryOver = game.accessRole !== "collaborator";
+  return game.players.filter(
+    (player) =>
+      !(linkedPlayersCarryOver && player.joinedViaInvite === true) &&
+      !getSavedReplayProfile(player, profiles),
+  );
+}
+
+export function linkedPlayersCarryIntoReplay(game: Game) {
+  return game.isShared === true && game.accessRole !== "collaborator";
+}

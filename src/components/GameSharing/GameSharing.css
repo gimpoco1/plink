@@ -1,0 +1,243 @@
+.gameSharingDialog {
+  width: min(92vw, 500px);
+}
+
+.gameSharingDialog__form {
+  min-height: 0;
+}
+
+.gameSharingDialog__body {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+}
+
+.gameSharingDialog__body_homeScreen {
+  display: grid;
+  gap: 14px;
+  padding: 4px;
+}
+
+.gameSharingDialog__intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.gameSharingDialog__intro p {
+  margin: 0;
+}
+
+.gameSharingDialog__icon {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(216, 255, 79, 0.2);
+  border-radius: 12px;
+  background: rgba(216, 255, 79, 0.08);
+  color: var(--accent);
+}
+
+.gameSharingDialog__code {
+  display: grid;
+  min-height: 92px;
+  place-items: center;
+  padding: 20px 16px;
+  border: 1px solid rgba(216, 255, 79, 0.26);
+  border-radius: 14px;
+  background: rgba(216, 255, 79, 0.07);
+  color: var(--accent);
+  font-size: clamp(28px, 8vw, 40px);
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-align: center;
+  user-select: all;
+}
+
+.gameSharingDialog__loader {
+  animation: gameSharingDialogSpin 0.8s linear infinite;
+}
+
+.gameSharingDialog__rotate {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  justify-self: center;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.gameSharingDialog__rotate:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.gameSharingDialog__rotate:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.gameSharingDialog__rotate:disabled {
+  cursor: default;
+  opacity: 0.56;
+}
+
+.gameSharingDialog__body > .collaboratorManagementControl {
+  margin-left: -10px;
+  margin-right: -10px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes gameSharingDialogSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gameSharingDialog__label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gameSharingDialog__inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 14px;
+  border: 1px solid rgba(217, 228, 235, 0.14);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.gameSharingDialog__input.input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gameSharingDialog__input.input:focus {
+  box-shadow: none;
+}
+
+.gameSharingDialog__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gameSharingDialog__hint {
+  color: var(--muted);
+}
+
+.gameSharingDialog__error {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(239, 68, 68, 0.18), rgba(127, 29, 29, 0.06)),
+    rgba(255, 255, 255, 0.03);
+  color: #ffe1e1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 22px rgba(90, 18, 18, 0.18);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.gameSharingDialog__errorIcon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  margin-top: -2px;
+  border-radius: 999px;
+  color: #fecaca;
+  flex-shrink: 0;
+}
+
+.gameSharingDialog .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.homeJoinGameButton {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  gap: 7px;
+  margin-top: -7px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.homeJoinGameButton__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text);
+  font-weight: 850;
+  transition: color 0.18s ease;
+}
+
+.homeJoinGameButton:hover .homeJoinGameButton__action {
+  color: var(--accent);
+}
+
+.homeJoinGameButton:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 380px) {
+  .homeJoinGameButton {
+    flex-wrap: wrap;
+    column-gap: 6px;
+  }
+}
+
+@media (max-width: 560px) {
+  .gameSharingDialog__body {
+    padding: 20px;
+  }
+
+  .gameSharingDialog__code {
+    letter-spacing: 0.1em;
+  }
+}

@@ -244,6 +244,139 @@
   margin-top: 10px;
 }
 
+.managePlayersDialog__inviteOthers {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.managePlayersDialog__pastLinked {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(216, 255, 79, 0.12);
+  border-radius: 14px;
+  background: rgba(216, 255, 79, 0.025);
+}
+
+.managePlayersDialog__pastLinkedHeading {
+  display: grid;
+  gap: 2px;
+}
+
+.managePlayersDialog__pastLinkedTitle {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.managePlayersDialog__pastLinkedDescription {
+  color: var(--text-dim);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.managePlayersDialog__pastLinkedList {
+  display: grid;
+  gap: 6px;
+}
+
+.managePlayersDialog__pastLinkedPlayer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.managePlayersDialog__pastLinkedAvatar {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.managePlayersDialog__pastLinkedIdentity {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 2px;
+}
+
+.managePlayersDialog__pastLinkedName {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.managePlayersDialog__pastLinkedMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 9px;
+}
+
+.managePlayersDialog__pastLinkedMeta svg {
+  color: var(--accent);
+}
+
+.managePlayersDialog__pastLinkedAdd {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 9px;
+  border: 1px solid rgba(216, 255, 79, 0.24);
+  border-radius: 9px;
+  background: rgba(216, 255, 79, 0.08);
+  color: var(--accent);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.managePlayersDialog__pastLinkedAdd:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.managePlayersDialog__inviteOthers:hover {
+  color: var(--accent);
+}
+
+.managePlayersDialog__inviteOthers:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .managePlayersDialog__simpleTitle {
   color: var(--text);
   font-size: 13px;
@@ -512,10 +645,10 @@
 
 .managePlayersDialog__card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.035);
@@ -523,7 +656,6 @@
 
 .managePlayersDialog__card--editing {
   align-items: stretch;
-  padding: 12px;
 }
 
 .managePlayersDialog__cardMain {
@@ -532,11 +664,13 @@
   gap: 8px;
   min-width: 0;
   flex: 1;
+  padding: 8px 10px;
 }
 
 .managePlayersDialog__card--editing .managePlayersDialog__cardMain {
   align-items: flex-start;
   gap: 10px;
+  padding: 12px;
 }
 
 .managePlayersDialog__avatar {
@@ -606,10 +740,29 @@
   min-width: 0;
 }
 
+.managePlayersDialog__nameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.managePlayersDialog__linkedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
 .managePlayersDialog__meta {
   color: var(--text-dim);
   font-size: 10px;
   line-height: 1.25;
+}
+
+.managePlayersDialog__meta--linked {
+  color: color-mix(in srgb, var(--accent) 72%, var(--text-dim));
 }
 
 .managePlayersDialog__teamAssignment {
@@ -701,6 +854,62 @@
 .managePlayersDialog__actionBtn--edit:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.26);
   background: rgba(255, 255, 255, 0.11);
+}
+
+.managePlayersDialog__mergeBtn {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 7px;
+  border: 1px solid rgba(216, 255, 79, 0.22);
+  border-radius: 8px;
+  background: rgba(216, 255, 79, 0.08);
+  color: var(--accent);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+
+.managePlayersDialog__mergeFooter {
+  min-width: 0;
+  padding: 7px 9px 8px;
+  border-top: 1px solid rgba(216, 255, 79, 0.14);
+  background: rgba(216, 255, 79, 0.045);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.managePlayersDialog__mergeFooterCopy {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.managePlayersDialog__mergeFooterCopy svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.managePlayersDialog__mergeFooterCopy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.managePlayersDialog__mergeBtn:hover {
+  border-color: rgba(216, 255, 79, 0.38);
+  background: rgba(216, 255, 79, 0.13);
 }
 
 .managePlayersDialog__actionBtn--save {
@@ -980,8 +1189,8 @@
   }
 
   .managePlayersDialog__card {
-    align-items: center;
-    flex-direction: row;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .managePlayersDialog__identityTop {
