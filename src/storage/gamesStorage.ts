@@ -32,6 +32,18 @@ function sanitizeScoreHistory(input: unknown): Game["scoreHistory"] {
         playerId: obj.playerId,
         playerName: obj.playerName,
         avatarColor: obj.avatarColor,
+        updatedByPlayerId:
+          typeof obj.updatedByPlayerId === "string"
+            ? obj.updatedByPlayerId
+            : undefined,
+        updatedByPlayerName:
+          typeof obj.updatedByPlayerName === "string"
+            ? obj.updatedByPlayerName
+            : undefined,
+        updatedByAvatarColor:
+          typeof obj.updatedByAvatarColor === "string"
+            ? obj.updatedByAvatarColor
+            : undefined,
         delta: obj.delta,
         scoreBefore: obj.scoreBefore,
         scoreAfter: obj.scoreAfter,

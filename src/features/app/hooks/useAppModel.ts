@@ -50,6 +50,7 @@ import {
   prepareBackupImport,
   type BackupSelection,
 } from "../../../storage/backupFile";
+import { shareOrDownloadBackup } from "../../../storage/backupDownload";
 import { loadGuestGames, saveGuestGames } from "../../../storage/gamesStorage";
 import { loadProfiles } from "../../../storage/profilesStorage";
 import {
@@ -1308,48 +1309,7 @@ export function useAppModel() {
     const backupJson = JSON.stringify(payload, null, 2);
     const stamp = new Date().toISOString().slice(0, 10);
     const filename = `plink-backup-${stamp}.json`;
-    const file = new File([backupJson], filename, {
-      type: "application/json",
-    });
-
-    if (
-      typeof navigator.canShare === "function" &&
-      navigator.canShare({ files: [file] }) &&
-      typeof navigator.share === "function"
-    ) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: "Plink backup",
-          text: "Backup file for Plink sessions and players.",
-        });
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return {
-            games: selection.games ? payload.games.length : 0,
-            profiles: selection.profiles ? payload.profiles.length : 0,
-            teams: selection.profiles ? payload.teams.length : 0,
-          };
-        }
-        throw error;
-      }
-
-      return {
-        games: selection.games ? payload.games.length : 0,
-        profiles: selection.profiles ? payload.profiles.length : 0,
-        teams: selection.profiles ? payload.teams.length : 0,
-      };
-    }
-
-    const blob = new Blob([backupJson], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    await shareOrDownloadBackup({ contents: backupJson, filename });
 
     return {
       games: selection.games ? payload.games.length : 0,

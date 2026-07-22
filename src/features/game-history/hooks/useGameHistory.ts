@@ -7,6 +7,7 @@ export type HistorySubject = {
   name: string;
   avatarColor: string;
   icon?: string;
+  isCurrentUser?: boolean;
 };
 type HistoryAction = HistorySubject & {
   key: string;
@@ -16,6 +17,7 @@ type HistoryAction = HistorySubject & {
   scoreBefore: number;
   scoreAfter: number;
   delta: number;
+  updatedBy?: HistorySubject;
   entries: ScoreHistoryEntry[];
 };
 export type HistoryTurn = {
@@ -29,6 +31,7 @@ export type HistoryTurn = {
   scoreBefore: number;
   scoreAfter: number;
   totalDelta: number;
+  updatedBy?: HistorySubject;
   actions: HistoryAction[];
 };
 
@@ -103,6 +106,10 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
     }
     return map;
   }, [game]);
+  const currentUserPlayerId =
+    game.accessRole === "collaborator"
+      ? game.linkedPlayerIdForCurrentUser
+      : game.players.find((player) => player.isGameOwner)?.id;
   const actions = useMemo(() => {
     const result: HistoryAction[] = [];
     for (const entry of [...entries].reverse()) {
@@ -112,9 +119,19 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
         avatarColor: entry.avatarColor,
       };
       const current = result[result.length - 1];
+      const updatedBy = entry.updatedByPlayerId
+        ? {
+            id: entry.updatedByPlayerId,
+            name: entry.updatedByPlayerName ?? "Unknown player",
+            avatarColor: entry.updatedByAvatarColor ?? "#6f7b8f",
+            isCurrentUser:
+              entry.updatedByPlayerId === currentUserPlayerId,
+          }
+        : undefined;
       if (
         current &&
         current.subjectId === subject.id &&
+        current.updatedBy?.id === updatedBy?.id &&
         current.createdAt === entry.createdAt &&
         current.scoreBefore === entry.scoreBefore &&
         current.scoreAfter === entry.scoreAfter &&
@@ -131,12 +148,13 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
           scoreBefore: entry.scoreBefore,
           scoreAfter: entry.scoreAfter,
           delta: entry.delta,
+          updatedBy,
           entries: [entry],
         });
       }
     }
     return result;
-  }, [entries, subjectsByPlayerId]);
+  }, [currentUserPlayerId, entries, subjectsByPlayerId]);
   const playerOptions = useMemo(() => {
     const subjects = new Map<string, HistorySubject>();
     for (const action of actions) {
@@ -174,6 +192,7 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
       if (
         current &&
         current.subjectId === action.subjectId &&
+        current.updatedBy?.id === action.updatedBy?.id &&
         action.createdAt - current.createdAt <= ACTION_MERGE_WINDOW_MS
       ) {
         current.actions.push(action);
@@ -192,6 +211,7 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
           scoreBefore: action.scoreBefore,
           scoreAfter: action.scoreAfter,
           totalDelta: action.delta,
+          updatedBy: action.updatedBy,
           actions: [action],
         });
       }

@@ -48,6 +48,9 @@ export type ScoreHistoryEntry = {
   playerId: string;
   playerName: string;
   avatarColor: string;
+  updatedByPlayerId?: string;
+  updatedByPlayerName?: string;
+  updatedByAvatarColor?: string;
   delta: number;
   scoreBefore: number;
   scoreAfter: number;

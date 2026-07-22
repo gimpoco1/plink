@@ -46,6 +46,9 @@ export function GameRowCard({
   const complete = useMemo(() => isGameComplete(game), [game]);
   const draw = useMemo(() => isGameDraw(game), [game]);
   const isTeamsGame = game.participantMode === "teams";
+  const hasInvitedPlayers = game.players.some(
+    (player) => player.joinedViaInvite === true,
+  );
 
   const parsedName = getGameDisplayName(game.name);
   const displayName = parsedName.title
@@ -153,7 +156,7 @@ export function GameRowCard({
               ) : null}
             </div>
             <div className="gameRow__headMeta">
-              {game.isShared ? (
+              {hasInvitedPlayers ? (
                 <span
                   className="gameRow__modeBadge gameRow__modeBadge--shared"
                   aria-label="Shared game"
