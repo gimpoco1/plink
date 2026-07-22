@@ -15,8 +15,8 @@ export function GameScreen(props: GameScreenProps) {
   const {
     savedTeamIconByName,
     takenProfileIds,
-    accountProfileIds,
     getPlayerDisplayName,
+    isCurrentUserPlayer,
     hasPlayers,
     isTeamGame,
     isTeamsMode,
@@ -48,6 +48,8 @@ export function GameScreen(props: GameScreenProps) {
   } = model;
   const {
     game,
+    canManageGame,
+    canManageLifecycle,
     managePlayersDialogRef,
     pulseById,
     onTriggerPulse,
@@ -109,17 +111,21 @@ export function GameScreen(props: GameScreenProps) {
         {!hasPlayers ? (
           <section className="empty">
             <h1 className="empty__title">
-              {isTeamsMode
-                ? "Manage teams to start."
-                : "Manage players to start."}
+              {!canManageGame
+                ? "Waiting for the game owner."
+                : isTeamsMode
+                  ? "Manage teams to start."
+                  : "Manage players to start."}
             </h1>
-            <button
-              className="btn btn--primary btn--xl gameScreen__emptyCta"
-              type="button"
-              onClick={() => managePlayersDialogRef.current?.open()}
-            >
-              {isTeamsMode ? "Manage teams" : "Manage players"}
-            </button>
+            {canManageGame ? (
+              <button
+                className="btn btn--primary btn--xl gameScreen__emptyCta"
+                type="button"
+                onClick={() => managePlayersDialogRef.current?.open()}
+              >
+                {isTeamsMode ? "Manage teams" : "Manage players"}
+              </button>
+            ) : null}
           </section>
         ) : isTeamGame ? (
           <section className="teamBoard" aria-label="Teams">
@@ -150,10 +156,14 @@ export function GameScreen(props: GameScreenProps) {
                       targetScore={game.targetScore}
                       startingScore={game.startingScore}
                       winCondition={game.winCondition}
-                      onDelta={(_participantId, delta) => {
+                      onDelta={async (_participantId, delta) => {
                         const targetPlayerId = participant.members[0]?.id;
                         if (!targetPlayerId) return;
-                        onUpdateScore(targetPlayerId, delta);
+                        const updated = await onUpdateScore(
+                          targetPlayerId,
+                          delta,
+                        );
+                        if (!updated) return;
                         onTriggerPulse(participant.id, delta);
                         setLastScoreAction({
                           targetId: targetPlayerId,
@@ -182,9 +192,7 @@ export function GameScreen(props: GameScreenProps) {
                     {section.players.map((player) => {
                       const rank = ranks.get(player.id) ?? 1;
                       const pulse = pulseById[player.id];
-                      const isAccountPlayer =
-                        !!player.profileId &&
-                        accountProfileIds.has(player.profileId);
+                      const isAccountPlayer = isCurrentUserPlayer(player);
                       return (
                         <PlayerCard
                           key={player.id}
@@ -194,11 +202,27 @@ export function GameScreen(props: GameScreenProps) {
                           pulse={pulse}
                           isWinner={winner?.id === player.id}
                           isAccountPlayer={isAccountPlayer}
+                          isLinkedPlayer={
+                            game.isShared === true &&
+                            player.joinedViaInvite === true
+                          }
+                          isGameOwner={
+                            game.isShared === true &&
+                            game.hasCollaborators === true &&
+                            (game.accessRole === "collaborator"
+                              ? player.isGameOwner === true
+                              : isAccountPlayer)
+                          }
                           targetScore={game.targetScore}
                           startingScore={game.startingScore}
                           winCondition={game.winCondition}
-                          onDelta={(playerId, delta) => {
-                            onUpdateScore(playerId, delta);
+                          canDelete={canManageGame}
+                          onDelta={async (playerId, delta) => {
+                            const updated = await onUpdateScore(
+                              playerId,
+                              delta,
+                            );
+                            if (!updated) return;
                             onTriggerPulse(playerId, delta);
                             scheduleResort();
                             setLastScoreAction({
@@ -240,8 +264,12 @@ export function GameScreen(props: GameScreenProps) {
           </span>
           <button
             type="button"
-            onClick={() => {
-              onUpdateScore(lastScoreAction.targetId, -lastScoreAction.delta);
+            onClick={async () => {
+              const updated = await onUpdateScore(
+                lastScoreAction.targetId,
+                -lastScoreAction.delta,
+              );
+              if (!updated) return;
               onTriggerPulse(lastScoreAction.pulseId, -lastScoreAction.delta);
               if (!isTeamGame) scheduleResort();
               setLastScoreAction(null);
@@ -252,7 +280,7 @@ export function GameScreen(props: GameScreenProps) {
         </div>
       ) : null}
 
-      {referenceReached ? (
+      {referenceReached && canManageLifecycle ? (
         <div
           className={`manualEndPrompt${game.timerEnabled ? " manualEndPrompt--withTimer" : ""}`}
           role="status"
@@ -278,7 +306,7 @@ export function GameScreen(props: GameScreenProps) {
         <GameDiceTray accentTone={isTeamGame ? "team" : "default"} />
       ) : null}
 
-      <GameManagePlayersDialog model={model} />
+      {canManageGame ? <GameManagePlayersDialog model={model} /> : null}
     </div>
   );
 }

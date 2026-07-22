@@ -159,6 +159,17 @@ export function useHomeScreenModel(props: HomeScreenProps) {
     const setups = new Map<string, QuickSetup>();
 
     for (const game of games) {
+      const isOwnedGame = game.isShared
+        ? game.accessRole === "owner"
+        : game.accessRole !== "collaborator";
+      const usesOnlySavedPlayers =
+        game.players.length > 0 &&
+        game.players.every(
+          (player) =>
+            !!player.profileId && profilesById.has(player.profileId),
+        );
+      if (!isOwnedGame || !usesOnlySavedPlayers) continue;
+
       const label = getGameDisplayName(game.name).title;
       const key = [
         label,

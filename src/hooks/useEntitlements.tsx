@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { SUBSCRIPTION_SYNCED_EVENT } from "../features/billing/appleSubscriptionSync";
 import { supabase } from "../lib/supabase";
+import {
+  createForegroundRefreshHandlers,
+  createRealtimeReconnectHandler,
+} from "../utils/foregroundRefresh";
 
 export type SubscriptionPlan = "free" | "pro";
 export type SubscriptionBillingPeriod = "monthly" | "yearly";
@@ -211,9 +215,10 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       }
     }
 
-    function refreshWhenVisible() {
-      if (document.visibilityState === "visible") void refreshSubscription();
-    }
+    const {
+      refreshOnFocus,
+      refreshWhenVisible,
+    } = createForegroundRefreshHandlers(() => void refreshSubscription());
 
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
       null;
@@ -230,22 +235,22 @@ export function useEntitlements(session: Session | null): EntitlementsState {
         void refreshSubscription();
       },
     );
-    void channel.subscribe();
+    void channel.subscribe(
+      createRealtimeReconnectHandler(() => void refreshSubscription()),
+    );
 
     void refreshSubscription();
-    const intervalId = window.setInterval(refreshSubscription, 5000);
-    window.addEventListener("focus", refreshSubscription);
+    window.addEventListener("focus", refreshOnFocus);
     window.addEventListener(SUBSCRIPTION_SYNCED_EVENT, refreshSubscription);
     document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       alive = false;
-      window.clearInterval(intervalId);
       if (channel) {
         void channel.unsubscribe();
         client.removeChannel(channel);
       }
-      window.removeEventListener("focus", refreshSubscription);
+      window.removeEventListener("focus", refreshOnFocus);
       window.removeEventListener(
         SUBSCRIPTION_SYNCED_EVENT,
         refreshSubscription,

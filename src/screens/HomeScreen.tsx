@@ -12,6 +12,7 @@ import type { HomeScreenProps } from "../features/home/types/homeScreenTypes";
 import { getSuggestionFacts } from "../features/home/utils/quickSetupFacts";
 import { useHomeScreenModel } from "../features/home/hooks/useHomeScreenModel";
 import { HomeGuestInfo } from "../features/home/components/HomeGuestInfo";
+import { JoinGameDialog } from "../components/GameSharing/JoinGameDialog";
 
 export function HomeScreen(props: HomeScreenProps) {
   const {
@@ -48,6 +49,7 @@ export function HomeScreen(props: HomeScreenProps) {
     onOpenTeamsTab,
     onCreate,
     onUpsertProfile,
+    onJoinGame,
     onEnter,
   } = screenProps;
   return (
@@ -122,6 +124,7 @@ export function HomeScreen(props: HomeScreenProps) {
             onUpsertProfile={onUpsertProfile}
           />
         </div>
+        {isAuthenticated ? <JoinGameDialog onJoin={onJoinGame} /> : null}
       </section>
 
       {quickSetups.length > 0 ? (

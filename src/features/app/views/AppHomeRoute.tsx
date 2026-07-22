@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
 import { DashboardScreen } from "../../../screens/DashboardScreen";
+import {
+  getUnsavedReplayPlayers,
+  linkedPlayersCarryIntoReplay,
+} from "../../../utils/replay";
 import { useAppContext } from "../context/AppContext";
 
 export function AppHomeRoute() {
   const {
     authDialogRef,
     canViewSavedData,
+    cancelGameStartSplash,
     confirmRef,
     createTeam,
     deleteGame,
@@ -29,6 +34,7 @@ export function AppHomeRoute() {
     presetDraftIntent,
     presetDraftToken,
     profiles,
+    joinGameByCode,
     reduceMotion,
     removeProfileMemberships,
     renameGame,
@@ -41,6 +47,7 @@ export function AppHomeRoute() {
     showLocalSessionsHint,
     showToast,
     teams,
+    triggerGameStartSplash,
     toggleTeamMember,
     updateProfileEverywhere,
     updateTeam,
@@ -99,6 +106,12 @@ export function AppHomeRoute() {
         onCreate={handleCreateGame}
         onStartQuickSetup={handleStartQuickSetup}
         onUpsertProfile={upsertProfile}
+        onJoinGame={async (code) => {
+          const joinedGame = await joinGameByCode(code);
+          selectGame(joinedGame.id);
+          setGameReturnTab(homeTab);
+          setView("game");
+        }}
         onUpdateProfile={(id, updates) => {
           updateProfileEverywhere(id, updates);
         }}
@@ -135,14 +148,43 @@ export function AppHomeRoute() {
         onToggleTeamMember={(teamId, profileId) => {
           toggleTeamMember(teamId, profileId);
         }}
-        onDuplicate={(gameId) => {
+        onDuplicate={async (gameId) => {
           if (!guardSessionCreation()) {
             return;
           }
-          const duplicated = duplicateGame(gameId);
+          const game = games.find((item) => item.id === gameId);
+          if (!game) return;
+          const unsavedPlayers = getUnsavedReplayPlayers(game, profiles);
+          if (unsavedPlayers.length > 0) {
+            const linkedPlayersCarryOver = linkedPlayersCarryIntoReplay(game);
+            const confirmed = await confirmRef.current?.confirm({
+              eyebrow: "New game",
+              title: "Play again",
+              message: linkedPlayersCarryOver
+                ? "Invited players will be added automatically. Results for game-only players won’t be added to Stats."
+                : "This starts a separate game with the same players. Invited players won’t stay connected, and results for unsaved players won’t be added to Stats.",
+              messageCase: "normal",
+              playersTitle: linkedPlayersCarryOver
+                ? "Game-only players"
+                : "Some players aren’t saved",
+              players: unsavedPlayers.map((player) => ({
+                name: player.name,
+                avatarColor: player.avatarColor,
+              })),
+              confirmText: "Play again",
+              cancelText: "Cancel",
+              layout: "feature",
+              tone: "default",
+            });
+            if (!confirmed) return;
+          }
+          triggerGameStartSplash();
+          const duplicated = await duplicateGame(gameId, profiles);
           if (duplicated) {
             setGameReturnTab(homeTab);
             setView("game");
+          } else {
+            cancelGameStartSplash();
           }
         }}
         onRename={async (gameId) => {
@@ -158,7 +200,7 @@ export function AppHomeRoute() {
             maxLength: 28,
           });
           if (nextName) {
-            renameGame(gameId, nextName);
+            await renameGame(gameId, nextName);
           }
         }}
         onEnter={(gameId) => {
@@ -176,7 +218,7 @@ export function AppHomeRoute() {
             tone: "danger",
           });
           if (!ok) return;
-          deleteGame(gameId);
+          await deleteGame(gameId);
         }}
       />
     </motion.div>
