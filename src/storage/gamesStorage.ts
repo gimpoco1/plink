@@ -132,6 +132,7 @@ export function sanitizeGames(input: unknown): Game[] {
       const startingScore = obj.startingScore;
       return {
         id: obj.id,
+        collaboratorsCanManage: obj.collaboratorsCanManage === true,
         name: obj.name,
         participantMode: obj.participantMode === "teams" ? "teams" : "players",
         scoreDirection: obj.scoreDirection,
@@ -223,6 +224,7 @@ export function migrateSingleGameToGamesIfNeeded(): {
   const gameId = uid();
   const migrated: Game = {
     id: gameId,
+    collaboratorsCanManage: false,
     name: "Game",
     participantMode: "players",
     scoreDirection: "up",

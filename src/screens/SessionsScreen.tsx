@@ -40,8 +40,11 @@ export function SessionsScreen({
   const { isLoading, isPro, maxSessions } = useEntitlementsContext();
   const [filter, setFilter] = useState<"all" | "inProgress" | "completed">("inProgress");
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
+  const ownedSessionCount = games.filter(
+    (game) => game.accessRole !== "collaborator",
+  ).length;
   const remainingSessions =
-    maxSessions === null ? null : Math.max(0, maxSessions - games.length);
+    maxSessions === null ? null : Math.max(0, maxSessions - ownedSessionCount);
   const showSessionLimitWarning =
     !isLoading &&
     !isPro &&
@@ -111,9 +114,12 @@ export function SessionsScreen({
             </div>
             <p>
               {remainingSessions === 0
-                ? `You reached the Free plan limit of ${maxSessions} sessions.`
-                : `You have ${remainingSessions} Free plan sessions left.`}{" "}
-              Upgrade to Pro for unlimited session history.
+                ? `You reached the Free plan limit of ${maxSessions} games you create.`
+                : `You can create ${remainingSessions} more Free ${
+                    remainingSessions === 1 ? "game" : "games"
+                  }.`}{" "}
+              Shared games never use this limit. Upgrade to Pro for unlimited
+              sessions of your own.
             </p>
           </div>
           <button

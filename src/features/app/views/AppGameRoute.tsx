@@ -63,6 +63,11 @@ export function AppGameRoute() {
         teamMembers={visibleTeamMembers}
         isAuthenticated={canViewSavedData}
         canUseTeams={entitlements.canUseTeams}
+        canManageGame={currentGame.accessRole !== "collaborator"}
+        canManageLifecycle={
+          currentGame.accessRole !== "collaborator" ||
+          currentGame.collaboratorsCanManage
+        }
         pulseById={pulseById}
         onTriggerPulse={triggerPulse}
         managePlayersDialogRef={managePlayersDialogRef}
@@ -150,8 +155,7 @@ export function AppGameRoute() {
             if (!confirmed) return false;
           }
 
-          updateScore(currentGame.id, playerId, delta);
-          return true;
+          return updateScore(currentGame.id, playerId, delta);
         }}
         onDeletePlayer={async (playerId) => {
           const player = currentGame.players.find(
@@ -165,7 +169,7 @@ export function AppGameRoute() {
             tone: "danger",
           });
           if (!ok) return;
-          removePlayer(currentGame.id, playerId);
+          await removePlayer(currentGame.id, playerId);
         }}
         onUpdateProfile={(profileId, updates) => {
           updateProfileEverywhere(profileId, updates);

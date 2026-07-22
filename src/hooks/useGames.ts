@@ -7,6 +7,7 @@ import type {
   Player,
   ScoreDirection,
   ToastState,
+  ToastTone,
   WinCondition,
 } from "../types";
 import { MAX_ABS_SCORE, DEFAULT_TEAM_ICON } from "../constants";
@@ -22,7 +23,30 @@ import {
   saveGuestCurrentGameId,
   saveGuestGames,
 } from "../storage/gamesStorage";
-import { loadRemoteGames, saveRemoteGames } from "../storage/remoteStorage";
+import {
+  removeGameInviteCode,
+  saveGameInviteCode,
+} from "../storage/gameInviteStorage";
+import {
+  applyRemoteSharedScoreDelta,
+  createRemoteGameInvite,
+  dismissRemoteGameJoinNotification,
+  dismissRemoteGameRemovalNotification,
+  finishRemoteSharedGame,
+  GAME_JOIN_NOTIFICATIONS_TABLE,
+  GAME_REMOVAL_NOTIFICATIONS_TABLE,
+  joinRemoteGame,
+  loadRemoteGameJoinNotifications,
+  loadRemoteGameRemovalNotifications,
+  loadRemoteGames,
+  parseRemoteGameJoinNotification,
+  parseRemoteGameRemovalNotification,
+  removeRemoteSharedGamePlayer,
+  resetRemoteSharedGame,
+  rotateRemoteGameInvite,
+  saveRemoteGames,
+  updateRemoteSharedGameSettings,
+} from "../storage/remoteStorage";
 import { computeRanks, sortPlayers } from "../utils/ranking";
 import {
   clampScoreForGame,
@@ -58,6 +82,7 @@ type CreateGameInput = {
 
 type UpdateGameSettingsInput = {
   name: string;
+  collaboratorsCanManage: boolean;
   scoreDirection: ScoreDirection;
   startingScore: number;
   targetScore: number;
@@ -87,6 +112,64 @@ function getSyncedGameIds(signature: string | null) {
   );
 }
 
+function getSyncedGameVersions(signature: string | null) {
+  const versions = new Map<string, number>();
+  if (!signature) return versions;
+  signature.split("|").forEach((entry) => {
+    const separatorIndex = entry.lastIndexOf(":");
+    if (separatorIndex <= 0) return;
+    const id = entry.slice(0, separatorIndex);
+    const updatedAt = Number(entry.slice(separatorIndex + 1));
+    if (id && Number.isFinite(updatedAt)) versions.set(id, updatedAt);
+  });
+  return versions;
+}
+
+function markGameVersionSynced(signature: string | null, game: Game) {
+  const versions = getSyncedGameVersions(signature);
+  versions.set(game.id, game.updatedAt);
+  return [...versions.entries()]
+    .map(([id, updatedAt]) => `${id}:${updatedAt}`)
+    .sort()
+    .join("|");
+}
+
+function markGameSaveSynced(
+  signature: string | null,
+  games: Game[],
+  changedGameIds: ReadonlySet<string>,
+) {
+  const versions = getSyncedGameVersions(signature);
+  const currentIds = new Set(games.map((game) => game.id));
+  [...versions.keys()].forEach((id) => {
+    if (!currentIds.has(id)) versions.delete(id);
+  });
+  games.forEach((game) => {
+    if (changedGameIds.has(game.id)) versions.set(game.id, game.updatedAt);
+  });
+  return [...versions.entries()]
+    .map(([id, updatedAt]) => `${id}:${updatedAt}`)
+    .sort()
+    .join("|");
+}
+
+function getChangedGameIds(
+  games: Game[],
+  signature: string | null,
+  userId: string,
+) {
+  const versions = getSyncedGameVersions(signature);
+  return new Set(
+    games
+      .filter(
+        (game) =>
+          (!game.ownerId || game.ownerId === userId) &&
+          versions.get(game.id) !== game.updatedAt,
+      )
+      .map((game) => game.id),
+  );
+}
+
 function getSyncErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
   if (error && typeof error === "object" && "message" in error) {
@@ -103,6 +186,18 @@ function isTransientFetchError(error: unknown) {
     message.includes("load failed") ||
     message.includes("networkerror")
   );
+}
+
+function getRemovedGamesNotice(removedGames: Game[]) {
+  if (
+    removedGames.length === 1 &&
+    removedGames[0].accessRole === "collaborator"
+  ) {
+    return `You've been removed from ${removedGames[0].name}`;
+  }
+  return removedGames.length === 1
+    ? `"${removedGames[0].name}" was removed from your account.`
+    : `${removedGames.length} games were removed from your account.`;
 }
 
 function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
@@ -129,7 +224,11 @@ function hasOwn<T extends object, K extends PropertyKey>(
   return Object.prototype.hasOwnProperty.call(value, key);
 }
 
-export function useGames(session: Session | null, authLoading = false) {
+export function useGames(
+  session: Session | null,
+  authLoading = false,
+  onToast?: (message: string, tone?: ToastTone) => void,
+) {
   const sessionUserId = session?.user.id ?? null;
   const migrated = useMemo(() => migrateSingleGameToGamesIfNeeded(), []);
   const [games, setGames] = useState<Game[]>(
@@ -146,12 +245,27 @@ export function useGames(session: Session | null, authLoading = false) {
   const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
   const [saveRetryTick, setSaveRetryTick] = useState(0);
   const remoteSignatureRef = useRef<string | null>(null);
+  const handledJoinNotificationIdsRef = useRef(new Set<string>());
+  const handledRemovalNotificationIdsRef = useRef(new Set<string>());
+  const onToastRef = useRef(onToast);
   const failedSaveNoticeSignatureRef = useRef<string | null>(null);
   const saveRetryTimeoutRef = useRef<number | null>(null);
   const saveInFlightRef = useRef(false);
   const saveInFlightUserIdRef = useRef<string | null>(null);
   const queuedSaveSignatureRef = useRef<string | null>(null);
   const latestSessionUserIdRef = useRef<string | null>(sessionUserId);
+
+  useEffect(() => {
+    onToastRef.current = onToast;
+  }, [onToast]);
+
+  function showGameToast(message: string, tone: ToastTone = "default") {
+    if (onToastRef.current) {
+      onToastRef.current(message, tone);
+      return;
+    }
+    setSyncNotice({ message, tone });
+  }
 
   useEffect(() => {
     latestSessionUserIdRef.current = sessionUserId;
@@ -182,10 +296,7 @@ export function useGames(session: Session | null, authLoading = false) {
           });
           if (removed.length > 0) {
             setSyncNotice({
-              message:
-                removed.length === 1
-                  ? `"${removed[0].name}" was removed from your account.`
-                  : `${removed.length} games were removed from your account.`,
+              message: getRemovedGamesNotice(removed),
               tone: "default",
             });
           } else if (changed.length > 0) {
@@ -269,6 +380,85 @@ export function useGames(session: Session | null, authLoading = false) {
     if (!session || remoteUserId !== session.user.id) return;
     let alive = true;
 
+    function handleRemovalNotification(
+      notification: NonNullable<
+        ReturnType<typeof parseRemoteGameRemovalNotification>
+      >,
+    ) {
+      if (
+        !alive ||
+        notification.userId !== session!.user.id ||
+        handledRemovalNotificationIdsRef.current.has(notification.id)
+      ) {
+        return;
+      }
+
+      handledRemovalNotificationIdsRef.current.add(notification.id);
+      removeGameInviteCode(notification.gameId);
+      setGames((previousGames) =>
+        previousGames.filter((game) => game.id !== notification.gameId),
+      );
+      setCurrentGameId((current) =>
+        current === notification.gameId ? null : current,
+      );
+      showGameToast(`You've been removed from ${notification.gameName}`);
+      void dismissRemoteGameRemovalNotification(
+        session!.user.id,
+        notification.id,
+      ).catch(() => {
+        handledRemovalNotificationIdsRef.current.delete(notification.id);
+      });
+    }
+
+    function handleJoinNotification(
+      notification: NonNullable<
+        ReturnType<typeof parseRemoteGameJoinNotification>
+      >,
+    ) {
+      if (
+        !alive ||
+        notification.userId !== session!.user.id ||
+        handledJoinNotificationIdsRef.current.has(notification.id)
+      ) {
+        return;
+      }
+
+      handledJoinNotificationIdsRef.current.add(notification.id);
+      showGameToast(
+        `${notification.playerName} joined ${notification.gameName}`,
+      );
+      void dismissRemoteGameJoinNotification(
+        session!.user.id,
+        notification.id,
+      ).catch(() => {
+        handledJoinNotificationIdsRef.current.delete(notification.id);
+      });
+    }
+
+    async function refreshJoinNotifications() {
+      try {
+        const notifications = await loadRemoteGameJoinNotifications(
+          session!.user.id,
+        );
+        if (!alive) return;
+        notifications.forEach(handleJoinNotification);
+      } catch {
+        // The next realtime event or background refresh will retry delivery.
+      }
+    }
+
+    async function refreshRemovalNotifications() {
+      try {
+        const notifications = await loadRemoteGameRemovalNotifications(
+          session!.user.id,
+        );
+        if (!alive) return;
+        notifications.forEach(handleRemovalNotification);
+      } catch {
+        // The game refresh remains the fallback if notifications cannot load.
+      }
+    }
+
     async function refreshRemoteGames() {
       try {
         const remoteGames = await loadRemoteGames(session!.user.id);
@@ -302,15 +492,26 @@ export function useGames(session: Session | null, authLoading = false) {
             const remote = remoteById.get(game.id);
             return remote && remote.updatedAt !== game.updatedAt;
           });
+          const includesJoinedPlayer = changed.some((game) => {
+            const remote = remoteById.get(game.id);
+            if (!remote || game.accessRole === "collaborator") return false;
+            const previousProfileIds = new Set(
+              game.players
+                .map((player) => player.profileId)
+                .filter((profileId): profileId is string => !!profileId),
+            );
+            return remote.players.some(
+              (player) =>
+                !!player.profileId &&
+                !previousProfileIds.has(player.profileId),
+            );
+          });
           if (removed.length > 0) {
             setSyncNotice({
-              message:
-                removed.length === 1
-                  ? `"${removed[0].name}" was removed from your account.`
-                  : `${removed.length} games were removed from your account.`,
+              message: getRemovedGamesNotice(removed),
               tone: "default",
             });
-          } else if (changed.length > 0) {
+          } else if (changed.length > 0 && !includesJoinedPlayer) {
             setSyncNotice({
               message: "Your games were updated.",
               tone: "default",
@@ -332,8 +533,14 @@ export function useGames(session: Session | null, authLoading = false) {
       }
     }
 
+    function refreshAll() {
+      void refreshRemoteGames();
+      void refreshJoinNotifications();
+      void refreshRemovalNotifications();
+    }
+
     function refreshWhenVisible() {
-      if (document.visibilityState === "visible") void refreshRemoteGames();
+      if (document.visibilityState === "visible") refreshAll();
     }
 
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
@@ -343,20 +550,47 @@ export function useGames(session: Session | null, authLoading = false) {
       channel.on(
         "postgres_changes",
         {
+          event: "INSERT",
+          schema: "public",
+          table: GAME_JOIN_NOTIFICATIONS_TABLE,
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          const notification = parseRemoteGameJoinNotification(payload.new);
+          if (notification) handleJoinNotification(notification);
+        },
+      );
+      channel.on(
+        "postgres_changes",
+        {
           event: "*",
           schema: "public",
           table: "games",
-          filter: `user_id=eq.${session.user.id}`,
         },
         () => {
           void refreshRemoteGames();
         },
       );
+      channel.on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: GAME_REMOVAL_NOTIFICATIONS_TABLE,
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          const notification = parseRemoteGameRemovalNotification(payload.new);
+          if (notification) handleRemovalNotification(notification);
+        },
+      );
       void channel.subscribe();
     }
 
-    const intervalId = window.setInterval(refreshRemoteGames, 5000);
-    window.addEventListener("focus", refreshRemoteGames);
+    void refreshJoinNotifications();
+    void refreshRemovalNotifications();
+    const intervalId = window.setInterval(refreshAll, 5000);
+    window.addEventListener("focus", refreshAll);
     document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
@@ -368,7 +602,7 @@ export function useGames(session: Session | null, authLoading = false) {
           supabase.removeChannel(channel);
         }
       }
-      window.removeEventListener("focus", refreshRemoteGames);
+      window.removeEventListener("focus", refreshAll);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [remoteUserId, session]);
@@ -400,10 +634,19 @@ export function useGames(session: Session | null, authLoading = false) {
     saveInFlightUserIdRef.current = sessionUserId;
     queuedSaveSignatureRef.current = null;
 
-    void saveRemoteGames(sessionUserId, games)
+    const changedGameIds = getChangedGameIds(
+      games,
+      remoteSignatureRef.current,
+      sessionUserId,
+    );
+    void saveRemoteGames(sessionUserId, games, changedGameIds)
       .then(() => {
         if (latestSessionUserIdRef.current !== sessionUserId) return;
-        remoteSignatureRef.current = nextSignature;
+        remoteSignatureRef.current = markGameSaveSynced(
+          remoteSignatureRef.current,
+          games,
+          changedGameIds,
+        );
         failedSaveNoticeSignatureRef.current = null;
       })
       .catch((error) => {
@@ -561,6 +804,10 @@ export function useGames(session: Session | null, authLoading = false) {
 
     const game: Game = {
       id: uid(),
+      ownerId: sessionUserId ?? undefined,
+      accessRole: sessionUserId ? "owner" : undefined,
+      isShared: false,
+      collaboratorsCanManage: false,
       name,
       participantMode,
       scoreDirection,
@@ -589,6 +836,7 @@ export function useGames(session: Session | null, authLoading = false) {
   }
 
   function deleteGame(gameId: string) {
+    removeGameInviteCode(gameId);
     setGames((prev) => prev.filter((g) => g.id !== gameId));
     setCurrentGameId((prev) => (prev === gameId ? null : prev));
   }
@@ -633,6 +881,10 @@ export function useGames(session: Session | null, authLoading = false) {
     const next: Game = {
       ...original,
       id: uid(),
+      ownerId: sessionUserId ?? undefined,
+      accessRole: sessionUserId ? "owner" : undefined,
+      isShared: false,
+      collaboratorsCanManage: false,
       name: nextName,
       teams: original.teams.map((team) => ({ ...team })),
       players: duplicatedPlayers,
@@ -721,7 +973,34 @@ export function useGames(session: Session | null, authLoading = false) {
     });
   }
 
-  function removePlayer(gameId: string, playerId: string) {
+  async function removePlayer(gameId: string, playerId: string) {
+    const game = games.find((item) => item.id === gameId);
+    if (game?.isShared && sessionUserId) {
+      try {
+        const updatedGame = await removeRemoteSharedGamePlayer(
+          sessionUserId,
+          gameId,
+          playerId,
+        );
+        remoteSignatureRef.current = markGameVersionSynced(
+          remoteSignatureRef.current,
+          updatedGame,
+        );
+        setGames((previousGames) =>
+          mergeGamesById(previousGames, [updatedGame]),
+        );
+        removeGameInviteCode(gameId);
+        return true;
+      } catch (error) {
+        console.error("Failed to remove the shared game player", error);
+        setSyncNotice({
+          message: `Could not remove player: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
+        return false;
+      }
+    }
+
     const now = Date.now();
     updateGame(gameId, (g) => {
       const players = g.players.filter((p) => p.id !== playerId);
@@ -730,6 +1009,7 @@ export function useGames(session: Session | null, authLoading = false) {
         ...reconcileGameCompletion(g, players, g.teams, now),
       };
     });
+    return true;
   }
 
   function updatePlayer(
@@ -862,7 +1142,29 @@ export function useGames(session: Session | null, authLoading = false) {
     });
   }
 
-  function resetScores(gameId: string) {
+  async function resetScores(gameId: string) {
+    const game = games.find((item) => item.id === gameId);
+    if (game?.isShared && sessionUserId) {
+      try {
+        const updatedGame = await resetRemoteSharedGame(sessionUserId, gameId);
+        remoteSignatureRef.current = markGameVersionSynced(
+          remoteSignatureRef.current,
+          updatedGame,
+        );
+        setGames((previousGames) =>
+          mergeGamesById(previousGames, [updatedGame]),
+        );
+        return true;
+      } catch (error) {
+        console.error("Failed to reset the shared game", error);
+        setSyncNotice({
+          message: `Could not reset game: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
+        return false;
+      }
+    }
+
     const now = Date.now();
     updateGame(gameId, (g) => ({
       ...g,
@@ -875,10 +1177,38 @@ export function useGames(session: Session | null, authLoading = false) {
         reachedAt: now,
       })),
     }));
+    return true;
   }
 
-  function updateScore(gameId: string, playerId: string, delta: number) {
-    if (!delta) return;
+  async function updateScore(gameId: string, playerId: string, delta: number) {
+    if (!delta) return false;
+    const game = games.find((item) => item.id === gameId);
+    if (game?.isShared && sessionUserId) {
+      try {
+        const updatedGame = await applyRemoteSharedScoreDelta(
+          sessionUserId,
+          gameId,
+          playerId,
+          delta,
+        );
+        remoteSignatureRef.current = markGameVersionSynced(
+          remoteSignatureRef.current,
+          updatedGame,
+        );
+        setGames((previousGames) =>
+          mergeGamesById(previousGames, [updatedGame]),
+        );
+        return true;
+      } catch (error) {
+        console.error("Failed to update the shared game score", error);
+        setSyncNotice({
+          message: `Could not update score: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
+        return false;
+      }
+    }
+
     const now = Date.now();
     updateGame(gameId, (g) => {
       let scoreHistory = g.scoreHistory ?? [];
@@ -931,9 +1261,51 @@ export function useGames(session: Session | null, authLoading = false) {
         endedAt: hasWinner ? (g.endedAt ?? now) : undefined,
       };
     });
+    return true;
   }
 
-  function updateGameSettings(gameId: string, input: UpdateGameSettingsInput) {
+  async function createGameInvite(gameId: string) {
+    if (!sessionUserId) throw new Error("Sign in to invite players.");
+    const game = games.find((item) => item.id === gameId);
+    if (!game?.isShared) {
+      await saveRemoteGames(sessionUserId, games, new Set([gameId]));
+    }
+    const code = await createRemoteGameInvite(gameId);
+    saveGameInviteCode(gameId, code);
+    setGames((currentGames) =>
+      currentGames.map((currentGame) =>
+        currentGame.id === gameId
+          ? { ...currentGame, isShared: true }
+          : currentGame,
+      ),
+    );
+    return code;
+  }
+
+  async function rotateGameInvite(gameId: string) {
+    if (!sessionUserId) throw new Error("Sign in to generate a new code.");
+    const code = await rotateRemoteGameInvite(gameId);
+    saveGameInviteCode(gameId, code);
+    return code;
+  }
+
+  async function joinGameByCode(code: string) {
+    if (!sessionUserId) throw new Error("Sign in to join a game.");
+    const gameId = await joinRemoteGame(code);
+    const remoteGames = await loadRemoteGames(sessionUserId);
+    const joinedGame = remoteGames.find((game) => game.id === gameId);
+    if (!joinedGame) throw new Error("The shared game could not be loaded.");
+    saveGameInviteCode(gameId, code);
+    remoteSignatureRef.current = getGameSyncSignature(remoteGames);
+    setGames(remoteGames);
+    setCurrentGameId(gameId);
+    return joinedGame;
+  }
+
+  async function updateGameSettings(
+    gameId: string,
+    input: UpdateGameSettingsInput,
+  ) {
     const name = clampName(input.name).toUpperCase();
     const startingScore = Number.isFinite(input.startingScore)
       ? Math.trunc(input.startingScore)
@@ -955,16 +1327,59 @@ export function useGames(session: Session | null, authLoading = false) {
       return false;
     if (input.timerEnabled && timerSeconds <= 0) return false;
 
+    const game = games.find((item) => item.id === gameId);
+    if (!game) return false;
+    const participantCount =
+      game.participantMode === "teams"
+        ? game.teams.length
+        : game.players.length;
+    if (
+      (input.winCondition === "lowest" || input.winByTwo) &&
+      participantCount < 2
+    ) {
+      return false;
+    }
+
+    if (game.accessRole === "collaborator") {
+      if (!game.isShared || !sessionUserId) return false;
+      try {
+        const updatedGame = await updateRemoteSharedGameSettings(
+          sessionUserId,
+          gameId,
+          {
+            name,
+            scoreDirection: input.scoreDirection,
+            startingScore,
+            targetScore,
+            winCondition: input.winCondition,
+            winByTwo: input.winByTwo,
+            manualEndOnly: input.manualEndOnly,
+            timerEnabled: input.timerEnabled,
+            diceEnabled: input.diceEnabled,
+            timerMode: input.timerMode,
+            timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
+          },
+        );
+        remoteSignatureRef.current = markGameVersionSynced(
+          remoteSignatureRef.current,
+          updatedGame,
+        );
+        setGames((previousGames) =>
+          mergeGamesById(previousGames, [updatedGame]),
+        );
+        return true;
+      } catch (error) {
+        console.error("Failed to update the shared game settings", error);
+        setSyncNotice({
+          message: `Could not update settings: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
+        return false;
+      }
+    }
+
     const now = Date.now();
     updateGame(gameId, (g) => {
-      const participantCount =
-        g.participantMode === "teams" ? g.teams.length : g.players.length;
-      if (
-        (input.winCondition === "lowest" || input.winByTwo) &&
-        participantCount < 2
-      ) {
-        return g;
-      }
       const nextGame = {
         ...g,
         scoreDirection: input.scoreDirection,
@@ -984,6 +1399,7 @@ export function useGames(session: Session | null, authLoading = false) {
       return {
         ...g,
         name,
+        collaboratorsCanManage: input.collaboratorsCanManage,
         scoreDirection: input.scoreDirection,
         startingScore,
         targetScore,
@@ -1001,7 +1417,48 @@ export function useGames(session: Session | null, authLoading = false) {
     return true;
   }
 
-  function finishGame(gameId: string, completionMode?: CompletionMode) {
+  function setCollaboratorsCanManage(gameId: string, enabled: boolean) {
+    updateGame(gameId, (game) => {
+      if (
+        game.accessRole === "collaborator" ||
+        game.collaboratorsCanManage === enabled
+      ) {
+        return game;
+      }
+      return { ...game, collaboratorsCanManage: enabled };
+    });
+  }
+
+  async function finishGame(
+    gameId: string,
+    completionMode: CompletionMode = "no_winner",
+  ) {
+    const game = games.find((item) => item.id === gameId);
+    if (game?.isShared && sessionUserId) {
+      try {
+        const updatedGame = await finishRemoteSharedGame(
+          sessionUserId,
+          gameId,
+          completionMode,
+        );
+        remoteSignatureRef.current = markGameVersionSynced(
+          remoteSignatureRef.current,
+          updatedGame,
+        );
+        setGames((previousGames) =>
+          mergeGamesById(previousGames, [updatedGame]),
+        );
+        return true;
+      } catch (error) {
+        console.error("Failed to end the shared game", error);
+        setSyncNotice({
+          message: `Could not end game: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
+        return false;
+      }
+    }
+
     updateGame(gameId, (g) => {
       if (!g.players.length || g.endedAt) return g;
       return {
@@ -1010,6 +1467,7 @@ export function useGames(session: Session | null, authLoading = false) {
         endedAt: Date.now(),
       };
     });
+    return true;
   }
 
   function syncProfile(
@@ -1025,16 +1483,15 @@ export function useGames(session: Session | null, authLoading = false) {
         const players = g.players.map((p) => {
           if (p.profileId === profileId) {
             const nextName =
-              updates.name !== undefined ? formatPlayerName(updates.name) : p.name;
+              updates.name !== undefined
+                ? formatPlayerName(updates.name)
+                : p.name;
             const nextAvatarColor =
               updates.avatarColor !== undefined
                 ? updates.avatarColor
                 : p.avatarColor;
 
-            if (
-              nextName === p.name &&
-              nextAvatarColor === p.avatarColor
-            ) {
+            if (nextName === p.name && nextAvatarColor === p.avatarColor) {
               return p;
             }
 
@@ -1129,7 +1586,11 @@ export function useGames(session: Session | null, authLoading = false) {
     updatePlayer,
     resetScores,
     updateScore,
+    createGameInvite,
+    rotateGameInvite,
+    joinGameByCode,
     updateGameSettings,
+    setCollaboratorsCanManage,
     finishGame,
     syncProfile,
     sortedPlayers,

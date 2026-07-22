@@ -3,6 +3,7 @@ import {
   Check,
   Copy,
   Crosshair,
+  Link,
   Pencil,
   Trash2,
   Trophy,
@@ -33,7 +34,8 @@ export function GameRowCard({
   onRename,
   onDelete,
 }: Props) {
-  const ACTION_WIDTH = 240;
+  const canManageGame = game.accessRole !== "collaborator";
+  const actionWidth = canManageGame ? 240 : 80;
 
   const winner = useMemo(() => {
     return findWinner(game.players, game);
@@ -68,22 +70,24 @@ export function GameRowCard({
 
   return (
     <SwipeableCard
-      actionWidth={ACTION_WIDTH}
+      actionWidth={actionWidth}
       cardClassName={`gameRowCard${isTeamsGame ? " gameRowCard--teams" : ""}`}
       renderActions={({ closeSwipe }) => (
         <>
-          <button
-            className="swipeRename"
-            type="button"
-            onClick={() => {
-              closeSwipe();
-              onRename();
-            }}
-            aria-label={`Rename game ${game.name}`}
-          >
-            <Pencil size={18} strokeWidth={2} aria-hidden="true" />
-            Rename
-          </button>
+          {canManageGame ? (
+            <button
+              className="swipeRename"
+              type="button"
+              onClick={() => {
+                closeSwipe();
+                onRename();
+              }}
+              aria-label={`Rename game ${game.name}`}
+            >
+              <Pencil size={18} strokeWidth={2} aria-hidden="true" />
+              Rename
+            </button>
+          ) : null}
           <button
             className="swipeDuplicate"
             type="button"
@@ -96,18 +100,20 @@ export function GameRowCard({
             <Copy size={18} strokeWidth={2} aria-hidden="true" />
             Re-play
           </button>
-          <button
-            className="swipeDelete"
-            type="button"
-            onClick={() => {
-              closeSwipe();
-              onDelete();
-            }}
-            aria-label={`Delete game ${game.name}`}
-          >
-            <Trash2 size={18} strokeWidth={2} aria-hidden="true" />
-            Delete
-          </button>
+          {canManageGame ? (
+            <button
+              className="swipeDelete"
+              type="button"
+              onClick={() => {
+                closeSwipe();
+                onDelete();
+              }}
+              aria-label={`Delete game ${game.name}`}
+            >
+              <Trash2 size={18} strokeWidth={2} aria-hidden="true" />
+              Delete
+            </button>
+          ) : null}
         </>
       )}
     >
@@ -136,6 +142,15 @@ export function GameRowCard({
               ) : null}
             </div>
             <div className="gameRow__headMeta">
+              {game.isShared ? (
+                <span
+                  className="gameRow__modeBadge gameRow__modeBadge--shared"
+                  aria-label="Shared game"
+                >
+                  <Link size={14} strokeWidth={2.3} aria-hidden="true" />
+                  <span>Shared</span>
+                </span>
+              ) : null}
               {isTeamsGame ? (
                 <span
                   className="gameRow__modeBadge gameRow__modeBadge--teams"

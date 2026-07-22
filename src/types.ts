@@ -50,6 +50,10 @@ export type CompletionMode = "winner" | "no_winner" | "draw";
 
 export type Game = {
   id: string;
+  ownerId?: string;
+  accessRole?: "owner" | "collaborator";
+  isShared?: boolean;
+  collaboratorsCanManage: boolean;
   name: string;
   participantMode?: "players" | "teams";
   scoreDirection: ScoreDirection;

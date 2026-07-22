@@ -257,6 +257,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onCreate={props.onCreate}
             onStartQuickSetup={props.onStartQuickSetup}
             onUpsertProfile={props.onUpsertProfile}
+            onJoinGame={props.onJoinGame}
             onEnter={props.onEnter}
           />
         );

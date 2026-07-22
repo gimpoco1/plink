@@ -16,6 +16,8 @@ export type GameScreenProps = {
   teamMembers: TeamMember[];
   isAuthenticated: boolean;
   canUseTeams: boolean;
+  canManageGame: boolean;
+  canManageLifecycle: boolean;
   managePlayersDialogRef: RefObject<ManagePlayersDialogHandle>;
   pulseById: Record<string, "pos" | "neg" | undefined>;
   onTriggerPulse: (playerId: string, delta: number) => void;

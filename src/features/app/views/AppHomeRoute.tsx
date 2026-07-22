@@ -30,6 +30,7 @@ export function AppHomeRoute() {
     presetDraftIntent,
     presetDraftToken,
     profiles,
+    joinGameByCode,
     reduceMotion,
     removeProfileMemberships,
     renameGame,
@@ -101,6 +102,12 @@ export function AppHomeRoute() {
         onCreate={handleCreateGame}
         onStartQuickSetup={handleStartQuickSetup}
         onUpsertProfile={upsertProfile}
+        onJoinGame={async (code) => {
+          const joinedGame = await joinGameByCode(code);
+          selectGame(joinedGame.id);
+          setGameReturnTab(homeTab);
+          setView("game");
+        }}
         onUpdateProfile={(id, updates) => {
           updateProfileEverywhere(id, updates);
         }}

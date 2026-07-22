@@ -20,14 +20,13 @@ import { useScorePulse } from "../../../hooks/useScorePulse";
 import { useAuthSession } from "../../../hooks/useAuthSession";
 import { useEntitlements } from "../../../hooks/useEntitlements";
 import { useGameStartSplash } from "./useGameStartSplash";
+import { useToastStack } from "./useToastStack";
 import { supabase } from "../../../lib/supabase";
 import type {
   Game,
   GameTeam,
   HomeTab,
   PlayerProfile,
-  ToastState,
-  ToastTone,
 } from "../../../types";
 import { uid } from "../../../utils/id";
 import {
@@ -94,6 +93,7 @@ function getGamesThroughSession(games: Game[], currentGame: Game) {
 
 export function useAppModel() {
   const reduceMotion = useReducedMotion();
+  const { visibleToasts, showToast } = useToastStack();
   const {
     session,
     loading: authLoading,
@@ -139,13 +139,17 @@ export function useAppModel() {
     updatePlayer,
     resetScores,
     updateScore,
+    createGameInvite,
+    rotateGameInvite,
+    joinGameByCode,
     updateGameSettings,
+    setCollaboratorsCanManage,
     finishGame,
     syncProfile,
     importGames,
     remoteReady: gamesReady,
     syncNotice: gameSyncNotice,
-  } = useGames(session, authLoading);
+  } = useGames(session, authLoading, showToast);
   const { pulseById, triggerPulse } = useScorePulse();
   const {
     cancelGameStartSplash,
@@ -188,7 +192,6 @@ export function useAppModel() {
   });
   const [gameReturnTab, setGameReturnTab] = useState<HomeTab>(homeTab);
   const appTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const [visibleToast, setVisibleToast] = useState<ToastState | null>(null);
   const [localDataVersion, setLocalDataVersion] = useState(0);
   const [localStoredPlayers, setLocalStoredPlayers] = useState<LocalPlayer[]>(
     () => loadLocalPlayers(),
@@ -314,7 +317,7 @@ export function useAppModel() {
     : combinedGuestAndLocalProfiles;
   const isSessionCountPending = canViewSavedData && !gamesReady;
   const currentSessionCount = canViewSavedData
-    ? games.length
+    ? games.filter((game) => game.accessRole !== "collaborator").length
     : localGuestGames.length;
 
   useEffect(() => {
@@ -326,10 +329,6 @@ export function useAppModel() {
   function randomAvatarColor() {
     const index = Math.floor(Math.random() * AVATAR_COLORS.length);
     return AVATAR_COLORS[index]?.value ?? "#64748b";
-  }
-
-  function showToast(message: string, tone: ToastTone = "default") {
-    setVisibleToast({ message, tone });
   }
 
   function upsertLocalStoredPlayer(
@@ -641,27 +640,24 @@ export function useAppModel() {
     });
     if (!result || result === "cancel") return;
     if (result === "extra") {
-      finishGame(currentGame.id, "no_winner");
+      await finishGame(currentGame.id, "no_winner");
       return;
     }
     if (isDraw) {
-      finishGame(currentGame.id, "draw");
+      await finishGame(currentGame.id, "draw");
       return;
     }
-    finishGame(currentGame.id, canDeclareWinner ? "winner" : "no_winner");
+    await finishGame(
+      currentGame.id,
+      canDeclareWinner ? "winner" : "no_winner",
+    );
   }
 
   useEffect(() => {
     const nextToast = gameSyncNotice ?? profileSyncNotice ?? teamSyncNotice;
     if (!nextToast) return;
-    setVisibleToast(nextToast);
-  }, [gameSyncNotice, profileSyncNotice, teamSyncNotice]);
-
-  useEffect(() => {
-    if (!visibleToast) return;
-    const timeout = window.setTimeout(() => setVisibleToast(null), 5200);
-    return () => window.clearTimeout(timeout);
-  }, [visibleToast]);
+    showToast(nextToast.message, nextToast.tone);
+  }, [gameSyncNotice, profileSyncNotice, showToast, teamSyncNotice]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -1436,10 +1432,14 @@ export function useAppModel() {
     toggleTeamMember,
     triggerPulse,
     updateGameSettings,
+    setCollaboratorsCanManage,
     updatePlayer,
     updateProfile,
     updateProfileEverywhere,
     updateScore,
+    createGameInvite,
+    rotateGameInvite,
+    joinGameByCode,
     updateTeam,
     upsertLocalStoredPlayer,
     upsertProfile,
@@ -1448,6 +1448,6 @@ export function useAppModel() {
     visibleProfiles,
     visibleTeamMembers,
     visibleTeams,
-    visibleToast,
+    visibleToasts,
   };
 }

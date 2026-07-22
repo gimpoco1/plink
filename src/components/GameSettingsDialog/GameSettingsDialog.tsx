@@ -1,6 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { ScoreDirection, WinCondition } from "../../types";
 import { ArrowDownUp, Dices, Flag, Timer, Trophy } from "lucide-react";
+import { CollaboratorManagementControl } from "../CollaboratorManagementControl/CollaboratorManagementControl";
 import {
   SettingsAuthCard,
   SettingsModeButton,
@@ -39,6 +40,9 @@ export const GameSettingsDialog = forwardRef<
   );
   const [winByTwo, setWinByTwo] = useState(game.winByTwo);
   const [manualEndOnly, setManualEndOnly] = useState(game.manualEndOnly);
+  const [collaboratorsCanManage, setCollaboratorsCanManage] = useState(
+    game.collaboratorsCanManage,
+  );
   const [timerEnabled, setTimerEnabled] = useState(game.timerEnabled);
   const [diceEnabled, setDiceEnabled] = useState(game.diceEnabled);
   const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
@@ -64,6 +68,7 @@ export const GameSettingsDialog = forwardRef<
     setWinCondition(game.winCondition);
     setWinByTwo(game.winByTwo);
     setManualEndOnly(game.manualEndOnly);
+    setCollaboratorsCanManage(game.collaboratorsCanManage);
     setTimerEnabled(game.timerEnabled);
     setDiceEnabled(game.diceEnabled);
     setTimerMode(game.timerMode);
@@ -111,6 +116,7 @@ export const GameSettingsDialog = forwardRef<
           if (!canSave) return;
           onSave({
             name,
+            collaboratorsCanManage,
             scoreDirection,
             startingScore: scoreDirection === "down" ? parsedScore : 0,
             targetScore: winCondition === "reach_zero" ? 0 : parsedScore,
@@ -237,6 +243,13 @@ export const GameSettingsDialog = forwardRef<
               onClick={() => setDiceEnabled((value) => !value)}
             />
           </div>
+
+          {game.isShared && game.accessRole !== "collaborator" ? (
+            <CollaboratorManagementControl
+              enabled={collaboratorsCanManage}
+              onChange={setCollaboratorsCanManage}
+            />
+          ) : null}
 
           {ruleNeedsMorePlayers ? (
             <SettingsRequirement

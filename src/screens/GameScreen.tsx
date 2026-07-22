@@ -48,6 +48,8 @@ export function GameScreen(props: GameScreenProps) {
   } = model;
   const {
     game,
+    canManageGame,
+    canManageLifecycle,
     managePlayersDialogRef,
     pulseById,
     onTriggerPulse,
@@ -109,17 +111,21 @@ export function GameScreen(props: GameScreenProps) {
         {!hasPlayers ? (
           <section className="empty">
             <h1 className="empty__title">
-              {isTeamsMode
-                ? "Manage teams to start."
-                : "Manage players to start."}
+              {!canManageGame
+                ? "Waiting for the game owner."
+                : isTeamsMode
+                  ? "Manage teams to start."
+                  : "Manage players to start."}
             </h1>
-            <button
-              className="btn btn--primary btn--xl gameScreen__emptyCta"
-              type="button"
-              onClick={() => managePlayersDialogRef.current?.open()}
-            >
-              {isTeamsMode ? "Manage teams" : "Manage players"}
-            </button>
+            {canManageGame ? (
+              <button
+                className="btn btn--primary btn--xl gameScreen__emptyCta"
+                type="button"
+                onClick={() => managePlayersDialogRef.current?.open()}
+              >
+                {isTeamsMode ? "Manage teams" : "Manage players"}
+              </button>
+            ) : null}
           </section>
         ) : isTeamGame ? (
           <section className="teamBoard" aria-label="Teams">
@@ -201,8 +207,12 @@ export function GameScreen(props: GameScreenProps) {
                           targetScore={game.targetScore}
                           startingScore={game.startingScore}
                           winCondition={game.winCondition}
+                          canDelete={canManageGame}
                           onDelta={async (playerId, delta) => {
-                            const updated = await onUpdateScore(playerId, delta);
+                            const updated = await onUpdateScore(
+                              playerId,
+                              delta,
+                            );
                             if (!updated) return;
                             onTriggerPulse(playerId, delta);
                             scheduleResort();
@@ -261,7 +271,7 @@ export function GameScreen(props: GameScreenProps) {
         </div>
       ) : null}
 
-      {referenceReached ? (
+      {referenceReached && canManageLifecycle ? (
         <div
           className={`manualEndPrompt${game.timerEnabled ? " manualEndPrompt--withTimer" : ""}`}
           role="status"
@@ -287,7 +297,7 @@ export function GameScreen(props: GameScreenProps) {
         <GameDiceTray accentTone={isTeamGame ? "team" : "default"} />
       ) : null}
 
-      <GameManagePlayersDialog model={model} />
+      {canManageGame ? <GameManagePlayersDialog model={model} /> : null}
     </div>
   );
 }

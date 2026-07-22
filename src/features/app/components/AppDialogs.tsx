@@ -38,9 +38,13 @@ export function AppDialogs() {
             setShouldSaveGamePlayersOnSignIn(true);
             authDialogRef.current?.open();
           }}
-          onAddPlayer={() => managePlayersDialogRef.current?.openWithCreate()}
+          onAddPlayer={
+            currentGame.accessRole !== "collaborator"
+              ? () => managePlayersDialogRef.current?.openWithCreate()
+              : undefined
+          }
           onSave={(input) => {
-            updateGameSettings(currentGame.id, input);
+            void updateGameSettings(currentGame.id, input);
           }}
         />
       ) : null}
