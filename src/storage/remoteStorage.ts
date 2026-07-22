@@ -1064,11 +1064,19 @@ export async function saveRemoteGames(
     }
   }
 
-  const { data, error: loadError } = await supabase
+  let { data, error: loadError } = await supabase
     .from(GAMES_TABLE)
     .select("id")
     .eq("user_id", userId)
     .eq("is_shared", false);
+  if (loadError && isMissingSharedGameColumn(loadError)) {
+    const legacyResult = await supabase
+      .from(GAMES_TABLE)
+      .select("id")
+      .eq("user_id", userId);
+    data = legacyResult.data;
+    loadError = legacyResult.error;
+  }
   if (loadError) throw loadError;
 
   const nextIds = new Set(ownedGames.map((game) => game.id));

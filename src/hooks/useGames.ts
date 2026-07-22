@@ -1680,8 +1680,13 @@ export function useGames(
     const joinedGame = remoteGames.find((game) => game.id === gameId);
     if (!joinedGame) throw new Error("The shared game could not be loaded.");
     saveGameInviteCode(gameId, code);
-    remoteSignatureRef.current = getGameSyncSignature(remoteGames);
-    setGames(remoteGames);
+    remoteSignatureRef.current = markGameVersionSynced(
+      remoteSignatureRef.current,
+      joinedGame,
+    );
+    setGames((currentGames) =>
+      mergeGamesById(currentGames, [joinedGame]),
+    );
     setCurrentGameId(gameId);
     return joinedGame;
   }
