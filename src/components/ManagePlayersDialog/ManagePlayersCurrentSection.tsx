@@ -34,10 +34,17 @@ export function ManagePlayersCurrentSection() {
           const isLinkedAccountPlayer = linkedPlayerIds.has(player.id);
           const mergeCandidate = isLinkedAccountPlayer
             ? currentGamePlayers.find(
-                (candidate) =>
-                  candidate.id !== player.id &&
-                  !linkedPlayerIds.has(candidate.id) &&
-                  getMergeName(candidate.name) === getMergeName(player.name),
+                (candidate) => {
+                  const candidateProfile = profiles.find(
+                    (profile) => profile.id === candidate.profileId,
+                  );
+                  return (
+                    candidate.id !== player.id &&
+                    !linkedPlayerIds.has(candidate.id) &&
+                    candidateProfile !== undefined &&
+                    getMergeName(candidate.name) === getMergeName(player.name)
+                  );
+                },
               )
             : undefined;
           return (

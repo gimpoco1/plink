@@ -136,6 +136,7 @@ export function useAppModel() {
     addTeam,
     removePlayer,
     mergePlayers,
+    addPastLinkedPlayer,
     removeTeam,
     updatePlayer,
     resetScores,
@@ -150,6 +151,7 @@ export function useAppModel() {
     importGames,
     remoteReady: gamesReady,
     syncNotice: gameSyncNotice,
+    pastLinkedPlayers,
   } = useGames(session, authLoading, showToast);
   const { pulseById, triggerPulse } = useScorePulse();
   const {
@@ -1358,6 +1360,7 @@ export function useAppModel() {
 
   return {
     addPlayer,
+    addPastLinkedPlayer,
     addTeam,
     authDialogLocalGames,
     authDialogLocalProfiles,
@@ -1406,6 +1409,7 @@ export function useAppModel() {
     openTeamsTabFromGame,
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
+    pastLinkedPlayers,
     presetDraft,
     presetDraftIntent,
     presetDraftToken,

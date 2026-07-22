@@ -4,6 +4,7 @@ import type {
   CompletionMode,
   Game,
   GameTeam,
+  PastLinkedPlayer,
   Player,
   PlayerProfile,
   ScoreDirection,
@@ -31,6 +32,7 @@ import {
 } from "../storage/gameInviteStorage";
 import {
   addRemoteSharedGamePlayer,
+  addRemotePastLinkedPlayerToGame,
   applyRemoteSharedScoreDelta,
   createRemoteGameInvite,
   deleteRemoteSharedGame,
@@ -43,10 +45,12 @@ import {
   loadRemoteGameJoinNotifications,
   loadRemoteGameRemovalNotifications,
   loadRemoteGames,
+  loadRemotePastLinkedPlayers,
   mergeRemoteSharedGamePlayers,
   parseRemoteGameJoinNotification,
   parseRemoteGameChange,
   parseRemoteGameRemovalNotification,
+  replayRemoteSharedGame,
   renameRemoteSharedGame,
   removeRemoteSharedGamePlayer,
   resetRemoteSharedGame,
@@ -190,12 +194,17 @@ function getChangedGameIds(
 }
 
 function getSyncErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message;
+  let message = "";
+  if (error instanceof Error && error.message) message = error.message;
   if (error && typeof error === "object" && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message) return message;
+    const value = (error as { message?: unknown }).message;
+    if (typeof value === "string" && value) message = value;
   }
-  return "Unknown sync error";
+  if (!message) return "Unknown sync error";
+  return message
+    .replace(/collaborators/gi, "invited players")
+    .replace(/collaborator/gi, "invited player")
+    .replace(/collaboration settings/gi, "invited-player settings");
 }
 
 function isTransientFetchError(error: unknown) {
@@ -269,6 +278,9 @@ export function useGames(
   const [remoteReady, setRemoteReady] = useState(!session && !authLoading);
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
+  const [pastLinkedPlayers, setPastLinkedPlayers] = useState<
+    PastLinkedPlayer[]
+  >([]);
   const [saveRetryTick, setSaveRetryTick] = useState(0);
   const remoteSignatureRef = useRef<string | null>(null);
   const handledJoinNotificationIdsRef = useRef(new Set<string>());
@@ -777,6 +789,42 @@ export function useGames(
     [games, currentGameId],
   );
 
+  useEffect(() => {
+    let alive = true;
+    if (
+      !sessionUserId ||
+      !remoteReady ||
+      !currentGame ||
+      currentGame.accessRole === "collaborator" ||
+      currentGame.participantMode === "teams"
+    ) {
+      setPastLinkedPlayers([]);
+      return () => {
+        alive = false;
+      };
+    }
+
+    setPastLinkedPlayers([]);
+    loadRemotePastLinkedPlayers(currentGame.id)
+      .then((players) => {
+        if (alive) setPastLinkedPlayers(players);
+      })
+      .catch(() => {
+        if (alive) setPastLinkedPlayers([]);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [
+    currentGame?.accessRole,
+    currentGame?.id,
+    currentGame?.participantMode,
+    currentGame?.players.length,
+    remoteReady,
+    sessionUserId,
+  ]);
+
   const gamesByUpdated = useMemo(() => {
     return [...games].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [games]);
@@ -925,10 +973,10 @@ export function useGames(
     return true;
   }
 
-  function duplicateGame(
+  async function duplicateGame(
     gameId: string,
     savedProfiles: PlayerProfile[],
-  ): Game | null {
+  ): Promise<Game | null> {
     const original = games.find((g) => g.id === gameId);
     if (!original) return null;
     const participantCount =
@@ -942,6 +990,51 @@ export function useGames(
       return null;
 
     const now = Date.now();
+
+    // Treat the unnumbered original as game #1, then find the highest
+    // existing duplicate number so the first duplicate starts at #2.
+    const baseName = original.name.replace(/\s\(\d+\)$/, "");
+    const siblings = games.filter((g) => g.name.startsWith(baseName));
+    let maxNum = 1;
+    for (const s of siblings) {
+      const match = s.name.match(/\((\d+)\)$/);
+      if (match) {
+        maxNum = Math.max(maxNum, parseInt(match[1], 10));
+      }
+    }
+
+    const nextName = `${baseName} (${maxNum + 1})`.toUpperCase();
+
+    if (
+      original.isShared &&
+      original.accessRole !== "collaborator" &&
+      sessionUserId
+    ) {
+      try {
+        const replayedGame = await replayRemoteSharedGame(
+          sessionUserId,
+          original.id,
+          uid(),
+          nextName,
+        );
+        remoteSignatureRef.current = markGameVersionSynced(
+          remoteSignatureRef.current,
+          replayedGame,
+        );
+        setGames((previousGames) =>
+          mergeGamesById(previousGames, [replayedGame]),
+        );
+        setCurrentGameId(replayedGame.id);
+        return replayedGame;
+      } catch (error) {
+        console.error("Failed to replay the shared game", error);
+        setSyncNotice({
+          message: `Could not start game: ${getSyncErrorMessage(error)}`,
+          tone: "error",
+        });
+        return null;
+      }
+    }
 
     const duplicatedPlayers: Player[] = original.players.map((p) => {
       const savedProfile = getSavedReplayProfile(p, savedProfiles);
@@ -958,20 +1051,6 @@ export function useGames(
         reachedAt: now,
       };
     });
-
-    // Treat the unnumbered original as game #1, then find the highest
-    // existing duplicate number so the first duplicate starts at #2.
-    const baseName = original.name.replace(/\s\(\d+\)$/, "");
-    const siblings = games.filter((g) => g.name.startsWith(baseName));
-    let maxNum = 1;
-    for (const s of siblings) {
-      const match = s.name.match(/\((\d+)\)$/);
-      if (match) {
-        maxNum = Math.max(maxNum, parseInt(match[1], 10));
-      }
-    }
-
-    const nextName = `${baseName} (${maxNum + 1})`.toUpperCase();
 
     const next: Game = {
       ...original,
@@ -1185,6 +1264,7 @@ export function useGames(
     gameId: string,
     linkedPlayerId: string,
     rosterPlayerId: string,
+    keepPlayer: "linked" | "local",
   ) {
     if (!sessionUserId) return false;
     try {
@@ -1193,6 +1273,7 @@ export function useGames(
         gameId,
         linkedPlayerId,
         rosterPlayerId,
+        keepPlayer,
       );
       remoteSignatureRef.current = markGameVersionSynced(
         remoteSignatureRef.current,
@@ -1206,6 +1287,38 @@ export function useGames(
       console.error("Failed to merge the shared game players", error);
       setSyncNotice({
         message: `Could not merge players: ${getSyncErrorMessage(error)}`,
+        tone: "error",
+      });
+      return false;
+    }
+  }
+
+  async function addPastLinkedPlayer(
+    gameId: string,
+    collaboratorUserId: string,
+  ) {
+    if (!sessionUserId) return false;
+    try {
+      const updatedGame = await addRemotePastLinkedPlayerToGame(
+        sessionUserId,
+        gameId,
+        collaboratorUserId,
+      );
+      remoteSignatureRef.current = markGameVersionSynced(
+        remoteSignatureRef.current,
+        updatedGame,
+      );
+      setGames((previousGames) =>
+        mergeGamesById(previousGames, [updatedGame]),
+      );
+      setPastLinkedPlayers((players) =>
+        players.filter((player) => player.userId !== collaboratorUserId),
+      );
+      return true;
+    } catch (error) {
+      console.error("Failed to add the past linked player", error);
+      setSyncNotice({
+        message: `Could not add invited player: ${getSyncErrorMessage(error)}`,
         tone: "error",
       });
       return false;
@@ -1888,6 +2001,7 @@ export function useGames(
     addTeam,
     removePlayer,
     mergePlayers,
+    addPastLinkedPlayer,
     removeTeam,
     updatePlayer,
     resetScores,
@@ -1903,6 +2017,7 @@ export function useGames(
     ranks,
     allZero,
     remoteReady,
+    pastLinkedPlayers,
     syncNotice,
     updateGame,
     importGames,

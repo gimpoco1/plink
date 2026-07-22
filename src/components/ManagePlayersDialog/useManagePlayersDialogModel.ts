@@ -6,7 +6,13 @@ import {
   type ForwardedRef,
 } from "react";
 import { AVATAR_COLORS } from "../../constants";
-import type { GameTeam, Player, PlayerProfile, TeamMember } from "../../types";
+import type {
+  GameTeam,
+  PastLinkedPlayer,
+  Player,
+  PlayerProfile,
+  TeamMember,
+} from "../../types";
 import { clampName } from "../../utils/text";
 
 export type ManagePlayersDialogHandle = {
@@ -28,12 +34,16 @@ export type ManagePlayersDialogProps = {
   savedTeamMembers: TeamMember[];
   currentPlayers: Player[];
   linkedPlayerIds: Set<string>;
+  pastLinkedPlayers: PastLinkedPlayer[];
   currentTeams: GameTeam[];
   canUseTeams: boolean;
   takenProfileIds: Set<string>;
   isAuthenticated: boolean;
   onDeleteProfile: (profileId: string) => void;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
+  onAddPastLinkedPlayer?: (
+    collaboratorUserId: string,
+  ) => Promise<boolean> | boolean;
   onMergePlayers?: (
     linkedPlayerId: string,
     rosterPlayerId: string,
@@ -76,12 +86,14 @@ export function useManagePlayersDialogModel(
     savedTeamMembers,
     currentPlayers,
     linkedPlayerIds,
+    pastLinkedPlayers,
     currentTeams,
     canUseTeams,
     takenProfileIds,
     isAuthenticated,
     onDeleteProfile,
     onDeletePlayer,
+    onAddPastLinkedPlayer,
     onMergePlayers,
     onUpsertProfile,
     onUpsertLocalPlayer,
@@ -113,6 +125,9 @@ export function useManagePlayersDialogModel(
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [addingPastLinkedUserId, setAddingPastLinkedUserId] = useState<
+    string | null
+  >(null);
   const [editingColor, setEditingColor] = useState<
     (typeof AVATAR_COLORS)[number]["value"]
   >(AVATAR_COLORS[0]?.value ?? "#64748b");
@@ -382,8 +397,20 @@ export function useManagePlayersDialogModel(
     setIsCreating(false);
   }
 
+  async function addPastLinkedPlayer(collaboratorUserId: string) {
+    if (!onAddPastLinkedPlayer || addingPastLinkedUserId) return;
+    setAddingPastLinkedUserId(collaboratorUserId);
+    try {
+      await onAddPastLinkedPlayer(collaboratorUserId);
+    } finally {
+      setAddingPastLinkedUserId(null);
+    }
+  }
+
   return {
     availableSavedTeams,
+    addingPastLinkedUserId,
+    addPastLinkedPlayer,
     canUseTeams,
     close,
     currentGamePlayers,
@@ -412,6 +439,7 @@ export function useManagePlayersDialogModel(
     onUpdatePlayer,
     onUpdateProfile,
     pendingName,
+    pastLinkedPlayers,
     profiles,
     resetState,
     saveForLater,

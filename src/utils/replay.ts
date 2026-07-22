@@ -25,7 +25,14 @@ export function getUnsavedReplayPlayers(
   profiles: PlayerProfile[],
 ): Player[] {
   if (!game.isShared) return [];
+  const linkedPlayersCarryOver = game.accessRole !== "collaborator";
   return game.players.filter(
-    (player) => !getSavedReplayProfile(player, profiles),
+    (player) =>
+      !(linkedPlayersCarryOver && player.joinedViaInvite === true) &&
+      !getSavedReplayProfile(player, profiles),
   );
+}
+
+export function linkedPlayersCarryIntoReplay(game: Game) {
+  return game.isShared === true && game.accessRole !== "collaborator";
 }

@@ -35,6 +35,14 @@ export type PlayerProfile = {
   updatedAt: number;
 };
 
+export type PastLinkedPlayer = {
+  userId: string;
+  profileId: string;
+  name: string;
+  avatarColor: string;
+  lastLinkedAt: number;
+};
+
 export type ScoreHistoryEntry = {
   id: string;
   playerId: string;

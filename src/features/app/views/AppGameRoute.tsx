@@ -1,18 +1,17 @@
 import { motion } from "framer-motion";
-import {
-  ChartNoAxesColumnIncreasing,
-  Link,
-  UserMinus,
-} from "lucide-react";
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
-import { getUnsavedReplayPlayers } from "../../../utils/replay";
+import {
+  getUnsavedReplayPlayers,
+  linkedPlayersCarryIntoReplay,
+} from "../../../utils/replay";
 import { useAppContext } from "../context/AppContext";
 
 export function AppGameRoute() {
   const {
     addPlayer,
+    addPastLinkedPlayer,
     addTeam,
     canViewSavedData,
     cancelGameStartSplash,
@@ -31,6 +30,7 @@ export function AppGameRoute() {
     managePlayersDialogRef,
     openTeamsTabFromGame,
     profiles,
+    pastLinkedPlayers,
     pulseById,
     reduceMotion,
     removePlayer,
@@ -179,6 +179,23 @@ export function AppGameRoute() {
           if (!ok) return;
           await removePlayer(currentGame.id, playerId);
         }}
+        pastLinkedPlayers={pastLinkedPlayers}
+        onAddPastLinkedPlayer={async (collaboratorUserId) => {
+          const linkedPlayer = pastLinkedPlayers.find(
+            (player) => player.userId === collaboratorUserId,
+          );
+          if (!linkedPlayer) return false;
+          const confirmed = await confirmRef.current?.confirm({
+            eyebrow: "Invited player",
+            title: `Add ${capitalizeFirst(linkedPlayer.name)}?`,
+            message:
+              "This game will appear in their account and they’ll be able to update it. Their results will count toward their Stats.",
+            confirmText: "Add player",
+            cancelText: "Cancel",
+          });
+          if (!confirmed) return false;
+          return addPastLinkedPlayer(currentGame.id, collaboratorUserId);
+        }}
         onMergePlayers={async (linkedPlayerId, rosterPlayerId) => {
           const linkedPlayer = currentGame.players.find(
             (player) => player.id === linkedPlayerId,
@@ -186,49 +203,47 @@ export function AppGameRoute() {
           const rosterPlayer = currentGame.players.find(
             (player) => player.id === rosterPlayerId,
           );
-          if (!linkedPlayer || !rosterPlayer) return;
-          const confirmed = await confirmRef.current?.confirm({
-            eyebrow: "Linked player",
-            title: "Merge players?",
-            bodyTitle: "Scores & history move",
-            message: "The saved player stays in your roster for future games.",
+          const rosterProfile = profiles.find(
+            (profile) => profile.id === rosterPlayer?.profileId,
+          );
+          if (!linkedPlayer || !rosterPlayer || !rosterProfile) return;
+          const keepPlayer = await confirmRef.current?.selectPlayer({
+            eyebrow: "Merge duplicate",
+            title: "Which player should stay?",
+            message:
+              "Scores will be combined. Stats count for the player you keep.",
+            messageCase: "normal",
             layout: "feature",
-            detailFlow: true,
-            details: [
+            players: [
               {
-                label: "Saved player",
-                value: capitalizeFirst(rosterPlayer.name),
-                icon: <UserMinus size={20} strokeWidth={2.4} />,
+                id: "local",
+                name: rosterProfile.isAccountPlayer
+                  ? `${capitalizeFirst(rosterPlayer.name)} (You)`
+                  : capitalizeFirst(rosterPlayer.name),
+                avatarColor: rosterPlayer.avatarColor,
+                label: rosterProfile.isAccountPlayer
+                  ? "Account player"
+                  : "Saved player",
+                description: "Invited player will be removed",
               },
               {
-                label: "Linked player",
-                value: capitalizeFirst(linkedPlayer.name),
-                icon: <Link size={20} strokeWidth={2.4} />,
-              },
-            ],
-            settingChips: [
-              {
-                label: "Game stats → Linked player",
-                description: "Only this game is counted for the linked player.",
-                icon: (
-                  <ChartNoAxesColumnIncreasing
-                    size={17}
-                    strokeWidth={2.4}
-                  />
-                ),
-                tone: "accent",
-                size: "wide",
+                id: "linked",
+                name: capitalizeFirst(linkedPlayer.name),
+                avatarColor: linkedPlayer.avatarColor,
+                label: "Invited player",
+                description: "Stays connected to their account",
               },
             ],
-            confirmText: "Merge players",
-            cancelText: "Keep separate",
+            confirmText: "Merge",
+            cancelText: "Cancel",
             tone: "default",
           });
-          if (!confirmed) return;
+          if (keepPlayer !== "local" && keepPlayer !== "linked") return;
           await mergePlayers(
             currentGame.id,
             linkedPlayerId,
             rosterPlayerId,
+            keepPlayer,
           );
         }}
         onUpdateProfile={(profileId, updates) => {
@@ -308,13 +323,19 @@ export function AppGameRoute() {
             profiles,
           );
           if (unsavedPlayers.length > 0) {
+            const linkedPlayersCarryOver = linkedPlayersCarryIntoReplay(
+              currentGame,
+            );
             const confirmed = await confirmRef.current?.confirm({
               eyebrow: "New game",
               title: "Play again",
-              message:
-                "This starts a separate game with the same players. Linked players won’t stay connected, and results for unsaved players won’t be added to Stats.",
+              message: linkedPlayersCarryOver
+                ? "Invited players will be added automatically. Results for game-only players won’t be added to Stats."
+                : "This starts a separate game with the same players. Invited players won’t stay connected, and results for unsaved players won’t be added to Stats.",
               messageCase: "normal",
-              playersTitle: "Some players aren’t saved",
+              playersTitle: linkedPlayersCarryOver
+                ? "Game-only players"
+                : "Some players aren’t saved",
               players: unsavedPlayers.map((player) => ({
                 name: player.name,
                 avatarColor: player.avatarColor,
@@ -327,7 +348,7 @@ export function AppGameRoute() {
             if (!confirmed) return;
           }
           triggerGameStartSplash();
-          const duplicated = duplicateGame(currentGame.id, profiles);
+          const duplicated = await duplicateGame(currentGame.id, profiles);
           if (duplicated) {
             setView("game");
           } else {

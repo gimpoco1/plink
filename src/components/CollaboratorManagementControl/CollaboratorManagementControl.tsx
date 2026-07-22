@@ -17,7 +17,7 @@ export function CollaboratorManagementControl({
         onChange={(event) => onChange(event.target.checked)}
       />
       <span className="collaboratorManagementControl__copy">
-        <strong>Allow others to manage the game</strong>
+        <strong>Allow invited players to manage</strong>
         <span>They can change settings, end, or reset this game.</span>
       </span>
     </label>

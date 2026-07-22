@@ -3,6 +3,7 @@ import type { ManagePlayersDialogHandle } from "../../../components/ManagePlayer
 import type {
   Game,
   GameTeam,
+  PastLinkedPlayer,
   Player,
   PlayerProfile,
   TeamMember,
@@ -44,6 +45,10 @@ export type GameScreenProps = {
     delta: number,
   ) => boolean | Promise<boolean>;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
+  pastLinkedPlayers: PastLinkedPlayer[];
+  onAddPastLinkedPlayer: (
+    collaboratorUserId: string,
+  ) => Promise<boolean> | boolean;
   onMergePlayers?: (
     linkedPlayerId: string,
     rosterPlayerId: string,

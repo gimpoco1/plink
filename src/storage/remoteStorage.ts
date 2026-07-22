@@ -1,4 +1,10 @@
-import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
+import type {
+  Game,
+  GameTeam,
+  PastLinkedPlayer,
+  PlayerProfile,
+  TeamMember,
+} from "../types";
 import { supabase } from "../lib/supabase";
 import { DEFAULT_TEAM_ICON } from "../constants";
 
@@ -81,6 +87,14 @@ type TeamMemberRow = {
   team_id: string;
   profile_id: string;
   created_at: number;
+};
+
+type PastLinkedPlayerRow = {
+  collaborator_user_id: string;
+  profile_id: string;
+  player_name: string;
+  avatar_color: string;
+  last_linked_at: number;
 };
 
 export type GameRemovalNotification = {
@@ -778,6 +792,63 @@ export async function addRemoteSharedGamePlayer(
   return rowToGame(result.data as GameRow, userId);
 }
 
+export async function loadRemotePastLinkedPlayers(
+  gameId: string,
+): Promise<PastLinkedPlayer[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc("list_past_linked_players", {
+    p_game_id: gameId,
+  });
+  if (error) throw error;
+  return ((data ?? []) as PastLinkedPlayerRow[]).map((row) => ({
+    userId: row.collaborator_user_id,
+    profileId: row.profile_id,
+    name: row.player_name,
+    avatarColor: row.avatar_color,
+    lastLinkedAt: row.last_linked_at,
+  }));
+}
+
+export async function addRemotePastLinkedPlayerToGame(
+  userId: string,
+  gameId: string,
+  collaboratorUserId: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("add_past_linked_player_to_game", {
+      p_game_id: gameId,
+      p_collaborator_user_id: collaboratorUserId,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  return rowToGame(result.data as GameRow, userId);
+}
+
+export async function replayRemoteSharedGame(
+  userId: string,
+  gameId: string,
+  newGameId: string,
+  name: string,
+) {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const result = await supabase
+    .rpc("replay_shared_game", {
+      p_game_id: gameId,
+      p_new_game_id: newGameId,
+      p_name: name,
+    })
+    .select(GAME_SELECT_COLUMNS)
+    .single();
+  if (result.error) throw result.error;
+  const game = rowToGame(result.data as GameRow, userId);
+  return {
+    ...game,
+    hasCollaborators: game.isShared === true,
+  };
+}
+
 export async function updateRemoteSharedGamePlayer(
   userId: string,
   gameId: string,
@@ -851,6 +922,7 @@ export async function mergeRemoteSharedGamePlayers(
   gameId: string,
   linkedPlayerId: string,
   rosterPlayerId: string,
+  keepPlayer: "linked" | "local",
 ) {
   if (!supabase) throw new Error("Cloud games are not configured.");
   const result = await supabase
@@ -858,11 +930,24 @@ export async function mergeRemoteSharedGamePlayers(
       p_game_id: gameId,
       p_linked_player_id: linkedPlayerId,
       p_roster_player_id: rosterPlayerId,
+      p_keep_player: keepPlayer,
     })
     .select(GAME_SELECT_COLUMNS)
     .single();
   if (result.error) throw result.error;
-  return rowToGame(result.data as GameRow, userId);
+  const game = rowToGame(result.data as GameRow, userId);
+  if (keepPlayer === "linked") {
+    return { ...game, hasCollaborators: true };
+  }
+  const collaboratorResult = await supabase
+    .from(GAME_COLLABORATORS_TABLE)
+    .select("game_id", { count: "exact", head: true })
+    .eq("game_id", gameId);
+  if (collaboratorResult.error) throw collaboratorResult.error;
+  return {
+    ...game,
+    hasCollaborators: (collaboratorResult.count ?? 0) > 0,
+  };
 }
 
 export async function saveRemoteGames(

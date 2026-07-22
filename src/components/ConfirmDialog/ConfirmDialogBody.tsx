@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
@@ -10,6 +10,8 @@ type Props = {
   promptValue: string;
   isPrompt: boolean;
   onPromptValueChange: (value: string) => void;
+  selectedPlayerId: string;
+  onPlayerSelect: (playerId: string) => void;
 };
 
 export function ConfirmDialogBody({
@@ -18,6 +20,8 @@ export function ConfirmDialogBody({
   promptValue,
   isPrompt,
   onPromptValueChange,
+  selectedPlayerId,
+  onPlayerSelect,
 }: Props) {
   const hasRoster = Boolean(options.players?.length || options.teams?.length);
   return (
@@ -73,7 +77,11 @@ export function ConfirmDialogBody({
         </p>
       ) : null}
       <ConfirmTeams options={options} />
-      <ConfirmPlayers options={options} />
+      <ConfirmPlayers
+        options={options}
+        selectedPlayerId={selectedPlayerId}
+        onPlayerSelect={onPlayerSelect}
+      />
       {options.message && !hasRoster ? (
         <p
           className={`dialog__message${
@@ -211,8 +219,17 @@ function ConfirmTeams({ options }: { options: ConfirmOptions }) {
   );
 }
 
-function ConfirmPlayers({ options }: { options: ConfirmOptions }) {
+function ConfirmPlayers({
+  options,
+  selectedPlayerId,
+  onPlayerSelect,
+}: {
+  options: ConfirmOptions;
+  selectedPlayerId: string;
+  onPlayerSelect: (playerId: string) => void;
+}) {
   if (!options.players?.length) return null;
+  const selectable = options.selectablePlayers === true;
   return (
     <div className="dialog__playerSection">
       {options.playersTitle ? (
@@ -220,22 +237,67 @@ function ConfirmPlayers({ options }: { options: ConfirmOptions }) {
           {options.playersTitle}
         </div>
       ) : null}
-      <div className="dialog__playerList" aria-label="Players">
-        {options.players.map((player) => (
-          <div
-            key={`${player.name}-${player.avatarColor}`}
-            className="dialog__playerItem"
-          >
-            <span
-              className="dialog__playerAvatar"
-              style={avatarStyleFor(player.avatarColor)}
-              aria-hidden="true"
+      <div
+        className={`dialog__playerList${
+          selectable ? " dialog__playerList--selectable" : ""
+        }`}
+        aria-label="Players"
+      >
+        {options.players.map((player) => {
+          const selected = selectable && player.id === selectedPlayerId;
+          const className = `dialog__playerItem${
+            player.label ? " dialog__playerItem--identity" : ""
+          }${selected ? " dialog__playerItem--selected" : ""}`;
+          const content = (
+            <>
+              <span
+                className="dialog__playerAvatar"
+                style={avatarStyleFor(player.avatarColor)}
+                aria-hidden="true"
+              >
+                {getInitials(player.name)}
+              </span>
+              <span className="dialog__playerCopy">
+                {player.label ? (
+                  <span className="dialog__playerLabel">{player.label}</span>
+                ) : null}
+                <span className="dialog__playerName">{player.name}</span>
+                {player.description ? (
+                  <span className="dialog__playerDescription">
+                    {player.description}
+                  </span>
+                ) : null}
+              </span>
+              {selectable ? (
+                <span
+                  className="dialog__playerCheck"
+                  aria-hidden="true"
+                >
+                  {selected ? <Check size={15} strokeWidth={3} /> : null}
+                </span>
+              ) : null}
+            </>
+          );
+
+          return selectable && player.id ? (
+            <button
+              key={player.id}
+              className={className}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onPlayerSelect(player.id!)}
             >
-              {getInitials(player.name)}
-            </span>
-            <span className="dialog__playerName">{player.name}</span>
-          </div>
-        ))}
+              {content}
+            </button>
+          ) : (
+            <div
+              key={`${player.id ?? player.name}-${player.avatarColor}`}
+              className={className}
+            >
+              {content}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

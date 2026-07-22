@@ -14,6 +14,8 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
     managePlayersDialogRef,
     onDeleteProfile,
     onDeletePlayer,
+    pastLinkedPlayers,
+    onAddPastLinkedPlayer,
     onMergePlayers,
     onUpsertProfile,
     onUpsertLocalPlayer,
@@ -54,6 +56,14 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
       isAuthenticated={isAuthenticated}
       onDeleteProfile={onDeleteProfile}
       onDeletePlayer={onDeletePlayer}
+      pastLinkedPlayers={
+        game.accessRole === "collaborator" ? [] : pastLinkedPlayers
+      }
+      onAddPastLinkedPlayer={
+        game.accessRole === "collaborator"
+          ? undefined
+          : onAddPastLinkedPlayer
+      }
       onMergePlayers={
         game.accessRole === "collaborator" ? undefined : onMergePlayers
       }

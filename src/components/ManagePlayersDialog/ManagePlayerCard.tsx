@@ -244,7 +244,7 @@ function PlayerIdentity({
               }`}
             >
               {isLinkedAccountPlayer
-                ? "Linked player"
+                ? "Invited player"
                 : profile?.isAccountPlayer
                   ? "Account player"
                   : profile

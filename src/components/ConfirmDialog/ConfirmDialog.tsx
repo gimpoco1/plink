@@ -4,6 +4,7 @@ import {
   resolveConfirmEyebrow,
   type ConfirmDialogHandle,
   type ConfirmOptions,
+  type ConfirmPlayerSelectionOptions,
   type ConfirmResult,
   type PromptOptions,
 } from "./confirmDialogTypes";
@@ -17,7 +18,12 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
     const promptResolverRef = useRef<((value: string | null) => void) | null>(
       null,
     );
+    const playerSelectionResolverRef = useRef<
+      ((value: string | null) => void) | null
+    >(null);
     const [promptValue, setPromptValue] = useState("");
+    const [selectedPlayerId, setSelectedPlayerId] = useState("");
+    const [isPlayerSelection, setIsPlayerSelection] = useState(false);
     const [options, setOptions] = useState<ConfirmOptions>({
       title: "",
       bodyTitle: "",
@@ -37,6 +43,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       players: [],
       teams: [],
       layout: "default",
+      selectablePlayers: false,
     });
     const [promptOptions, setPromptOptions] = useState<PromptOptions | null>(
       null,
@@ -58,31 +65,45 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       setPromptValue("");
     }
 
+    function closePlayerSelection(value: string | null) {
+      dialogRef.current?.close();
+      playerSelectionResolverRef.current?.(value);
+      playerSelectionResolverRef.current = null;
+      setIsPlayerSelection(false);
+      setSelectedPlayerId("");
+    }
+
+    function setConfirmOptions(next: ConfirmOptions) {
+      setOptions({
+        title: next.title,
+        bodyTitle: next.bodyTitle ?? "",
+        message: next.message,
+        messageCase: next.messageCase ?? "default",
+        confirmText: next.confirmText ?? "Confirm",
+        cancelText: next.cancelText ?? "Cancel",
+        hideCancelAction: next.hideCancelAction ?? false,
+        extraActionText: next.extraActionText ?? "",
+        tone: next.tone ?? "default",
+        eyebrow: resolveConfirmEyebrow(next),
+        highlights: next.highlights ?? [],
+        details: next.details ?? [],
+        detailFlow: next.detailFlow ?? false,
+        settingChips: next.settingChips ?? [],
+        playersTitle: next.playersTitle ?? "",
+        players: next.players ?? [],
+        teams: next.teams ?? [],
+        layout: next.layout ?? "default",
+        selectablePlayers: next.selectablePlayers ?? false,
+      });
+    }
+
     useImperativeHandle(
       ref,
       () => ({
         choose: (next) => {
           setPromptOptions(null);
-          setOptions({
-            title: next.title,
-            bodyTitle: next.bodyTitle ?? "",
-            message: next.message,
-            messageCase: next.messageCase ?? "default",
-            confirmText: next.confirmText ?? "Confirm",
-            cancelText: next.cancelText ?? "Cancel",
-            hideCancelAction: next.hideCancelAction ?? false,
-            extraActionText: next.extraActionText ?? "",
-            tone: next.tone ?? "default",
-            eyebrow: resolveConfirmEyebrow(next),
-            highlights: next.highlights ?? [],
-            details: next.details ?? [],
-            detailFlow: next.detailFlow ?? false,
-            settingChips: next.settingChips ?? [],
-            playersTitle: next.playersTitle ?? "",
-            players: next.players ?? [],
-            teams: next.teams ?? [],
-            layout: next.layout ?? "default",
-          });
+          setIsPlayerSelection(false);
+          setConfirmOptions(next);
           dialogRef.current?.showModal();
           return new Promise<ConfirmResult>((resolve) => {
             resolverRef.current = resolve;
@@ -90,33 +111,30 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         },
         confirm: async (next) => {
           setPromptOptions(null);
-          setOptions({
-            title: next.title,
-            bodyTitle: next.bodyTitle ?? "",
-            message: next.message,
-            messageCase: next.messageCase ?? "default",
-            confirmText: next.confirmText ?? "Confirm",
-            cancelText: next.cancelText ?? "Cancel",
-            hideCancelAction: next.hideCancelAction ?? false,
-            extraActionText: "",
-            tone: next.tone ?? "default",
-            eyebrow: resolveConfirmEyebrow(next),
-            highlights: next.highlights ?? [],
-            details: next.details ?? [],
-            detailFlow: next.detailFlow ?? false,
-            settingChips: next.settingChips ?? [],
-            playersTitle: next.playersTitle ?? "",
-            players: next.players ?? [],
-            teams: next.teams ?? [],
-            layout: next.layout ?? "default",
-          });
+          setIsPlayerSelection(false);
+          setConfirmOptions({ ...next, extraActionText: "" });
           dialogRef.current?.showModal();
           const result = await new Promise<ConfirmResult>((resolve) => {
             resolverRef.current = resolve;
           });
           return result === "confirm";
         },
+        selectPlayer: async (next: ConfirmPlayerSelectionOptions) => {
+          setPromptOptions(null);
+          setIsPlayerSelection(true);
+          setSelectedPlayerId(next.initialSelectedPlayerId ?? "");
+          setConfirmOptions({
+            ...next,
+            selectablePlayers: true,
+            extraActionText: "",
+          });
+          dialogRef.current?.showModal();
+          return new Promise<string | null>((resolve) => {
+            playerSelectionResolverRef.current = resolve;
+          });
+        },
         prompt: async (next) => {
+          setIsPlayerSelection(false);
           setPromptOptions(next);
           setPromptValue(next.initialValue ?? "");
           setOptions({
@@ -138,6 +156,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             players: [],
             teams: [],
             layout: "default",
+            selectablePlayers: false,
           });
           dialogRef.current?.showModal();
           return new Promise<string | null>((resolve) => {
@@ -154,6 +173,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         ref={dialogRef}
         onClose={() => {
           if (promptResolverRef.current) closePrompt(null);
+          if (playerSelectionResolverRef.current) closePlayerSelection(null);
           if (resolverRef.current) closeWith("cancel");
         }}
       >
@@ -165,6 +185,10 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             if (isPrompt) {
               const value = promptValue.trim();
               if (value) closePrompt(value);
+              return;
+            }
+            if (isPlayerSelection) {
+              if (selectedPlayerId) closePlayerSelection(selectedPlayerId);
               return;
             }
             closeWith("confirm");
@@ -181,7 +205,11 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
               className="iconbtn"
               type="button"
               onClick={() =>
-                isPrompt ? closePrompt(null) : closeWith("cancel")
+                isPrompt
+                  ? closePrompt(null)
+                  : isPlayerSelection
+                    ? closePlayerSelection(null)
+                    : closeWith("cancel")
               }
               aria-label="Close"
             >
@@ -195,12 +223,14 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             promptValue={promptValue}
             isPrompt={isPrompt}
             onPromptValueChange={setPromptValue}
+            selectedPlayerId={selectedPlayerId}
+            onPlayerSelect={setSelectedPlayerId}
           />
 
           <div
             className={`dialog__actions${
               options.extraActionText ? " dialog__actions--decision" : ""
-            }`}
+            }${isPlayerSelection ? " dialog__actions--selection" : ""}`}
           >
             {!options.hideCancelAction ? (
               <button
@@ -211,7 +241,11 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 }`}
                 type="button"
                 onClick={() =>
-                  isPrompt ? closePrompt(null) : closeWith("cancel")
+                  isPrompt
+                    ? closePrompt(null)
+                    : isPlayerSelection
+                      ? closePlayerSelection(null)
+                      : closeWith("cancel")
                 }
               >
                 {options.cancelText ?? "Cancel"}
@@ -237,7 +271,10 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                   : ""
               }`}
               type="submit"
-              disabled={isPrompt && !promptValue.trim()}
+              disabled={
+                (isPrompt && !promptValue.trim()) ||
+                (isPlayerSelection && !selectedPlayerId)
+              }
             >
               {options.confirmText ?? "Confirm"}
             </button>

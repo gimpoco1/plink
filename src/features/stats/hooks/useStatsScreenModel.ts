@@ -197,7 +197,7 @@ export function useStatsScreenModel(props: StatsScreenProps) {
               ? formatAccountPlayerName(profile.name)
               : profile.name,
             subtitle: linkedProfileIds.has(profile.id)
-              ? `Linked player · ${sessionCount}`
+              ? `Invited player · ${sessionCount}`
               : sessionCount,
             avatarColor: profile.avatarColor,
             isAccountPlayer: profile.isAccountPlayer,
