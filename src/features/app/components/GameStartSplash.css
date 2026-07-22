@@ -1,0 +1,109 @@
+.gameStartSplash {
+  position: fixed;
+  inset: 0;
+  z-index: 1550;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px
+    max(24px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at center, rgba(216, 255, 79, 0.14), transparent 42%),
+    rgba(11, 16, 21, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: gameStartSplashVeil 2s ease-in-out both;
+}
+
+.gameStartSplash__content {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  animation: gameStartSplashContent 2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.gameStartSplash__icon {
+  position: relative;
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  margin-bottom: 6px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: #0b1015;
+  box-shadow: 0 18px 50px rgba(216, 255, 79, 0.2);
+}
+
+.gameStartSplash__icon::after {
+  position: absolute;
+  inset: -10px;
+  border: 2px solid rgba(216, 255, 79, 0.32);
+  border-radius: 28px;
+  content: "";
+  animation: gameStartSplashRing 1.25s ease-out 120ms both;
+}
+
+.gameStartSplash__eyebrow {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.gameStartSplash strong {
+  color: var(--text);
+  font-size: clamp(42px, 12vw, 72px);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+}
+
+@keyframes gameStartSplashVeil {
+  0%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes gameStartSplashContent {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.82);
+  }
+  18%,
+  76% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(1.025);
+  }
+}
+
+@keyframes gameStartSplashRing {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gameStartSplash,
+  .gameStartSplash__content,
+  .gameStartSplash__icon::after {
+    animation: none;
+  }
+}

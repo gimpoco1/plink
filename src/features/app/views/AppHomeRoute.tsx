@@ -6,6 +6,7 @@ export function AppHomeRoute() {
   const {
     authDialogRef,
     canViewSavedData,
+    cancelGameStartSplash,
     confirmRef,
     createTeam,
     deleteGame,
@@ -41,6 +42,7 @@ export function AppHomeRoute() {
     showLocalSessionsHint,
     showToast,
     teams,
+    triggerGameStartSplash,
     toggleTeamMember,
     updateProfileEverywhere,
     updateTeam,
@@ -139,10 +141,13 @@ export function AppHomeRoute() {
           if (!guardSessionCreation()) {
             return;
           }
+          triggerGameStartSplash();
           const duplicated = duplicateGame(gameId);
           if (duplicated) {
             setGameReturnTab(homeTab);
             setView("game");
+          } else {
+            cancelGameStartSplash();
           }
         }}
         onRename={async (gameId) => {

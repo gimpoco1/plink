@@ -8,6 +8,7 @@ export function AppGameRoute() {
     addPlayer,
     addTeam,
     canViewSavedData,
+    cancelGameStartSplash,
     combinedGuestAndLocalProfiles,
     confirmRef,
     currentGame,
@@ -31,6 +32,7 @@ export function AppGameRoute() {
     setView,
     showToast,
     triggerPulse,
+    triggerGameStartSplash,
     updatePlayer,
     updateProfile,
     updateProfileEverywhere,
@@ -214,8 +216,13 @@ export function AppGameRoute() {
           if (!guardSessionCreation()) {
             return;
           }
+          triggerGameStartSplash();
           const duplicated = duplicateGame(currentGame.id);
-          if (duplicated) setView("game");
+          if (duplicated) {
+            setView("game");
+          } else {
+            cancelGameStartSplash();
+          }
         }}
         onBackToHome={returnToGameSource}
         onEndGame={handleEndCurrentGame}

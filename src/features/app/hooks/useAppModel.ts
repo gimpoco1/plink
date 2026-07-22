@@ -19,6 +19,7 @@ import { useGames } from "../../../hooks/useGames";
 import { useScorePulse } from "../../../hooks/useScorePulse";
 import { useAuthSession } from "../../../hooks/useAuthSession";
 import { useEntitlements } from "../../../hooks/useEntitlements";
+import { useGameStartSplash } from "./useGameStartSplash";
 import { supabase } from "../../../lib/supabase";
 import type {
   Game,
@@ -146,6 +147,11 @@ export function useAppModel() {
     syncNotice: gameSyncNotice,
   } = useGames(session, authLoading);
   const { pulseById, triggerPulse } = useScorePulse();
+  const {
+    cancelGameStartSplash,
+    gameStartSplashCue,
+    triggerGameStartSplash,
+  } = useGameStartSplash();
   const confirmRef = useRef<ConfirmDialogHandle>(null!);
   const managePlayersDialogRef = useRef<ManagePlayersDialogHandle>(null!);
   const handledManageTeamsDialogOpenTokenRef = useRef(0);
@@ -882,6 +888,7 @@ export function useAppModel() {
       if (!ok) return false;
     }
 
+    triggerGameStartSplash();
     const created = createGame(input);
     if (created) {
       setPresetDraft(null);
@@ -890,6 +897,7 @@ export function useAppModel() {
       setView("game");
       return true;
     }
+    cancelGameStartSplash();
     return false;
   }
 
@@ -1359,6 +1367,7 @@ export function useAppModel() {
     authEnabled,
     authLoading,
     canViewSavedData,
+    cancelGameStartSplash,
     combinedGuestAndLocalProfiles,
     confirmRef,
     createTeam,
@@ -1374,6 +1383,7 @@ export function useAppModel() {
     gameDisplayName,
     gameMetaItems,
     gameScreenProfiles,
+    gameStartSplashCue,
     games,
     guardSessionCreation,
     handleCreateGame,
@@ -1422,6 +1432,7 @@ export function useAppModel() {
     showLocalSessionsHint,
     showToast,
     teams,
+    triggerGameStartSplash,
     toggleTeamMember,
     triggerPulse,
     updateGameSettings,

@@ -59,6 +59,17 @@ export function AppDialogs() {
             tone: "danger",
           })
         }
+        onConfirmAccountDeletion={() =>
+          confirmRef.current.confirm({
+            eyebrow: "Final warning",
+            title: "This cannot be undone",
+            message:
+              "Your Plink account and cloud sessions, players, teams, and account access will be permanently removed.",
+            confirmText: "Delete my account",
+            cancelText: "Go back",
+            tone: "danger",
+          })
+        }
         localGames={authDialogLocalGames}
         localProfiles={authDialogLocalProfiles}
         accountGamesCount={games.length}

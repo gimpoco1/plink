@@ -49,6 +49,7 @@ export type AuthDialogProps = {
   session: Session | null;
   onOpenChange?: (open: boolean) => void;
   onConfirmSignOut: () => Promise<boolean>;
+  onConfirmAccountDeletion: () => Promise<boolean>;
   localGames?: Game[];
   localProfiles?: PlayerProfile[];
   accountGamesCount?: number;
@@ -92,6 +93,7 @@ export function useAuthDialogModel(
     session,
     onOpenChange,
     onConfirmSignOut,
+    onConfirmAccountDeletion,
     localGames = [],
     localProfiles = [],
     accountGamesCount = 0,
@@ -1139,6 +1141,10 @@ export function useAuthDialogModel(
       setError("Sign in before deleting your account.");
       return;
     }
+    if (busy) return;
+
+    const confirmed = await onConfirmAccountDeletion();
+    if (!confirmed) return;
 
     setBusy(true);
     setError(null);
