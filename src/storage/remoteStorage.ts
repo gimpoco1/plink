@@ -726,6 +726,7 @@ export async function updateRemoteSharedGameSettings(
     | "manualEndOnly"
     | "timerEnabled"
     | "diceEnabled"
+    | "quickScoreValues"
     | "timerMode"
     | "timerSeconds"
     | "collaboratorsCanManage"
@@ -733,7 +734,7 @@ export async function updateRemoteSharedGameSettings(
 ) {
   if (!supabase) throw new Error("Cloud games are not configured.");
   const result = await supabase
-    .rpc("update_shared_game_settings_v2", {
+    .rpc("update_shared_game_settings_v3", {
       p_game_id: gameId,
       p_name: settings.name,
       p_score_direction: settings.scoreDirection,
@@ -744,6 +745,8 @@ export async function updateRemoteSharedGameSettings(
       p_manual_end_only: settings.manualEndOnly,
       p_timer_enabled: settings.timerEnabled,
       p_dice_enabled: settings.diceEnabled,
+      p_quick_score_value_1: settings.quickScoreValues[0],
+      p_quick_score_value_2: settings.quickScoreValues[1],
       p_timer_mode: settings.timerMode,
       p_timer_seconds: settings.timerSeconds,
       p_collaborators_can_manage: settings.collaboratorsCanManage,

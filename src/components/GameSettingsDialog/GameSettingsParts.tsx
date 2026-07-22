@@ -14,8 +14,16 @@ export function QuickScoreSettings({
   onLargeValueChange: (value: string) => void;
 }) {
   return (
-    <fieldset className="quickScoreSettings">
-      <legend>Quick score buttons</legend>
+    <fieldset
+      className="quickScoreSettings"
+      aria-labelledby="quick-score-settings-title"
+    >
+      <h3
+        className="quickScoreSettings__title"
+        id="quick-score-settings-title"
+      >
+        Quick score buttons
+      </h3>
       <p>Choose the two point amounts shown on every player card.</p>
       <div className="quickScoreSettings__fields">
         <label className="field">

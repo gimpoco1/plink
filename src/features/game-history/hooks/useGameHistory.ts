@@ -70,6 +70,9 @@ function formatDayLabel(
 export function useGameHistory(game: Game, selectedSubjectId: string) {
   const entries = game.scoreHistory ?? [];
   const isTeamsGame = game.participantMode === "teams";
+  const hasInvitedPlayer = game.players.some(
+    (player) => player.joinedViaInvite === true,
+  );
   const timeFormat = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -119,7 +122,7 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
         avatarColor: entry.avatarColor,
       };
       const current = result[result.length - 1];
-      const updatedBy = entry.updatedByPlayerId
+      const updatedBy = hasInvitedPlayer && entry.updatedByPlayerId
         ? {
             id: entry.updatedByPlayerId,
             name: entry.updatedByPlayerName ?? "Unknown player",
@@ -154,7 +157,7 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
       }
     }
     return result;
-  }, [currentUserPlayerId, entries, subjectsByPlayerId]);
+  }, [currentUserPlayerId, entries, hasInvitedPlayer, subjectsByPlayerId]);
   const playerOptions = useMemo(() => {
     const subjects = new Map<string, HistorySubject>();
     for (const action of actions) {

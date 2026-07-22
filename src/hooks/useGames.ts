@@ -1751,6 +1751,7 @@ export function useGames(
             manualEndOnly: input.manualEndOnly,
             timerEnabled: input.timerEnabled,
             diceEnabled: input.diceEnabled,
+            quickScoreValues,
             timerMode: input.timerMode,
             timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
             collaboratorsCanManage: input.collaboratorsCanManage,

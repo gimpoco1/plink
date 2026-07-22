@@ -276,13 +276,6 @@ export const GameSettingsDialog = forwardRef<
             />
           </div>
 
-          {game.isShared && game.accessRole !== "collaborator" ? (
-            <CollaboratorManagementControl
-              enabled={collaboratorsCanManage}
-              onChange={setCollaboratorsCanManage}
-            />
-          ) : null}
-
           {ruleNeedsMorePlayers ? (
             <SettingsRequirement
               lowestNeedsMorePlayers={lowestNeedsMorePlayers}
@@ -305,6 +298,13 @@ export const GameSettingsDialog = forwardRef<
               onModeChange={setTimerMode}
               onMinutesChange={setTimerMinutes}
               onSecondsChange={setTimerSecondsRaw}
+            />
+          ) : null}
+
+          {game.isShared && game.accessRole !== "collaborator" ? (
+            <CollaboratorManagementControl
+              enabled={collaboratorsCanManage}
+              onChange={setCollaboratorsCanManage}
             />
           ) : null}
         </div>
