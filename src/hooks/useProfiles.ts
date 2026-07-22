@@ -4,6 +4,10 @@ import type { PlayerProfile, ToastState } from "../types";
 import { supabase } from "../lib/supabase";
 import { loadProfiles, saveProfiles } from "../storage/profilesStorage";
 import { loadRemoteProfiles, saveRemoteProfiles } from "../storage/remoteStorage";
+import {
+  createForegroundRefreshHandlers,
+  createRealtimeReconnectHandler,
+} from "../utils/foregroundRefresh";
 import { uid } from "../utils/id";
 import { formatPlayerName } from "../utils/text";
 
@@ -216,9 +220,10 @@ export function useProfiles(session: Session | null) {
       }
     }
 
-    function refreshWhenVisible() {
-      if (document.visibilityState === "visible") void refreshRemoteProfiles();
-    }
+    const {
+      refreshOnFocus,
+      refreshWhenVisible,
+    } = createForegroundRefreshHandlers(() => void refreshRemoteProfiles());
 
     let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
     if (supabase) {
@@ -235,23 +240,23 @@ export function useProfiles(session: Session | null) {
           void refreshRemoteProfiles();
         },
       );
-      void channel.subscribe();
+      void channel.subscribe(
+        createRealtimeReconnectHandler(() => void refreshRemoteProfiles()),
+      );
     }
 
-    const intervalId = window.setInterval(refreshRemoteProfiles, 5000);
-    window.addEventListener("focus", refreshRemoteProfiles);
+    window.addEventListener("focus", refreshOnFocus);
     document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       alive = false;
-      window.clearInterval(intervalId);
       if (channel) {
         void channel.unsubscribe();
         if (supabase) {
           supabase.removeChannel(channel);
         }
       }
-      window.removeEventListener("focus", refreshRemoteProfiles);
+      window.removeEventListener("focus", refreshOnFocus);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [remoteUserId, userId]);

@@ -126,7 +126,10 @@ export function useNativeAppLifecycle() {
     let disposed = false;
     let statusBarRestoreTimeout: number | undefined;
 
-    function restoreStatusBarLayout() {
+    // Dismissing the native auth browser can leave WKWebView with a stale
+    // status-bar frame. Keep this repair scoped to browser dismissal: running
+    // it on every foreground transition visibly resizes the whole app.
+    function repairLayoutAfterBrowserDismissal() {
       if (disposed) return;
       window.clearTimeout(statusBarRestoreTimeout);
       void configureNativeStatusBar(true);
@@ -148,10 +151,12 @@ export function useNativeAppLifecycle() {
       }),
       CapacitorApp.addListener("appStateChange", ({ isActive }) => {
         if (!isActive) return;
-        restoreStatusBarLayout();
         window.dispatchEvent(new Event("plink:app-resumed"));
       }),
-      Browser.addListener("browserFinished", restoreStatusBarLayout),
+      Browser.addListener(
+        "browserFinished",
+        repairLayoutAfterBrowserDismissal,
+      ),
       Keyboard.addListener("keyboardWillShow", () => setKeyboardOpen(true)),
       Keyboard.addListener("keyboardDidShow", () => setKeyboardOpen(true)),
       Keyboard.addListener("keyboardDidHide", () => setKeyboardOpen(false)),
@@ -159,7 +164,7 @@ export function useNativeAppLifecycle() {
 
     window.addEventListener(
       NATIVE_BROWSER_DISMISSED_EVENT,
-      restoreStatusBarLayout,
+      repairLayoutAfterBrowserDismissal,
     );
 
     void CapacitorApp.getLaunchUrl().then((launchUrl) => {
@@ -173,7 +178,7 @@ export function useNativeAppLifecycle() {
       window.clearTimeout(statusBarRestoreTimeout);
       window.removeEventListener(
         NATIVE_BROWSER_DISMISSED_EVENT,
-        restoreStatusBarLayout,
+        repairLayoutAfterBrowserDismissal,
       );
       document.documentElement.classList.remove("native-keyboard-open");
       document.documentElement.classList.remove("is-native-app");

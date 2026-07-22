@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import {
+  createForegroundRefreshHandlers,
+  createRealtimeReconnectHandler,
+} from "../utils/foregroundRefresh";
 import type {
   CompletionMode,
   Game,
@@ -107,6 +111,8 @@ type UpdateGameSettingsInput = {
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
 };
+
+const GAME_SYNC_FALLBACK_INTERVAL_MS = 60_000;
 
 function getGameSyncSignature(games: Game[]) {
   return games
@@ -275,7 +281,9 @@ export function useGames(
       loadCurrentGameId() ??
       loadGuestCurrentGameId(),
   );
-  const [remoteReady, setRemoteReady] = useState(!session && !authLoading);
+  const [remoteReady, setRemoteReady] = useState(
+    !sessionUserId && !authLoading,
+  );
   const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<ToastState | null>(null);
   const [pastLinkedPlayers, setPastLinkedPlayers] = useState<
@@ -361,7 +369,7 @@ export function useGames(
       };
     }
 
-    if (!session) {
+    if (!sessionUserId) {
       setRemoteUserId(null);
       setSyncNotice(null);
       remoteSignatureRef.current = null;
@@ -377,7 +385,7 @@ export function useGames(
     setRemoteUserId(null);
     remoteSignatureRef.current = null;
     setGames([]);
-    loadRemoteGames(session.user.id)
+    loadRemoteGames(sessionUserId)
       .then((remoteGames) => {
         if (!alive) return;
         applyRemoteGames(remoteGames, false);
@@ -393,7 +401,7 @@ export function useGames(
             ? current
             : (remoteGames[0]?.id ?? null);
         });
-        setRemoteUserId(session.user.id);
+        setRemoteUserId(sessionUserId);
         setRemoteReady(true);
       })
       .catch((error) => {
@@ -412,10 +420,11 @@ export function useGames(
     return () => {
       alive = false;
     };
-  }, [authLoading, migrated, session]);
+  }, [authLoading, migrated, sessionUserId]);
 
   useEffect(() => {
-    if (!session || remoteUserId !== session.user.id) return;
+    if (!sessionUserId || remoteUserId !== sessionUserId) return;
+    const activeUserId = sessionUserId;
     let alive = true;
     let gameRefreshInFlight = false;
     let gameRefreshQueued = false;
@@ -427,7 +436,7 @@ export function useGames(
     ) {
       if (
         !alive ||
-        notification.userId !== session!.user.id ||
+        notification.userId !== activeUserId ||
         handledRemovalNotificationIdsRef.current.has(notification.id)
       ) {
         return;
@@ -443,7 +452,7 @@ export function useGames(
       );
       showGameToast(`You've been removed from ${notification.gameName}`);
       void dismissRemoteGameRemovalNotification(
-        session!.user.id,
+        activeUserId,
         notification.id,
       ).catch(() => {
         handledRemovalNotificationIdsRef.current.delete(notification.id);
@@ -457,7 +466,7 @@ export function useGames(
     ) {
       if (
         !alive ||
-        notification.userId !== session!.user.id ||
+        notification.userId !== activeUserId ||
         handledJoinNotificationIdsRef.current.has(notification.id)
       ) {
         return;
@@ -468,7 +477,7 @@ export function useGames(
         `${notification.playerName} joined ${notification.gameName}`,
       );
       void dismissRemoteGameJoinNotification(
-        session!.user.id,
+        activeUserId,
         notification.id,
       ).catch(() => {
         handledJoinNotificationIdsRef.current.delete(notification.id);
@@ -478,7 +487,7 @@ export function useGames(
     async function refreshJoinNotifications() {
       try {
         const notifications = await loadRemoteGameJoinNotifications(
-          session!.user.id,
+          activeUserId,
         );
         if (!alive) return;
         notifications.forEach(handleJoinNotification);
@@ -490,7 +499,7 @@ export function useGames(
     async function refreshRemovalNotifications() {
       try {
         const notifications = await loadRemoteGameRemovalNotifications(
-          session!.user.id,
+          activeUserId,
         );
         if (!alive) return;
         notifications.forEach(handleRemovalNotification);
@@ -507,7 +516,7 @@ export function useGames(
 
       gameRefreshInFlight = true;
       try {
-        const remoteGames = await loadRemoteGames(session!.user.id);
+        const remoteGames = await loadRemoteGames(activeUserId);
         if (!alive) return;
         let appliedRemoteState = false;
         setGames((previousGames) => {
@@ -603,21 +612,22 @@ export function useGames(
       void refreshRemovalNotifications();
     }
 
-    function refreshWhenVisible() {
-      if (document.visibilityState === "visible") refreshAll();
-    }
+    const {
+      refreshOnFocus,
+      refreshWhenVisible,
+    } = createForegroundRefreshHandlers(refreshAll);
 
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
       null;
     if (supabase) {
-      channel = supabase.channel(`games:${session.user.id}`);
+      channel = supabase.channel(`games:${activeUserId}`);
       channel.on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: GAME_JOIN_NOTIFICATIONS_TABLE,
-          filter: `user_id=eq.${session.user.id}`,
+          filter: `user_id=eq.${activeUserId}`,
         },
         (payload) => {
           const notification = parseRemoteGameJoinNotification(payload.new);
@@ -634,7 +644,7 @@ export function useGames(
         (payload) => {
           const changedGame = parseRemoteGameChange(
             payload.new,
-            session.user.id,
+            activeUserId,
           );
           if (changedGame) {
             remoteSignatureRef.current = markGameVersionSynced(
@@ -644,7 +654,9 @@ export function useGames(
             setGames((previousGames) =>
               mergeGamesById(previousGames, [changedGame]),
             );
+            return;
           }
+          // Deletes and incompatible payloads still need a full reconciliation.
           void refreshRemoteGames();
         },
       );
@@ -654,20 +666,24 @@ export function useGames(
           event: "INSERT",
           schema: "public",
           table: GAME_REMOVAL_NOTIFICATIONS_TABLE,
-          filter: `user_id=eq.${session.user.id}`,
+          filter: `user_id=eq.${activeUserId}`,
         },
         (payload) => {
           const notification = parseRemoteGameRemovalNotification(payload.new);
           if (notification) handleRemovalNotification(notification);
         },
       );
-      void channel.subscribe();
+      void channel.subscribe(
+        createRealtimeReconnectHandler(refreshAll),
+      );
     }
 
     void refreshJoinNotifications();
     void refreshRemovalNotifications();
-    const intervalId = window.setInterval(refreshAll, 5000);
-    window.addEventListener("focus", refreshAll);
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshRemoteGames();
+    }, GAME_SYNC_FALLBACK_INTERVAL_MS);
+    window.addEventListener("focus", refreshOnFocus);
     document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
@@ -679,10 +695,10 @@ export function useGames(
           supabase.removeChannel(channel);
         }
       }
-      window.removeEventListener("focus", refreshAll);
+      window.removeEventListener("focus", refreshOnFocus);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [remoteUserId, session]);
+  }, [remoteUserId, sessionUserId]);
 
   useEffect(() => {
     if (!sessionUserId) {
@@ -770,7 +786,7 @@ export function useGames(
   }, []);
 
   useEffect(() => {
-    if (!session) {
+    if (!sessionUserId) {
       const guestGameIds = new Set(loadGuestGames().map((game) => game.id));
       if (currentGameId === null || guestGameIds.has(currentGameId)) {
         saveGuestCurrentGameId(currentGameId);
@@ -779,7 +795,7 @@ export function useGames(
     }
 
     saveCurrentGameId(currentGameId);
-  }, [currentGameId, session]);
+  }, [currentGameId, sessionUserId]);
 
   const currentGame = useMemo(
     () =>
