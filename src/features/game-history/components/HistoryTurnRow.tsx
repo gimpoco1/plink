@@ -51,6 +51,23 @@ export function HistoryTurnRow({
             <Clock3 size={11} strokeWidth={2.5} aria-hidden="true" />
             {timeLabel}
           </span>
+          {turn.updatedBy ? (
+            <span className="historyUpdater">
+              <span
+                className="historyUpdater__avatar"
+                style={avatarStyleFor(turn.updatedBy.avatarColor)}
+                aria-hidden="true"
+              >
+                {getInitials(turn.updatedBy.name)}
+              </span>
+              <span>
+                Updated by{" "}
+                {turn.updatedBy.isCurrentUser
+                  ? "You"
+                  : capitalizeFirst(turn.updatedBy.name)}
+              </span>
+            </span>
+          ) : null}
         </div>
       </div>
       <div className="historyScore">

@@ -20,14 +20,13 @@ import { useScorePulse } from "../../../hooks/useScorePulse";
 import { useAuthSession } from "../../../hooks/useAuthSession";
 import { useEntitlements } from "../../../hooks/useEntitlements";
 import { useGameStartSplash } from "./useGameStartSplash";
+import { useToastStack } from "./useToastStack";
 import { supabase } from "../../../lib/supabase";
 import type {
   Game,
   GameTeam,
   HomeTab,
   PlayerProfile,
-  ToastState,
-  ToastTone,
 } from "../../../types";
 import { uid } from "../../../utils/id";
 import {
@@ -51,6 +50,7 @@ import {
   prepareBackupImport,
   type BackupSelection,
 } from "../../../storage/backupFile";
+import { shareOrDownloadBackup } from "../../../storage/backupDownload";
 import { loadGuestGames, saveGuestGames } from "../../../storage/gamesStorage";
 import { loadProfiles } from "../../../storage/profilesStorage";
 import {
@@ -94,6 +94,7 @@ function getGamesThroughSession(games: Game[], currentGame: Game) {
 
 export function useAppModel() {
   const reduceMotion = useReducedMotion();
+  const { visibleToasts, showToast } = useToastStack();
   const {
     session,
     loading: authLoading,
@@ -135,17 +136,24 @@ export function useAppModel() {
     addPlayer,
     addTeam,
     removePlayer,
+    mergePlayers,
+    addPastLinkedPlayer,
     removeTeam,
     updatePlayer,
     resetScores,
     updateScore,
+    createGameInvite,
+    rotateGameInvite,
+    joinGameByCode,
     updateGameSettings,
+    setCollaboratorsCanManage,
     finishGame,
     syncProfile,
     importGames,
     remoteReady: gamesReady,
     syncNotice: gameSyncNotice,
-  } = useGames(session, authLoading);
+    pastLinkedPlayers,
+  } = useGames(session, authLoading, showToast);
   const { pulseById, triggerPulse } = useScorePulse();
   const {
     cancelGameStartSplash,
@@ -188,7 +196,6 @@ export function useAppModel() {
   });
   const [gameReturnTab, setGameReturnTab] = useState<HomeTab>(homeTab);
   const appTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const [visibleToast, setVisibleToast] = useState<ToastState | null>(null);
   const [localDataVersion, setLocalDataVersion] = useState(0);
   const [localStoredPlayers, setLocalStoredPlayers] = useState<LocalPlayer[]>(
     () => loadLocalPlayers(),
@@ -196,6 +203,7 @@ export function useAppModel() {
   const [shouldSaveGamePlayersOnSignIn, setShouldSaveGamePlayersOnSignIn] =
     useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [sharingOpen, setSharingOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<NewGameInput | null>(null);
   const [presetDraftToken, setPresetDraftToken] = useState(0);
   const [presetDraftIntent, setPresetDraftIntent] =
@@ -314,7 +322,7 @@ export function useAppModel() {
     : combinedGuestAndLocalProfiles;
   const isSessionCountPending = canViewSavedData && !gamesReady;
   const currentSessionCount = canViewSavedData
-    ? games.length
+    ? games.filter((game) => game.accessRole !== "collaborator").length
     : localGuestGames.length;
 
   useEffect(() => {
@@ -326,10 +334,6 @@ export function useAppModel() {
   function randomAvatarColor() {
     const index = Math.floor(Math.random() * AVATAR_COLORS.length);
     return AVATAR_COLORS[index]?.value ?? "#64748b";
-  }
-
-  function showToast(message: string, tone: ToastTone = "default") {
-    setVisibleToast({ message, tone });
   }
 
   function upsertLocalStoredPlayer(
@@ -641,27 +645,24 @@ export function useAppModel() {
     });
     if (!result || result === "cancel") return;
     if (result === "extra") {
-      finishGame(currentGame.id, "no_winner");
+      await finishGame(currentGame.id, "no_winner");
       return;
     }
     if (isDraw) {
-      finishGame(currentGame.id, "draw");
+      await finishGame(currentGame.id, "draw");
       return;
     }
-    finishGame(currentGame.id, canDeclareWinner ? "winner" : "no_winner");
+    await finishGame(
+      currentGame.id,
+      canDeclareWinner ? "winner" : "no_winner",
+    );
   }
 
   useEffect(() => {
     const nextToast = gameSyncNotice ?? profileSyncNotice ?? teamSyncNotice;
     if (!nextToast) return;
-    setVisibleToast(nextToast);
-  }, [gameSyncNotice, profileSyncNotice, teamSyncNotice]);
-
-  useEffect(() => {
-    if (!visibleToast) return;
-    const timeout = window.setTimeout(() => setVisibleToast(null), 5200);
-    return () => window.clearTimeout(timeout);
-  }, [visibleToast]);
+    showToast(nextToast.message, nextToast.tone);
+  }, [gameSyncNotice, profileSyncNotice, showToast, teamSyncNotice]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -795,6 +796,7 @@ export function useAppModel() {
     );
 
     games.forEach((game) => {
+      if (game.isShared) return;
       game.players.forEach((player) => {
         const matchedProfile =
           (player.profileId ? profilesById.get(player.profileId) : null) ??
@@ -1307,48 +1309,7 @@ export function useAppModel() {
     const backupJson = JSON.stringify(payload, null, 2);
     const stamp = new Date().toISOString().slice(0, 10);
     const filename = `plink-backup-${stamp}.json`;
-    const file = new File([backupJson], filename, {
-      type: "application/json",
-    });
-
-    if (
-      typeof navigator.canShare === "function" &&
-      navigator.canShare({ files: [file] }) &&
-      typeof navigator.share === "function"
-    ) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: "Plink backup",
-          text: "Backup file for Plink sessions and players.",
-        });
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return {
-            games: selection.games ? payload.games.length : 0,
-            profiles: selection.profiles ? payload.profiles.length : 0,
-            teams: selection.profiles ? payload.teams.length : 0,
-          };
-        }
-        throw error;
-      }
-
-      return {
-        games: selection.games ? payload.games.length : 0,
-        profiles: selection.profiles ? payload.profiles.length : 0,
-        teams: selection.profiles ? payload.teams.length : 0,
-      };
-    }
-
-    const blob = new Blob([backupJson], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    await shareOrDownloadBackup({ contents: backupJson, filename });
 
     return {
       games: selection.games ? payload.games.length : 0,
@@ -1359,6 +1320,7 @@ export function useAppModel() {
 
   return {
     addPlayer,
+    addPastLinkedPlayer,
     addTeam,
     authDialogLocalGames,
     authDialogLocalProfiles,
@@ -1407,6 +1369,7 @@ export function useAppModel() {
     openTeamsTabFromGame,
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
+    pastLinkedPlayers,
     presetDraft,
     presetDraftIntent,
     presetDraftToken,
@@ -1415,6 +1378,7 @@ export function useAppModel() {
     pulseById,
     reduceMotion,
     removePlayer,
+    mergePlayers,
     removeProfileMemberships,
     removeTeam,
     renameGame,
@@ -1422,11 +1386,13 @@ export function useAppModel() {
     returnToGameSource,
     selectGame,
     session,
+    sharingOpen,
     setAuthDialogOpen,
     setGameReturnTab,
     setHomeTab,
     setOpenTeamBuilderRequestToken,
     setShouldSaveGamePlayersOnSignIn,
+    setSharingOpen,
     setView,
     settingsDialogRef,
     showLocalSessionsHint,
@@ -1436,10 +1402,14 @@ export function useAppModel() {
     toggleTeamMember,
     triggerPulse,
     updateGameSettings,
+    setCollaboratorsCanManage,
     updatePlayer,
     updateProfile,
     updateProfileEverywhere,
     updateScore,
+    createGameInvite,
+    rotateGameInvite,
+    joinGameByCode,
     updateTeam,
     upsertLocalStoredPlayer,
     upsertProfile,
@@ -1448,6 +1418,6 @@ export function useAppModel() {
     visibleProfiles,
     visibleTeamMembers,
     visibleTeams,
-    visibleToast,
+    visibleToasts,
   };
 }

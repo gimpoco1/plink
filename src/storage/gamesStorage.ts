@@ -32,6 +32,18 @@ function sanitizeScoreHistory(input: unknown): Game["scoreHistory"] {
         playerId: obj.playerId,
         playerName: obj.playerName,
         avatarColor: obj.avatarColor,
+        updatedByPlayerId:
+          typeof obj.updatedByPlayerId === "string"
+            ? obj.updatedByPlayerId
+            : undefined,
+        updatedByPlayerName:
+          typeof obj.updatedByPlayerName === "string"
+            ? obj.updatedByPlayerName
+            : undefined,
+        updatedByAvatarColor:
+          typeof obj.updatedByAvatarColor === "string"
+            ? obj.updatedByAvatarColor
+            : undefined,
         delta: obj.delta,
         scoreBefore: obj.scoreBefore,
         scoreAfter: obj.scoreAfter,
@@ -69,6 +81,8 @@ function sanitizePlayers(
         profileId:
           typeof obj.profileId === "string" ? obj.profileId : undefined,
         teamId: typeof obj.teamId === "string" ? obj.teamId : undefined,
+        joinedViaInvite: obj.joinedViaInvite === true ? true : undefined,
+        isGameOwner: obj.isGameOwner === true ? true : undefined,
       };
     })
     .filter(Boolean) as Game["players"];
@@ -132,6 +146,7 @@ export function sanitizeGames(input: unknown): Game[] {
       const startingScore = obj.startingScore;
       return {
         id: obj.id,
+        collaboratorsCanManage: obj.collaboratorsCanManage === true,
         name: obj.name,
         participantMode: obj.participantMode === "teams" ? "teams" : "players",
         scoreDirection: obj.scoreDirection,
@@ -223,6 +238,7 @@ export function migrateSingleGameToGamesIfNeeded(): {
   const gameId = uid();
   const migrated: Game = {
     id: gameId,
+    collaboratorsCanManage: false,
     name: "Game",
     participantMode: "players",
     scoreDirection: "up",

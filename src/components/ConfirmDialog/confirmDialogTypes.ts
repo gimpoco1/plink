@@ -1,6 +1,16 @@
 import type { ReactNode } from "react";
 
-export type ConfirmPlayer = { name: string; avatarColor: string };
+export type ConfirmPlayer = {
+  id?: string;
+  name: string;
+  avatarColor: string;
+  label?: string;
+  description?: string;
+};
+export type ConfirmPlayerSelectionOptions = Omit<ConfirmOptions, "players"> & {
+  players: Array<ConfirmPlayer & { id: string }>;
+  initialSelectedPlayerId?: string;
+};
 export type ConfirmDetail = {
   label: string;
   value: string;
@@ -9,6 +19,7 @@ export type ConfirmDetail = {
 };
 export type ConfirmSettingChip = {
   label: string;
+  description?: string;
   icon?: ReactNode;
   tone?: "accent" | "default";
   size?: "default" | "wide";
@@ -24,6 +35,7 @@ export type ConfirmOptions = {
   title: string;
   bodyTitle?: string;
   message: string;
+  messageCase?: "default" | "normal";
   confirmText?: string;
   cancelText?: string;
   hideCancelAction?: boolean;
@@ -32,10 +44,13 @@ export type ConfirmOptions = {
   eyebrow?: string;
   highlights?: string[];
   details?: ConfirmDetail[];
+  detailFlow?: boolean;
   settingChips?: ConfirmSettingChip[];
+  playersTitle?: string;
   players?: ConfirmPlayer[];
   teams?: ConfirmTeam[];
   layout?: "default" | "feature";
+  selectablePlayers?: boolean;
 };
 export type PromptOptions = {
   title: string;
@@ -50,6 +65,9 @@ export type PromptOptions = {
 export type ConfirmDialogHandle = {
   confirm: (options: ConfirmOptions) => Promise<boolean>;
   choose: (options: ConfirmOptions) => Promise<ConfirmResult>;
+  selectPlayer: (
+    options: ConfirmPlayerSelectionOptions,
+  ) => Promise<string | null>;
   prompt: (options: PromptOptions) => Promise<string | null>;
 };
 

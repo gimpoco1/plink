@@ -3,6 +3,7 @@ import {
   Check,
   Copy,
   Crosshair,
+  Link,
   Pencil,
   Trash2,
   Trophy,
@@ -18,6 +19,7 @@ import "./GameRowCard.css";
 
 type Props = {
   game: Game;
+  accountProfileIds: ReadonlySet<string>;
   createdLabel: string;
   onEnter: () => void;
   onDuplicate: () => void;
@@ -27,13 +29,15 @@ type Props = {
 
 export function GameRowCard({
   game,
+  accountProfileIds,
   createdLabel,
   onEnter,
   onDuplicate,
   onRename,
   onDelete,
 }: Props) {
-  const ACTION_WIDTH = 240;
+  const canManageGame = game.accessRole !== "collaborator";
+  const actionWidth = canManageGame ? 240 : 80;
 
   const winner = useMemo(() => {
     return findWinner(game.players, game);
@@ -42,6 +46,9 @@ export function GameRowCard({
   const complete = useMemo(() => isGameComplete(game), [game]);
   const draw = useMemo(() => isGameDraw(game), [game]);
   const isTeamsGame = game.participantMode === "teams";
+  const hasInvitedPlayers = game.players.some(
+    (player) => player.joinedViaInvite === true,
+  );
 
   const parsedName = getGameDisplayName(game.name);
   const displayName = parsedName.title
@@ -55,8 +62,17 @@ export function GameRowCard({
       ) ?? null
     );
   }, [participants, winner]);
+  const winnerIsCurrentAccount = Boolean(
+    winner &&
+      !isTeamsGame &&
+      (game.accessRole === "collaborator"
+        ? winner.id === game.linkedPlayerIdForCurrentUser
+        : !!winner.profileId && accountProfileIds.has(winner.profileId)),
+  );
   const winnerName = winner
-    ? isTeamsGame
+    ? winnerIsCurrentAccount
+      ? "You"
+      : isTeamsGame
       ? (winningParticipant?.name ?? capitalizeFirst(winner.name))
       : capitalizeFirst(winner.name)
     : null;
@@ -68,22 +84,24 @@ export function GameRowCard({
 
   return (
     <SwipeableCard
-      actionWidth={ACTION_WIDTH}
+      actionWidth={actionWidth}
       cardClassName={`gameRowCard${isTeamsGame ? " gameRowCard--teams" : ""}`}
       renderActions={({ closeSwipe }) => (
         <>
-          <button
-            className="swipeRename"
-            type="button"
-            onClick={() => {
-              closeSwipe();
-              onRename();
-            }}
-            aria-label={`Rename game ${game.name}`}
-          >
-            <Pencil size={18} strokeWidth={2} aria-hidden="true" />
-            Rename
-          </button>
+          {canManageGame ? (
+            <button
+              className="swipeRename"
+              type="button"
+              onClick={() => {
+                closeSwipe();
+                onRename();
+              }}
+              aria-label={`Rename game ${game.name}`}
+            >
+              <Pencil size={18} strokeWidth={2} aria-hidden="true" />
+              Rename
+            </button>
+          ) : null}
           <button
             className="swipeDuplicate"
             type="button"
@@ -91,23 +109,25 @@ export function GameRowCard({
               closeSwipe();
               onDuplicate();
             }}
-            aria-label={`Duplicate game ${game.name}`}
+            aria-label={`Play ${game.name} again`}
           >
             <Copy size={18} strokeWidth={2} aria-hidden="true" />
-            Re-play
+            Play again
           </button>
-          <button
-            className="swipeDelete"
-            type="button"
-            onClick={() => {
-              closeSwipe();
-              onDelete();
-            }}
-            aria-label={`Delete game ${game.name}`}
-          >
-            <Trash2 size={18} strokeWidth={2} aria-hidden="true" />
-            Delete
-          </button>
+          {canManageGame ? (
+            <button
+              className="swipeDelete"
+              type="button"
+              onClick={() => {
+                closeSwipe();
+                onDelete();
+              }}
+              aria-label={`Delete game ${game.name}`}
+            >
+              <Trash2 size={18} strokeWidth={2} aria-hidden="true" />
+              Delete
+            </button>
+          ) : null}
         </>
       )}
     >
@@ -136,6 +156,15 @@ export function GameRowCard({
               ) : null}
             </div>
             <div className="gameRow__headMeta">
+              {hasInvitedPlayers ? (
+                <span
+                  className="gameRow__modeBadge gameRow__modeBadge--shared"
+                  aria-label="Shared game"
+                >
+                  <Link size={14} strokeWidth={2.3} aria-hidden="true" />
+                  <span>Shared</span>
+                </span>
+              ) : null}
               {isTeamsGame ? (
                 <span
                   className="gameRow__modeBadge gameRow__modeBadge--teams"

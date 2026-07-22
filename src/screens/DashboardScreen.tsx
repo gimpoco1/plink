@@ -169,6 +169,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
         return (
           <SessionsScreen
             games={props.games}
+            profiles={props.profiles}
             showLocalSessionsHint={props.showLocalSessionsHint}
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
             pendingLocalProfilesCount={props.pendingLocalProfilesCount}
@@ -257,6 +258,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onCreate={props.onCreate}
             onStartQuickSetup={props.onStartQuickSetup}
             onUpsertProfile={props.onUpsertProfile}
+            onJoinGame={props.onJoinGame}
             onEnter={props.onEnter}
           />
         );

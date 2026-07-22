@@ -2,11 +2,16 @@ import { motion } from "framer-motion";
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
+import {
+  getUnsavedReplayPlayers,
+  linkedPlayersCarryIntoReplay,
+} from "../../../utils/replay";
 import { useAppContext } from "../context/AppContext";
 
 export function AppGameRoute() {
   const {
     addPlayer,
+    addPastLinkedPlayer,
     addTeam,
     canViewSavedData,
     cancelGameStartSplash,
@@ -25,12 +30,15 @@ export function AppGameRoute() {
     managePlayersDialogRef,
     openTeamsTabFromGame,
     profiles,
+    pastLinkedPlayers,
     pulseById,
     reduceMotion,
     removePlayer,
+    mergePlayers,
     removeTeam,
     returnToGameSource,
     setView,
+    setSharingOpen,
     showToast,
     triggerPulse,
     triggerGameStartSplash,
@@ -63,6 +71,11 @@ export function AppGameRoute() {
         teamMembers={visibleTeamMembers}
         isAuthenticated={canViewSavedData}
         canUseTeams={entitlements.canUseTeams}
+        canManageGame={currentGame.accessRole !== "collaborator"}
+        canManageLifecycle={
+          currentGame.accessRole !== "collaborator" ||
+          currentGame.collaboratorsCanManage
+        }
         pulseById={pulseById}
         onTriggerPulse={triggerPulse}
         managePlayersDialogRef={managePlayersDialogRef}
@@ -150,8 +163,7 @@ export function AppGameRoute() {
             if (!confirmed) return false;
           }
 
-          updateScore(currentGame.id, playerId, delta);
-          return true;
+          return updateScore(currentGame.id, playerId, delta);
         }}
         onDeletePlayer={async (playerId) => {
           const player = currentGame.players.find(
@@ -165,7 +177,74 @@ export function AppGameRoute() {
             tone: "danger",
           });
           if (!ok) return;
-          removePlayer(currentGame.id, playerId);
+          await removePlayer(currentGame.id, playerId);
+        }}
+        pastLinkedPlayers={pastLinkedPlayers}
+        onAddPastLinkedPlayer={async (collaboratorUserId) => {
+          const linkedPlayer = pastLinkedPlayers.find(
+            (player) => player.userId === collaboratorUserId,
+          );
+          if (!linkedPlayer) return false;
+          const confirmed = await confirmRef.current?.confirm({
+            eyebrow: "Invited player",
+            title: `Add ${capitalizeFirst(linkedPlayer.name)}?`,
+            message:
+              "This game will appear in their account and they’ll be able to update it. Their results will count toward their Stats.",
+            confirmText: "Add player",
+            cancelText: "Cancel",
+          });
+          if (!confirmed) return false;
+          return addPastLinkedPlayer(currentGame.id, collaboratorUserId);
+        }}
+        onMergePlayers={async (linkedPlayerId, rosterPlayerId) => {
+          const linkedPlayer = currentGame.players.find(
+            (player) => player.id === linkedPlayerId,
+          );
+          const rosterPlayer = currentGame.players.find(
+            (player) => player.id === rosterPlayerId,
+          );
+          const rosterProfile = profiles.find(
+            (profile) => profile.id === rosterPlayer?.profileId,
+          );
+          if (!linkedPlayer || !rosterPlayer || !rosterProfile) return;
+          const keepPlayer = await confirmRef.current?.selectPlayer({
+            eyebrow: "Merge duplicate",
+            title: "Which player should stay?",
+            message:
+              "Scores will be combined. Stats count for the player you keep.",
+            messageCase: "normal",
+            layout: "feature",
+            players: [
+              {
+                id: "local",
+                name: rosterProfile.isAccountPlayer
+                  ? `${capitalizeFirst(rosterPlayer.name)} (You)`
+                  : capitalizeFirst(rosterPlayer.name),
+                avatarColor: rosterPlayer.avatarColor,
+                label: rosterProfile.isAccountPlayer
+                  ? "Account player"
+                  : "Saved player",
+                description: "Invited player will be removed",
+              },
+              {
+                id: "linked",
+                name: capitalizeFirst(linkedPlayer.name),
+                avatarColor: linkedPlayer.avatarColor,
+                label: "Invited player",
+                description: "Stays connected to their account",
+              },
+            ],
+            confirmText: "Merge",
+            cancelText: "Cancel",
+            tone: "default",
+          });
+          if (keepPlayer !== "local" && keepPlayer !== "linked") return;
+          await mergePlayers(
+            currentGame.id,
+            linkedPlayerId,
+            rosterPlayerId,
+            keepPlayer,
+          );
         }}
         onUpdateProfile={(profileId, updates) => {
           updateProfileEverywhere(profileId, updates);
@@ -187,7 +266,13 @@ export function AppGameRoute() {
               updateProfileEverywhere(profileId, profileUpdates);
             }
           }
-          updatePlayer(currentGame.id, playerId, updates);
+          const needsDirectGameUpdate =
+            !profileId ||
+            "profileId" in updates ||
+            "teamId" in updates;
+          if (needsDirectGameUpdate) {
+            void updatePlayer(currentGame.id, playerId, updates);
+          }
         }}
         onCreateTeam={(name, icon, members = []) => {
           return addTeam(
@@ -224,14 +309,46 @@ export function AppGameRoute() {
           if (ok) deleteSavedTeam(teamId);
         }}
         onOpenTeamsTab={openTeamsTabFromGame}
+        onInviteOthers={
+          canViewSavedData ? () => setSharingOpen(true) : undefined
+        }
         winnerStats={currentWinnerStats}
         isLatestCompletedGame={currentGameIsLatestCompleted}
-        onReplayGame={() => {
+        onReplayGame={async () => {
           if (!guardSessionCreation()) {
             return;
           }
+          const unsavedPlayers = getUnsavedReplayPlayers(
+            currentGame,
+            profiles,
+          );
+          if (unsavedPlayers.length > 0) {
+            const linkedPlayersCarryOver = linkedPlayersCarryIntoReplay(
+              currentGame,
+            );
+            const confirmed = await confirmRef.current?.confirm({
+              eyebrow: "New game",
+              title: "Play again",
+              message: linkedPlayersCarryOver
+                ? "Invited players will be added automatically. Results for game-only players won’t be added to Stats."
+                : "This starts a separate game with the same players. Invited players won’t stay connected, and results for unsaved players won’t be added to Stats.",
+              messageCase: "normal",
+              playersTitle: linkedPlayersCarryOver
+                ? "Game-only players"
+                : "Some players aren’t saved",
+              players: unsavedPlayers.map((player) => ({
+                name: player.name,
+                avatarColor: player.avatarColor,
+              })),
+              confirmText: "Play again",
+              cancelText: "Cancel",
+              layout: "feature",
+              tone: "default",
+            });
+            if (!confirmed) return;
+          }
           triggerGameStartSplash();
-          const duplicated = duplicateGame(currentGame.id);
+          const duplicated = await duplicateGame(currentGame.id, profiles);
           if (duplicated) {
             setView("game");
           } else {

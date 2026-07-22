@@ -6,6 +6,23 @@ import {
   supabase,
 } from "../lib/supabase";
 import { PASSWORD_RECOVERY_EVENT } from "../lib/nativePlatform";
+import { createForegroundRefreshHandlers } from "../utils/foregroundRefresh";
+
+function areSessionsEquivalent(
+  current: Session | null,
+  next: Session | null,
+) {
+  if (current === next) return true;
+  if (!current || !next) return false;
+
+  return (
+    current.user.id === next.user.id &&
+    current.access_token === next.access_token &&
+    current.refresh_token === next.refresh_token &&
+    current.expires_at === next.expires_at &&
+    current.user.updated_at === next.user.updated_at
+  );
+}
 
 export function useAuthSession() {
   const [session, setSession] = useState<Session | null>(() =>
@@ -25,13 +42,21 @@ export function useAuthSession() {
     let alive = true;
     let refreshRequestId = 0;
 
+    function updateSession(nextSession: Session | null) {
+      setSession((currentSession) =>
+        areSessionsEquivalent(currentSession, nextSession)
+          ? currentSession
+          : nextSession,
+      );
+    }
+
     async function refreshSession() {
       const requestId = ++refreshRequestId;
 
       try {
         const { data, error } = await authClient.auth.getSession();
         if (!alive || requestId !== refreshRequestId) return;
-        if (!error) setSession(data.session);
+        if (!error) updateSession(data.session);
       } catch {
         if (!alive || requestId !== refreshRequestId) return;
       } finally {
@@ -45,22 +70,17 @@ export function useAuthSession() {
     const {
       data: { subscription },
     } = authClient.auth.onAuthStateChange((event, nextSession) => {
-      setSession(nextSession);
+      updateSession(nextSession);
       setLoading(false);
       if (event === "PASSWORD_RECOVERY") {
         setPasswordRecoveryRequestedAt(Date.now());
       }
     });
 
-    function handleWindowFocus() {
-      void refreshSession();
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        void refreshSession();
-      }
-    }
+    const {
+      refreshOnFocus: handleWindowFocus,
+      refreshWhenVisible: handleVisibilityChange,
+    } = createForegroundRefreshHandlers(() => void refreshSession());
 
     function handleStorage(event: StorageEvent) {
       if (!event.key) return;

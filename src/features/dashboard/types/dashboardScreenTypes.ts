@@ -52,6 +52,7 @@ export type DashboardScreenProps = {
   ) => void;
   onDeleteTeam: (id: string) => void;
   onToggleTeamMember: (teamId: string, profileId: string) => void;
+  onJoinGame: (code: string) => Promise<void>;
   onDuplicate: (gameId: string) => void;
   onRename: (gameId: string) => void;
   onEnter: (gameId: string) => void;
