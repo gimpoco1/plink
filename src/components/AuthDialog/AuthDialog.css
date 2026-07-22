@@ -598,15 +598,16 @@
 }
 
 .authDialog__providerRow {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 
 .authDialog__providerBtn {
-  width: 100%;
-  min-height: 48px;
-  padding: 10px 16px;
-  border-radius: 999px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
@@ -614,7 +615,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   color: var(--text);
   font-weight: 850;
   cursor: pointer;
@@ -657,19 +657,7 @@
 }
 
 .authDialog__providerIcon--apple {
-  color: #0b1015;
-}
-
-.authDialog__providerBtn--apple {
-  border-color: #ffffff;
-  background: #ffffff;
-  color: #0b1015;
-}
-
-.authDialog__providerBtn--apple:hover:not(:disabled) {
-  border-color: #f1f1f1;
-  background: #f1f1f1;
-  color: #0b1015;
+  color: #ffffff;
 }
 
 .authDialog__divider {
