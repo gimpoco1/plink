@@ -49,6 +49,16 @@ export function AppDialogs() {
         ref={authDialogRef}
         session={session}
         onOpenChange={setAuthDialogOpen}
+        onConfirmSignOut={() =>
+          confirmRef.current.confirm({
+            eyebrow: "Account",
+            title: "Sign out?",
+            message: "Are you sure you want to sign out?",
+            confirmText: "Sign out",
+            cancelText: "Cancel",
+            tone: "danger",
+          })
+        }
         localGames={authDialogLocalGames}
         localProfiles={authDialogLocalProfiles}
         accountGamesCount={games.length}
