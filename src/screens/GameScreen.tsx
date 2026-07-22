@@ -156,6 +156,7 @@ export function GameScreen(props: GameScreenProps) {
                       targetScore={game.targetScore}
                       startingScore={game.startingScore}
                       winCondition={game.winCondition}
+                      quickScoreValues={game.quickScoreValues}
                       onDelta={async (_participantId, delta) => {
                         const targetPlayerId = participant.members[0]?.id;
                         if (!targetPlayerId) return;
@@ -216,6 +217,7 @@ export function GameScreen(props: GameScreenProps) {
                           targetScore={game.targetScore}
                           startingScore={game.startingScore}
                           winCondition={game.winCondition}
+                          quickScoreValues={game.quickScoreValues}
                           canDelete={canManageGame}
                           onDelta={async (playerId, delta) => {
                             const updated = await onUpdateScore(

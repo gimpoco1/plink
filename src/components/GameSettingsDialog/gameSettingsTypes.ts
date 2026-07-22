@@ -1,4 +1,9 @@
-import type { Game, ScoreDirection, WinCondition } from "../../types";
+import type {
+  Game,
+  QuickScoreValues,
+  ScoreDirection,
+  WinCondition,
+} from "../../types";
 
 export type GameSettingsDialogHandle = {
   open: () => void;
@@ -21,6 +26,7 @@ export type GameSettingsDialogProps = {
     manualEndOnly: boolean;
     timerEnabled: boolean;
     diceEnabled: boolean;
+    quickScoreValues: QuickScoreValues;
     timerMode: "countdown" | "stopwatch";
     timerSeconds: number;
   }) => void;

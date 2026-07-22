@@ -70,6 +70,22 @@ function formatDayLabel(
 export function useGameHistory(game: Game, selectedSubjectId: string) {
   const entries = game.scoreHistory ?? [];
   const isTeamsGame = game.participantMode === "teams";
+  const hasInvitedPlayer = game.players.some(
+    (player) => player.joinedViaInvite === true,
+  );
+  const ownerPlayerId = game.players.find(
+    (player) => player.isGameOwner === true,
+  )?.id;
+  const recordedUpdaterIds = new Set(
+    entries.flatMap((entry) =>
+      entry.updatedByPlayerId ? [entry.updatedByPlayerId] : [],
+    ),
+  );
+  const hasInvitedUpdaterHistory = ownerPlayerId
+    ? [...recordedUpdaterIds].some((playerId) => playerId !== ownerPlayerId)
+    : recordedUpdaterIds.size > 1;
+  const showUpdaterAttribution =
+    hasInvitedPlayer || hasInvitedUpdaterHistory;
   const timeFormat = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -119,7 +135,7 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
         avatarColor: entry.avatarColor,
       };
       const current = result[result.length - 1];
-      const updatedBy = entry.updatedByPlayerId
+      const updatedBy = showUpdaterAttribution && entry.updatedByPlayerId
         ? {
             id: entry.updatedByPlayerId,
             name: entry.updatedByPlayerName ?? "Unknown player",
@@ -154,7 +170,7 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
       }
     }
     return result;
-  }, [currentUserPlayerId, entries, subjectsByPlayerId]);
+  }, [currentUserPlayerId, entries, showUpdaterAttribution, subjectsByPlayerId]);
   const playerOptions = useMemo(() => {
     const subjects = new Map<string, HistorySubject>();
     for (const action of actions) {

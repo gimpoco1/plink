@@ -11,6 +11,7 @@ import type {
   PastLinkedPlayer,
   Player,
   PlayerProfile,
+  QuickScoreValues,
   ScoreDirection,
   ToastState,
   ToastTone,
@@ -68,6 +69,7 @@ import { computeRanks, sortPlayers } from "../utils/ranking";
 import {
   clampScoreForGame,
   hasGameEnded,
+  sanitizeQuickScoreValues,
   shouldSortLowToHigh,
 } from "../utils/scoring";
 
@@ -82,6 +84,7 @@ type CreateGameInput = {
   manualEndOnly?: boolean;
   timerEnabled?: boolean;
   diceEnabled?: boolean;
+  quickScoreValues?: QuickScoreValues;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
   initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
@@ -108,6 +111,7 @@ type UpdateGameSettingsInput = {
   manualEndOnly: boolean;
   timerEnabled: boolean;
   diceEnabled: boolean;
+  quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
 };
@@ -872,6 +876,7 @@ export function useGames(
         : "reach_target";
     const timerEnabled = input.timerEnabled === true;
     const diceEnabled = input.diceEnabled === true;
+    const quickScoreValues = sanitizeQuickScoreValues(input.quickScoreValues);
     const timerMode =
       input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
     const timerSeconds =
@@ -947,6 +952,7 @@ export function useGames(
       manualEndOnly,
       timerEnabled,
       diceEnabled,
+      quickScoreValues,
       timerMode,
       timerSeconds,
       teams,
@@ -1705,6 +1711,7 @@ export function useGames(
     const timerSeconds = Number.isFinite(input.timerSeconds)
       ? Math.trunc(input.timerSeconds)
       : 0;
+    const quickScoreValues = sanitizeQuickScoreValues(input.quickScoreValues);
     if (!name) return false;
     if (
       !input.manualEndOnly &&
@@ -1744,6 +1751,7 @@ export function useGames(
             manualEndOnly: input.manualEndOnly,
             timerEnabled: input.timerEnabled,
             diceEnabled: input.diceEnabled,
+            quickScoreValues,
             timerMode: input.timerMode,
             timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
             collaboratorsCanManage: input.collaboratorsCanManage,
@@ -1797,6 +1805,7 @@ export function useGames(
         manualEndOnly: input.manualEndOnly,
         timerEnabled: input.timerEnabled,
         diceEnabled: input.diceEnabled,
+        quickScoreValues,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
         completionMode: wasAlreadyEnded ? g.completionMode : undefined,

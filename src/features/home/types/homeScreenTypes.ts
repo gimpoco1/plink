@@ -3,6 +3,7 @@ import type {
   Game,
   GameTeam,
   PlayerProfile,
+  QuickScoreValues,
   ScoreDirection,
   TeamMember,
   WinCondition,
@@ -21,6 +22,7 @@ export type QuickSetup = {
   manualEndOnly: boolean;
   timerEnabled: boolean;
   diceEnabled: boolean;
+  quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   suggestedPlayers: { name: string; avatarColor: string; profileId?: string }[];

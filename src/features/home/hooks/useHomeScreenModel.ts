@@ -183,6 +183,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         game.timerEnabled ? game.timerMode : "off",
         game.timerEnabled ? game.timerSeconds : 0,
         game.diceEnabled ? "dice" : "no-dice",
+        game.quickScoreValues.join(","),
       ].join("|");
 
       const existing = setups.get(key);
@@ -203,6 +204,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         manualEndOnly: game.manualEndOnly,
         timerEnabled: game.timerEnabled,
         diceEnabled: game.diceEnabled,
+        quickScoreValues: game.quickScoreValues,
         timerMode: game.timerMode,
         timerSeconds: game.timerSeconds,
         suggestedPlayers: game.players.slice(0, 4).map((player) => {
@@ -271,6 +273,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         manualEndOnly: setup.manualEndOnly,
         timerEnabled: setup.timerEnabled,
         diceEnabled: setup.diceEnabled,
+        quickScoreValues: setup.quickScoreValues,
         timerMode: setup.timerMode,
         timerSeconds: setup.timerSeconds,
         initialPlayers: setup.suggestedPlayers,

@@ -11,8 +11,8 @@ export const HOME_NEW_GAME_OPEN_KEY = "plink:homeNewGameOpen:v1";
 export const LOCAL_SESSIONS_HINT_DISMISSED_KEY =
   "plink:localSessionsHintDismissed:v1";
 export const GAME_TIMER_STORAGE_KEY = "plink:timer:v1";
-export const QUICK_DELTAS = [-2, -1, 1, 2] as const;
 export const MAX_ABS_SCORE = 999999;
+export const DEFAULT_QUICK_SCORE_VALUES = [1, 2] as const;
 export const DEFAULT_TEAM_ICON = "dumbbell";
 export const TEAM_ICONS = [
   { id: "dumbbell", label: "Training" },

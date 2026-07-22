@@ -1,6 +1,7 @@
 import type {
   GameTeam,
   PlayerProfile,
+  QuickScoreValues,
   ScoreDirection,
   TeamMember,
   WinCondition,
@@ -19,6 +20,7 @@ export type NewGameInput = {
   manualEndOnly: boolean;
   timerEnabled: boolean;
   diceEnabled: boolean;
+  quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
   initialPlayers: { name: string; avatarColor: string; profileId?: string }[];

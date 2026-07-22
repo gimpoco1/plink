@@ -1,7 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { AVATAR_COLORS } from "../../constants";
-import type { PlayerProfile, ScoreDirection, WinCondition } from "../../types";
+import type {
+  PlayerProfile,
+  QuickScoreValues,
+  ScoreDirection,
+  WinCondition,
+} from "../../types";
 import { GAME_PRESETS, type GamePreset } from "./gamePresets";
 import { useScrollableListFade } from "../../hooks/useScrollableListFade";
 
@@ -49,6 +54,8 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const [manualEndOnly, setManualEndOnly] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [diceEnabled, setDiceEnabled] = useState(false);
+  const [quickScoreValues, setQuickScoreValues] =
+    useState<QuickScoreValues>([1, 2]);
   const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
     "countdown",
   );
@@ -169,6 +176,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setManualEndOnly(false);
     setTimerEnabled(false);
     setDiceEnabled(false);
+    setQuickScoreValues([1, 2]);
     setTimerMode("countdown");
     setTimerMinutes("5");
     setTimerSeconds("0");
@@ -395,6 +403,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       manualEndOnly: draft.manualEndOnly,
       timerEnabled: draft.timerEnabled,
       diceEnabled: draft.diceEnabled ?? false,
+      quickScoreValues: draft.quickScoreValues ?? [1, 2],
       timerMode: draft.timerMode,
       timerSeconds: draft.timerSeconds,
       initialPlayers: draft.initialPlayers.map(
@@ -421,6 +430,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setManualEndOnly(draft.manualEndOnly);
     setTimerEnabled(draft.timerEnabled);
     setDiceEnabled(draft.diceEnabled ?? false);
+    setQuickScoreValues(draft.quickScoreValues ?? [1, 2]);
     setTimerMode(draft.timerMode);
     setTimerMinutes(String(Math.floor(draft.timerSeconds / 60)));
     setTimerSeconds(String(draft.timerSeconds % 60));
@@ -582,6 +592,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setManualEndOnly(preset.manualEndOnly);
     setTimerEnabled(preset.timerEnabled);
     setDiceEnabled(false);
+    setQuickScoreValues(preset.quickScoreValues);
     setTimerMode(preset.timerMode);
     setTimerMinutes(String(Math.floor(preset.timerSeconds / 60)));
     setTimerSeconds(String(preset.timerSeconds % 60));
@@ -687,6 +698,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       manualEndOnly,
       timerEnabled,
       diceEnabled,
+      quickScoreValues,
       timerMode,
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds || 0) : 300,
@@ -729,6 +741,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       manualEndOnly,
       timerEnabled,
       diceEnabled,
+      quickScoreValues,
       timerMode,
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds) : 300,

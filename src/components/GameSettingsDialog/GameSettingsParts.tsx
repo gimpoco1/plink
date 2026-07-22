@@ -1,5 +1,61 @@
 import type { ReactNode } from "react";
 
+export function QuickScoreSettings({
+  smallValue,
+  largeValue,
+  isValid,
+  onSmallValueChange,
+  onLargeValueChange,
+}: {
+  smallValue: string;
+  largeValue: string;
+  isValid: boolean;
+  onSmallValueChange: (value: string) => void;
+  onLargeValueChange: (value: string) => void;
+}) {
+  return (
+    <fieldset
+      className="quickScoreSettings"
+      aria-labelledby="quick-score-settings-title"
+    >
+      <h3
+        className="quickScoreSettings__title"
+        id="quick-score-settings-title"
+      >
+        Quick score buttons
+      </h3>
+      <p>Choose the two point amounts shown on every player card.</p>
+      <div className="quickScoreSettings__fields">
+        <label className="field">
+          <span className="field__label">Small step</span>
+          <input
+            className="input"
+            value={smallValue}
+            inputMode="numeric"
+            aria-invalid={!isValid}
+            onChange={(event) => onSmallValueChange(event.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span className="field__label">Large step</span>
+          <input
+            className="input"
+            value={largeValue}
+            inputMode="numeric"
+            aria-invalid={!isValid}
+            onChange={(event) => onLargeValueChange(event.target.value)}
+          />
+        </label>
+      </div>
+      {!isValid ? (
+        <span className="quickScoreSettings__error" role="status">
+          Use two different positive values, smallest first.
+        </span>
+      ) : null}
+    </fieldset>
+  );
+}
+
 export function SettingsAuthCard({ onSignIn }: { onSignIn: () => void }) {
   return (
     <div className="settingsAuthCard">

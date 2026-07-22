@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "lucide-react";
-import type { Player, WinCondition } from "../../types";
-import { MAX_ABS_SCORE, QUICK_DELTAS } from "../../constants";
+import type { Player, QuickScoreValues, WinCondition } from "../../types";
+import { MAX_ABS_SCORE } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import {
   capitalizeFirst,
@@ -23,6 +23,7 @@ type Props = {
   targetScore: number;
   startingScore: number;
   winCondition: WinCondition;
+  quickScoreValues: QuickScoreValues;
   canDelete?: boolean;
   onDelta: (playerId: string, delta: number) => void;
   onDelete: (playerId: string) => void;
@@ -40,6 +41,7 @@ export function PlayerCard({
   targetScore,
   startingScore,
   winCondition,
+  quickScoreValues,
   canDelete = true,
   onDelta,
   onDelete,
@@ -84,8 +86,8 @@ export function PlayerCard({
           Math.max(0, (currentScore / Math.max(1, targetScore)) * 100),
         );
 
-  const negDeltas = QUICK_DELTAS.filter((d) => d < 0).reverse();
-  const posDeltas = QUICK_DELTAS.filter((d) => d > 0).reverse();
+  const negDeltas = quickScoreValues.map((value) => -value);
+  const posDeltas = [...quickScoreValues].reverse();
 
   return (
     <SwipeableCard
