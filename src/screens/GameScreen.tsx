@@ -150,10 +150,14 @@ export function GameScreen(props: GameScreenProps) {
                       targetScore={game.targetScore}
                       startingScore={game.startingScore}
                       winCondition={game.winCondition}
-                      onDelta={(_participantId, delta) => {
+                      onDelta={async (_participantId, delta) => {
                         const targetPlayerId = participant.members[0]?.id;
                         if (!targetPlayerId) return;
-                        onUpdateScore(targetPlayerId, delta);
+                        const updated = await onUpdateScore(
+                          targetPlayerId,
+                          delta,
+                        );
+                        if (!updated) return;
                         onTriggerPulse(participant.id, delta);
                         setLastScoreAction({
                           targetId: targetPlayerId,
@@ -197,8 +201,9 @@ export function GameScreen(props: GameScreenProps) {
                           targetScore={game.targetScore}
                           startingScore={game.startingScore}
                           winCondition={game.winCondition}
-                          onDelta={(playerId, delta) => {
-                            onUpdateScore(playerId, delta);
+                          onDelta={async (playerId, delta) => {
+                            const updated = await onUpdateScore(playerId, delta);
+                            if (!updated) return;
                             onTriggerPulse(playerId, delta);
                             scheduleResort();
                             setLastScoreAction({
@@ -240,8 +245,12 @@ export function GameScreen(props: GameScreenProps) {
           </span>
           <button
             type="button"
-            onClick={() => {
-              onUpdateScore(lastScoreAction.targetId, -lastScoreAction.delta);
+            onClick={async () => {
+              const updated = await onUpdateScore(
+                lastScoreAction.targetId,
+                -lastScoreAction.delta,
+              );
+              if (!updated) return;
               onTriggerPulse(lastScoreAction.pulseId, -lastScoreAction.delta);
               if (!isTeamGame) scheduleResort();
               setLastScoreAction(null);

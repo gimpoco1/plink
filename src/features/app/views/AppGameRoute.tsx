@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
+import { isGameComplete } from "../../../utils/ranking";
 import { useAppContext } from "../context/AppContext";
 
 export function AppGameRoute() {
@@ -136,9 +137,22 @@ export function AppGameRoute() {
             }
           });
         }}
-        onUpdateScore={(playerId, delta) =>
-          updateScore(currentGame.id, playerId, delta)
-        }
+        onUpdateScore={async (playerId, delta) => {
+          if (isGameComplete(currentGame)) {
+            const confirmed = await confirmRef.current?.confirm({
+              eyebrow: "Game finished",
+              title: "Change this score?",
+              message:
+                "Changing the score will also update this game's result and stats.",
+              confirmText: "Update score",
+              cancelText: "Cancel",
+            });
+            if (!confirmed) return false;
+          }
+
+          updateScore(currentGame.id, playerId, delta);
+          return true;
+        }}
         onDeletePlayer={async (playerId) => {
           const player = currentGame.players.find(
             (item) => item.id === playerId,

@@ -37,7 +37,10 @@ export type GameScreenProps = {
       saveForLater: boolean;
     }>,
   ) => void;
-  onUpdateScore: (playerId: string, delta: number) => void;
+  onUpdateScore: (
+    playerId: string,
+    delta: number,
+  ) => boolean | Promise<boolean>;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
   onUpdatePlayer: (
     playerId: string,
