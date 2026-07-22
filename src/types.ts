@@ -7,6 +7,8 @@ export type Player = {
   avatarColor: string;
   profileId?: string;
   teamId?: string;
+  joinedViaInvite?: boolean;
+  isGameOwner?: boolean;
 };
 
 export type GameTeam = {
@@ -53,6 +55,8 @@ export type Game = {
   ownerId?: string;
   accessRole?: "owner" | "collaborator";
   isShared?: boolean;
+  linkedPlayerIdForCurrentUser?: string;
+  hasCollaborators?: boolean;
   collaboratorsCanManage: boolean;
   name: string;
   participantMode?: "players" | "teams";

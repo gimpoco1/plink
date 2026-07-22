@@ -14,6 +14,7 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
     managePlayersDialogRef,
     onDeleteProfile,
     onDeletePlayer,
+    onMergePlayers,
     onUpsertProfile,
     onUpsertLocalPlayer,
     onUpdateProfile,
@@ -23,8 +24,21 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
     onDeleteSavedTeam,
     onStartGame,
     onOpenTeamsTab,
+    onInviteOthers,
     takenProfileIds,
   } = model;
+  const localProfileIds = new Set(profiles.map((profile) => profile.id));
+  const linkedPlayerIds = new Set(
+    game.isShared
+      ? game.players
+          .filter(
+            (player) =>
+              player.joinedViaInvite === true ||
+              (!!player.profileId && !localProfileIds.has(player.profileId)),
+          )
+          .map((player) => player.id)
+      : [],
+  );
 
   return (
     <ManagePlayersDialog
@@ -34,12 +48,16 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
       savedTeams={teams}
       savedTeamMembers={teamMembers}
       currentPlayers={game.players}
+      linkedPlayerIds={linkedPlayerIds}
       currentTeams={game.teams}
       canUseTeams={canUseTeams}
       takenProfileIds={takenProfileIds}
       isAuthenticated={isAuthenticated}
       onDeleteProfile={onDeleteProfile}
       onDeletePlayer={onDeletePlayer}
+      onMergePlayers={
+        game.accessRole === "collaborator" ? undefined : onMergePlayers
+      }
       onUpsertProfile={onUpsertProfile}
       onUpsertLocalPlayer={onUpsertLocalPlayer}
       onUpdateProfile={onUpdateProfile}
@@ -49,6 +67,7 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
       onDeleteSavedTeam={onDeleteSavedTeam}
       onStartGame={onStartGame}
       onOpenTeamsTab={onOpenTeamsTab}
+      onInviteOthers={onInviteOthers}
     />
   );
 }

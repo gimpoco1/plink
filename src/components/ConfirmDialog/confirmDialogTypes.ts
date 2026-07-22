@@ -9,6 +9,7 @@ export type ConfirmDetail = {
 };
 export type ConfirmSettingChip = {
   label: string;
+  description?: string;
   icon?: ReactNode;
   tone?: "accent" | "default";
   size?: "default" | "wide";
@@ -32,6 +33,7 @@ export type ConfirmOptions = {
   eyebrow?: string;
   highlights?: string[];
   details?: ConfirmDetail[];
+  detailFlow?: boolean;
   settingChips?: ConfirmSettingChip[];
   players?: ConfirmPlayer[];
   teams?: ConfirmTeam[];

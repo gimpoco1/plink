@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "lucide-react";
 import type { Player, WinCondition } from "../../types";
 import { MAX_ABS_SCORE, QUICK_DELTAS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
@@ -17,6 +18,8 @@ type Props = {
   pulse?: "pos" | "neg";
   isWinner?: boolean;
   isAccountPlayer?: boolean;
+  isLinkedPlayer?: boolean;
+  isGameOwner?: boolean;
   targetScore: number;
   startingScore: number;
   winCondition: WinCondition;
@@ -32,6 +35,8 @@ export function PlayerCard({
   pulse,
   isWinner,
   isAccountPlayer,
+  isLinkedPlayer,
+  isGameOwner,
   targetScore,
   startingScore,
   winCondition,
@@ -46,6 +51,9 @@ export function PlayerCard({
   const displayName = isAccountPlayer
     ? formatAccountPlayerName(player.name)
     : capitalizeFirst(player.name);
+  const linkedNameParts = isLinkedPlayer
+    ? displayName.match(/^(.*\s)?(\S+)$/)
+    : null;
   const initials = getInitials(player.name);
   const scoreClass =
     currentScore > 0
@@ -133,7 +141,29 @@ export function PlayerCard({
               </div>
               <div className="who">
                 <div className="who__nameRow">
-                  <div className="who__name">{displayName}</div>
+                  <div className="who__name">
+                    {linkedNameParts ? (
+                      <>
+                        {linkedNameParts[1] ?? ""}
+                        <span className="who__linkedNameTail">
+                          {linkedNameParts[2]}
+                          <span
+                            className="who__linkedPlayer"
+                            aria-label="Joined with an invitation code"
+                            title="Joined with an invitation code"
+                          >
+                            <Link
+                              size={17}
+                              strokeWidth={2.5}
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </span>
+                      </>
+                    ) : (
+                      displayName
+                    )}
+                  </div>
                   {isWinner ? (
                     <div className="winnerMark" aria-label="Winner">
                       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -148,6 +178,9 @@ export function PlayerCard({
                     </div>
                   ) : null}
                 </div>
+                {isGameOwner ? (
+                  <span className="who__ownerTag">Game owner</span>
+                ) : null}
               </div>
             </div>
 

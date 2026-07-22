@@ -135,6 +135,7 @@ export function useAppModel() {
     addPlayer,
     addTeam,
     removePlayer,
+    mergePlayers,
     removeTeam,
     updatePlayer,
     resetScores,
@@ -199,6 +200,7 @@ export function useAppModel() {
   const [shouldSaveGamePlayersOnSignIn, setShouldSaveGamePlayersOnSignIn] =
     useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [sharingOpen, setSharingOpen] = useState(false);
   const [presetDraft, setPresetDraft] = useState<NewGameInput | null>(null);
   const [presetDraftToken, setPresetDraftToken] = useState(0);
   const [presetDraftIntent, setPresetDraftIntent] =
@@ -791,6 +793,7 @@ export function useAppModel() {
     );
 
     games.forEach((game) => {
+      if (game.isShared) return;
       game.players.forEach((player) => {
         const matchedProfile =
           (player.profileId ? profilesById.get(player.profileId) : null) ??
@@ -1411,6 +1414,7 @@ export function useAppModel() {
     pulseById,
     reduceMotion,
     removePlayer,
+    mergePlayers,
     removeProfileMemberships,
     removeTeam,
     renameGame,
@@ -1418,11 +1422,13 @@ export function useAppModel() {
     returnToGameSource,
     selectGame,
     session,
+    sharingOpen,
     setAuthDialogOpen,
     setGameReturnTab,
     setHomeTab,
     setOpenTeamBuilderRequestToken,
     setShouldSaveGamePlayersOnSignIn,
+    setSharingOpen,
     setView,
     settingsDialogRef,
     showLocalSessionsHint,

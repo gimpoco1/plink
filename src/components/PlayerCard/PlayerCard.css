@@ -104,6 +104,29 @@
   color: #ffffff;
 }
 
+.who__linkedPlayer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 7px;
+  vertical-align: -0.12em;
+  color: var(--accent);
+}
+
+.who__linkedNameTail {
+  white-space: nowrap;
+}
+
+.who__ownerTag {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
 .score {
   font-variant-numeric: tabular-nums;
   font-size: 48px;

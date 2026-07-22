@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { CircleUser } from "lucide-react";
 import { TopBar } from "../../../components/TopBar/TopBar";
 import { GameSharingDialog } from "../../../components/GameSharing/GameSharingDialog";
@@ -25,13 +24,14 @@ export function AppTopBar() {
     returnToGameSource,
     rotateGameInvite,
     session,
+    sharingOpen,
     setCollaboratorsCanManage,
     setShouldSaveGamePlayersOnSignIn,
+    setSharingOpen,
     setView,
     settingsDialogRef,
     view,
   } = useAppContext();
-  const [sharingOpen, setSharingOpen] = useState(false);
   const canManageGame = currentGame?.accessRole !== "collaborator";
   const canManageLifecycle =
     canManageGame || currentGame?.collaboratorsCanManage === true;

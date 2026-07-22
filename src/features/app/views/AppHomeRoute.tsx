@@ -170,7 +170,7 @@ export function AppHomeRoute() {
             maxLength: 28,
           });
           if (nextName) {
-            renameGame(gameId, nextName);
+            await renameGame(gameId, nextName);
           }
         }}
         onEnter={(gameId) => {
@@ -188,7 +188,7 @@ export function AppHomeRoute() {
             tone: "danger",
           });
           if (!ok) return;
-          deleteGame(gameId);
+          await deleteGame(gameId);
         }}
       />
     </motion.div>

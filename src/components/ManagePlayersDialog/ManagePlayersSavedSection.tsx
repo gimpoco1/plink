@@ -1,3 +1,4 @@
+import { Link } from "lucide-react";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRosterPicker";
 import { useManagePlayersDialogContext } from "./ManagePlayersDialogContext";
@@ -6,11 +7,13 @@ import { ManagePlayersQueue } from "./ManagePlayersQueue";
 
 export function ManagePlayersSavedSection() {
   const {
+    close,
     filteredProfiles,
     isAuthenticated,
     isCreating,
     newPlayerValidationMessage,
     onOpenTeamsTab,
+    onInviteOthers,
     pendingName,
     profiles,
     saveForLater,
@@ -79,6 +82,19 @@ export function ManagePlayersSavedSection() {
           <ManagePlayerCard key={profile.id} kind="saved" profile={profile} />
         ))}
       </SearchableRosterPicker>
+      {onInviteOthers ? (
+        <button
+          className="managePlayersDialog__inviteOthers"
+          type="button"
+          onClick={() => {
+            close();
+            onInviteOthers();
+          }}
+        >
+          <Link size={16} strokeWidth={2.4} aria-hidden="true" />
+          Share invite code
+        </button>
+      ) : null}
       <ManagePlayersQueue />
     </section>
   );

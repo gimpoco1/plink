@@ -15,8 +15,8 @@ export function GameScreen(props: GameScreenProps) {
   const {
     savedTeamIconByName,
     takenProfileIds,
-    accountProfileIds,
     getPlayerDisplayName,
+    isCurrentUserPlayer,
     hasPlayers,
     isTeamGame,
     isTeamsMode,
@@ -192,9 +192,7 @@ export function GameScreen(props: GameScreenProps) {
                     {section.players.map((player) => {
                       const rank = ranks.get(player.id) ?? 1;
                       const pulse = pulseById[player.id];
-                      const isAccountPlayer =
-                        !!player.profileId &&
-                        accountProfileIds.has(player.profileId);
+                      const isAccountPlayer = isCurrentUserPlayer(player);
                       return (
                         <PlayerCard
                           key={player.id}
@@ -204,6 +202,13 @@ export function GameScreen(props: GameScreenProps) {
                           pulse={pulse}
                           isWinner={winner?.id === player.id}
                           isAccountPlayer={isAccountPlayer}
+                          isLinkedPlayer={player.joinedViaInvite === true}
+                          isGameOwner={
+                            game.hasCollaborators === true &&
+                            (game.accessRole === "collaborator"
+                              ? player.isGameOwner === true
+                              : isAccountPlayer)
+                          }
                           targetScore={game.targetScore}
                           startingScore={game.startingScore}
                           winCondition={game.winCondition}

@@ -1,4 +1,4 @@
-import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, GitMerge, Link, Pencil, Plus, Trash2, X } from "lucide-react";
 import { AVATAR_COLORS } from "../../constants";
 import type { Player, PlayerProfile } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
@@ -11,7 +11,13 @@ import {
 import { useManagePlayersDialogContext } from "./ManagePlayersDialogContext";
 
 type Props =
-  | { kind: "current"; player: Player; profile?: PlayerProfile }
+  | {
+      kind: "current";
+      player: Player;
+      profile?: PlayerProfile;
+      isLinkedAccountPlayer?: boolean;
+      mergeCandidate?: Player;
+    }
   | { kind: "saved"; profile: PlayerProfile };
 
 export function ManagePlayerCard(props: Props) {
@@ -30,8 +36,13 @@ export function ManagePlayerCard(props: Props) {
     props.kind === "current"
       ? model.currentPlayerNameValidationMessage
       : model.savedProfileNameValidationMessage;
+  const isLinkedAccountPlayer =
+    props.kind === "current" && props.isLinkedAccountPlayer === true;
+  const mergeCandidate =
+    props.kind === "current" ? props.mergeCandidate : undefined;
 
   function beginEditing() {
+    if (isLinkedAccountPlayer) return;
     model.setEditingPlayerId(props.kind === "current" ? entity.id : null);
     model.setEditingProfileId(props.kind === "saved" ? entity.id : null);
     model.setEditingName(entity.name);
@@ -87,9 +98,29 @@ export function ManagePlayerCard(props: Props) {
             onEdit={beginEditing}
             player={player}
             profile={profile}
+            isLinkedAccountPlayer={isLinkedAccountPlayer}
           />
         )}
       </div>
+      {player && isLinkedAccountPlayer && mergeCandidate ? (
+        <div className="managePlayersDialog__mergeFooter">
+          <span className="managePlayersDialog__mergeFooterCopy">
+            <GitMerge size={15} strokeWidth={2.4} aria-hidden="true" />
+            <span>Another player found with same name</span>
+          </span>
+          <button
+            className="managePlayersDialog__mergeBtn"
+            type="button"
+            onClick={() =>
+              void model.onMergePlayers?.(player.id, mergeCandidate.id)
+            }
+            aria-label={`Merge ${mergeCandidate.name} into ${displayName}`}
+            title={`Merge with ${mergeCandidate.name}`}
+          >
+            Merge
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -177,11 +208,13 @@ function PlayerIdentity({
   onEdit,
   player,
   profile,
+  isLinkedAccountPlayer,
 }: {
   displayName: string;
   onEdit: () => void;
   player?: Player;
   profile?: PlayerProfile;
+  isLinkedAccountPlayer: boolean;
 }) {
   const model = useManagePlayersDialogContext();
   const isTaken = !!profile && model.takenProfileIds.has(profile.id);
@@ -190,8 +223,33 @@ function PlayerIdentity({
     <div className="managePlayersDialog__identity">
       <div className="managePlayersDialog__identityTop">
         <div className="managePlayersDialog__identityCopy">
-          <span className="managePlayersDialog__name">{displayName}</span>
-          {isTaken ? (
+          <span className="managePlayersDialog__nameRow">
+            <span className="managePlayersDialog__name">{displayName}</span>
+            {isLinkedAccountPlayer ? (
+              <span
+                className="managePlayersDialog__linkedIcon"
+                aria-label="Joined with an invitation code"
+                title="Joined with an invitation code"
+              >
+                <Link size={14} strokeWidth={2.5} aria-hidden="true" />
+              </span>
+            ) : null}
+          </span>
+          {player ? (
+            <span
+              className={`managePlayersDialog__meta${
+                isLinkedAccountPlayer
+                  ? " managePlayersDialog__meta--linked"
+                  : ""
+              }`}
+            >
+              {isLinkedAccountPlayer
+                ? "Linked player"
+                : profile?.isAccountPlayer
+                  ? "Account player"
+                  : "Saved player"}
+            </span>
+          ) : isTaken ? (
             <span className="managePlayersDialog__meta">In game</span>
           ) : null}
         </div>
@@ -215,15 +273,17 @@ function PlayerIdentity({
               </button>
             )
           ) : null}
-          <button
-            className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
-            type="button"
-            onClick={onEdit}
-            aria-label={`Edit ${displayName}`}
-            title="Edit"
-          >
-            <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
-          </button>
+          {!isLinkedAccountPlayer ? (
+            <button
+              className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
+              type="button"
+              onClick={onEdit}
+              aria-label={`Edit ${displayName}`}
+              title="Edit"
+            >
+              <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
+            </button>
+          ) : null}
           {player ? (
             <button
               className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"

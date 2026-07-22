@@ -27,12 +27,17 @@ export type ManagePlayersDialogProps = {
   savedTeams: GameTeam[];
   savedTeamMembers: TeamMember[];
   currentPlayers: Player[];
+  linkedPlayerIds: Set<string>;
   currentTeams: GameTeam[];
   canUseTeams: boolean;
   takenProfileIds: Set<string>;
   isAuthenticated: boolean;
   onDeleteProfile: (profileId: string) => void;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
+  onMergePlayers?: (
+    linkedPlayerId: string,
+    rosterPlayerId: string,
+  ) => Promise<void> | void;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
   onUpsertLocalPlayer: (
     name: string,
@@ -57,6 +62,7 @@ export type ManagePlayersDialogProps = {
   onDeleteSavedTeam: (teamId: string, teamName: string) => Promise<void> | void;
   onStartGame: (profileIds: string[], newPlayers: StagedCustomPlayer[]) => void;
   onOpenTeamsTab: () => void;
+  onInviteOthers?: () => void;
 };
 
 export function useManagePlayersDialogModel(
@@ -69,12 +75,14 @@ export function useManagePlayersDialogModel(
     savedTeams,
     savedTeamMembers,
     currentPlayers,
+    linkedPlayerIds,
     currentTeams,
     canUseTeams,
     takenProfileIds,
     isAuthenticated,
     onDeleteProfile,
     onDeletePlayer,
+    onMergePlayers,
     onUpsertProfile,
     onUpsertLocalPlayer,
     onUpdateProfile,
@@ -84,6 +92,7 @@ export function useManagePlayersDialogModel(
     onDeleteSavedTeam,
     onStartGame,
     onOpenTeamsTab,
+    onInviteOthers,
   } = props;
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const [pendingName, setPendingName] = useState("");
@@ -390,12 +399,15 @@ export function useManagePlayersDialogModel(
     isCreating,
     isPlayersGame,
     isTeamsGame,
+    linkedPlayerIds,
     newPlayerValidationMessage,
     onDeletePlayer,
+    onMergePlayers,
     onDeleteProfile,
     onDeleteSavedTeam,
     onDeleteTeam,
     onOpenTeamsTab,
+    onInviteOthers,
     onStartGame,
     onUpdatePlayer,
     onUpdateProfile,

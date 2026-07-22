@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
@@ -39,7 +40,14 @@ export function ConfirmDialogBody({
                   {chip.icon}
                 </span>
               ) : null}
-              <span>{chip.label}</span>
+              <span className="dialog__settingChipCopy">
+                <span className="dialog__settingChipLabel">{chip.label}</span>
+                {chip.description ? (
+                  <span className="dialog__settingChipDescription">
+                    {chip.description}
+                  </span>
+                ) : null}
+              </span>
             </span>
           ))}
         </div>
@@ -93,30 +101,61 @@ function ConfirmDetails({ options }: { options: ConfirmOptions }) {
       </div>
     );
   }
+  if (options.detailFlow) {
+    return (
+      <div className="dialog__detailFlow" aria-label="Merge workflow">
+        {options.details.map((detail, index) => (
+          <div
+            className="dialog__detailFlowPart"
+            key={`${detail.label}-${detail.value}`}
+          >
+            <DetailCard detail={detail} />
+            {index < options.details!.length - 1 ? (
+              <span className="dialog__detailFlowArrow" aria-hidden="true">
+                <ArrowRight size={22} strokeWidth={2.6} />
+              </span>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="dialog__detailCards" aria-label="Game details">
       {options.details.map((detail) => (
-        <div
+        <DetailCard
+          detail={detail}
           key={`${detail.label}-${detail.value}`}
-          className={`dialog__detailCard${
-            detail.size === "wide"
-              ? " dialog__detailCard--wide"
-              : detail.size === "compact"
-                ? " dialog__detailCard--compact"
-                : ""
-          }`}
-        >
-          {detail.icon ? (
-            <span className="dialog__detailCardIcon" aria-hidden="true">
-              {detail.icon}
-            </span>
-          ) : null}
-          <span className="dialog__detailCardCopy">
-            <span className="dialog__detailLabel">{detail.label}</span>
-            <span className="dialog__detailValue">{detail.value}</span>
-          </span>
-        </div>
+        />
       ))}
+    </div>
+  );
+}
+
+function DetailCard({
+  detail,
+}: {
+  detail: NonNullable<ConfirmOptions["details"]>[number];
+}) {
+  return (
+    <div
+      className={`dialog__detailCard${
+        detail.size === "wide"
+          ? " dialog__detailCard--wide"
+          : detail.size === "compact"
+            ? " dialog__detailCard--compact"
+            : ""
+      }`}
+    >
+      {detail.icon ? (
+        <span className="dialog__detailCardIcon" aria-hidden="true">
+          {detail.icon}
+        </span>
+      ) : null}
+      <span className="dialog__detailCardCopy">
+        <span className="dialog__detailLabel">{detail.label}</span>
+        <span className="dialog__detailValue">{detail.value}</span>
+      </span>
     </div>
   );
 }

@@ -44,6 +44,10 @@ export type GameScreenProps = {
     delta: number,
   ) => boolean | Promise<boolean>;
   onDeletePlayer: (playerId: string) => Promise<void> | void;
+  onMergePlayers?: (
+    linkedPlayerId: string,
+    rosterPlayerId: string,
+  ) => Promise<void> | void;
   onUpdatePlayer: (
     playerId: string,
     updates: Partial<
@@ -58,6 +62,7 @@ export type GameScreenProps = {
   onDeleteTeam: (teamId: string, teamName: string) => Promise<void> | void;
   onDeleteSavedTeam: (teamId: string, teamName: string) => Promise<void> | void;
   onOpenTeamsTab: () => void;
+  onInviteOthers?: () => void;
   winnerStats: ProfileStats | TeamStats | null;
   isLatestCompletedGame: boolean;
   onReplayGame: () => void;

@@ -44,8 +44,19 @@ export function useGameScreenModel(props: GameScreenProps) {
     [profiles],
   );
 
+  function isCurrentUserPlayer(player: Player) {
+    if (game.accessRole === "collaborator") {
+      return player.id === game.linkedPlayerIdForCurrentUser;
+    }
+    return (
+      player.joinedViaInvite !== true &&
+      !!player.profileId &&
+      accountProfileIds.has(player.profileId)
+    );
+  }
+
   function getPlayerDisplayName(player: Player) {
-    return player.profileId && accountProfileIds.has(player.profileId)
+    return isCurrentUserPlayer(player)
       ? formatAccountPlayerName(player.name)
       : capitalizeFirst(player.name);
   }
@@ -219,6 +230,7 @@ export function useGameScreenModel(props: GameScreenProps) {
     takenProfileIds,
     accountProfileIds,
     getPlayerDisplayName,
+    isCurrentUserPlayer,
     hasPlayers,
     isTeamGame,
     isTeamsMode,

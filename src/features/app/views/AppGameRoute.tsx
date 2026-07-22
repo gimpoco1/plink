@@ -1,4 +1,9 @@
 import { motion } from "framer-motion";
+import {
+  ChartNoAxesColumnIncreasing,
+  Link,
+  UserMinus,
+} from "lucide-react";
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
@@ -28,9 +33,11 @@ export function AppGameRoute() {
     pulseById,
     reduceMotion,
     removePlayer,
+    mergePlayers,
     removeTeam,
     returnToGameSource,
     setView,
+    setSharingOpen,
     showToast,
     triggerPulse,
     triggerGameStartSplash,
@@ -171,6 +178,58 @@ export function AppGameRoute() {
           if (!ok) return;
           await removePlayer(currentGame.id, playerId);
         }}
+        onMergePlayers={async (linkedPlayerId, rosterPlayerId) => {
+          const linkedPlayer = currentGame.players.find(
+            (player) => player.id === linkedPlayerId,
+          );
+          const rosterPlayer = currentGame.players.find(
+            (player) => player.id === rosterPlayerId,
+          );
+          if (!linkedPlayer || !rosterPlayer) return;
+          const confirmed = await confirmRef.current?.confirm({
+            eyebrow: "Linked player",
+            title: "Merge players?",
+            bodyTitle: "Scores & history move",
+            message: "The saved player stays in your roster for future games.",
+            layout: "feature",
+            detailFlow: true,
+            details: [
+              {
+                label: "Saved player",
+                value: capitalizeFirst(rosterPlayer.name),
+                icon: <UserMinus size={20} strokeWidth={2.4} />,
+              },
+              {
+                label: "Linked player",
+                value: capitalizeFirst(linkedPlayer.name),
+                icon: <Link size={20} strokeWidth={2.4} />,
+              },
+            ],
+            settingChips: [
+              {
+                label: "Game stats → Linked player",
+                description: "Only this game is counted for the linked player.",
+                icon: (
+                  <ChartNoAxesColumnIncreasing
+                    size={17}
+                    strokeWidth={2.4}
+                  />
+                ),
+                tone: "accent",
+                size: "wide",
+              },
+            ],
+            confirmText: "Merge players",
+            cancelText: "Keep separate",
+            tone: "default",
+          });
+          if (!confirmed) return;
+          await mergePlayers(
+            currentGame.id,
+            linkedPlayerId,
+            rosterPlayerId,
+          );
+        }}
         onUpdateProfile={(profileId, updates) => {
           updateProfileEverywhere(profileId, updates);
         }}
@@ -191,7 +250,13 @@ export function AppGameRoute() {
               updateProfileEverywhere(profileId, profileUpdates);
             }
           }
-          updatePlayer(currentGame.id, playerId, updates);
+          const needsDirectGameUpdate =
+            !profileId ||
+            "profileId" in updates ||
+            "teamId" in updates;
+          if (needsDirectGameUpdate) {
+            void updatePlayer(currentGame.id, playerId, updates);
+          }
         }}
         onCreateTeam={(name, icon, members = []) => {
           return addTeam(
@@ -228,6 +293,9 @@ export function AppGameRoute() {
           if (ok) deleteSavedTeam(teamId);
         }}
         onOpenTeamsTab={openTeamsTabFromGame}
+        onInviteOthers={
+          canViewSavedData ? () => setSharingOpen(true) : undefined
+        }
         winnerStats={currentWinnerStats}
         isLatestCompletedGame={currentGameIsLatestCompleted}
         onReplayGame={() => {

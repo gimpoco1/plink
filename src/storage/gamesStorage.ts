@@ -69,6 +69,8 @@ function sanitizePlayers(
         profileId:
           typeof obj.profileId === "string" ? obj.profileId : undefined,
         teamId: typeof obj.teamId === "string" ? obj.teamId : undefined,
+        joinedViaInvite: obj.joinedViaInvite === true ? true : undefined,
+        isGameOwner: obj.isGameOwner === true ? true : undefined,
       };
     })
     .filter(Boolean) as Game["players"];

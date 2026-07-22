@@ -59,6 +59,42 @@ import {
   type StatsScreenProps,
 } from "../../../screens/StatsScreen";
 
+function buildStatsProfiles(games: Game[], profiles: PlayerProfile[]) {
+  const profileById = new Map(
+    profiles.map((profile) => [profile.id, profile]),
+  );
+  const localProfileIds = new Set(profileById.keys());
+  const linkedProfileIds = new Set<string>();
+  const linkedProfileUpdatedAt = new Map<string, number>();
+
+  games.forEach((game) => {
+    game.players.forEach((player) => {
+      if (!player.profileId || player.joinedViaInvite !== true) return;
+      if (localProfileIds.has(player.profileId)) return;
+
+      linkedProfileIds.add(player.profileId);
+      const updatedAt = game.updatedAt ?? game.createdAt;
+      if ((linkedProfileUpdatedAt.get(player.profileId) ?? -1) > updatedAt) {
+        return;
+      }
+
+      linkedProfileUpdatedAt.set(player.profileId, updatedAt);
+      profileById.set(player.profileId, {
+        id: player.profileId,
+        name: player.name,
+        avatarColor: player.avatarColor,
+        createdAt: player.createdAt,
+        updatedAt,
+      });
+    });
+  });
+
+  return {
+    profiles: [...profileById.values()],
+    linkedProfileIds,
+  };
+}
+
 export function useStatsScreenModel(props: StatsScreenProps) {
   const {
     games,
@@ -113,29 +149,35 @@ export function useStatsScreenModel(props: StatsScreenProps) {
     () => filterGamesForChart(games, rateChartGame),
     [games, rateChartGame],
   );
+  const statsProfileData = useMemo(
+    () => buildStatsProfiles(games, profiles),
+    [games, profiles],
+  );
+  const statsProfiles = statsProfileData.profiles;
+  const linkedProfileIds = statsProfileData.linkedProfileIds;
   const profileById = useMemo(
-    () => new Map(profiles.map((profile) => [profile.id, profile])),
-    [profiles],
+    () => new Map(statsProfiles.map((profile) => [profile.id, profile])),
+    [statsProfiles],
   );
   const playerReports = useMemo(
-    () => buildPlayerReports(games, profiles),
-    [games, profiles],
+    () => buildPlayerReports(games, statsProfiles),
+    [games, statsProfiles],
   );
   const teamReports = useMemo(
     () => buildTeamReports(games, teams, teamMembers),
     [games, teamMembers, teams],
   );
   const winsChartPlayerReports = useMemo(
-    () => buildPlayerReports(winsChartGames, profiles),
-    [profiles, winsChartGames],
+    () => buildPlayerReports(winsChartGames, statsProfiles),
+    [statsProfiles, winsChartGames],
   );
   const winsChartTeamReports = useMemo(
     () => buildTeamReports(winsChartGames, teams, teamMembers),
     [teamMembers, teams, winsChartGames],
   );
   const rateChartPlayerReports = useMemo(
-    () => buildPlayerReports(rateChartGames, profiles),
-    [profiles, rateChartGames],
+    () => buildPlayerReports(rateChartGames, statsProfiles),
+    [rateChartGames, statsProfiles],
   );
   const rateChartTeamReports = useMemo(
     () => buildTeamReports(rateChartGames, teams, teamMembers),
@@ -144,15 +186,18 @@ export function useStatsScreenModel(props: StatsScreenProps) {
 
   const playerOptions = useMemo<SelectableEntity[]>(
     () =>
-      profiles
+      statsProfiles
         .map((profile) => {
           const report = playerReports.get(profile.id);
+          const sessionCount = formatSessionCount(report?.gamesPlayed ?? 0);
           return {
             id: profile.id,
             name: profile.isAccountPlayer
               ? formatAccountPlayerName(profile.name)
               : profile.name,
-            subtitle: formatSessionCount(report?.gamesPlayed ?? 0),
+            subtitle: linkedProfileIds.has(profile.id)
+              ? `Linked player · ${sessionCount}`
+              : sessionCount,
             avatarColor: profile.avatarColor,
             isAccountPlayer: profile.isAccountPlayer,
           };
@@ -166,7 +211,7 @@ export function useStatsScreenModel(props: StatsScreenProps) {
           }
           return a.name.localeCompare(b.name);
         }),
-    [playerReports, profiles],
+    [linkedProfileIds, playerReports, statsProfiles],
   );
 
   const teamOptions = useMemo<SelectableEntity[]>(
