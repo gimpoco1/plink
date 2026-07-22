@@ -616,17 +616,15 @@ export function useGames(session: Session | null, authLoading = false) {
       reachedAt: now,
     }));
 
-    // Find the next available number if duplicating multiple times
-    // Matches "NAME (N)" and extracts N
+    // Treat the unnumbered original as game #1, then find the highest
+    // existing duplicate number so the first duplicate starts at #2.
     const baseName = original.name.replace(/\s\(\d+\)$/, "");
     const siblings = games.filter((g) => g.name.startsWith(baseName));
-    let maxNum = 0;
+    let maxNum = 1;
     for (const s of siblings) {
       const match = s.name.match(/\((\d+)\)$/);
       if (match) {
         maxNum = Math.max(maxNum, parseInt(match[1], 10));
-      } else if (s.name === baseName) {
-        // Technically the base name is "0", but we start with (1)
       }
     }
 
