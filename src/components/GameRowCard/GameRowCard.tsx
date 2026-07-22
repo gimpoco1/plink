@@ -19,6 +19,7 @@ import "./GameRowCard.css";
 
 type Props = {
   game: Game;
+  accountProfileIds: ReadonlySet<string>;
   createdLabel: string;
   onEnter: () => void;
   onDuplicate: () => void;
@@ -28,6 +29,7 @@ type Props = {
 
 export function GameRowCard({
   game,
+  accountProfileIds,
   createdLabel,
   onEnter,
   onDuplicate,
@@ -57,8 +59,17 @@ export function GameRowCard({
       ) ?? null
     );
   }, [participants, winner]);
+  const winnerIsCurrentAccount = Boolean(
+    winner &&
+      !isTeamsGame &&
+      (game.accessRole === "collaborator"
+        ? winner.id === game.linkedPlayerIdForCurrentUser
+        : !!winner.profileId && accountProfileIds.has(winner.profileId)),
+  );
   const winnerName = winner
-    ? isTeamsGame
+    ? winnerIsCurrentAccount
+      ? "You"
+      : isTeamsGame
       ? (winningParticipant?.name ?? capitalizeFirst(winner.name))
       : capitalizeFirst(winner.name)
     : null;
@@ -95,10 +106,10 @@ export function GameRowCard({
               closeSwipe();
               onDuplicate();
             }}
-            aria-label={`Duplicate game ${game.name}`}
+            aria-label={`Play ${game.name} again`}
           >
             <Copy size={18} strokeWidth={2} aria-hidden="true" />
-            Re-play
+            Play again
           </button>
           {canManageGame ? (
             <button

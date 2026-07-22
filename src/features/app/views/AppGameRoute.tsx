@@ -7,6 +7,7 @@ import {
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
+import { getUnsavedReplayPlayers } from "../../../utils/replay";
 import { useAppContext } from "../context/AppContext";
 
 export function AppGameRoute() {
@@ -298,12 +299,35 @@ export function AppGameRoute() {
         }
         winnerStats={currentWinnerStats}
         isLatestCompletedGame={currentGameIsLatestCompleted}
-        onReplayGame={() => {
+        onReplayGame={async () => {
           if (!guardSessionCreation()) {
             return;
           }
+          const unsavedPlayers = getUnsavedReplayPlayers(
+            currentGame,
+            profiles,
+          );
+          if (unsavedPlayers.length > 0) {
+            const confirmed = await confirmRef.current?.confirm({
+              eyebrow: "New game",
+              title: "Play again",
+              message:
+                "This starts a separate game with the same players. Linked players won’t stay connected, and results for unsaved players won’t be added to Stats.",
+              messageCase: "normal",
+              playersTitle: "Some players aren’t saved",
+              players: unsavedPlayers.map((player) => ({
+                name: player.name,
+                avatarColor: player.avatarColor,
+              })),
+              confirmText: "Play again",
+              cancelText: "Cancel",
+              layout: "feature",
+              tone: "default",
+            });
+            if (!confirmed) return;
+          }
           triggerGameStartSplash();
-          const duplicated = duplicateGame(currentGame.id);
+          const duplicated = duplicateGame(currentGame.id, profiles);
           if (duplicated) {
             setView("game");
           } else {

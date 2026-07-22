@@ -288,6 +288,25 @@ function rowToGame(row: GameRow, currentUserId?: string): Game {
   };
 }
 
+export function parseRemoteGameChange(
+  input: unknown,
+  currentUserId: string,
+): Game | null {
+  if (!input || typeof input !== "object") return null;
+  const row = input as Record<string, unknown>;
+  if (
+    typeof row.id !== "string" ||
+    typeof row.user_id !== "string" ||
+    typeof row.name !== "string" ||
+    !Array.isArray(row.players) ||
+    typeof row.created_at !== "number" ||
+    typeof row.updated_at !== "number"
+  ) {
+    return null;
+  }
+  return rowToGame(input as GameRow, currentUserId);
+}
+
 function isMissingScoreHistoryColumn(error: unknown) {
   return getErrorMessage(error).includes("score_history");
 }

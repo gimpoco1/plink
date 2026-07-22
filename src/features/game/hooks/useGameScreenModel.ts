@@ -45,11 +45,11 @@ export function useGameScreenModel(props: GameScreenProps) {
   );
 
   function isCurrentUserPlayer(player: Player) {
-    if (game.accessRole === "collaborator") {
+    if (game.isShared && game.accessRole === "collaborator") {
       return player.id === game.linkedPlayerIdForCurrentUser;
     }
     return (
-      player.joinedViaInvite !== true &&
+      (!game.isShared || player.joinedViaInvite !== true) &&
       !!player.profileId &&
       accountProfileIds.has(player.profileId)
     );

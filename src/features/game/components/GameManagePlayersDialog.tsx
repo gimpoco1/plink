@@ -27,14 +27,13 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
     onInviteOthers,
     takenProfileIds,
   } = model;
-  const localProfileIds = new Set(profiles.map((profile) => profile.id));
   const linkedPlayerIds = new Set(
     game.isShared
       ? game.players
           .filter(
             (player) =>
               player.joinedViaInvite === true ||
-              (!!player.profileId && !localProfileIds.has(player.profileId)),
+              player.id === game.linkedPlayerIdForCurrentUser,
           )
           .map((player) => player.id)
       : [],

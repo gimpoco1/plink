@@ -202,8 +202,12 @@ export function GameScreen(props: GameScreenProps) {
                           pulse={pulse}
                           isWinner={winner?.id === player.id}
                           isAccountPlayer={isAccountPlayer}
-                          isLinkedPlayer={player.joinedViaInvite === true}
+                          isLinkedPlayer={
+                            game.isShared === true &&
+                            player.joinedViaInvite === true
+                          }
                           isGameOwner={
+                            game.isShared === true &&
                             game.hasCollaborators === true &&
                             (game.accessRole === "collaborator"
                               ? player.isGameOwner === true

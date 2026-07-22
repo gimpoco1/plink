@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Crown } from "lucide-react";
-import type { Game } from "../types";
+import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
 import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
 import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
@@ -12,6 +12,7 @@ import "../features/sessions/styles/SessionsScreen.css";
 
 type SessionsScreenProps = {
   games: Game[];
+  profiles: PlayerProfile[];
   showLocalSessionsHint: boolean;
   pendingLocalSessionsCount: number;
   pendingLocalProfilesCount: number;
@@ -26,6 +27,7 @@ type SessionsScreenProps = {
 
 export function SessionsScreen({
   games,
+  profiles,
   showLocalSessionsHint,
   pendingLocalSessionsCount,
   pendingLocalProfilesCount,
@@ -59,6 +61,15 @@ export function SessionsScreen({
         year: "numeric",
       }),
     [],
+  );
+  const accountProfileIds = useMemo(
+    () =>
+      new Set(
+        profiles
+          .filter((profile) => profile.isAccountPlayer)
+          .map((profile) => profile.id),
+      ),
+    [profiles],
   );
 
   const sessions = useMemo(() => {
@@ -181,6 +192,7 @@ export function SessionsScreen({
                 <GameRowCard
                   key={game.id}
                   game={game}
+                  accountProfileIds={accountProfileIds}
                   createdLabel={dateFormat.format(new Date(game.createdAt))}
                   onEnter={() => onEnter(game.id)}
                   onDuplicate={() => onDuplicate(game.id)}

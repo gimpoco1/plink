@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { DashboardScreen } from "../../../screens/DashboardScreen";
+import { getUnsavedReplayPlayers } from "../../../utils/replay";
 import { useAppContext } from "../context/AppContext";
 
 export function AppHomeRoute() {
@@ -144,12 +145,34 @@ export function AppHomeRoute() {
         onToggleTeamMember={(teamId, profileId) => {
           toggleTeamMember(teamId, profileId);
         }}
-        onDuplicate={(gameId) => {
+        onDuplicate={async (gameId) => {
           if (!guardSessionCreation()) {
             return;
           }
+          const game = games.find((item) => item.id === gameId);
+          if (!game) return;
+          const unsavedPlayers = getUnsavedReplayPlayers(game, profiles);
+          if (unsavedPlayers.length > 0) {
+            const confirmed = await confirmRef.current?.confirm({
+              eyebrow: "New game",
+              title: "Play again",
+              message:
+                "This starts a separate game with the same players. Linked players won’t stay connected, and results for unsaved players won’t be added to Stats.",
+              messageCase: "normal",
+              playersTitle: "Some players aren’t saved",
+              players: unsavedPlayers.map((player) => ({
+                name: player.name,
+                avatarColor: player.avatarColor,
+              })),
+              confirmText: "Play again",
+              cancelText: "Cancel",
+              layout: "feature",
+              tone: "default",
+            });
+            if (!confirmed) return;
+          }
           triggerGameStartSplash();
-          const duplicated = duplicateGame(gameId);
+          const duplicated = duplicateGame(gameId, profiles);
           if (duplicated) {
             setGameReturnTab(homeTab);
             setView("game");

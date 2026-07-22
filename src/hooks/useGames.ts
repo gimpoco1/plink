@@ -5,6 +5,7 @@ import type {
   Game,
   GameTeam,
   Player,
+  PlayerProfile,
   ScoreDirection,
   ToastState,
   ToastTone,
@@ -14,6 +15,7 @@ import { MAX_ABS_SCORE, DEFAULT_TEAM_ICON } from "../constants";
 import { supabase } from "../lib/supabase";
 import { clampName, formatPlayerName, formatTeamName } from "../utils/text";
 import { uid } from "../utils/id";
+import { getSavedReplayProfile } from "../utils/replay";
 import {
   loadCurrentGameId,
   loadGuestCurrentGameId,
@@ -43,6 +45,7 @@ import {
   loadRemoteGames,
   mergeRemoteSharedGamePlayers,
   parseRemoteGameJoinNotification,
+  parseRemoteGameChange,
   parseRemoteGameRemovalNotification,
   renameRemoteSharedGame,
   removeRemoteSharedGamePlayer,
@@ -402,6 +405,8 @@ export function useGames(
   useEffect(() => {
     if (!session || remoteUserId !== session.user.id) return;
     let alive = true;
+    let gameRefreshInFlight = false;
+    let gameRefreshQueued = false;
 
     function handleRemovalNotification(
       notification: NonNullable<
@@ -483,12 +488,30 @@ export function useGames(
     }
 
     async function refreshRemoteGames() {
+      if (gameRefreshInFlight) {
+        gameRefreshQueued = true;
+        return;
+      }
+
+      gameRefreshInFlight = true;
       try {
         const remoteGames = await loadRemoteGames(session!.user.id);
         if (!alive) return;
         let appliedRemoteState = false;
         setGames((previousGames) => {
-          const remoteSignature = getGameSyncSignature(remoteGames);
+          const previousById = new Map(
+            previousGames.map((game) => [game.id, game]),
+          );
+          const reconciledRemoteGames = remoteGames.map((remoteGame) => {
+            const previousGame = previousById.get(remoteGame.id);
+            return previousGame &&
+              previousGame.updatedAt > remoteGame.updatedAt
+              ? previousGame
+              : remoteGame;
+          });
+          const remoteSignature = getGameSyncSignature(
+            reconciledRemoteGames,
+          );
           const previousSignature = getGameSyncSignature(previousGames);
           const lastSyncedSignature = remoteSignatureRef.current;
 
@@ -505,7 +528,7 @@ export function useGames(
             return previousGames;
           }
           const remoteById = new Map(
-            remoteGames.map((game) => [game.id, game]),
+            reconciledRemoteGames.map((game) => [game.id, game]),
           );
           const lastSyncedIds = getSyncedGameIds(remoteSignatureRef.current);
           const removed = previousGames.filter(
@@ -542,7 +565,7 @@ export function useGames(
           }
           remoteSignatureRef.current = remoteSignature;
           appliedRemoteState = true;
-          return remoteGames;
+          return reconciledRemoteGames;
         });
         if (appliedRemoteState) {
           setCurrentGameId((current) =>
@@ -553,6 +576,12 @@ export function useGames(
         }
       } catch {
         // Keep local in-memory state if a background refresh fails.
+      } finally {
+        gameRefreshInFlight = false;
+        if (alive && gameRefreshQueued) {
+          gameRefreshQueued = false;
+          void refreshRemoteGames();
+        }
       }
     }
 
@@ -590,7 +619,20 @@ export function useGames(
           schema: "public",
           table: "games",
         },
-        () => {
+        (payload) => {
+          const changedGame = parseRemoteGameChange(
+            payload.new,
+            session.user.id,
+          );
+          if (changedGame) {
+            remoteSignatureRef.current = markGameVersionSynced(
+              remoteSignatureRef.current,
+              changedGame,
+            );
+            setGames((previousGames) =>
+              mergeGamesById(previousGames, [changedGame]),
+            );
+          }
           void refreshRemoteGames();
         },
       );
@@ -883,7 +925,10 @@ export function useGames(
     return true;
   }
 
-  function duplicateGame(gameId: string): Game | null {
+  function duplicateGame(
+    gameId: string,
+    savedProfiles: PlayerProfile[],
+  ): Game | null {
     const original = games.find((g) => g.id === gameId);
     if (!original) return null;
     const participantCount =
@@ -898,13 +943,21 @@ export function useGames(
 
     const now = Date.now();
 
-    const duplicatedPlayers: Player[] = original.players.map((p) => ({
-      ...p,
-      id: uid(),
-      score: original.startingScore,
-      createdAt: now,
-      reachedAt: now,
-    }));
+    const duplicatedPlayers: Player[] = original.players.map((p) => {
+      const savedProfile = getSavedReplayProfile(p, savedProfiles);
+      return {
+        ...p,
+        id: uid(),
+        name: savedProfile?.name ?? p.name,
+        avatarColor: savedProfile?.avatarColor ?? p.avatarColor,
+        profileId: savedProfile?.id,
+        joinedViaInvite: undefined,
+        isGameOwner: undefined,
+        score: original.startingScore,
+        createdAt: now,
+        reachedAt: now,
+      };
+    });
 
     // Treat the unnumbered original as game #1, then find the highest
     // existing duplicate number so the first duplicate starts at #2.
@@ -926,6 +979,8 @@ export function useGames(
       ownerId: sessionUserId ?? undefined,
       accessRole: sessionUserId ? "owner" : undefined,
       isShared: false,
+      linkedPlayerIdForCurrentUser: undefined,
+      hasCollaborators: false,
       collaboratorsCanManage: false,
       name: nextName,
       teams: original.teams.map((team) => ({ ...team })),

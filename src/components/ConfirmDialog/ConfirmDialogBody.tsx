@@ -62,12 +62,28 @@ export function ConfirmDialogBody({
         </div>
       ) : null}
       {options.message && hasRoster ? (
-        <p className="dialog__message">{options.message}</p>
+        <p
+          className={`dialog__message${
+            options.messageCase === "normal"
+              ? " dialog__message--normal"
+              : ""
+          }`}
+        >
+          {options.message}
+        </p>
       ) : null}
       <ConfirmTeams options={options} />
       <ConfirmPlayers options={options} />
       {options.message && !hasRoster ? (
-        <p className="dialog__message">{options.message}</p>
+        <p
+          className={`dialog__message${
+            options.messageCase === "normal"
+              ? " dialog__message--normal"
+              : ""
+          }`}
+        >
+          {options.message}
+        </p>
       ) : null}
       {isPrompt ? (
         <input
@@ -198,22 +214,29 @@ function ConfirmTeams({ options }: { options: ConfirmOptions }) {
 function ConfirmPlayers({ options }: { options: ConfirmOptions }) {
   if (!options.players?.length) return null;
   return (
-    <div className="dialog__playerList" aria-label="Players">
-      {options.players.map((player) => (
-        <div
-          key={`${player.name}-${player.avatarColor}`}
-          className="dialog__playerItem"
-        >
-          <span
-            className="dialog__playerAvatar"
-            style={avatarStyleFor(player.avatarColor)}
-            aria-hidden="true"
-          >
-            {getInitials(player.name)}
-          </span>
-          <span className="dialog__playerName">{player.name}</span>
+    <div className="dialog__playerSection">
+      {options.playersTitle ? (
+        <div className="dialog__playerSectionTitle">
+          {options.playersTitle}
         </div>
-      ))}
+      ) : null}
+      <div className="dialog__playerList" aria-label="Players">
+        {options.players.map((player) => (
+          <div
+            key={`${player.name}-${player.avatarColor}`}
+            className="dialog__playerItem"
+          >
+            <span
+              className="dialog__playerAvatar"
+              style={avatarStyleFor(player.avatarColor)}
+              aria-hidden="true"
+            >
+              {getInitials(player.name)}
+            </span>
+            <span className="dialog__playerName">{player.name}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

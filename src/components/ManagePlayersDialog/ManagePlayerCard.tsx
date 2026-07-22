@@ -247,7 +247,9 @@ function PlayerIdentity({
                 ? "Linked player"
                 : profile?.isAccountPlayer
                   ? "Account player"
-                  : "Saved player"}
+                  : profile
+                    ? "Saved player"
+                    : "Game-only player"}
             </span>
           ) : isTaken ? (
             <span className="managePlayersDialog__meta">In game</span>

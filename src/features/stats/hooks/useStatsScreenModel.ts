@@ -68,6 +68,7 @@ function buildStatsProfiles(games: Game[], profiles: PlayerProfile[]) {
   const linkedProfileUpdatedAt = new Map<string, number>();
 
   games.forEach((game) => {
+    if (!game.isShared) return;
     game.players.forEach((player) => {
       if (!player.profileId || player.joinedViaInvite !== true) return;
       if (localProfileIds.has(player.profileId)) return;

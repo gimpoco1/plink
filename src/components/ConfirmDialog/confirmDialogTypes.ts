@@ -25,6 +25,7 @@ export type ConfirmOptions = {
   title: string;
   bodyTitle?: string;
   message: string;
+  messageCase?: "default" | "normal";
   confirmText?: string;
   cancelText?: string;
   hideCancelAction?: boolean;
@@ -35,6 +36,7 @@ export type ConfirmOptions = {
   details?: ConfirmDetail[];
   detailFlow?: boolean;
   settingChips?: ConfirmSettingChip[];
+  playersTitle?: string;
   players?: ConfirmPlayer[];
   teams?: ConfirmTeam[];
   layout?: "default" | "feature";

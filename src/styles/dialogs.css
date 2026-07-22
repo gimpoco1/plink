@@ -301,6 +301,18 @@
   gap: 8px;
 }
 
+.dialog__playerSection {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog__playerSectionTitle {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 .dialog__teamList {
   display: grid;
   gap: 8px;
@@ -618,6 +630,15 @@
 .dialog--confirmFeature .dialog__playerName {
   font-size: 14px;
   font-weight: 800;
+}
+
+.dialog--confirmFeature .dialog__message--normal {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.4;
+  text-transform: none;
 }
 
 .dialog--confirmFeature .dialog__actions {
