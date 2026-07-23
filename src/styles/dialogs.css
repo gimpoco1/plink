@@ -421,6 +421,26 @@
   line-height: 1.2;
 }
 
+.dialog__playerNameRow {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dialog__playerNameIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.dialog__playerNameIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
 .dialog__playerCopy {
   min-width: 0;
   display: grid;
@@ -441,6 +461,32 @@
   font-size: 11px;
   font-weight: 650;
   line-height: 1.25;
+}
+
+.dialog__rosterNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid rgba(216, 255, 79, 0.2);
+  border-radius: 14px;
+  background: rgba(216, 255, 79, 0.055);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.dialog__rosterNoticeIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.dialog__rosterNoticeIcon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .dialog__playerItem--identity {
@@ -562,6 +608,19 @@
   white-space: normal;
   text-wrap: balance;
   line-height: 1.2;
+}
+
+.dialog__actionCopy {
+  display: inline-grid;
+  justify-items: center;
+  gap: 3px;
+}
+
+.dialog__actionDescription {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.25;
 }
 
 .dialog__actionBtn--extra {
@@ -696,6 +755,11 @@
 .dialog--confirmFeature .dialog__playerList {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
+}
+
+.dialog--confirmFeature .dialog__playerItem:only-child {
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .dialog--confirmFeature .dialog__teamList {

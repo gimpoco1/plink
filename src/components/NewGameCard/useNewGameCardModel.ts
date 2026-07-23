@@ -90,6 +90,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const presetBrowserRef = useRef<HTMLDivElement | null>(null);
   const bodyInnerRef = useRef<HTMLDivElement | null>(null);
   const appliedDraftKeyRef = useRef<string | null>(null);
+  const reconciledDraftInvitesKeyRef = useRef<string | null>(null);
   const hasLoadedLocalPlayersRef = useRef(false);
 
   useEffect(() => {
@@ -451,6 +452,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   useEffect(() => {
     if (!draft) {
       appliedDraftKeyRef.current = null;
+      reconciledDraftInvitesKeyRef.current = null;
       return;
     }
 
@@ -478,6 +480,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
 
     if (appliedDraftKeyRef.current === draftKey) return;
     appliedDraftKeyRef.current = draftKey;
+    reconciledDraftInvitesKeyRef.current = null;
 
     setName(draft.name);
     setParticipantMode(draft.participantMode ?? "players");
@@ -594,6 +597,47 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     profiles,
     teams,
   ]);
+
+  useEffect(() => {
+    if (!draft) {
+      reconciledDraftInvitesKeyRef.current = null;
+      return;
+    }
+
+    const draftInvitedUserIds = draft.initialPlayers
+      .map((player) => player.invitedUserId)
+      .filter((userId): userId is string => !!userId);
+    if (
+      draftInvitedUserIds.length === 0 ||
+      pastInvitedPlayers.length === 0
+    ) {
+      return;
+    }
+
+    const reconciliationKey = JSON.stringify({
+      token: draftToken ?? 0,
+      invitedUserIds: draftInvitedUserIds,
+    });
+    if (reconciledDraftInvitesKeyRef.current === reconciliationKey) return;
+    reconciledDraftInvitesKeyRef.current = reconciliationKey;
+
+    const availableUserIds = new Set(
+      pastInvitedPlayers
+        .filter(
+          (player) =>
+            player.canInvite &&
+            draftInvitedUserIds.includes(player.userId),
+        )
+        .map((player) => player.userId),
+    );
+    if (availableUserIds.size === 0) return;
+
+    setSelectedPastInvitedUserIds((current) => {
+      const next = new Set(current);
+      availableUserIds.forEach((userId) => next.add(userId));
+      return next;
+    });
+  }, [draft, draftToken, pastInvitedPlayers]);
 
   useEffect(() => {
     if (!isPresetBrowserOpen) return;

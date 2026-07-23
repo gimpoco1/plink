@@ -968,7 +968,10 @@ export function useGames(
     return [...games].sort((a, b) => b.updatedAt - a.updatedAt);
   }, [games]);
 
-  function createGame(input: CreateGameInput): Game | null {
+  function createGame(
+    input: CreateGameInput,
+    pendingInvitedPlayerCount = 0,
+  ): Game | null {
     const requestedName = clampName(input.name).toUpperCase();
     const name = getNextGameSessionName(
       requestedName,
@@ -1050,7 +1053,9 @@ export function useGames(
           }));
 
     const participantCount =
-      participantMode === "teams" ? teams.length : players.length;
+      participantMode === "teams"
+        ? teams.length
+        : players.length + Math.max(0, pendingInvitedPlayerCount);
 
     if (
       (winCondition === "lowest" || input.winByTwo === true) &&
@@ -1533,6 +1538,14 @@ export function useGames(
   ) {
     if (!sessionUserId || invitedPlayers.length === 0) return true;
 
+    // This game is saved and then mutated through targeted invite RPCs below.
+    // Mark its current version handled before yielding so the generic saver
+    // cannot race those RPCs with the pre-link player identities.
+    remoteSignatureRef.current = markGameVersionSynced(
+      remoteSignatureRef.current,
+      game,
+    );
+
     try {
       const gamesWithNewGame = [
         game,
@@ -1577,12 +1590,51 @@ export function useGames(
       );
       return true;
     } catch (error) {
+      remoteSignatureRef.current = markGameDeletedSynced(
+        remoteSignatureRef.current,
+        game.id,
+      );
       console.error("Failed to add invited players to the new game", error);
       setSyncNotice({
         message: `Could not add invited players: ${getSyncErrorMessage(error)}`,
         tone: "error",
       });
       return false;
+    }
+  }
+
+  async function checkPastInvitedPlayerPermissions(
+    invitedUserIds: string[],
+  ): Promise<{
+    status: "allowed" | "blocked" | "error";
+    blockedUserIds: string[];
+  }> {
+    if (!sessionUserId || invitedUserIds.length === 0) {
+      return { status: "allowed", blockedUserIds: [] };
+    }
+
+    try {
+      const candidates = await loadRemotePastInvitedPlayers();
+      setPastInvitedPlayers(candidates);
+      const allowedUserIds = new Set(
+        candidates
+          .filter((candidate) => candidate.canInvite)
+          .map((candidate) => candidate.userId),
+      );
+      const blockedUserIds = invitedUserIds.filter(
+        (userId) => !allowedUserIds.has(userId),
+      );
+      return {
+        status: blockedUserIds.length > 0 ? "blocked" : "allowed",
+        blockedUserIds,
+      };
+    } catch (error) {
+      console.error("Failed to check invited player permissions", error);
+      setSyncNotice({
+        message: `Could not check invite permissions: ${getSyncErrorMessage(error)}`,
+        tone: "error",
+      });
+      return { status: "error", blockedUserIds: [] };
     }
   }
 
@@ -2273,6 +2325,7 @@ export function useGames(
     mergePlayers,
     addPastLinkedPlayer,
     addPastLinkedPlayersToNewGame,
+    checkPastInvitedPlayerPermissions,
     removeTeam,
     updatePlayer,
     resetScores,

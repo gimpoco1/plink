@@ -66,6 +66,7 @@ import {
   Dices,
   Flag,
   GitCompareArrows,
+  Link,
   RotateCcw,
   Target,
   Timer,
@@ -141,6 +142,7 @@ export function useAppModel() {
     mergePlayers,
     addPastLinkedPlayer,
     addPastLinkedPlayersToNewGame,
+    checkPastInvitedPlayerPermissions,
     removeTeam,
     updatePlayer,
     resetScores,
@@ -951,7 +953,7 @@ export function useAppModel() {
   }, [canViewSavedData, localStoredPlayers, profiles]);
 
   async function handleCreateGame(
-    input: Parameters<typeof createGame>[0],
+    input: NewGameInput,
     invitedPlayers: Array<{ userId: string; profileId: string }> = [],
   ) {
     if (!guardSessionCreation()) {
@@ -969,33 +971,173 @@ export function useAppModel() {
       if (!ok) return false;
     }
 
-    triggerGameStartSplash();
-    const created = createGame(input);
-    if (created) {
-      const requestedInvitedPlayers = new Map<
-        string,
-        { userId: string; profileId: string }
-      >();
-      input.initialPlayers?.forEach((player) => {
-        if (!player.invitedUserId || !player.profileId) return;
-        requestedInvitedPlayers.set(player.invitedUserId, {
-          userId: player.invitedUserId,
-          profileId: player.profileId,
+    const accountProfiles = profiles.filter(
+      (profile) => profile.isAccountPlayer,
+    );
+    const accountProfile = accountProfiles[0];
+    const accountProfileIds = new Set(
+      accountProfiles.map((profile) => profile.id),
+    );
+    const seenProfileIds = new Set<string>();
+    const seenInvitedUserIds = new Set<string>();
+    const normalizedInitialPlayers = input.initialPlayers.flatMap((player) => {
+      const resolvesToCurrentAccount =
+        !!accountProfile &&
+        (player.invitedUserId
+          ? player.invitedUserId === session?.user.id
+          : !!player.profileId && accountProfileIds.has(player.profileId));
+      const normalizedPlayer = resolvesToCurrentAccount
+        ? {
+            name: accountProfile.name,
+            avatarColor: accountProfile.avatarColor,
+            profileId: accountProfile.id,
+          }
+        : player;
+      const invitedUserId =
+        "invitedUserId" in normalizedPlayer
+          ? normalizedPlayer.invitedUserId
+          : undefined;
+
+      if (
+        !invitedUserId &&
+        normalizedPlayer.profileId &&
+        seenProfileIds.has(normalizedPlayer.profileId)
+      ) {
+        return [];
+      }
+      if (
+        invitedUserId &&
+        seenInvitedUserIds.has(invitedUserId)
+      ) {
+        return [];
+      }
+
+      if (!invitedUserId && normalizedPlayer.profileId) {
+        seenProfileIds.add(normalizedPlayer.profileId);
+      }
+      if (invitedUserId) {
+        seenInvitedUserIds.add(invitedUserId);
+      }
+      return [normalizedPlayer];
+    });
+
+    let resolvedInput: NewGameInput = {
+      ...input,
+      initialPlayers: normalizedInitialPlayers,
+    };
+    let openSharingAfterCreate = false;
+    const requestedInvitedPlayers = new Map<
+      string,
+      { userId: string; profileId: string }
+    >();
+    resolvedInput.initialPlayers.forEach((player) => {
+      if (!player.invitedUserId || !player.profileId) return;
+      requestedInvitedPlayers.set(player.invitedUserId, {
+        userId: player.invitedUserId,
+        profileId: player.profileId,
+      });
+    });
+    invitedPlayers.forEach((player) => {
+      if (
+        player.userId === session?.user.id ||
+        accountProfileIds.has(player.profileId)
+      ) {
+        return;
+      }
+      requestedInvitedPlayers.set(player.userId, player);
+    });
+
+    if (requestedInvitedPlayers.size > 0) {
+      const permissionResult = await checkPastInvitedPlayerPermissions([
+        ...requestedInvitedPlayers.keys(),
+      ]);
+      if (permissionResult.status === "error") {
+        return false;
+      }
+      if (permissionResult.status === "blocked") {
+        const blockedUserIds = new Set(permissionResult.blockedUserIds);
+        const blockedPlayers = resolvedInput.initialPlayers.filter(
+          (player) =>
+            !!player.invitedUserId &&
+            blockedUserIds.has(player.invitedUserId),
+        );
+        const decision = await confirmRef.current?.choose({
+          eyebrow: "Invite code required",
+          title: "How should these players join?",
+          message:
+            "Automatic invites are off for these accounts. Choose how to continue.",
+          messageCase: "normal",
+          playersTitle: "Players needing an invite code",
+          players: blockedPlayers.map((player) => ({
+            name: player.name,
+            avatarColor: player.avatarColor,
+            label: "Invited before",
+            description: "Automatic invites are off",
+          })),
+          confirmText: "Share invite code",
+          extraActionText: "Use game-only",
+          extraActionDescription: "Only in this game — no account or Stats.",
+          cancelText: "Cancel",
+          layout: "feature",
         });
-      });
-      invitedPlayers.forEach((player) => {
-        requestedInvitedPlayers.set(player.userId, player);
-      });
+
+        if (decision === "cancel" || !decision) return false;
+        openSharingAfterCreate = decision === "confirm";
+        resolvedInput = {
+          ...resolvedInput,
+          initialPlayers:
+            decision === "confirm"
+              ? resolvedInput.initialPlayers.filter(
+                  (player) =>
+                    !player.invitedUserId ||
+                    !blockedUserIds.has(player.invitedUserId),
+                )
+              : resolvedInput.initialPlayers.map((player) =>
+                  player.invitedUserId &&
+                  blockedUserIds.has(player.invitedUserId)
+                    ? {
+                        name: player.name,
+                        avatarColor: player.avatarColor,
+                      }
+                    : player,
+                ),
+        };
+        blockedUserIds.forEach((userId) =>
+          requestedInvitedPlayers.delete(userId),
+        );
+      }
+    }
+
+    const baseGameInput: NewGameInput = {
+      ...resolvedInput,
+      initialPlayers: resolvedInput.initialPlayers.filter(
+        (player) =>
+          !player.invitedUserId ||
+          !requestedInvitedPlayers.has(player.invitedUserId),
+      ),
+    };
+
+    triggerGameStartSplash();
+    const created = createGame(
+      baseGameInput,
+      requestedInvitedPlayers.size,
+    );
+    if (created) {
       if (requestedInvitedPlayers.size > 0) {
-        await addPastLinkedPlayersToNewGame(
+        const invitesAdded = await addPastLinkedPlayersToNewGame(
           created,
           [...requestedInvitedPlayers.values()],
         );
+        if (!invitesAdded) {
+          cancelGameStartSplash();
+          return false;
+        }
       }
       setPresetDraft(null);
       setPresetDraftIntent(null);
       setGameReturnTab(homeTab);
       setView("game");
+      if (openSharingAfterCreate) setSharingOpen(true);
       return true;
     }
     cancelGameStartSplash();
@@ -1006,7 +1148,11 @@ export function useAppModel() {
     input: NewGameInput,
     details: {
       label: string;
-      players: { name: string; avatarColor: string }[];
+      players: {
+        name: string;
+        avatarColor: string;
+        invitedUserId?: string;
+      }[];
       teams?: Array<{
         id: string;
         name: string;
@@ -1091,16 +1237,41 @@ export function useAppModel() {
             ]
           : []),
       ],
-      players: input.participantMode === "teams" ? [] : details.players,
+      players:
+        input.participantMode === "teams"
+          ? []
+          : details.players.map((player) => ({
+              ...player,
+              nameIcon: player.invitedUserId
+                ? createElement(Link, {
+                    size: 14,
+                    strokeWidth: 2.5,
+                    "aria-hidden": true,
+                  })
+                : undefined,
+            })),
+      playersTitle:
+        input.participantMode !== "teams" && details.players.length
+          ? "Players"
+          : "",
       teams: details.teams,
       message:
         input.participantMode === "teams"
           ? details.teams?.length
             ? "Teams"
             : ""
-          : details.players.length
-            ? "Players"
-            : "",
+          : "",
+      messageCase: "normal",
+      rosterNotice: details.players.some((player) => player.invitedUserId)
+        ? {
+            icon: createElement(Link, {
+              size: 16,
+              strokeWidth: 2.4,
+              "aria-hidden": true,
+            }),
+            text: "This game will appear in the invited players’ accounts, and they can update the score.",
+          }
+        : undefined,
       hideCancelAction: true,
       extraActionText: "Edit",
       confirmText: "Start new game",

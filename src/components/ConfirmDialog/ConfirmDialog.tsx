@@ -39,6 +39,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       cancelText: "Cancel",
       hideCancelAction: false,
       extraActionText: "",
+      extraActionDescription: "",
       tone: "default",
       eyebrow: "",
       highlights: [],
@@ -48,6 +49,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       playersTitle: "",
       players: [],
       teams: [],
+      rosterNotice: undefined,
       layout: "default",
       selectablePlayers: false,
       multiSelectablePlayers: false,
@@ -98,6 +100,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         cancelText: next.cancelText ?? "Cancel",
         hideCancelAction: next.hideCancelAction ?? false,
         extraActionText: next.extraActionText ?? "",
+        extraActionDescription: next.extraActionDescription ?? "",
         tone: next.tone ?? "default",
         eyebrow: resolveConfirmEyebrow(next),
         highlights: next.highlights ?? [],
@@ -107,6 +110,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         playersTitle: next.playersTitle ?? "",
         players: next.players ?? [],
         teams: next.teams ?? [],
+        rosterNotice: next.rosterNotice,
         layout: next.layout ?? "default",
         selectablePlayers: next.selectablePlayers ?? false,
         multiSelectablePlayers: next.multiSelectablePlayers ?? false,
@@ -184,6 +188,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             cancelText: next.cancelText ?? "Cancel",
             hideCancelAction: false,
             extraActionText: "",
+            extraActionDescription: "",
             tone: "default",
             eyebrow: next.eyebrow ?? "Edit",
             highlights: [],
@@ -193,6 +198,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             playersTitle: "",
             players: [],
             teams: [],
+            rosterNotice: undefined,
             layout: "default",
             selectablePlayers: false,
             multiSelectablePlayers: false,
@@ -319,7 +325,14 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 type="button"
                 onClick={() => closeWith("extra")}
               >
-                {options.extraActionText}
+                <span className="dialog__actionCopy">
+                  <span>{options.extraActionText}</span>
+                  {options.extraActionDescription ? (
+                    <span className="dialog__actionDescription">
+                      {options.extraActionDescription}
+                    </span>
+                  ) : null}
+                </span>
               </button>
             ) : null}
             <button

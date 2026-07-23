@@ -17,6 +17,7 @@ import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 import { HOME_NEW_GAME_OPEN_KEY } from "../../../constants";
 import { avatarStyleFor } from "../../../utils/color";
 import {
+  formatAccountPlayerName,
   getGameDisplayName,
   getNextGameSessionName,
 } from "../../../utils/text";
@@ -165,20 +166,30 @@ export function useHomeScreenModel(props: HomeScreenProps) {
       const isOwnedGame = game.isShared
         ? game.accessRole === "owner"
         : game.accessRole !== "collaborator";
-      const suggestedPlayers = game.players.map((player) => {
-        const savedProfile = player.profileId
+      const seenPlayerIdentities = new Set<string>();
+      const suggestedPlayers = game.players.flatMap((player) => {
+        const localProfile = player.profileId
           ? profilesById.get(player.profileId)
           : undefined;
         const invitedUserId =
-          player.joinedViaInvite === true
-            ? game.invitedUserIdsByPlayerId?.[player.id]
-            : undefined;
-        return {
-          name: savedProfile?.name ?? player.name,
-          avatarColor: savedProfile?.avatarColor ?? player.avatarColor,
-          profileId: player.profileId,
-          invitedUserId: savedProfile ? undefined : invitedUserId,
-        };
+          game.invitedUserIdsByPlayerId?.[player.id];
+        const savedProfile =
+          !invitedUserId ? localProfile : undefined;
+        const identityKey = invitedUserId
+          ? `invited:${invitedUserId}`
+          : player.profileId
+            ? `saved:${player.profileId}`
+            : "";
+        if (!identityKey || seenPlayerIdentities.has(identityKey)) return [];
+        seenPlayerIdentities.add(identityKey);
+        return [
+          {
+            name: savedProfile?.name ?? player.name,
+            avatarColor: savedProfile?.avatarColor ?? player.avatarColor,
+            profileId: player.profileId,
+            invitedUserId,
+          },
+        ];
       });
       const usesReusablePlayers =
         suggestedPlayers.length > 0 &&
@@ -198,6 +209,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
             ? `invited:${player.invitedUserId}`
             : `saved:${player.profileId}`,
         )
+        .sort()
         .join(",");
       const key = [
         label,
@@ -290,8 +302,12 @@ export function useHomeScreenModel(props: HomeScreenProps) {
       {
         label: setup.label,
         players: setup.suggestedPlayers.map((player) => ({
-          name: player.name,
+          name: player.profileId &&
+            profilesById.get(player.profileId)?.isAccountPlayer
+            ? formatAccountPlayerName(player.name)
+            : player.name,
           avatarColor: player.avatarColor,
+          invitedUserId: player.invitedUserId,
         })),
         teams: setup.suggestedTeams?.map((team) => ({
           id: team.id,

@@ -468,7 +468,8 @@ export function useManagePlayersDialogModel(
     if (stagedCount === 0 || addingPastLinkedUserId) return;
 
     for (const userId of stagedPastLinkedUserIds) {
-      await addPastLinkedPlayer(userId);
+      const added = await addPastLinkedPlayer(userId);
+      if (!added) return;
     }
     onStartGame(Array.from(stagedProfileIds), stagedCustomPlayers);
     close();

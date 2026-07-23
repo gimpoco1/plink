@@ -74,7 +74,11 @@ export type HomeScreenProps = {
     input: NewGameInput,
     details: {
       label: string;
-      players: { name: string; avatarColor: string }[];
+      players: {
+        name: string;
+        avatarColor: string;
+        invitedUserId?: string;
+      }[];
       teams?: Array<{
         id: string;
         name: string;

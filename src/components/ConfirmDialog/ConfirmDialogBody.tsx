@@ -88,6 +88,16 @@ export function ConfirmDialogBody({
         selectedPlayerIds={selectedPlayerIds}
         onPlayerMultiSelect={onPlayerMultiSelect}
       />
+      {options.rosterNotice ? (
+        <div className="dialog__rosterNotice">
+          {options.rosterNotice.icon ? (
+            <span className="dialog__rosterNoticeIcon" aria-hidden="true">
+              {options.rosterNotice.icon}
+            </span>
+          ) : null}
+          <span>{options.rosterNotice.text}</span>
+        </div>
+      ) : null}
       {options.message && !hasRoster ? (
         <p
           className={`dialog__message${
@@ -282,7 +292,18 @@ function ConfirmPlayers({
                 {player.label ? (
                   <span className="dialog__playerLabel">{player.label}</span>
                 ) : null}
-                <span className="dialog__playerName">{player.name}</span>
+                <span className="dialog__playerNameRow">
+                  <span className="dialog__playerName">{player.name}</span>
+                  {player.nameIcon ? (
+                    <span
+                      className="dialog__playerNameIcon"
+                      aria-label="Invited player"
+                      title="Invited player"
+                    >
+                      {player.nameIcon}
+                    </span>
+                  ) : null}
+                </span>
                 {(
                   selected
                     ? player.selectedDescription ?? player.description

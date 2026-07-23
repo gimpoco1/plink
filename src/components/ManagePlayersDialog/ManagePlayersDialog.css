@@ -265,7 +265,7 @@
 
 .managePlayersDialog__invitedOption {
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
   padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
@@ -278,11 +278,6 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-.managePlayersDialog__invitedOption--selected {
-  border-color: rgba(216, 255, 79, 0.42);
-  background: rgba(216, 255, 79, 0.09);
 }
 
 .managePlayersDialog__invitedOption--blocked {
@@ -329,21 +324,29 @@
 }
 
 .managePlayersDialog__invitedState {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+}
+
+.managePlayersDialog__invitedState svg {
+  width: 18px;
+  height: 18px;
 }
 
 .managePlayersDialog__invitedState--selected {
   color: var(--accent-ink);
   background: var(--accent);
   border-color: var(--accent);
+  box-shadow:
+    inset 0 0 0 1px rgba(17, 24, 10, 0.12),
+    0 0 0 2px rgba(216, 255, 79, 0.2);
 }
 
 .managePlayersDialog__invitedState--blocked {
@@ -684,11 +687,21 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  min-height: 54px;
   overflow: hidden;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.035);
+}
+
+.managePlayersDialog__card--selectable {
+  cursor: pointer;
+}
+
+.managePlayersDialog__card--selectable:hover {
+  border-color: rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .managePlayersDialog__card--editing {

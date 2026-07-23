@@ -4,6 +4,7 @@ export type ConfirmPlayer = {
   id?: string;
   name: string;
   avatarColor: string;
+  nameIcon?: ReactNode;
   label?: string;
   description?: string;
   selectedDescription?: string;
@@ -34,6 +35,10 @@ export type ConfirmSettingChip = {
   tone?: "accent" | "default";
   size?: "default" | "wide";
 };
+export type ConfirmRosterNotice = {
+  text: string;
+  icon?: ReactNode;
+};
 export type ConfirmTeam = {
   id: string;
   name: string;
@@ -50,6 +55,7 @@ export type ConfirmOptions = {
   cancelText?: string;
   hideCancelAction?: boolean;
   extraActionText?: string;
+  extraActionDescription?: string;
   tone?: "default" | "danger";
   eyebrow?: string;
   highlights?: string[];
@@ -59,6 +65,7 @@ export type ConfirmOptions = {
   playersTitle?: string;
   players?: ConfirmPlayer[];
   teams?: ConfirmTeam[];
+  rosterNotice?: ConfirmRosterNotice;
   layout?: "default" | "feature";
   selectablePlayers?: boolean;
   multiSelectablePlayers?: boolean;
