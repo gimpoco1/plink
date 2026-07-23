@@ -6,17 +6,19 @@ import { StatsSelector } from "../components/StatsSelector";
 import { StatsReport } from "../components/StatsReport";
 
 export function StatsScreenView() {
-  const { handleStatsPointerDown, isAuthenticated, onOpenAuth } =
+  const { handleStatsPointerDown, isAuthenticated, onOpenAuth, primaryReport } =
     useStatsScreenContext();
   return (
     <div
       className="tabContent tabContent--stats"
       onPointerDown={handleStatsPointerDown}
     >
-      <AdBannerSlot
-        placement="Stats"
-        slotId={import.meta.env.VITE_ADSENSE_STATS_SLOT_ID}
-      />
+      {isAuthenticated && primaryReport?.sessions.length ? (
+        <AdBannerSlot
+          placement="Stats"
+          slotId={import.meta.env.VITE_ADSENSE_STATS_SLOT_ID}
+        />
+      ) : null}
       <div className="tabHeader">
         <div>
           <h2 className="tabTitle">Stats</h2>

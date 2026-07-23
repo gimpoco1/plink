@@ -1,4 +1,11 @@
-import { BarChart3, Cloud, History, Sparkles } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  Cloud,
+  History,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 export function HomeGuestInfo() {
   return (
@@ -51,7 +58,43 @@ export function HomeGuestInfo() {
             Review wins, streaks, and past results after each match.
           </InfoFeature>
         </div>
+        <div className="homeInfoGuides">
+          <div className="homeInfoGuides__heading">
+            <div>
+              <div className="homeInfo__eyebrow">Practical guides</div>
+              <h3>Make every game easier to run.</h3>
+            </div>
+            <a href="/guides/index.html">View all guides</a>
+          </div>
+          <div className="homeInfoGuides__grid">
+            <GuideLink
+              href="/guides/scorekeeping-basics.html"
+              icon={<BookOpen size={17} strokeWidth={2.3} />}
+              title="Scorekeeping basics"
+            >
+              Pick clear rules, handle corrections, and finish with a result
+              everyone understands.
+            </GuideLink>
+            <GuideLink
+              href="/guides/game-night.html"
+              icon={<Sparkles size={17} strokeWidth={2.3} />}
+              title="Run a smoother game night"
+            >
+              Prepare players, teams, timers, and repeat sessions without
+              slowing down play.
+            </GuideLink>
+            <GuideLink
+              href="/guides/shared-scorekeeping.html"
+              icon={<Users size={17} strokeWidth={2.3} />}
+              title="Share scorekeeping safely"
+            >
+              Let several people update one game while keeping ownership and
+              changes clear.
+            </GuideLink>
+          </div>
+        </div>
         <div className="homeInfoLinks" aria-label="Helpful site links">
+          <a href="/guides/index.html">Guides</a>
           <a href="/about.html">About</a>
           <a href="/faq.html">FAQ</a>
           <a href="/privacy.html">Privacy Policy</a>
@@ -60,6 +103,33 @@ export function HomeGuestInfo() {
         </div>
       </div>
     </section>
+  );
+}
+
+function GuideLink({
+  children,
+  href,
+  icon,
+  title,
+}: {
+  children: React.ReactNode;
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <a className="homeInfoGuide" href={href}>
+      <span className="homeInfoGuide__icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span>
+        <strong>{title}</strong>
+        <small>{children}</small>
+      </span>
+      <span className="homeInfoGuide__arrow" aria-hidden="true">
+        →
+      </span>
+    </a>
   );
 }
 

@@ -77,6 +77,8 @@ export function AuthAccountPanel() {
         </button>
       )}
       <div className="authDialog__links" aria-label="Account links">
+        <a href="/guides/index.html">Guides</a>
+        <span aria-hidden="true">·</span>
         <a href="/privacy.html">Privacy</a>
         <span aria-hidden="true">·</span>
         <a href="/support.html">Support</a>
