@@ -103,10 +103,12 @@ export function SessionsScreen({
 
   return (
     <div className="tabContent tabContent--sessions">
-      <AdBannerSlot
-        placement="Sessions"
-        slotId={import.meta.env.VITE_ADSENSE_SESSIONS_SLOT_ID}
-      />
+      {sessions.length > 0 ? (
+        <AdBannerSlot
+          placement="Sessions"
+          slotId={import.meta.env.VITE_ADSENSE_SESSIONS_SLOT_ID}
+        />
+      ) : null}
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="signedInHint"

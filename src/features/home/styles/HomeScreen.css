@@ -295,6 +295,101 @@
   line-height: 1.5;
 }
 
+.homeInfoGuides {
+  position: relative;
+  z-index: 1;
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(217, 228, 235, 0.08);
+}
+
+.homeInfoGuides__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.homeInfoGuides__heading h3 {
+  margin: 12px 0 0;
+  color: var(--text);
+  font-size: clamp(22px, 4vw, 30px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.homeInfoGuides__heading > a {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.homeInfoGuides__grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.homeInfoGuide {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(217, 228, 235, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.homeInfoGuide:hover {
+  transform: translateY(-1px);
+  border-color: rgba(216, 255, 79, 0.2);
+  background: rgba(216, 255, 79, 0.045);
+}
+
+.homeInfoGuide__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(216, 255, 79, 0.1);
+  color: var(--accent);
+}
+
+.homeInfoGuide strong,
+.homeInfoGuide small {
+  display: block;
+}
+
+.homeInfoGuide strong {
+  color: #f2f8fb;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.homeInfoGuide small {
+  margin-top: 4px;
+  color: rgba(217, 228, 235, 0.68);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.homeInfoGuide__arrow {
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 900;
+}
+
 .homeInfoLinks {
   position: relative;
   display: flex;
@@ -371,6 +466,16 @@
     font-size: 10px;
     letter-spacing: 0.05em;
   }
+
+  .homeInfoGuides__heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .homeInfoGuide {
+    padding: 12px;
+  }
 }
 
 @media (min-width: 860px) {
@@ -382,6 +487,19 @@
 
   .homeInfo__features {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .homeInfoGuides__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .homeInfoGuide {
+    align-items: start;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .homeInfoGuide__arrow {
+    display: none;
   }
 }
 

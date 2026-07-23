@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How to Share Scorekeeping Safely | Plink Guide</title>
+    <meta
+      name="description"
+      content="Learn how to share a game scoreboard across devices while keeping ownership, permissions, player identity, score changes, and history clear."
+    />
+    <link
+      rel="canonical"
+      href="https://plinkscore.com/guides/shared-scorekeeping.html"
+    />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/guides.css" />
+  </head>
+  <body>
+    <header class="siteHeader">
+      <a class="brand" href="/">
+        <img src="/favicon.png" alt="" />
+        <span>Plink</span>
+      </a>
+      <nav class="siteNav" aria-label="Main navigation">
+        <a href="/guides/index.html" aria-current="page">Guides</a>
+        <a href="/about.html">About</a>
+        <a href="/faq.html">FAQ</a>
+        <a class="siteNav__app" href="/">Open score tracker</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <article>
+        <header class="hero">
+          <span class="eyebrow">Shared scorekeeping</span>
+          <h1>How to share a scoreboard without confusion.</h1>
+          <p class="lead">
+            Shared scorekeeping is useful when several people need to record a
+            result from their own devices. It works best when ownership,
+            identity, and permissions are clear before the first score changes.
+          </p>
+          <p class="articleMeta">A practical 7-minute guide</p>
+        </header>
+
+        <nav class="contents" aria-label="On this page">
+          <strong>On this page</strong>
+          <ol>
+            <li><a href="#owner">Keep one clear game owner</a></li>
+            <li><a href="#joining">Add people with an invite</a></li>
+            <li><a href="#permissions">Separate scoring from management</a></li>
+            <li><a href="#identity">Protect player identity</a></li>
+            <li><a href="#history">Record who made changes</a></li>
+            <li><a href="#access">Remove and restore access safely</a></li>
+          </ol>
+        </nav>
+
+        <div class="articleBody">
+          <section id="owner">
+            <h2>1. Every shared game still needs one owner</h2>
+            <p>
+              The owner creates the game and is responsible for its settings,
+              participant list, and long-term session record. Other invited
+              players may update scores, but the game should count against only
+              the owner’s session allowance. This keeps ownership predictable
+              even when several accounts can see the same scoreboard.
+            </p>
+            <p>
+              Display the owner inside the game when invited players are
+              present. The label can stay subtle, but it answers an important
+              question: who can make final decisions about access, settings,
+              ending, or resetting the game?
+            </p>
+          </section>
+
+          <section id="joining">
+            <h2>2. Use an invite to connect an account to its player</h2>
+            <p>
+              An invite code should do more than copy a game. When someone
+              joins, their account player is added to the existing game and the
+              same session becomes visible in their account. From that point,
+              score updates can move between devices in real time.
+            </p>
+            <p>
+              Treat the code like temporary access information. Rotate it after
+              removing an invited player, or generate a new one when the owner
+              no longer wants an older code to work. A removed person should not
+              be able to rejoin with a code they already know.
+            </p>
+            <div class="callout">
+              <strong>Inviting someone from a previous game</strong>
+              <p>
+                Ask permission before automatically adding their account to a
+                new game. If they disabled automatic invitations, start without
+                them and share a new code from the active game.
+              </p>
+            </div>
+          </section>
+
+          <section id="permissions">
+            <h2>3. Score access and game management are different</h2>
+            <p>
+              An invited player normally needs permission to update scores; that
+              is the purpose of shared scorekeeping. Changing the target, timer,
+              teams, participant list, or completion state is a broader
+              responsibility. Keep those actions owner-only unless the owner
+              explicitly allows invited players to manage the game.
+            </p>
+            <ul>
+              <li>
+                <strong>Score access:</strong> add or remove points during play.
+              </li>
+              <li>
+                <strong>Management access:</strong> change settings, reset the
+                score, manage players, or end the game.
+              </li>
+            </ul>
+            <p>
+              The control should describe this distinction clearly. A label such
+              as “Allow invited players to change settings, end, or reset” is
+              less ambiguous than “Allow invited players to manage,” which can
+              sound as if score updates are disabled too.
+            </p>
+          </section>
+
+          <section id="identity">
+            <h2>4. Keep invited identities distinct from local players</h2>
+            <p>
+              A saved player and an invited account can have the same display
+              name while representing different people. Use a link or invite
+              marker so the group can see which player remains connected to an
+              account. Add a numbered suffix when identical names need to
+              coexist inside one game.
+            </p>
+            <p>
+              If both entries represent the same person, merge deliberately. The
+              interface should show which player stays, where this game’s score
+              history moves, and which account receives the statistics. Do not
+              silently replace a saved identity simply because the names match.
+            </p>
+            <div class="example">
+              <strong>Why the distinction matters</strong>
+              <p>
+                “John” saved in the owner’s roster is local to that owner.
+                “John” who joined by code is connected to another account. They
+                may look identical, but only the invited identity can see the
+                shared game and receive its result automatically.
+              </p>
+            </div>
+          </section>
+
+          <section id="history">
+            <h2>5. A shared history should show who changed the score</h2>
+            <p>
+              Each history entry should record the affected player, score
+              change, resulting total, time, and the account player who made the
+              update. “Updated by You” is useful on the current device; other
+              devices should show the updater’s actual name and avatar.
+            </p>
+            <p>
+              Keep attribution after an invited player leaves. Their removal
+              should stop future access, not erase who made earlier changes.
+              Historical attribution is especially important when a large
+              correction or final point changes the winner.
+            </p>
+          </section>
+
+          <section id="access">
+            <h2>6. Removing a player must remove access immediately</h2>
+            <p>
+              When the owner removes an invited account player, that game should
+              disappear from the removed person’s account and their device
+              should receive a clear notice. Targeted real-time notification is
+              better than waiting for periodic polling because it closes the
+              permission window quickly.
+            </p>
+            <p>
+              If the group wants to play together again, share the new code or
+              use an automatic invitation only when that account allows it.
+              Previous participation can make future setup faster, but it should
+              never override a person’s current sharing preference.
+            </p>
+          </section>
+        </div>
+
+        <section class="articleCta">
+          <h2>Keep one scoreboard in sync</h2>
+          <p>
+            Plink supports invite codes, connected account players, real-time
+            score updates, owner permissions, updater history, and access
+            removal.
+          </p>
+          <a href="/">Open Plink</a>
+        </section>
+
+        <aside class="related">
+          <h2>Continue reading</h2>
+          <div class="relatedLinks">
+            <a href="/guides/scorekeeping-basics.html"
+              >Learn scorekeeping basics →</a
+            >
+            <a href="/guides/game-night.html">Run a smoother game night →</a>
+          </div>
+        </aside>
+      </article>
+    </main>
+
+    <footer class="siteFooter">
+      <a href="/guides/index.html">← All guides</a>
+      <nav aria-label="Footer navigation">
+        <a href="/about.html">About</a>
+        <a href="/faq.html">FAQ</a>
+        <a href="/support.html">Support</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+      </nav>
+    </footer>
+  </body>
+</html>

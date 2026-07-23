@@ -14,6 +14,7 @@ export function PlayersScreenView() {
     onOpenAuth,
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
+    profiles,
     showLocalSessionsHint,
   } = usePlayersScreenContext();
 
@@ -30,10 +31,12 @@ export function PlayersScreenView() {
           onAdd={onOpenAuth}
         />
       ) : null}
-      <AdBannerSlot
-        placement="Players"
-        slotId={import.meta.env.VITE_ADSENSE_PLAYERS_SLOT_ID}
-      />
+      {isAuthenticated && profiles.length > 0 ? (
+        <AdBannerSlot
+          placement="Players"
+          slotId={import.meta.env.VITE_ADSENSE_PLAYERS_SLOT_ID}
+        />
+      ) : null}
       <PlayersScreenHeader />
       {!isAuthenticated ? (
         <LockedFrame title="Sign in to save players." onSignIn={onOpenAuth}>
