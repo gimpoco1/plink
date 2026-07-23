@@ -27,6 +27,10 @@ import {
   openExternalUrl,
 } from "../../lib/nativePlatform";
 import type { BackupSelection } from "../../storage/backupFile";
+import {
+  loadRemoteSharingPreference,
+  updateRemoteSharingPreference,
+} from "../../storage/remoteStorage";
 import type { Game, PlayerProfile, ToastState, ToastTone } from "../../types";
 import { formatPlayerName } from "../../utils/text";
 
@@ -150,6 +154,12 @@ export function useAuthDialogModel(
   const [showDeviceImport, setShowDeviceImport] = useState(false);
   const [showDevicePlayersImport, setShowDevicePlayersImport] = useState(false);
   const [showAccountDetails, setShowAccountDetails] = useState(false);
+  const [
+    allowPreviousPlayersToInvite,
+    setAllowPreviousPlayersToInvite,
+  ] = useState(true);
+  const [sharingPreferenceLoading, setSharingPreferenceLoading] =
+    useState(false);
   const [showPlanDetails, setShowPlanDetails] = useState(false);
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<
     "monthly" | "yearly"
@@ -444,8 +454,11 @@ export function useAuthDialogModel(
       openPasswordReset() {
         setMode("signin");
         setRecoveryMode(true);
-        setNotice("Enter a new password for your account.");
-        setTransferToast(null);
+        setNotice(null);
+        setTransferToast({
+          message: "Enter a new password for your account.",
+          tone: "default",
+        });
         setError(null);
         setPassword("");
         setNewPassword("");
@@ -591,6 +604,49 @@ export function useAuthDialogModel(
       client.removeChannel(channel);
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (!userId || !supabase) {
+      setAllowPreviousPlayersToInvite(true);
+      setSharingPreferenceLoading(false);
+      return;
+    }
+
+    let alive = true;
+    setSharingPreferenceLoading(true);
+    void loadRemoteSharingPreference()
+      .then((allow) => {
+        if (alive) setAllowPreviousPlayersToInvite(allow);
+      })
+      .catch((loadError) => {
+        console.error("Failed to load sharing preference", loadError);
+      })
+      .finally(() => {
+        if (alive) setSharingPreferenceLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
+
+  async function updateSharingPreference(allow: boolean) {
+    if (!userId || sharingPreferenceLoading) return;
+    const previous = allowPreviousPlayersToInvite;
+    setAllowPreviousPlayersToInvite(allow);
+    setSharingPreferenceLoading(true);
+    setError(null);
+    try {
+      const savedValue = await updateRemoteSharingPreference(allow);
+      setAllowPreviousPlayersToInvite(savedValue);
+    } catch (saveError) {
+      console.error("Failed to update sharing preference", saveError);
+      setAllowPreviousPlayersToInvite(previous);
+      setError("Could not update sharing preference.");
+    } finally {
+      setSharingPreferenceLoading(false);
+    }
+  }
 
   useEffect(() => {
     const visibleGameIds = new Set(localGames.map((game) => game.id));
@@ -1304,6 +1360,7 @@ export function useAuthDialogModel(
   }
 
   return {
+    allowPreviousPlayersToInvite,
     hasSupabaseConfig,
     accountColorOptionRefs,
     accountDraftColor,
@@ -1399,6 +1456,7 @@ export function useAuthDialogModel(
     showPassword,
     showPlanDetails,
     showTransferTools,
+    sharingPreferenceLoading,
     signInWithProvider,
     signOut,
     signupConfirmationEmail,
@@ -1412,5 +1470,6 @@ export function useAuthDialogModel(
     toggleLocalGame,
     toggleLocalProfile,
     transferToast,
+    updateSharingPreference,
   };
 }

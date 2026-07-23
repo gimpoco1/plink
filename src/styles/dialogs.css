@@ -484,6 +484,22 @@
   color: var(--accent);
 }
 
+.dialog__playerItem--disabled {
+  cursor: not-allowed !important;
+  border-color: rgba(255, 255, 255, 0.065);
+  background: rgba(255, 255, 255, 0.018);
+  opacity: 0.72;
+}
+
+.dialog__playerItem--disabled .dialog__playerLabel {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.dialog__playerItem--disabled .dialog__playerCheck {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .dialog__playerCheck {
   width: 24px;
   height: 24px;

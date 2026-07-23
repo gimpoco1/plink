@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { AVATAR_COLORS } from "../../constants";
+import {
+  AVATAR_COLORS,
+  REFRESH_PAST_INVITED_PLAYERS_EVENT,
+} from "../../constants";
 import type {
   PlayerProfile,
   QuickScoreValues,
@@ -88,6 +91,11 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const bodyInnerRef = useRef<HTMLDivElement | null>(null);
   const appliedDraftKeyRef = useRef<string | null>(null);
   const hasLoadedLocalPlayersRef = useRef(false);
+
+  useEffect(() => {
+    if (!props.open) return;
+    window.dispatchEvent(new Event(REFRESH_PAST_INVITED_PLAYERS_EVENT));
+  }, [props.open]);
   const reduceMotion = useReducedMotion();
   const [bodyContentHeight, setBodyContentHeight] = useState(0);
   const [selectedStagedPlayerIds, setSelectedStagedPlayerIds] = useState<
@@ -229,7 +237,11 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       }));
 
     const invited = pastInvitedPlayers
-      .filter((player) => selectedPastInvitedUserIds.has(player.userId))
+      .filter(
+        (player) =>
+          player.canInvite &&
+          selectedPastInvitedUserIds.has(player.userId),
+      )
       .map((player) => ({
         id: player.userId,
         name: player.name,
@@ -271,7 +283,11 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const selectedInvitedPlayersForGame = useMemo(
     () =>
       pastInvitedPlayers
-        .filter((player) => selectedPastInvitedUserIds.has(player.userId))
+        .filter(
+          (player) =>
+            player.canInvite &&
+            selectedPastInvitedUserIds.has(player.userId),
+        )
         .map((player) => ({
           name: player.name,
           avatarColor: player.avatarColor,
@@ -500,7 +516,9 @@ export function useNewGameCardModel(props: NewGameCardProps) {
           .filter(
             (userId): userId is string =>
               !!userId &&
-              pastInvitedPlayers.some((player) => player.userId === userId),
+              pastInvitedPlayers.some(
+                (player) => player.userId === userId && player.canInvite,
+              ),
           ),
       ),
     );
@@ -626,6 +644,13 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   }
 
   function togglePastInvitedPlayer(userId: string) {
+    if (
+      !pastInvitedPlayers.some(
+        (player) => player.userId === userId && player.canInvite,
+      )
+    ) {
+      return;
+    }
     setSelectedPastInvitedUserIds((current) => {
       const next = new Set(current);
       if (next.has(userId)) next.delete(userId);

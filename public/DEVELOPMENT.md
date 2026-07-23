@@ -26,6 +26,16 @@ Preview the production build:
 npm run preview
 ```
 
+## Routine development commands
+
+```bash
+npm run dev          # Browser development
+npm run build        # Type-check and production web build
+npm run ios:sync     # Build web code and sync the iOS project
+npm run ios:open     # Open Xcode
+npm run ios:run      # Sync and choose a simulator/device from the CLI
+```
+
 ## Publish a New iOS Build to TestFlight
 
 Use this checklist for every TestFlight upload. The version shown to users and

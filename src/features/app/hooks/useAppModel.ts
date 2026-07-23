@@ -78,6 +78,7 @@ import {
   LOCAL_PLAYERS_CHANGED_EVENT,
   type LocalPlayer,
 } from "../../../storage/localPlayers";
+import { getUnsavedReplayPlayers } from "../../../utils/replay";
 
 type PresetDraftIntent = "edit" | "teams-detour" | null;
 
@@ -130,6 +131,7 @@ export function useAppModel() {
     currentGame,
     createGame,
     duplicateGame,
+    getReplayInviteCandidates,
     selectGame,
     deleteGame,
     renameGame,
@@ -415,6 +417,78 @@ export function useAppModel() {
       return false;
     }
     return true;
+  }
+
+  async function chooseReplayInvitedUserIds(
+    game: Game,
+  ): Promise<string[] | null> {
+    if (!game.isShared) return [];
+
+    const candidates = await getReplayInviteCandidates(game.id);
+    if (candidates === null) return null;
+
+    const candidatePlayerIds = new Set(
+      candidates.map((candidate) => candidate.sourcePlayerId),
+    );
+    const unsavedPlayers = getUnsavedReplayPlayers(game, profiles).filter(
+      (player) => !candidatePlayerIds.has(player.id),
+    );
+    const hasInvitablePlayers = candidates.some(
+      (candidate) => candidate.canInvite,
+    );
+
+    if (candidates.length === 0 && unsavedPlayers.length === 0) return [];
+
+    const selectedUserIds = await confirmRef.current?.selectPlayers({
+      eyebrow: "New game",
+      title: "Play again",
+      message: hasInvitablePlayers
+        ? "You’ll own this new game. Select the accounts you want to invite again."
+        : "",
+      messageCase: "normal",
+      playersTitle: hasInvitablePlayers
+        ? "Players from the previous game"
+        : "Players not saved",
+      players: [
+        ...candidates.map((candidate) => ({
+          id: candidate.userId,
+          name: candidate.name,
+          avatarColor: candidate.avatarColor,
+          label: candidate.canInvite
+            ? candidate.isPreviousOwner
+              ? "Previous game owner"
+              : "Invited before"
+            : "Automatic invites off",
+          description: candidate.canInvite
+            ? undefined
+            : "Can’t be invited. They’ll be added as a player not saved, and Stats won’t count.",
+          selectedDescription: candidate.canInvite
+            ? "Invited to the new game. Their results will count toward Stats."
+            : undefined,
+          unselectedDescription: candidate.canInvite
+            ? "Added as a player not saved. Their results won’t count toward Stats."
+            : undefined,
+          disabled: !candidate.canInvite,
+        })),
+        ...unsavedPlayers.map((player) => ({
+          id: `game-only:${player.id}`,
+          name: player.name,
+          avatarColor: player.avatarColor,
+          label: "Player not saved",
+          description: "Their results won’t count toward Stats.",
+          disabled: true,
+        })),
+      ],
+      initialSelectedPlayerIds: candidates
+        .filter((candidate) => candidate.canInvite)
+        .map((candidate) => candidate.userId),
+      confirmText: "Play again",
+      cancelText: "Cancel",
+      layout: "feature",
+      tone: "default",
+    });
+
+    return selectedUserIds ?? null;
   }
 
   function returnToGameSource() {
@@ -1357,6 +1431,7 @@ export function useAppModel() {
     canViewSavedData,
     cancelGameStartSplash,
     combinedGuestAndLocalProfiles,
+    chooseReplayInvitedUserIds,
     confirmRef,
     createTeam,
     currentGame,

@@ -6,10 +6,20 @@ export type ConfirmPlayer = {
   avatarColor: string;
   label?: string;
   description?: string;
+  selectedDescription?: string;
+  unselectedDescription?: string;
+  disabled?: boolean;
 };
 export type ConfirmPlayerSelectionOptions = Omit<ConfirmOptions, "players"> & {
   players: Array<ConfirmPlayer & { id: string }>;
   initialSelectedPlayerId?: string;
+};
+export type ConfirmPlayerMultiSelectionOptions = Omit<
+  ConfirmOptions,
+  "players"
+> & {
+  players: Array<ConfirmPlayer & { id: string }>;
+  initialSelectedPlayerIds?: string[];
 };
 export type ConfirmDetail = {
   label: string;
@@ -51,6 +61,7 @@ export type ConfirmOptions = {
   teams?: ConfirmTeam[];
   layout?: "default" | "feature";
   selectablePlayers?: boolean;
+  multiSelectablePlayers?: boolean;
 };
 export type PromptOptions = {
   title: string;
@@ -68,6 +79,9 @@ export type ConfirmDialogHandle = {
   selectPlayer: (
     options: ConfirmPlayerSelectionOptions,
   ) => Promise<string | null>;
+  selectPlayers: (
+    options: ConfirmPlayerMultiSelectionOptions,
+  ) => Promise<string[] | null>;
   prompt: (options: PromptOptions) => Promise<string | null>;
 };
 

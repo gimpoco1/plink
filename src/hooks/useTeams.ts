@@ -367,6 +367,20 @@ export function useTeams(session: Session | null) {
       });
       return;
     }
+    const existing = teamMembers.some(
+      (member) =>
+        member.teamId === teamId && member.profileId === profileId,
+    );
+    const teamMemberCount = teamMembers.filter(
+      (member) => member.teamId === teamId,
+    ).length;
+    if (existing && teamMemberCount <= 1) {
+      setSyncNotice({
+        message: "A team needs at least one player.",
+        tone: "error",
+      });
+      return;
+    }
     markLocalChange();
     setTeamMembers((current) => {
       const existing = current.find(

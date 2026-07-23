@@ -612,13 +612,13 @@
 .quickSetupCard__playerMore {
   width: 26px;
   height: 26px;
-  border-radius: 9px;
+  border-radius: 7px;
   border: 2px solid #0f121c;
   color: #fff;
   display: inline-grid;
   place-items: center;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -0.02em;
   margin-left: -6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
@@ -765,8 +765,8 @@
   .quickSetupCard__teamIcon {
     width: 24px;
     height: 24px;
-    border-radius: 8px;
-    font-size: 9px;
+    border-radius: 7px;
+    font-size: 12px;
   }
   .quickSetupCard__metaRow {
     gap: 6px 8px;

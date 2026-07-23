@@ -41,6 +41,17 @@ export type PastLinkedPlayer = {
   name: string;
   avatarColor: string;
   lastLinkedAt: number;
+  canInvite: boolean;
+};
+
+export type ReplayInviteCandidate = {
+  userId: string;
+  sourcePlayerId: string;
+  profileId: string;
+  name: string;
+  avatarColor: string;
+  isPreviousOwner: boolean;
+  canInvite: boolean;
 };
 
 export type ScoreHistoryEntry = {

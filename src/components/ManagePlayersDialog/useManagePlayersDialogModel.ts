@@ -1,11 +1,15 @@
 import {
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
   useState,
   type ForwardedRef,
 } from "react";
-import { AVATAR_COLORS } from "../../constants";
+import {
+  AVATAR_COLORS,
+  REFRESH_PAST_LINKED_PLAYERS_EVENT,
+} from "../../constants";
 import type {
   GameTeam,
   PastLinkedPlayer,
@@ -233,10 +237,24 @@ export function useManagePlayersDialogModel(
   const stagedPastLinkedPlayers = useMemo(
     () =>
       pastLinkedPlayers.filter((player) =>
-        stagedPastLinkedUserIds.has(player.userId),
+        player.canInvite && stagedPastLinkedUserIds.has(player.userId),
       ),
     [pastLinkedPlayers, stagedPastLinkedUserIds],
   );
+
+  useEffect(() => {
+    const allowedUserIds = new Set(
+      pastLinkedPlayers
+        .filter((player) => player.canInvite)
+        .map((player) => player.userId),
+    );
+    setStagedPastLinkedUserIds((previous) => {
+      const next = new Set(
+        [...previous].filter((userId) => allowedUserIds.has(userId)),
+      );
+      return next.size === previous.size ? previous : next;
+    });
+  }, [pastLinkedPlayers]);
   const stagedTeams = useMemo(
     () => savedTeams.filter((team) => stagedTeamIds.has(team.id)),
     [savedTeams, stagedTeamIds],
@@ -335,6 +353,7 @@ export function useManagePlayersDialogModel(
 
   function open() {
     resetState();
+    window.dispatchEvent(new Event(REFRESH_PAST_LINKED_PLAYERS_EVENT));
     dialogRef.current?.showModal();
   }
 
@@ -342,6 +361,7 @@ export function useManagePlayersDialogModel(
     resetState();
     setIsCreating(true);
     setShowRosterImmediately(true);
+    window.dispatchEvent(new Event(REFRESH_PAST_LINKED_PLAYERS_EVENT));
     dialogRef.current?.showModal();
   }
 
@@ -366,6 +386,13 @@ export function useManagePlayersDialogModel(
   }
 
   function togglePastLinkedPlayer(userId: string) {
+    if (
+      !pastLinkedPlayers.some(
+        (player) => player.userId === userId && player.canInvite,
+      )
+    ) {
+      return;
+    }
     setStagedPastLinkedUserIds((previous) => {
       const next = new Set(previous);
       if (next.has(userId)) next.delete(userId);

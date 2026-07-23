@@ -8,6 +8,10 @@ export const APP_VIEW_STORAGE_KEY = "plink:view:v1";
 export const HOME_TAB_STORAGE_KEY = "plink:homeTab:v1";
 export const PLAYERS_VIEW_STORAGE_KEY = "plink:playersView:v1";
 export const HOME_NEW_GAME_OPEN_KEY = "plink:homeNewGameOpen:v1";
+export const REFRESH_PAST_LINKED_PLAYERS_EVENT =
+  "plink:refreshPastLinkedPlayers";
+export const REFRESH_PAST_INVITED_PLAYERS_EVENT =
+  "plink:refreshPastInvitedPlayers";
 export const LOCAL_SESSIONS_HINT_DISMISSED_KEY =
   "plink:localSessionsHintDismissed:v1";
 export const GAME_TIMER_STORAGE_KEY = "plink:timer:v1";

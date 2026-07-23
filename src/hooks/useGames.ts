@@ -12,12 +12,18 @@ import type {
   Player,
   PlayerProfile,
   QuickScoreValues,
+  ReplayInviteCandidate,
   ScoreDirection,
   ToastState,
   ToastTone,
   WinCondition,
 } from "../types";
-import { MAX_ABS_SCORE, DEFAULT_TEAM_ICON } from "../constants";
+import {
+  DEFAULT_TEAM_ICON,
+  MAX_ABS_SCORE,
+  REFRESH_PAST_INVITED_PLAYERS_EVENT,
+  REFRESH_PAST_LINKED_PLAYERS_EVENT,
+} from "../constants";
 import { supabase } from "../lib/supabase";
 import {
   clampName,
@@ -57,6 +63,7 @@ import {
   loadRemoteGames,
   loadRemotePastInvitedPlayers,
   loadRemotePastLinkedPlayers,
+  loadRemoteReplayInviteCandidates,
   mergeRemoteSharedGamePlayers,
   parseRemoteGameJoinNotification,
   parseRemoteGameChange,
@@ -68,6 +75,7 @@ import {
   rotateRemoteGameInvite,
   saveRemoteGames,
   setRemoteSharedCollaboratorManagement,
+  SHARING_PREFERENCE_NOTIFICATIONS_TABLE,
   updateRemoteSharedGamePlayer,
   updateRemoteSharedGameSettings,
 } from "../storage/remoteStorage";
@@ -311,6 +319,8 @@ export function useGames(
     PastLinkedPlayer[]
   >([]);
   const [pastInvitedPlayersRefreshTick, setPastInvitedPlayersRefreshTick] =
+    useState(0);
+  const [pastLinkedPlayersRefreshTick, setPastLinkedPlayersRefreshTick] =
     useState(0);
   const pastLinkedPlayersCacheRef = useRef(
     new Map<string, PastLinkedPlayer[]>(),
@@ -670,6 +680,16 @@ export function useGames(
       void refreshRemoteGames();
       void refreshJoinNotifications();
       void refreshRemovalNotifications();
+      setPastInvitedPlayersRefreshTick((value) => value + 1);
+      setPastLinkedPlayersRefreshTick((value) => value + 1);
+    }
+
+    function refreshPastInvitedPlayers() {
+      setPastInvitedPlayersRefreshTick((value) => value + 1);
+    }
+
+    function refreshPastLinkedPlayers() {
+      setPastLinkedPlayersRefreshTick((value) => value + 1);
     }
 
     const {
@@ -733,6 +753,19 @@ export function useGames(
           if (notification) handleRemovalNotification(notification);
         },
       );
+      channel.on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: SHARING_PREFERENCE_NOTIFICATIONS_TABLE,
+          filter: `user_id=eq.${activeUserId}`,
+        },
+        () => {
+          refreshPastInvitedPlayers();
+          refreshPastLinkedPlayers();
+        },
+      );
       void channel.subscribe(
         createRealtimeReconnectHandler(refreshAll),
       );
@@ -745,6 +778,14 @@ export function useGames(
     }, GAME_SYNC_FALLBACK_INTERVAL_MS);
     window.addEventListener("focus", refreshOnFocus);
     document.addEventListener("visibilitychange", refreshWhenVisible);
+    window.addEventListener(
+      REFRESH_PAST_INVITED_PLAYERS_EVENT,
+      refreshPastInvitedPlayers,
+    );
+    window.addEventListener(
+      REFRESH_PAST_LINKED_PLAYERS_EVENT,
+      refreshPastLinkedPlayers,
+    );
 
     return () => {
       alive = false;
@@ -757,6 +798,14 @@ export function useGames(
       }
       window.removeEventListener("focus", refreshOnFocus);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.removeEventListener(
+        REFRESH_PAST_INVITED_PLAYERS_EVENT,
+        refreshPastInvitedPlayers,
+      );
+      window.removeEventListener(
+        REFRESH_PAST_LINKED_PLAYERS_EVENT,
+        refreshPastLinkedPlayers,
+      );
     };
   }, [remoteUserId, sessionUserId]);
 
@@ -910,6 +959,7 @@ export function useGames(
     currentGame?.id,
     currentGame?.participantMode,
     currentGame?.players.length,
+    pastLinkedPlayersRefreshTick,
     remoteReady,
     sessionUserId,
   ]);
@@ -1071,6 +1121,7 @@ export function useGames(
   async function duplicateGame(
     gameId: string,
     savedProfiles: PlayerProfile[],
+    invitedUserIds: string[] = [],
   ): Promise<Game | null> {
     const original = games.find((g) => g.id === gameId);
     if (!original) return null;
@@ -1095,7 +1146,6 @@ export function useGames(
 
     if (
       original.isShared &&
-      original.accessRole !== "collaborator" &&
       sessionUserId
     ) {
       try {
@@ -1104,6 +1154,7 @@ export function useGames(
           original.id,
           uid(),
           nextName,
+          invitedUserIds,
         );
         remoteSignatureRef.current = markGameVersionSynced(
           remoteSignatureRef.current,
@@ -1162,6 +1213,22 @@ export function useGames(
     setGames((prev) => [next, ...prev]);
     setCurrentGameId(next.id);
     return next;
+  }
+
+  async function getReplayInviteCandidates(
+    gameId: string,
+  ): Promise<ReplayInviteCandidate[] | null> {
+    if (!sessionUserId) return [];
+    try {
+      return await loadRemoteReplayInviteCandidates(gameId);
+    } catch (error) {
+      console.error("Failed to load replay invite candidates", error);
+      setSyncNotice({
+        message: `Could not prepare game: ${getSyncErrorMessage(error)}`,
+        tone: "error",
+      });
+      return null;
+    }
   }
 
   async function renameGame(gameId: string, name: string) {
@@ -1345,6 +1412,7 @@ export function useGames(
             name: removedPlayer.name,
             avatarColor: removedPlayer.avatarColor,
             lastLinkedAt: Date.now(),
+            canInvite: false,
           };
           const cacheKey = `${sessionUserId}:${gameId}`;
           const addPastPlayer = (players: PastLinkedPlayer[]) => [
@@ -2195,6 +2263,7 @@ export function useGames(
     currentGame,
     createGame,
     duplicateGame,
+    getReplayInviteCandidates,
     selectGame,
     deleteGame,
     renameGame,

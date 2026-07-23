@@ -4,7 +4,7 @@ import {
   formatPlayerName,
   getInitials,
 } from "../../utils/text";
-import { Info, Link, Trash2 } from "lucide-react";
+import { Info, Link, LockKeyhole, Trash2 } from "lucide-react";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
 import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRosterPicker";
 import { SwipeableCard } from "../SwipeableCard/SwipeableCard";
@@ -102,7 +102,10 @@ export function NewGamePlayers() {
             }
             listFooterContent={
               selectedPastInvitedUserIds.size > 0 ||
-              selectedStagedPlayerIds.size > 0 ? (
+              selectedStagedPlayerIds.size > 0 ||
+              filteredPastInvitedPlayers.some(
+                (player) => !player.canInvite,
+              ) ? (
                 <div className="participantPicker__selectionNotices">
                   {selectedPastInvitedUserIds.size > 0 ? (
                     <div className="participantPicker__selectionNotice">
@@ -122,6 +125,18 @@ export function NewGamePlayers() {
                       </span>
                     </div>
                   ) : null}
+                  {filteredPastInvitedPlayers.some(
+                    (player) => !player.canInvite,
+                  ) ? (
+                    <div className="participantPicker__selectionNotice participantPicker__selectionNotice--blocked">
+                      <Info size={15} strokeWidth={2.4} aria-hidden="true" />
+                      <span>
+                        <strong>Invite code required:</strong> players marked
+                        “Code only” turned off automatic invites. Share a new
+                        code for them to join.
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               ) : null
             }
@@ -133,13 +148,16 @@ export function NewGamePlayers() {
               .map(renderSavedProfile)}
             {filteredPastInvitedPlayers.map((player) => {
               const selected = selectedPastInvitedUserIds.has(player.userId);
+              const blocked = !player.canInvite;
               return (
                 <button
                   key={player.userId}
                   type="button"
                   className={`participantOption participantOption--invited${
                     selected ? " participantOption--active" : ""
-                  }`}
+                  }${blocked ? " participantOption--blocked" : ""}`}
+                  disabled={blocked}
+                  aria-pressed={selected}
                   onClick={() => togglePastInvitedPlayer(player.userId)}
                 >
                   <span
@@ -159,7 +177,17 @@ export function NewGamePlayers() {
                       </span>
                     </span>
                   </span>
-                  <SelectionStateIcon selected={selected} />
+                  {blocked ? (
+                    <span
+                      className="participantOption__blockedState"
+                      aria-hidden="true"
+                    >
+                      <LockKeyhole size={14} strokeWidth={2.5} />
+                      Code only
+                    </span>
+                  ) : (
+                    <SelectionStateIcon selected={selected} />
+                  )}
                 </button>
               );
             })}

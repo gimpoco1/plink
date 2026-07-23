@@ -12,6 +12,8 @@ type Props = {
   onPromptValueChange: (value: string) => void;
   selectedPlayerId: string;
   onPlayerSelect: (playerId: string) => void;
+  selectedPlayerIds: string[];
+  onPlayerMultiSelect: (playerId: string) => void;
 };
 
 export function ConfirmDialogBody({
@@ -22,6 +24,8 @@ export function ConfirmDialogBody({
   onPromptValueChange,
   selectedPlayerId,
   onPlayerSelect,
+  selectedPlayerIds,
+  onPlayerMultiSelect,
 }: Props) {
   const hasRoster = Boolean(options.players?.length || options.teams?.length);
   return (
@@ -81,6 +85,8 @@ export function ConfirmDialogBody({
         options={options}
         selectedPlayerId={selectedPlayerId}
         onPlayerSelect={onPlayerSelect}
+        selectedPlayerIds={selectedPlayerIds}
+        onPlayerMultiSelect={onPlayerMultiSelect}
       />
       {options.message && !hasRoster ? (
         <p
@@ -223,13 +229,19 @@ function ConfirmPlayers({
   options,
   selectedPlayerId,
   onPlayerSelect,
+  selectedPlayerIds,
+  onPlayerMultiSelect,
 }: {
   options: ConfirmOptions;
   selectedPlayerId: string;
   onPlayerSelect: (playerId: string) => void;
+  selectedPlayerIds: string[];
+  onPlayerMultiSelect: (playerId: string) => void;
 }) {
   if (!options.players?.length) return null;
-  const selectable = options.selectablePlayers === true;
+  const singleSelectable = options.selectablePlayers === true;
+  const multiSelectable = options.multiSelectablePlayers === true;
+  const selectable = singleSelectable || multiSelectable;
   return (
     <div className="dialog__playerSection">
       {options.playersTitle ? (
@@ -244,10 +256,19 @@ function ConfirmPlayers({
         aria-label="Players"
       >
         {options.players.map((player) => {
-          const selected = selectable && player.id === selectedPlayerId;
+          const selected =
+            selectable &&
+            Boolean(
+              player.id &&
+                (multiSelectable
+                  ? selectedPlayerIds.includes(player.id)
+                  : player.id === selectedPlayerId),
+            );
           const className = `dialog__playerItem${
             player.label ? " dialog__playerItem--identity" : ""
-          }${selected ? " dialog__playerItem--selected" : ""}`;
+          }${selected ? " dialog__playerItem--selected" : ""}${
+            player.disabled ? " dialog__playerItem--disabled" : ""
+          }`;
           const content = (
             <>
               <span
@@ -262,13 +283,19 @@ function ConfirmPlayers({
                   <span className="dialog__playerLabel">{player.label}</span>
                 ) : null}
                 <span className="dialog__playerName">{player.name}</span>
-                {player.description ? (
+                {(
+                  selected
+                    ? player.selectedDescription ?? player.description
+                    : player.unselectedDescription ?? player.description
+                ) ? (
                   <span className="dialog__playerDescription">
-                    {player.description}
+                    {selected
+                      ? player.selectedDescription ?? player.description
+                      : player.unselectedDescription ?? player.description}
                   </span>
                 ) : null}
               </span>
-              {selectable ? (
+              {selectable && !player.disabled ? (
                 <span
                   className="dialog__playerCheck"
                   aria-hidden="true"
@@ -285,7 +312,12 @@ function ConfirmPlayers({
               className={className}
               type="button"
               aria-pressed={selected}
-              onClick={() => onPlayerSelect(player.id!)}
+              disabled={player.disabled}
+              onClick={() =>
+                multiSelectable
+                  ? onPlayerMultiSelect(player.id!)
+                  : onPlayerSelect(player.id!)
+              }
             >
               {content}
             </button>

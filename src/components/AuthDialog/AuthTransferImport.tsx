@@ -191,13 +191,22 @@ export function AuthTransferImport() {
               <div className="authDialog__deviceGroup">
                 <div className="authDialog__deviceList">
                   {localProfiles.map((profile) => (
-                    <label key={profile.id} className="authDialog__deviceItem">
+                    <label
+                      key={profile.id}
+                      className="authDialog__deviceItem authDialog__deviceItem--player"
+                    >
                       <input
                         type="checkbox"
                         checked={selectedLocalProfileIds.includes(profile.id)}
                         onChange={() => toggleLocalProfile(profile.id)}
                       />
-
+                      <span
+                        className="authDialog__devicePlayerAvatar"
+                        style={avatarStyleFor(profile.avatarColor)}
+                        aria-hidden="true"
+                      >
+                        {getInitials(profile.name)}
+                      </span>
                       <span>
                         <strong>{formatPlayerName(profile.name)}</strong>
                       </span>

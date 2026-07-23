@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Eye, EyeOff, Mail } from "lucide-react";
+import { Check, Eye, EyeOff, Mail } from "lucide-react";
 import { FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { formatPlayerName } from "../../utils/text";
@@ -9,10 +9,8 @@ export function AuthSignedOutPanel() {
     accountName,
     busy,
     email,
-    error,
     isAwaitingSignupConfirmation,
     mode,
-    notice,
     oauthProvider,
     openEmailApp,
     password,
@@ -170,20 +168,6 @@ export function AuthSignedOutPanel() {
               >
                 Forgot password?
               </button>
-            ) : null}
-
-            {notice ? <div className="authDialog__notice">{notice}</div> : null}
-            {error ? (
-              <div
-                className="authDialog__authAlert authDialog__authAlert--error"
-                role="alert"
-                aria-live="assertive"
-              >
-                <span className="authDialog__authAlertIcon" aria-hidden="true">
-                  <AlertTriangle size={16} strokeWidth={2.4} />
-                </span>
-                <span>{error}</span>
-              </div>
             ) : null}
 
             <button

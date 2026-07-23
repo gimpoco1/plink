@@ -4,6 +4,7 @@ import {
   resolveConfirmEyebrow,
   type ConfirmDialogHandle,
   type ConfirmOptions,
+  type ConfirmPlayerMultiSelectionOptions,
   type ConfirmPlayerSelectionOptions,
   type ConfirmResult,
   type PromptOptions,
@@ -21,9 +22,14 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
     const playerSelectionResolverRef = useRef<
       ((value: string | null) => void) | null
     >(null);
+    const playerMultiSelectionResolverRef = useRef<
+      ((value: string[] | null) => void) | null
+    >(null);
     const [promptValue, setPromptValue] = useState("");
     const [selectedPlayerId, setSelectedPlayerId] = useState("");
+    const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
     const [isPlayerSelection, setIsPlayerSelection] = useState(false);
+    const [isPlayerMultiSelection, setIsPlayerMultiSelection] = useState(false);
     const [options, setOptions] = useState<ConfirmOptions>({
       title: "",
       bodyTitle: "",
@@ -44,6 +50,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       teams: [],
       layout: "default",
       selectablePlayers: false,
+      multiSelectablePlayers: false,
     });
     const [promptOptions, setPromptOptions] = useState<PromptOptions | null>(
       null,
@@ -73,6 +80,14 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       setSelectedPlayerId("");
     }
 
+    function closePlayerMultiSelection(value: string[] | null) {
+      dialogRef.current?.close();
+      playerMultiSelectionResolverRef.current?.(value);
+      playerMultiSelectionResolverRef.current = null;
+      setIsPlayerMultiSelection(false);
+      setSelectedPlayerIds([]);
+    }
+
     function setConfirmOptions(next: ConfirmOptions) {
       setOptions({
         title: next.title,
@@ -94,6 +109,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         teams: next.teams ?? [],
         layout: next.layout ?? "default",
         selectablePlayers: next.selectablePlayers ?? false,
+        multiSelectablePlayers: next.multiSelectablePlayers ?? false,
       });
     }
 
@@ -103,6 +119,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         choose: (next) => {
           setPromptOptions(null);
           setIsPlayerSelection(false);
+          setIsPlayerMultiSelection(false);
           setConfirmOptions(next);
           dialogRef.current?.showModal();
           return new Promise<ConfirmResult>((resolve) => {
@@ -112,6 +129,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         confirm: async (next) => {
           setPromptOptions(null);
           setIsPlayerSelection(false);
+          setIsPlayerMultiSelection(false);
           setConfirmOptions({ ...next, extraActionText: "" });
           dialogRef.current?.showModal();
           const result = await new Promise<ConfirmResult>((resolve) => {
@@ -122,6 +140,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         selectPlayer: async (next: ConfirmPlayerSelectionOptions) => {
           setPromptOptions(null);
           setIsPlayerSelection(true);
+          setIsPlayerMultiSelection(false);
           setSelectedPlayerId(next.initialSelectedPlayerId ?? "");
           setConfirmOptions({
             ...next,
@@ -133,8 +152,27 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             playerSelectionResolverRef.current = resolve;
           });
         },
+        selectPlayers: async (
+          next: ConfirmPlayerMultiSelectionOptions,
+        ) => {
+          setPromptOptions(null);
+          setIsPlayerSelection(false);
+          setIsPlayerMultiSelection(true);
+          setSelectedPlayerIds(next.initialSelectedPlayerIds ?? []);
+          setConfirmOptions({
+            ...next,
+            selectablePlayers: false,
+            multiSelectablePlayers: true,
+            extraActionText: "",
+          });
+          dialogRef.current?.showModal();
+          return new Promise<string[] | null>((resolve) => {
+            playerMultiSelectionResolverRef.current = resolve;
+          });
+        },
         prompt: async (next) => {
           setIsPlayerSelection(false);
+          setIsPlayerMultiSelection(false);
           setPromptOptions(next);
           setPromptValue(next.initialValue ?? "");
           setOptions({
@@ -157,6 +195,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             teams: [],
             layout: "default",
             selectablePlayers: false,
+            multiSelectablePlayers: false,
           });
           dialogRef.current?.showModal();
           return new Promise<string | null>((resolve) => {
@@ -174,6 +213,9 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         onClose={() => {
           if (promptResolverRef.current) closePrompt(null);
           if (playerSelectionResolverRef.current) closePlayerSelection(null);
+          if (playerMultiSelectionResolverRef.current) {
+            closePlayerMultiSelection(null);
+          }
           if (resolverRef.current) closeWith("cancel");
         }}
       >
@@ -189,6 +231,10 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             }
             if (isPlayerSelection) {
               if (selectedPlayerId) closePlayerSelection(selectedPlayerId);
+              return;
+            }
+            if (isPlayerMultiSelection) {
+              closePlayerMultiSelection(selectedPlayerIds);
               return;
             }
             closeWith("confirm");
@@ -209,6 +255,8 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                   ? closePrompt(null)
                   : isPlayerSelection
                     ? closePlayerSelection(null)
+                    : isPlayerMultiSelection
+                      ? closePlayerMultiSelection(null)
                     : closeWith("cancel")
               }
               aria-label="Close"
@@ -225,12 +273,24 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             onPromptValueChange={setPromptValue}
             selectedPlayerId={selectedPlayerId}
             onPlayerSelect={setSelectedPlayerId}
+            selectedPlayerIds={selectedPlayerIds}
+            onPlayerMultiSelect={(playerId) =>
+              setSelectedPlayerIds((current) =>
+                current.includes(playerId)
+                  ? current.filter((id) => id !== playerId)
+                  : [...current, playerId],
+              )
+            }
           />
 
           <div
             className={`dialog__actions${
               options.extraActionText ? " dialog__actions--decision" : ""
-            }${isPlayerSelection ? " dialog__actions--selection" : ""}`}
+            }${
+              isPlayerSelection || isPlayerMultiSelection
+                ? " dialog__actions--selection"
+                : ""
+            }`}
           >
             {!options.hideCancelAction ? (
               <button
@@ -242,10 +302,12 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 type="button"
                 onClick={() =>
                   isPrompt
-                    ? closePrompt(null)
-                    : isPlayerSelection
-                      ? closePlayerSelection(null)
-                      : closeWith("cancel")
+                  ? closePrompt(null)
+                  : isPlayerSelection
+                    ? closePlayerSelection(null)
+                    : isPlayerMultiSelection
+                      ? closePlayerMultiSelection(null)
+                    : closeWith("cancel")
                 }
               >
                 {options.cancelText ?? "Cancel"}

@@ -285,6 +285,15 @@
   background: rgba(216, 255, 79, 0.09);
 }
 
+.managePlayersDialog__invitedOption--blocked {
+  cursor: not-allowed;
+}
+
+.managePlayersDialog__invitedOption--blocked
+  .managePlayersDialog__invitedIdentity {
+  opacity: 0.72;
+}
+
 .managePlayersDialog__invitedIdentity {
   min-width: 0;
 }
@@ -337,6 +346,22 @@
   border-color: var(--accent);
 }
 
+.managePlayersDialog__invitedState--blocked {
+  width: auto;
+  padding: 0 7px;
+  gap: 4px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.managePlayersDialog__selectionNotices {
+  display: grid;
+  gap: 7px;
+}
+
 .managePlayersDialog__selectionNotice {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -363,6 +388,15 @@
   margin-bottom: 1px;
   color: var(--text);
   font-weight: 850;
+}
+
+.managePlayersDialog__selectionNotice--blocked {
+  border-color: rgba(203, 211, 215, 0.15);
+  background: rgba(203, 211, 215, 0.045);
+}
+
+.managePlayersDialog__selectionNotice--blocked svg {
+  color: var(--text-dim);
 }
 
 .managePlayersDialog__inviteOthers:hover {
@@ -679,13 +713,13 @@
 .managePlayersDialog__avatar {
   width: 30px;
   height: 30px;
-  border-radius: 10px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #fff;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 900;
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
 }

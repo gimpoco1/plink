@@ -210,6 +210,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             addingPlayer={isAddingPlayer}
             openTeamBuilderToken={openTeamBuilderToken}
+            onOpenTeamBuilderHandled={() => setOpenTeamBuilderToken(0)}
             onActiveViewChange={setPlayersView}
             onAddingPlayerChange={setIsAddingPlayer}
             onOpenAuth={props.onOpenAuth}

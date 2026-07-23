@@ -97,6 +97,7 @@ export function TeamBuilderMembersStep() {
         </SearchableRosterPicker>
         <NewPlayerComposer
           className="teamBuilderCreatePlayer teamBuilderCreatePlayer--inline teamBuilderCreatePlayer--composer"
+          triggerClassName="teamBuilderCreatePlayer__trigger"
           isOpen={
             model.creatingTeamPlayer &&
             model.creatingTeamPlayerForTeamId === null
