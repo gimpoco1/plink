@@ -6,7 +6,7 @@ import {
   supabase,
 } from "../lib/supabase";
 import { PASSWORD_RECOVERY_EVENT } from "../lib/nativePlatform";
-import { createForegroundRefreshHandlers } from "../utils/foregroundRefresh";
+import { subscribeToForegroundRefresh } from "../utils/foregroundRefresh";
 
 function areSessionsEquivalent(
   current: Session | null,
@@ -77,10 +77,9 @@ export function useAuthSession() {
       }
     });
 
-    const {
-      refreshOnFocus: handleWindowFocus,
-      refreshWhenVisible: handleVisibilityChange,
-    } = createForegroundRefreshHandlers(() => void refreshSession());
+    const unsubscribeForegroundRefresh = subscribeToForegroundRefresh(
+      () => void refreshSession(),
+    );
 
     function handleStorage(event: StorageEvent) {
       if (!event.key) return;
@@ -98,19 +97,16 @@ export function useAuthSession() {
       void refreshSession();
     }
 
-    window.addEventListener("focus", handleWindowFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("storage", handleStorage);
-    window.addEventListener("plink:app-resumed", handleWindowFocus);
+    window.addEventListener("plink:app-resumed", refreshSession);
     window.addEventListener(PASSWORD_RECOVERY_EVENT, handlePasswordRecovery);
 
     return () => {
       alive = false;
       subscription.unsubscribe();
-      window.removeEventListener("focus", handleWindowFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      unsubscribeForegroundRefresh();
       window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("plink:app-resumed", handleWindowFocus);
+      window.removeEventListener("plink:app-resumed", refreshSession);
       window.removeEventListener(
         PASSWORD_RECOVERY_EVENT,
         handlePasswordRecovery,

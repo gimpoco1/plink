@@ -5,8 +5,8 @@ import { supabase } from "../lib/supabase";
 import { loadProfiles, saveProfiles } from "../storage/profilesStorage";
 import { loadRemoteProfiles, saveRemoteProfiles } from "../storage/remoteStorage";
 import {
-  createForegroundRefreshHandlers,
   createRealtimeReconnectHandler,
+  subscribeToForegroundRefresh,
 } from "../utils/foregroundRefresh";
 import { uid } from "../utils/id";
 import { formatPlayerName } from "../utils/text";
@@ -220,10 +220,9 @@ export function useProfiles(session: Session | null) {
       }
     }
 
-    const {
-      refreshOnFocus,
-      refreshWhenVisible,
-    } = createForegroundRefreshHandlers(() => void refreshRemoteProfiles());
+    const unsubscribeForegroundRefresh = subscribeToForegroundRefresh(
+      () => void refreshRemoteProfiles(),
+    );
 
     let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
     if (supabase) {
@@ -245,19 +244,15 @@ export function useProfiles(session: Session | null) {
       );
     }
 
-    window.addEventListener("focus", refreshOnFocus);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-
     return () => {
       alive = false;
+      unsubscribeForegroundRefresh();
       if (channel) {
         void channel.unsubscribe();
         if (supabase) {
           supabase.removeChannel(channel);
         }
       }
-      window.removeEventListener("focus", refreshOnFocus);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [remoteUserId, userId]);
 

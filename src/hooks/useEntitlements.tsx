@@ -3,8 +3,8 @@ import type { Session } from "@supabase/supabase-js";
 import { SUBSCRIPTION_SYNCED_EVENT } from "../features/billing/appleSubscriptionSync";
 import { supabase } from "../lib/supabase";
 import {
-  createForegroundRefreshHandlers,
   createRealtimeReconnectHandler,
+  subscribeToForegroundRefresh,
 } from "../utils/foregroundRefresh";
 
 export type SubscriptionPlan = "free" | "pro";
@@ -215,10 +215,9 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       }
     }
 
-    const {
-      refreshOnFocus,
-      refreshWhenVisible,
-    } = createForegroundRefreshHandlers(() => void refreshSubscription());
+    const unsubscribeForegroundRefresh = subscribeToForegroundRefresh(
+      () => void refreshSubscription(),
+    );
 
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
       null;
@@ -240,22 +239,19 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     );
 
     void refreshSubscription();
-    window.addEventListener("focus", refreshOnFocus);
     window.addEventListener(SUBSCRIPTION_SYNCED_EVENT, refreshSubscription);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       alive = false;
+      unsubscribeForegroundRefresh();
       if (channel) {
         void channel.unsubscribe();
         client.removeChannel(channel);
       }
-      window.removeEventListener("focus", refreshOnFocus);
       window.removeEventListener(
         SUBSCRIPTION_SYNCED_EVENT,
         refreshSubscription,
       );
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [envOverridePlan, userId]);
 

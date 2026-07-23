@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
-  createForegroundRefreshHandlers,
   createRealtimeReconnectHandler,
+  subscribeToForegroundRefresh,
 } from "../utils/foregroundRefresh";
 import type {
   CompletionMode,
@@ -684,6 +684,12 @@ export function useGames(
       setPastLinkedPlayersRefreshTick((value) => value + 1);
     }
 
+    function refreshForegroundData() {
+      void refreshRemoteGames();
+      void refreshJoinNotifications();
+      void refreshRemovalNotifications();
+    }
+
     function refreshPastInvitedPlayers() {
       setPastInvitedPlayersRefreshTick((value) => value + 1);
     }
@@ -692,10 +698,9 @@ export function useGames(
       setPastLinkedPlayersRefreshTick((value) => value + 1);
     }
 
-    const {
-      refreshOnFocus,
-      refreshWhenVisible,
-    } = createForegroundRefreshHandlers(refreshAll);
+    const unsubscribeForegroundRefresh = subscribeToForegroundRefresh(
+      refreshForegroundData,
+    );
 
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
       null;
@@ -776,8 +781,6 @@ export function useGames(
     const intervalId = window.setInterval(() => {
       if (document.visibilityState === "visible") void refreshRemoteGames();
     }, GAME_SYNC_FALLBACK_INTERVAL_MS);
-    window.addEventListener("focus", refreshOnFocus);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
     window.addEventListener(
       REFRESH_PAST_INVITED_PLAYERS_EVENT,
       refreshPastInvitedPlayers,
@@ -790,14 +793,13 @@ export function useGames(
     return () => {
       alive = false;
       window.clearInterval(intervalId);
+      unsubscribeForegroundRefresh();
       if (channel) {
         void channel.unsubscribe();
         if (supabase) {
           supabase.removeChannel(channel);
         }
       }
-      window.removeEventListener("focus", refreshOnFocus);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
       window.removeEventListener(
         REFRESH_PAST_INVITED_PLAYERS_EVENT,
         refreshPastInvitedPlayers,

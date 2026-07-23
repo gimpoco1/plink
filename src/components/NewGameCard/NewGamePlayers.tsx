@@ -40,17 +40,13 @@ export function NewGamePlayers() {
     setSaveAsProfile,
   } = useNewGameCardContext();
 
-  function renderSavedProfile(
-    profile: (typeof filteredProfiles)[number],
-  ) {
+  function renderSavedProfile(profile: (typeof filteredProfiles)[number]) {
     return (
       <button
         key={profile.id}
         type="button"
         className={`participantOption${
-          selectedProfileIds.has(profile.id)
-            ? " participantOption--active"
-            : ""
+          selectedProfileIds.has(profile.id) ? " participantOption--active" : ""
         }`}
         onClick={() => toggleProfile(profile.id)}
       >
@@ -102,17 +98,13 @@ export function NewGamePlayers() {
             }
             listFooterContent={
               selectedPastInvitedUserIds.size > 0 ||
-              selectedStagedPlayerIds.size > 0 ||
-              filteredPastInvitedPlayers.some(
-                (player) => !player.canInvite,
-              ) ? (
+              selectedStagedPlayerIds.size > 0 ? (
                 <div className="participantPicker__selectionNotices">
                   {selectedPastInvitedUserIds.size > 0 ? (
                     <div className="participantPicker__selectionNotice">
                       <Link size={15} strokeWidth={2.4} aria-hidden="true" />
                       <span>
-                        <strong>Invited players:</strong> this game will appear
-                        in their accounts, and they can update the score.
+                        <strong>Invited Before players:</strong> They’ll see this game in their accounts and can update the score.
                       </span>
                     </div>
                   ) : null}
@@ -122,18 +114,6 @@ export function NewGamePlayers() {
                       <span>
                         <strong>Local players:</strong> results stay in this
                         game only and won’t be added to Stats.
-                      </span>
-                    </div>
-                  ) : null}
-                  {filteredPastInvitedPlayers.some(
-                    (player) => !player.canInvite,
-                  ) ? (
-                    <div className="participantPicker__selectionNotice participantPicker__selectionNotice--blocked">
-                      <Info size={15} strokeWidth={2.4} aria-hidden="true" />
-                      <span>
-                        <strong>Invite code required:</strong> players marked
-                        “Code only” turned off automatic invites. Share a new
-                        code for them to join.
                       </span>
                     </div>
                   ) : null}
@@ -149,7 +129,7 @@ export function NewGamePlayers() {
             {filteredPastInvitedPlayers.map((player) => {
               const selected = selectedPastInvitedUserIds.has(player.userId);
               const blocked = !player.canInvite;
-              return (
+              const playerOption = (
                 <button
                   key={player.userId}
                   type="button"
@@ -178,17 +158,39 @@ export function NewGamePlayers() {
                     </span>
                   </span>
                   {blocked ? (
-                    <span
-                      className="participantOption__blockedState"
+                    <LockKeyhole
+                      className="participantOption__blockedIcon"
+                      size={16}
+                      strokeWidth={2.5}
                       aria-hidden="true"
-                    >
-                      <LockKeyhole size={14} strokeWidth={2.5} />
-                      Code only
-                    </span>
+                    />
                   ) : (
                     <SelectionStateIcon selected={selected} />
                   )}
                 </button>
+              );
+
+              return blocked ? (
+                <div
+                  key={player.userId}
+                  className="participantOptionGroup participantOptionGroup--blocked"
+                >
+                  {playerOption}
+                  <div className="participantOption__codeFooter">
+                    <LockKeyhole
+                      size={14}
+                      strokeWidth={2.5}
+                      aria-hidden="true"
+                    />
+                    <span>
+                      <strong>Invite code required</strong>
+                      Player has automatic invites off. To add them, share the game code
+                      from the game menu and have them join the game.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                playerOption
               );
             })}
             {filteredStagedPlayers.map((player) => {
@@ -232,7 +234,9 @@ export function NewGamePlayers() {
                           <span className="participantOption__name">
                             {formatPlayerName(player.name)}
                           </span>
-                          <span className="participantOption__badge">Local</span>
+                          <span className="participantOption__badge">
+                            Local
+                          </span>
                         </span>
                       </span>
                       <SelectionStateIcon selected={selected} />

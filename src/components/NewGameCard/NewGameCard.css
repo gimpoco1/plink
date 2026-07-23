@@ -1296,15 +1296,56 @@
   opacity: 0.7;
 }
 
-.participantOption__blockedState {
+.participantOptionGroup {
+  min-width: 0;
+}
+
+.participantOptionGroup--blocked {
+  overflow: hidden;
+  border: 1px solid rgba(17, 24, 10, 0.16);
+  border-radius: 14px;
+  background: rgba(17, 24, 10, 0.06);
+}
+
+.participantOptionGroup--blocked
+  .participantOption.participantOption--blocked {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.participantOption__blockedIcon {
   flex: 0 0 auto;
-  display: inline-flex;
+  color: rgba(17, 24, 10, 0.6);
+}
+
+.participantOption__codeFooter {
+  min-width: 0;
+  padding: 7px 10px 8px;
+  border-top: 1px solid rgba(17, 24, 10, 0.14);
+  background: rgba(17, 24, 10, 0.045);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 4px;
-  color: rgba(17, 24, 10, 0.62);
-  font-size: 9px;
+  gap: 7px;
+  color: rgba(17, 24, 10, 0.68);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.participantOption__codeFooter svg {
+  color: rgba(17, 24, 10, 0.72);
+}
+
+.participantOption__codeFooter span {
+  min-width: 0;
+}
+
+.participantOption__codeFooter strong {
+  margin-right: 5px;
+  color: rgba(17, 24, 10, 0.9);
   font-weight: 950;
-  text-transform: uppercase;
 }
 
 .participantPicker__selectionNotices {
@@ -1315,7 +1356,7 @@
 .participantPicker__selectionNotice {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
+  align-items: center;
   gap: 8px;
   padding: 9px 10px;
   border: 1px solid rgba(17, 24, 10, 0.16);
@@ -1328,18 +1369,12 @@
 }
 
 .participantPicker__selectionNotice svg {
-  margin-top: 1px;
   color: rgba(17, 24, 10, 0.78);
 }
 
 .participantPicker__selectionNotice strong {
   color: rgba(17, 24, 10, 0.88);
   font-weight: 950;
-}
-
-.participantPicker__selectionNotice--blocked {
-  border-color: rgba(17, 24, 10, 0.13);
-  background: rgba(17, 24, 10, 0.045);
 }
 
 .participantOptionSwipe {
