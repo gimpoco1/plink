@@ -1,9 +1,5 @@
 import { motion } from "framer-motion";
 import { DashboardScreen } from "../../../screens/DashboardScreen";
-import {
-  getUnsavedReplayPlayers,
-  linkedPlayersCarryIntoReplay,
-} from "../../../utils/replay";
 import { useAppContext } from "../context/AppContext";
 
 export function AppHomeRoute() {
@@ -11,6 +7,7 @@ export function AppHomeRoute() {
     authDialogRef,
     canViewSavedData,
     cancelGameStartSplash,
+    chooseReplayInvitedUserIds,
     confirmRef,
     createTeam,
     deleteGame,
@@ -30,6 +27,7 @@ export function AppHomeRoute() {
     openTeamBuilderRequestToken,
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
+    pastInvitedPlayers,
     presetDraft,
     presetDraftIntent,
     presetDraftToken,
@@ -72,6 +70,7 @@ export function AppHomeRoute() {
       <DashboardScreen
         games={visibleGames}
         profiles={visibleProfiles}
+        pastInvitedPlayers={pastInvitedPlayers}
         teams={visibleTeams}
         teamMembers={visibleTeamMembers}
         canUseTeams={entitlements.canUseTeams}
@@ -154,32 +153,14 @@ export function AppHomeRoute() {
           }
           const game = games.find((item) => item.id === gameId);
           if (!game) return;
-          const unsavedPlayers = getUnsavedReplayPlayers(game, profiles);
-          if (unsavedPlayers.length > 0) {
-            const linkedPlayersCarryOver = linkedPlayersCarryIntoReplay(game);
-            const confirmed = await confirmRef.current?.confirm({
-              eyebrow: "New game",
-              title: "Play again",
-              message: linkedPlayersCarryOver
-                ? "Invited players will be added automatically. Results for game-only players won’t be added to Stats."
-                : "This starts a separate game with the same players. Invited players won’t stay connected, and results for unsaved players won’t be added to Stats.",
-              messageCase: "normal",
-              playersTitle: linkedPlayersCarryOver
-                ? "Game-only players"
-                : "Some players aren’t saved",
-              players: unsavedPlayers.map((player) => ({
-                name: player.name,
-                avatarColor: player.avatarColor,
-              })),
-              confirmText: "Play again",
-              cancelText: "Cancel",
-              layout: "feature",
-              tone: "default",
-            });
-            if (!confirmed) return;
-          }
+          const invitedUserIds = await chooseReplayInvitedUserIds(game);
+          if (invitedUserIds === null) return;
           triggerGameStartSplash();
-          const duplicated = await duplicateGame(gameId, profiles);
+          const duplicated = await duplicateGame(
+            gameId,
+            profiles,
+            invitedUserIds,
+          );
           if (duplicated) {
             setGameReturnTab(homeTab);
             setView("game");

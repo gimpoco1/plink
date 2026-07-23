@@ -46,7 +46,10 @@ export function useGameScreenModel(props: GameScreenProps) {
 
   function isCurrentUserPlayer(player: Player) {
     if (game.isShared && game.accessRole === "collaborator") {
-      return player.id === game.linkedPlayerIdForCurrentUser;
+      return (
+        player.id === game.linkedPlayerIdForCurrentUser ||
+        (!!player.profileId && accountProfileIds.has(player.profileId))
+      );
     }
     return (
       (!game.isShared || player.joinedViaInvite !== true) &&

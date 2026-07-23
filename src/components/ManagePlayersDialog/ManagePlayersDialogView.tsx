@@ -9,13 +9,11 @@ export function ManagePlayersDialogView() {
     dialogRef,
     isPlayersGame,
     isTeamsGame,
-    onStartGame,
     resetState,
     stagedCount,
-    stagedCustomPlayers,
-    stagedProfileIds,
     stagedTeamCount,
     submitLabel,
+    submitPlayers,
     submitTeams,
     teamSubmitLabel,
   } = useManagePlayersDialogContext();
@@ -61,13 +59,7 @@ export function ManagePlayersDialogView() {
                 <button
                   className="btn btn--primary btn--wide"
                   type="button"
-                  onClick={() => {
-                    onStartGame(
-                      Array.from(stagedProfileIds),
-                      stagedCustomPlayers,
-                    );
-                    close();
-                  }}
+                  onClick={() => void submitPlayers()}
                 >
                   {submitLabel}
                 </button>

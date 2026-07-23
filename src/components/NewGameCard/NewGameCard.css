@@ -1283,6 +1283,136 @@
   gap: 8px;
 }
 
+.participantOption.participantOption--invited {
+  border-color: rgba(17, 24, 10, 0.2);
+}
+
+.participantOption.participantOption--blocked {
+  cursor: not-allowed;
+}
+
+.participantOption.participantOption--blocked
+  .participantOption__copy {
+  opacity: 0.7;
+}
+
+.participantOptionGroup {
+  min-width: 0;
+}
+
+.participantOptionGroup--blocked {
+  overflow: hidden;
+  border: 1px solid rgba(17, 24, 10, 0.16);
+  border-radius: 14px;
+  background: rgba(17, 24, 10, 0.06);
+}
+
+.participantOptionGroup--blocked
+  .participantOption.participantOption--blocked {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.participantOption__blockedIcon {
+  flex: 0 0 auto;
+  color: rgba(17, 24, 10, 0.6);
+}
+
+.participantOption__codeFooter {
+  min-width: 0;
+  padding: 7px 10px 8px;
+  border-top: 1px solid rgba(17, 24, 10, 0.14);
+  background: rgba(17, 24, 10, 0.045);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  color: rgba(17, 24, 10, 0.68);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.participantOption__codeFooter svg {
+  color: rgba(17, 24, 10, 0.72);
+}
+
+.participantOption__codeFooter span {
+  min-width: 0;
+}
+
+.participantOption__codeFooter strong {
+  margin-right: 5px;
+  color: rgba(17, 24, 10, 0.9);
+  font-weight: 950;
+}
+
+.participantPicker__selectionNotices {
+  display: grid;
+  gap: 7px;
+}
+
+.participantPicker__selectionNotice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(17, 24, 10, 0.16);
+  border-radius: 12px;
+  background: rgba(17, 24, 10, 0.07);
+  color: rgba(17, 24, 10, 0.7);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.participantPicker__selectionNotice svg {
+  color: rgba(17, 24, 10, 0.78);
+}
+
+.participantPicker__selectionNotice strong {
+  color: rgba(17, 24, 10, 0.88);
+  font-weight: 950;
+}
+
+.participantOptionSwipe {
+  --radius: 14px;
+  --glow: none;
+}
+
+.participantOptionSwipe .card.participantOption--swipe {
+  min-height: 44px;
+  padding: 0;
+  display: block;
+  border-color: rgba(17, 24, 10, 0.12);
+  background: rgba(17, 24, 10, 0.06);
+  color: #11180f;
+}
+
+.participantOptionSwipe
+  .card.participantOption--swipe.participantOption--active {
+  border-color: rgba(17, 24, 10, 0.88);
+  background: rgba(17, 24, 10, 0.92);
+  color: var(--accent);
+}
+
+.participantOption__button {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
 .participantOption {
   width: 100%;
   min-height: 44px;
@@ -1313,12 +1443,12 @@
 .participantOption__avatar {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -1335,6 +1465,41 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.participantOption__nameRow {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.participantOption__nameRow .participantOption__name {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.participantOption__badge {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid rgba(17, 24, 10, 0.18);
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.08);
+  color: rgba(17, 24, 10, 0.68);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.participantOption--active .participantOption__badge {
+  border-color: rgba(210, 255, 52, 0.42);
+  background: rgba(210, 255, 52, 0.12);
+  color: var(--accent);
 }
 
 .participantOption__hint {
@@ -1466,7 +1631,7 @@
 }
 
 .teamPicker__option--active .teamPicker__icon {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(252, 254, 255, 0.6);
   color: #003549;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
@@ -1499,7 +1664,7 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  background: rgba(64, 196, 255, 0.16);
+  background: rgba(64, 196, 255, 0.28);
   color: #003549;
   box-shadow: inset 0 0 0 1px rgba(64, 196, 255, 0.24);
 }
@@ -1537,12 +1702,12 @@
   width: 24px;
   height: 24px;
   margin-left: -7px;
-  border-radius: 999px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 900;
   border: 2px solid rgba(17, 24, 10, 0.12);
 }

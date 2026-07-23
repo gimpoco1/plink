@@ -31,6 +31,7 @@ type SearchableRosterPickerProps = {
   listTitle?: string;
   collapseLabel?: string;
   onListOpenChange?: (isOpen: boolean) => void;
+  listFooterContent?: ReactNode;
   footerContent?: ReactNode;
   children?: ReactNode;
 };
@@ -57,6 +58,7 @@ export function SearchableRosterPicker({
   listTitle,
   collapseLabel = "Hide list",
   onListOpenChange,
+  listFooterContent,
   footerContent,
   children,
 }: SearchableRosterPickerProps) {
@@ -204,6 +206,8 @@ export function SearchableRosterPicker({
       {shouldShowList && !hasItems && emptyState ? (
         <div className="rosterPicker__empty">{emptyState}</div>
       ) : null}
+
+      {shouldShowList ? listFooterContent : null}
 
       {shouldShowList && createButtonLabel && onCreateButtonClick ? (
         <button

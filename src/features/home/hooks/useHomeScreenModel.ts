@@ -16,7 +16,11 @@ import { LocalSessionsHint } from "../../../components/LocalSessionsHint/LocalSe
 import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 import { HOME_NEW_GAME_OPEN_KEY } from "../../../constants";
 import { avatarStyleFor } from "../../../utils/color";
-import { getGameDisplayName } from "../../../utils/text";
+import {
+  formatAccountPlayerName,
+  getGameDisplayName,
+  getNextGameSessionName,
+} from "../../../utils/text";
 import { getInitials } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
 import "../styles/HomeScreen.css";
@@ -162,18 +166,55 @@ export function useHomeScreenModel(props: HomeScreenProps) {
       const isOwnedGame = game.isShared
         ? game.accessRole === "owner"
         : game.accessRole !== "collaborator";
-      const usesOnlySavedPlayers =
-        game.players.length > 0 &&
-        game.players.every(
+      const seenPlayerIdentities = new Set<string>();
+      const suggestedPlayers = game.players.flatMap((player) => {
+        const localProfile = player.profileId
+          ? profilesById.get(player.profileId)
+          : undefined;
+        const invitedUserId =
+          game.invitedUserIdsByPlayerId?.[player.id];
+        const savedProfile =
+          !invitedUserId ? localProfile : undefined;
+        const identityKey = invitedUserId
+          ? `invited:${invitedUserId}`
+          : player.profileId
+            ? `saved:${player.profileId}`
+            : "";
+        if (!identityKey || seenPlayerIdentities.has(identityKey)) return [];
+        seenPlayerIdentities.add(identityKey);
+        return [
+          {
+            name: savedProfile?.name ?? player.name,
+            avatarColor: savedProfile?.avatarColor ?? player.avatarColor,
+            profileId: player.profileId,
+            invitedUserId,
+          },
+        ];
+      });
+      const usesReusablePlayers =
+        suggestedPlayers.length > 0 &&
+        suggestedPlayers.every(
           (player) =>
-            !!player.profileId && profilesById.has(player.profileId),
+            (!!player.profileId && profilesById.has(player.profileId)) ||
+            (game.participantMode !== "teams" &&
+              !!player.profileId &&
+              !!player.invitedUserId),
         );
-      if (!isOwnedGame || !usesOnlySavedPlayers) continue;
+      if (!isOwnedGame || !usesReusablePlayers) continue;
 
       const label = getGameDisplayName(game.name).title;
+      const rosterKey = suggestedPlayers
+        .map((player) =>
+          player.invitedUserId
+            ? `invited:${player.invitedUserId}`
+            : `saved:${player.profileId}`,
+        )
+        .sort()
+        .join(",");
       const key = [
         label,
         game.participantMode ?? "players",
+        rosterKey,
         game.scoreDirection,
         game.startingScore,
         game.targetScore,
@@ -207,16 +248,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         quickScoreValues: game.quickScoreValues,
         timerMode: game.timerMode,
         timerSeconds: game.timerSeconds,
-        suggestedPlayers: game.players.slice(0, 4).map((player) => {
-          const savedProfile = player.profileId
-            ? profilesById.get(player.profileId)
-            : undefined;
-          return {
-            name: savedProfile?.name ?? player.name,
-            avatarColor: savedProfile?.avatarColor ?? player.avatarColor,
-            profileId: player.profileId,
-          };
-        }),
+        suggestedPlayers: suggestedPlayers.slice(0, 4),
         suggestedTeams:
           game.participantMode === "teams"
             ? game.teams.map((team) => ({
@@ -242,22 +274,10 @@ export function useHomeScreenModel(props: HomeScreenProps) {
   }, [games, profilesById]);
 
   function nextSuggestionName(baseName: string) {
-    const normalized = baseName
-      .trim()
-      .replace(/\s+\(\d+\)$/g, "")
-      .toUpperCase();
-    let maxNumber = 0;
-
-    for (const game of games) {
-      const parsed = getGameDisplayName(game.name);
-      if (parsed.title.toUpperCase() !== normalized) continue;
-      if (parsed.replayNumber)
-        maxNumber = Math.max(maxNumber, parsed.replayNumber);
-      else if (game.name.toUpperCase() === normalized)
-        maxNumber = Math.max(maxNumber, 1);
-    }
-
-    return maxNumber > 0 ? `${normalized} (${maxNumber + 1})` : normalized;
+    return getNextGameSessionName(
+      baseName.trim().toUpperCase(),
+      games.map((game) => game.name),
+    );
   }
 
   function startSuggestion(setup: QuickSetup) {
@@ -282,8 +302,12 @@ export function useHomeScreenModel(props: HomeScreenProps) {
       {
         label: setup.label,
         players: setup.suggestedPlayers.map((player) => ({
-          name: player.name,
+          name: player.profileId &&
+            profilesById.get(player.profileId)?.isAccountPlayer
+            ? formatAccountPlayerName(player.name)
+            : player.name,
           avatarColor: player.avatarColor,
+          invitedUserId: player.invitedUserId,
         })),
         teams: setup.suggestedTeams?.map((team) => ({
           id: team.id,
@@ -294,6 +318,16 @@ export function useHomeScreenModel(props: HomeScreenProps) {
             avatarColor: member.avatarColor,
           })),
         })),
+        invitedPlayers: setup.suggestedPlayers.flatMap((player) =>
+          player.invitedUserId && player.profileId
+            ? [
+                {
+                  userId: player.invitedUserId,
+                  profileId: player.profileId,
+                },
+              ]
+            : [],
+        ),
       },
     );
   }

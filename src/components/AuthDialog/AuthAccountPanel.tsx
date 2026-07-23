@@ -1,6 +1,7 @@
 import { AlertTriangle, LogOut, Trash2 } from "lucide-react";
 import { AuthAccountIdentity } from "./AuthAccountIdentity";
 import { AuthAccountStorage } from "./AuthAccountStorage";
+import { AuthSharingPreferences } from "./AuthSharingPreferences";
 import { useAuthDialogContext } from "./AuthDialogContext";
 import { AuthPlanSection } from "./AuthPlanSection";
 import { AuthTransferSection } from "./AuthTransferSection";
@@ -10,8 +11,6 @@ export function AuthAccountPanel() {
     busy,
     confirmingAccountDeletion,
     deleteAccount,
-    error,
-    notice,
     setConfirmingAccountDeletion,
     signOut,
   } = useAuthDialogContext();
@@ -19,12 +18,11 @@ export function AuthAccountPanel() {
     <div className="authDialog__panel">
       <div className="authDialog__accountOverview">
         <AuthAccountIdentity />
+        <AuthSharingPreferences />
         <AuthAccountStorage />
         <AuthPlanSection />
       </div>
       <AuthTransferSection />
-      {notice ? <div className="authDialog__notice">{notice}</div> : null}
-      {error ? <div className="authDialog__error">{error}</div> : null}
       <button
         className="btn btn--wide btn--dangerSolid authDialog__signOutBtn"
         type="button"

@@ -3,6 +3,7 @@ import type {
   GameTeam,
   PastLinkedPlayer,
   PlayerProfile,
+  ReplayInviteCandidate,
   TeamMember,
 } from "../types";
 import { supabase } from "../lib/supabase";
@@ -17,6 +18,8 @@ const TEAM_MEMBERS_TABLE = "team_members";
 export const GAME_REMOVAL_NOTIFICATIONS_TABLE =
   "game_removal_notifications";
 export const GAME_JOIN_NOTIFICATIONS_TABLE = "game_join_notifications";
+export const SHARING_PREFERENCE_NOTIFICATIONS_TABLE =
+  "sharing_preference_notifications";
 const GAME_SELECT_COLUMNS =
   "id,user_id,is_shared,collaborators_can_manage,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
@@ -92,6 +95,17 @@ type PastLinkedPlayerRow = {
   player_name: string;
   avatar_color: string;
   last_linked_at: number;
+  can_invite?: boolean;
+};
+
+type ReplayInviteCandidateRow = {
+  candidate_user_id: string;
+  source_player_id: string;
+  profile_id: string;
+  player_name: string;
+  avatar_color: string;
+  is_previous_owner: boolean;
+  can_invite: boolean;
 };
 
 export type GameRemovalNotification = {
@@ -214,6 +228,14 @@ function getErrorMessage(error: unknown) {
     .filter((part): part is string => typeof part === "string")
     .join(" ")
     .toLowerCase();
+}
+
+function isMissingOwnerMarkerRepairFunction(error: unknown) {
+  const message = getErrorMessage(error);
+  return (
+    message.includes("ensure_owned_game_player_marker") &&
+    (message.includes("schema cache") || message.includes("function"))
+  );
 }
 
 function sanitizeRemotePlayers(
@@ -484,9 +506,17 @@ async function attachCollaborationMetadata(
     (data ?? []).map((row) => row.game_id as string),
   );
   const playerIdByGameId = new Map<string, string>();
+  const invitedUserIdsByGameId = new Map<string, Record<string, string>>();
   (data ?? []).forEach((row) => {
+    const gameId = row.game_id as string;
+    const playerId = row.player_id as string;
+    const collaboratorUserId = row.user_id as string;
+    invitedUserIdsByGameId.set(gameId, {
+      ...invitedUserIdsByGameId.get(gameId),
+      [playerId]: collaboratorUserId,
+    });
     if (row.user_id === userId) {
-      playerIdByGameId.set(row.game_id as string, row.player_id as string);
+      playerIdByGameId.set(gameId, playerId);
     }
   });
   return games.map((game) => {
@@ -495,6 +525,7 @@ async function attachCollaborationMetadata(
       ...game,
       linkedPlayerIdForCurrentUser: linkedPlayerId,
       hasCollaborators: collaboratorGameIds.has(game.id),
+      invitedUserIdsByPlayerId: invitedUserIdsByGameId.get(game.id),
     };
   });
 }
@@ -808,6 +839,23 @@ export async function loadRemotePastLinkedPlayers(
     name: row.player_name,
     avatarColor: row.avatar_color,
     lastLinkedAt: row.last_linked_at,
+    canInvite: row.can_invite !== false,
+  }));
+}
+
+export async function loadRemotePastInvitedPlayers(): Promise<
+  PastLinkedPlayer[]
+> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc("list_past_invited_players");
+  if (error) throw error;
+  return ((data ?? []) as PastLinkedPlayerRow[]).map((row) => ({
+    userId: row.collaborator_user_id,
+    profileId: row.profile_id,
+    name: row.player_name,
+    avatarColor: row.avatar_color,
+    lastLinkedAt: row.last_linked_at,
+    canInvite: row.can_invite !== false,
   }));
 }
 
@@ -833,6 +881,7 @@ export async function replayRemoteSharedGame(
   gameId: string,
   newGameId: string,
   name: string,
+  invitedUserIds: string[],
 ) {
   if (!supabase) throw new Error("Cloud games are not configured.");
   const result = await supabase
@@ -840,15 +889,72 @@ export async function replayRemoteSharedGame(
       p_game_id: gameId,
       p_new_game_id: newGameId,
       p_name: name,
+      p_invited_user_ids: invitedUserIds,
     })
     .select(GAME_SELECT_COLUMNS)
     .single();
   if (result.error) throw result.error;
-  const game = rowToGame(result.data as GameRow, userId);
+  let game = rowToGame(result.data as GameRow, userId);
+  if (!game.players.some((player) => player.isGameOwner === true)) {
+    const ownerResult = await supabase
+      .rpc("ensure_owned_game_player_marker", {
+        p_game_id: newGameId,
+      })
+      .select(GAME_SELECT_COLUMNS)
+      .single();
+
+    if (!ownerResult.error) {
+      game = rowToGame(ownerResult.data as GameRow, userId);
+    } else if (!isMissingOwnerMarkerRepairFunction(ownerResult.error)) {
+      throw ownerResult.error;
+    }
+  }
   return {
     ...game,
     hasCollaborators: game.isShared === true,
   };
+}
+
+export async function loadRemoteReplayInviteCandidates(
+  gameId: string,
+): Promise<ReplayInviteCandidate[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc(
+    "list_replay_invite_candidates",
+    {
+      p_game_id: gameId,
+    },
+  );
+  if (error) throw error;
+  return ((data ?? []) as ReplayInviteCandidateRow[]).map((row) => ({
+    userId: row.candidate_user_id,
+    sourcePlayerId: row.source_player_id,
+    profileId: row.profile_id,
+    name: row.player_name,
+    avatarColor: row.avatar_color,
+    isPreviousOwner: row.is_previous_owner,
+    canInvite: row.can_invite,
+  }));
+}
+
+export async function loadRemoteSharingPreference(): Promise<boolean> {
+  if (!supabase) return true;
+  const { data, error } = await supabase.rpc("get_my_sharing_preferences");
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return row?.allow_previous_players_to_invite !== false;
+}
+
+export async function updateRemoteSharingPreference(
+  allow: boolean,
+): Promise<boolean> {
+  if (!supabase) throw new Error("Cloud games are not configured.");
+  const { data, error } = await supabase.rpc(
+    "set_allow_previous_players_to_invite",
+    { p_allow: allow },
+  );
+  if (error) throw error;
+  return data !== false;
 }
 
 export async function updateRemoteSharedGamePlayer(

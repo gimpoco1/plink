@@ -26,6 +26,7 @@ export type PlayersScreenProps = {
   onActiveViewChange: (view: "players" | "teams") => void;
   addingPlayer: boolean;
   openTeamBuilderToken?: number;
+  onOpenTeamBuilderHandled?: () => void;
   onAddingPlayerChange: (adding: boolean) => void;
   onOpenAuth: () => void;
   onOpenProFeatureAuth: () => void;
@@ -103,6 +104,7 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
     onActiveViewChange,
     addingPlayer,
     openTeamBuilderToken,
+    onOpenTeamBuilderHandled,
     onAddingPlayerChange,
     onOpenAuth,
     onOpenProFeatureAuth,
@@ -375,7 +377,8 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
       return;
     handledOpenTeamBuilderTokenRef.current = openTeamBuilderToken;
     openTeamBuilder();
-  }, [activeView, openTeamBuilderToken]);
+    onOpenTeamBuilderHandled?.();
+  }, [activeView, onOpenTeamBuilderHandled, openTeamBuilderToken]);
 
   useEffect(() => {
     if (activeView === "teams" && !canAccessTeamsView) {
@@ -401,7 +404,7 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
 
   function finishTeamEdit(teamId: string) {
     const name = formatTeamName(editingTeamName);
-    if (!name) return;
+    if (!name || editingTeamMemberIds.size === 0) return;
     onUpdateTeam(teamId, { name });
     editingTeamMemberIds.forEach((profileId) => {
       if (!editingTeamOriginalMemberIds.has(profileId)) {

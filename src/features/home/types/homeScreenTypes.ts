@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type {
   Game,
   GameTeam,
+  PastLinkedPlayer,
   PlayerProfile,
   QuickScoreValues,
   ScoreDirection,
@@ -25,7 +26,12 @@ export type QuickSetup = {
   quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
-  suggestedPlayers: { name: string; avatarColor: string; profileId?: string }[];
+  suggestedPlayers: Array<{
+    name: string;
+    avatarColor: string;
+    profileId?: string;
+    invitedUserId?: string;
+  }>;
   suggestedTeams?: Array<{
     id: string;
     name: string;
@@ -45,6 +51,7 @@ export type QuickSetupFact = {
 export type HomeScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
+  pastInvitedPlayers: PastLinkedPlayer[];
   teams: GameTeam[];
   teamMembers: TeamMember[];
   canUseTeams: boolean;
@@ -67,13 +74,18 @@ export type HomeScreenProps = {
     input: NewGameInput,
     details: {
       label: string;
-      players: { name: string; avatarColor: string }[];
+      players: {
+        name: string;
+        avatarColor: string;
+        invitedUserId?: string;
+      }[];
       teams?: Array<{
         id: string;
         name: string;
         icon?: string;
         members: { name: string; avatarColor: string }[];
       }>;
+      invitedPlayers?: Array<{ userId: string; profileId: string }>;
     },
   ) => void | Promise<void>;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;

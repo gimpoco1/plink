@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { AuthAccountPanel } from "./AuthAccountPanel";
 import { useAuthDialogContext } from "./AuthDialogContext";
 import { AuthPasswordRecoveryPanel } from "./AuthPasswordRecoveryPanel";
@@ -8,6 +10,8 @@ export function AuthDialogView() {
     dialogRef,
     hasSupabaseConfig,
     onOpenChange,
+    error,
+    notice,
     recoveryMode,
     session,
     setError,
@@ -16,6 +20,21 @@ export function AuthDialogView() {
     setTransferToast,
     transferToast,
   } = useAuthDialogContext();
+  const dialogToast = error
+    ? { message: error, tone: "error" as const }
+    : notice
+      ? { message: notice, tone: "success" as const }
+      : transferToast;
+
+  useEffect(() => {
+    if (!error && !notice) return;
+    const timeout = window.setTimeout(() => {
+      setError(null);
+      setNotice(null);
+    }, 5200);
+    return () => window.clearTimeout(timeout);
+  }, [error, notice, setError, setNotice]);
+
   return (
     <dialog
       className="dialog authDialog"
@@ -48,13 +67,22 @@ export function AuthDialogView() {
             ×
           </button>
         </div>
-        {transferToast && session && !recoveryMode ? (
+        {dialogToast ? (
           <div
-            className={`authDialog__toast authDialog__toast--${transferToast.tone}`}
-            role="status"
-            aria-live="polite"
+            className={`authDialog__toast authDialog__toast--${dialogToast.tone}`}
+            role={dialogToast.tone === "error" ? "alert" : "status"}
+            aria-live={dialogToast.tone === "error" ? "assertive" : "polite"}
           >
-            {transferToast.message}
+            <span className="authDialog__toastIcon" aria-hidden="true">
+              {dialogToast.tone === "error" ? (
+                <AlertTriangle size={17} strokeWidth={2.5} />
+              ) : dialogToast.tone === "success" ? (
+                <CheckCircle2 size={17} strokeWidth={2.5} />
+              ) : (
+                <Info size={17} strokeWidth={2.5} />
+              )}
+            </span>
+            <span>{dialogToast.message}</span>
           </div>
         ) : null}
         {!hasSupabaseConfig ? (

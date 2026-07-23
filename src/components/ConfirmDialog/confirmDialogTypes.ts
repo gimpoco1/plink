@@ -4,12 +4,23 @@ export type ConfirmPlayer = {
   id?: string;
   name: string;
   avatarColor: string;
+  nameIcon?: ReactNode;
   label?: string;
   description?: string;
+  selectedDescription?: string;
+  unselectedDescription?: string;
+  disabled?: boolean;
 };
 export type ConfirmPlayerSelectionOptions = Omit<ConfirmOptions, "players"> & {
   players: Array<ConfirmPlayer & { id: string }>;
   initialSelectedPlayerId?: string;
+};
+export type ConfirmPlayerMultiSelectionOptions = Omit<
+  ConfirmOptions,
+  "players"
+> & {
+  players: Array<ConfirmPlayer & { id: string }>;
+  initialSelectedPlayerIds?: string[];
 };
 export type ConfirmDetail = {
   label: string;
@@ -23,6 +34,10 @@ export type ConfirmSettingChip = {
   icon?: ReactNode;
   tone?: "accent" | "default";
   size?: "default" | "wide";
+};
+export type ConfirmRosterNotice = {
+  text: string;
+  icon?: ReactNode;
 };
 export type ConfirmTeam = {
   id: string;
@@ -40,6 +55,7 @@ export type ConfirmOptions = {
   cancelText?: string;
   hideCancelAction?: boolean;
   extraActionText?: string;
+  extraActionDescription?: string;
   tone?: "default" | "danger";
   eyebrow?: string;
   highlights?: string[];
@@ -49,8 +65,10 @@ export type ConfirmOptions = {
   playersTitle?: string;
   players?: ConfirmPlayer[];
   teams?: ConfirmTeam[];
+  rosterNotice?: ConfirmRosterNotice;
   layout?: "default" | "feature";
   selectablePlayers?: boolean;
+  multiSelectablePlayers?: boolean;
 };
 export type PromptOptions = {
   title: string;
@@ -68,6 +86,9 @@ export type ConfirmDialogHandle = {
   selectPlayer: (
     options: ConfirmPlayerSelectionOptions,
   ) => Promise<string | null>;
+  selectPlayers: (
+    options: ConfirmPlayerMultiSelectionOptions,
+  ) => Promise<string[] | null>;
   prompt: (options: PromptOptions) => Promise<string | null>;
 };
 

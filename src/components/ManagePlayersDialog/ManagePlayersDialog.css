@@ -263,108 +263,143 @@
   transition: color 0.18s ease;
 }
 
-.managePlayersDialog__pastLinked {
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid rgba(216, 255, 79, 0.12);
+.managePlayersDialog__invitedOption {
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
-  background: rgba(216, 255, 79, 0.025);
-}
-
-.managePlayersDialog__pastLinkedHeading {
-  display: grid;
-  gap: 2px;
-}
-
-.managePlayersDialog__pastLinkedTitle {
+  background: rgba(255, 255, 255, 0.035);
   color: var(--text);
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.managePlayersDialog__pastLinkedDescription {
-  color: var(--text-dim);
-  font-size: 10px;
-  line-height: 1.3;
-}
-
-.managePlayersDialog__pastLinkedList {
   display: grid;
-  gap: 6px;
-}
-
-.managePlayersDialog__pastLinkedPlayer {
-  display: flex;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.managePlayersDialog__invitedOption--blocked {
+  cursor: not-allowed;
+}
+
+.managePlayersDialog__invitedOption--blocked
+  .managePlayersDialog__invitedIdentity {
+  opacity: 0.72;
+}
+
+.managePlayersDialog__invitedIdentity {
   min-width: 0;
-  padding: 7px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.025);
 }
 
-.managePlayersDialog__pastLinkedAvatar {
-  display: inline-grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.managePlayersDialog__pastLinkedIdentity {
-  display: grid;
+.managePlayersDialog__invitedNameRow {
   min-width: 0;
-  flex: 1 1 auto;
-  gap: 2px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
-.managePlayersDialog__pastLinkedName {
+.managePlayersDialog__invitedNameRow .managePlayersDialog__name {
   overflow: hidden;
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.managePlayersDialog__pastLinkedMeta {
+.managePlayersDialog__invitedBadge {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid rgba(203, 211, 215, 0.16);
+  border-radius: 999px;
+  background: rgba(203, 211, 215, 0.06);
+  color: rgba(203, 211, 215, 0.72);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: var(--text-dim);
-  font-size: 9px;
+  gap: 3px;
 }
 
-.managePlayersDialog__pastLinkedMeta svg {
-  color: var(--accent);
-}
-
-.managePlayersDialog__pastLinkedAdd {
+.managePlayersDialog__invitedState {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
   display: inline-flex;
-  min-height: 30px;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 0 9px;
-  border: 1px solid rgba(216, 255, 79, 0.24);
-  border-radius: 9px;
-  background: rgba(216, 255, 79, 0.08);
-  color: var(--accent);
-  font: inherit;
-  font-size: 10px;
-  font-weight: 850;
-  cursor: pointer;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
 }
 
-.managePlayersDialog__pastLinkedAdd:disabled {
-  cursor: wait;
-  opacity: 0.55;
+.managePlayersDialog__invitedState svg {
+  width: 18px;
+  height: 18px;
+}
+
+.managePlayersDialog__invitedState--selected {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 0 0 1px rgba(17, 24, 10, 0.12),
+    0 0 0 2px rgba(216, 255, 79, 0.2);
+}
+
+.managePlayersDialog__invitedState--blocked {
+  width: auto;
+  padding: 0 7px;
+  gap: 4px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.managePlayersDialog__selectionNotices {
+  display: grid;
+  gap: 7px;
+}
+
+.managePlayersDialog__selectionNotice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 11px;
+  border: 1px solid rgba(216, 255, 79, 0.18);
+  border-radius: 12px;
+  background: rgba(216, 255, 79, 0.07);
+  color: rgba(217, 228, 235, 0.82);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.managePlayersDialog__selectionNotice svg {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.managePlayersDialog__selectionNotice strong {
+  display: block;
+  margin-bottom: 1px;
+  color: var(--text);
+  font-weight: 850;
+}
+
+.managePlayersDialog__selectionNotice--blocked {
+  border-color: rgba(203, 211, 215, 0.15);
+  background: rgba(203, 211, 215, 0.045);
+}
+
+.managePlayersDialog__selectionNotice--blocked svg {
+  color: var(--text-dim);
 }
 
 .managePlayersDialog__inviteOthers:hover {
@@ -520,6 +555,11 @@
   line-height: 1;
 }
 
+.managePlayersDialog__queueLinkedIcon {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
 .managePlayersDialog__list {
   display: grid;
   gap: 8px;
@@ -647,11 +687,21 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  min-height: 54px;
   overflow: hidden;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.035);
+}
+
+.managePlayersDialog__card--selectable {
+  cursor: pointer;
+}
+
+.managePlayersDialog__card--selectable:hover {
+  border-color: rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .managePlayersDialog__card--editing {
@@ -676,13 +726,13 @@
 .managePlayersDialog__avatar {
   width: 30px;
   height: 30px;
-  border-radius: 10px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #fff;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 900;
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
 }

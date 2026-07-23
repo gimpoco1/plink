@@ -96,18 +96,31 @@
   background: rgba(122, 208, 255, 0.05);
 }
 
-.tabContent--teamsTheme .teamEditor__newPlayer,
-.tabContent--teamsTheme .teamBuilderCreatePlayer__trigger {
+.tabContent--teamsTheme .teamEditor__newPlayer {
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.1);
   color: #d9e4eb;
 }
 
-.tabContent--teamsTheme .teamEditor__newPlayer:hover,
-.tabContent--teamsTheme .teamBuilderCreatePlayer__trigger:hover {
+.tabContent--teamsTheme .teamBuilderCreatePlayer__trigger {
+  border-color: rgba(122, 208, 255, 0.46);
+  background: rgba(122, 208, 255, 0.18);
+  color: #bfeaff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 8px 20px rgba(32, 128, 176, 0.08);
+}
+
+.tabContent--teamsTheme .teamEditor__newPlayer:hover {
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.1);
   color: #d9e4eb;
+}
+
+.tabContent--teamsTheme .teamBuilderCreatePlayer__trigger:hover {
+  border-color: rgba(122, 208, 255, 0.62);
+  background: rgba(122, 208, 255, 0.27);
+  color: #d7f3ff;
 }
 
 .tabContent--teamsTheme .teamAssignChip:hover,
@@ -260,7 +273,7 @@
     ),
     var(--surface);
   backdrop-filter: blur(3px);
-  padding: 14px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -383,9 +396,9 @@
 }
 
 .profileAvatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,9 +424,9 @@
   min-width: 0;
 }
 
-/* Keep title block height stable so switching to the input doesn't jump layout */
+/* Match the edit control so the compact header does not jump while editing. */
 .profileCard__titleBlock {
-  min-height: 56px; /* match avatar height */
+  min-height: 40px;
   display: flex;
   align-items: center;
 }
@@ -421,7 +434,7 @@
 .profileCard__nameText {
   color: var(--text);
   font-weight: 800;
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: -0.04em;
   line-height: 1;
 }
@@ -1046,7 +1059,11 @@
 .teamBuilderIdentity__badge--compact {
   width: 84px;
   height: 84px;
-  border-radius: 24px;
+  border-radius: 22px;
+}
+
+.teamCard--editing .teamBuilderIdentity__badge--compact {
+  border-radius: 14px;
 }
 
 .teamBuilderIdentity__badge--compact svg {
@@ -1119,8 +1136,8 @@
 .teamBuilder__input {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
-  padding: 0 16px;
+  min-height: 36px;
+  padding: 0 14px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #091116;
@@ -1138,7 +1155,6 @@
 .teamBuilderSearch__input::placeholder {
   color: rgba(197, 200, 179, 0.46);
   font-size: 14px;
-
 }
 
 .teamBuilder__input:focus,
@@ -1168,7 +1184,10 @@
 }
 
 .teamIconPicker.teamIconPicker--compactGrid {
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(72px, 112px));
+  justify-content: space-evenly;
+  column-gap: 10px;
+  row-gap: 12px;
 }
 
 .teamIconPicker__option.teamIconPicker__option--grid {
@@ -1191,7 +1210,7 @@
 
 .teamIconPicker__option.teamIconPicker__option--compactGrid {
   min-height: 74px;
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
 .teamIconPicker__option.teamIconPicker__option--compactGrid svg {
@@ -1385,6 +1404,10 @@
   cursor: default;
 }
 
+.teamBuilderPlayerOption--selected:disabled {
+  opacity: 0.78;
+}
+
 .teamBuilderPlayerOption--selected {
   border-color: rgba(122, 208, 255, 0.36);
   background: rgba(122, 208, 255, 0.14);
@@ -1410,7 +1433,6 @@
   font-weight: 700;
   flex: 0 0 auto;
 }
-
 
 .teamBuilderPlayerOption__copy {
   min-width: 0;
@@ -2387,7 +2409,7 @@
 }
 
 .teamCard {
-  padding: 14px;
+  padding: 10px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background:
@@ -2431,9 +2453,9 @@
 }
 
 .teamCard__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: 46px;
+  height: 46px;
+  border-radius: 11px;
   border: 1px solid rgba(216, 255, 79, 0.18);
   background:
     linear-gradient(180deg, rgba(216, 255, 79, 0.12), rgba(216, 255, 79, 0.05)),
@@ -2450,7 +2472,7 @@
 .teamCard__title {
   color: var(--text);
   font-size: 22px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: -0.04em;
 }
 
@@ -2493,9 +2515,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 8px 13px;
-  border-radius: 999px;
+  min-height: 36px;
+  padding: 4px 6px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
@@ -2513,6 +2535,11 @@
 
 .teamMemberChip--removable {
   cursor: pointer;
+}
+
+.teamMemberChip:disabled {
+  cursor: not-allowed;
+  opacity: 0.78;
 }
 
 .teamAssignChip--active {
@@ -2533,15 +2560,19 @@
 
 .teamMemberChip__avatar,
 .teamAssignChip__avatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  display: inline-flex;
+  width: 24px;
+  height: 24px;
+ border-radius: 5px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 10px;
   font-weight: 800;
+  font-size: 14px;
+  color: white;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+
 }
 
 .teamMemberChip__action,
@@ -2686,8 +2717,8 @@
   }
 
   .teamBuilderIdentity__badge--compact svg {
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
   }
 
   .teamBuilderIdentity__iconEdit {
@@ -2729,7 +2760,10 @@
   }
 
   .teamIconPicker.teamIconPicker--compactGrid {
-    gap: 8px;
+    grid-template-columns: repeat(4, minmax(0, 62px));
+    justify-content: space-evenly;
+    column-gap: 6px;
+    row-gap: 10px;
   }
 
   .teamIconPicker__option.teamIconPicker__option--grid {

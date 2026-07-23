@@ -27,8 +27,9 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
   const isEditing = model.editingId === profile.id;
   return (
     <SwipeableCard
-      actionWidth={120}
+      actionWidth={68}
       disabled={isEditing || profile.isAccountPlayer}
+      rowClassName="swipeRow--dropletDelete"
       cardClassName={`profileCard${isEditing ? " profileCard--editing" : ""}`}
       renderActions={({ closeSwipe }) => (
         <button
@@ -41,7 +42,6 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
           aria-label={`Delete player ${profile.name}`}
         >
           <Trash2 size={20} strokeWidth={2.2} aria-hidden="true" />
-          Delete
         </button>
       )}
     >

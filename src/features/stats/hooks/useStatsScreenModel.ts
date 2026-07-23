@@ -64,22 +64,30 @@ function buildStatsProfiles(games: Game[], profiles: PlayerProfile[]) {
     profiles.map((profile) => [profile.id, profile]),
   );
   const localProfileIds = new Set(profileById.keys());
-  const linkedProfileIds = new Set<string>();
-  const linkedProfileUpdatedAt = new Map<string, number>();
+  const invitedProfileIds = new Set<string>();
+  const gameOwnerProfileIds = new Set<string>();
+  const externalProfileUpdatedAt = new Map<string, number>();
 
   games.forEach((game) => {
     if (!game.isShared) return;
     game.players.forEach((player) => {
-      if (!player.profileId || player.joinedViaInvite !== true) return;
+      if (!player.profileId) return;
       if (localProfileIds.has(player.profileId)) return;
 
-      linkedProfileIds.add(player.profileId);
+      const isInvitedPlayer = player.joinedViaInvite === true;
+      const isGameOwner =
+        game.accessRole === "collaborator" && player.isGameOwner === true;
+      if (!isInvitedPlayer && !isGameOwner) return;
+
+      if (isGameOwner) gameOwnerProfileIds.add(player.profileId);
+      else invitedProfileIds.add(player.profileId);
+
       const updatedAt = game.updatedAt ?? game.createdAt;
-      if ((linkedProfileUpdatedAt.get(player.profileId) ?? -1) > updatedAt) {
+      if ((externalProfileUpdatedAt.get(player.profileId) ?? -1) > updatedAt) {
         return;
       }
 
-      linkedProfileUpdatedAt.set(player.profileId, updatedAt);
+      externalProfileUpdatedAt.set(player.profileId, updatedAt);
       profileById.set(player.profileId, {
         id: player.profileId,
         name: player.name,
@@ -92,7 +100,8 @@ function buildStatsProfiles(games: Game[], profiles: PlayerProfile[]) {
 
   return {
     profiles: [...profileById.values()],
-    linkedProfileIds,
+    invitedProfileIds,
+    gameOwnerProfileIds,
   };
 }
 
@@ -155,7 +164,8 @@ export function useStatsScreenModel(props: StatsScreenProps) {
     [games, profiles],
   );
   const statsProfiles = statsProfileData.profiles;
-  const linkedProfileIds = statsProfileData.linkedProfileIds;
+  const invitedProfileIds = statsProfileData.invitedProfileIds;
+  const gameOwnerProfileIds = statsProfileData.gameOwnerProfileIds;
   const profileById = useMemo(
     () => new Map(statsProfiles.map((profile) => [profile.id, profile])),
     [statsProfiles],
@@ -196,23 +206,32 @@ export function useStatsScreenModel(props: StatsScreenProps) {
             name: profile.isAccountPlayer
               ? formatAccountPlayerName(profile.name)
               : profile.name,
-            subtitle: linkedProfileIds.has(profile.id)
-              ? `Invited player · ${sessionCount}`
-              : sessionCount,
+            subtitle: gameOwnerProfileIds.has(profile.id)
+              ? `Game owner · ${sessionCount}`
+              : invitedProfileIds.has(profile.id)
+                ? `Invited player · ${sessionCount}`
+                : sessionCount,
             avatarColor: profile.avatarColor,
             isAccountPlayer: profile.isAccountPlayer,
           };
         })
         .sort((a, b) => {
-          if (Boolean(b.isAccountPlayer) !== Boolean(a.isAccountPlayer)) {
-            return (
-              Number(Boolean(b.isAccountPlayer)) -
-              Number(Boolean(a.isAccountPlayer))
-            );
-          }
+          const getPriority = (option: SelectableEntity) => {
+            if (option.isAccountPlayer) return 0;
+            if (gameOwnerProfileIds.has(option.id)) return 1;
+            if (invitedProfileIds.has(option.id)) return 2;
+            return 3;
+          };
+          const priorityDifference = getPriority(a) - getPriority(b);
+          if (priorityDifference !== 0) return priorityDifference;
           return a.name.localeCompare(b.name);
         }),
-    [linkedProfileIds, playerReports, statsProfiles],
+    [
+      gameOwnerProfileIds,
+      invitedProfileIds,
+      playerReports,
+      statsProfiles,
+    ],
   );
 
   const teamOptions = useMemo<SelectableEntity[]>(

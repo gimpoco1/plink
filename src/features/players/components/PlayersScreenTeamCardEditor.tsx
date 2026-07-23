@@ -93,6 +93,7 @@ export function TeamCardEditor({ data }: { data: TeamCardData }) {
               className="btn btn--primary teamCard__footerBtn teamCard__footerBtn--primary"
               type="button"
               aria-label={`Save changes for ${data.team.name}`}
+              disabled={model.editingTeamMemberIds.size === 0}
               onClick={() => model.finishTeamEdit(data.team.id)}
             >
               <Check size={18} strokeWidth={2.3} aria-hidden="true" />

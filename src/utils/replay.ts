@@ -32,7 +32,3 @@ export function getUnsavedReplayPlayers(
       !getSavedReplayProfile(player, profiles),
   );
 }
-
-export function linkedPlayersCarryIntoReplay(game: Game) {
-  return game.isShared === true && game.accessRole !== "collaborator";
-}

@@ -73,7 +73,7 @@
 .avatar {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,7 +327,7 @@
   .cardHeader { padding: 14px; }
   .cardHeader__left { gap: 10px; }
   .rank { min-width: 30px; height: 30px; border-radius: 10px; }
-  .avatar { width: 48px; height: 48px; font-size: 20px; }
+  .avatar { width: 48px; height: 48px; font-size: 26px; }
   .who__name { font-size: 18px; }
   .score { font-size: 42px; }
   .cardBody { padding: 11px 10px; }

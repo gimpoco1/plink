@@ -40,6 +40,10 @@ export function ManagePlayerCard(props: Props) {
     props.kind === "current" && props.isLinkedAccountPlayer === true;
   const mergeCandidate =
     props.kind === "current" ? props.mergeCandidate : undefined;
+  const savedProfileIsTaken =
+    props.kind === "saved" && model.takenProfileIds.has(profile!.id);
+  const savedProfileIsStaged =
+    props.kind === "saved" && model.stagedProfileIds.has(profile!.id);
 
   function beginEditing() {
     if (isLinkedAccountPlayer) return;
@@ -73,7 +77,27 @@ export function ManagePlayerCard(props: Props) {
 
   return (
     <article
-      className={`managePlayersDialog__card${editing ? " managePlayersDialog__card--editing" : ""}`}
+      className={`managePlayersDialog__card${
+        props.kind === "saved" && !savedProfileIsTaken
+          ? " managePlayersDialog__card--selectable"
+          : ""
+      }${editing ? " managePlayersDialog__card--editing" : ""}`}
+      onClick={(event) => {
+        if (
+          props.kind !== "saved" ||
+          savedProfileIsTaken ||
+          editing ||
+          (event.target as HTMLElement).closest("button, input")
+        ) {
+          return;
+        }
+        model.toggleProfile(profile!.id);
+      }}
+      aria-label={
+        props.kind === "saved" && !savedProfileIsTaken
+          ? `${savedProfileIsStaged ? "Remove" : "Add"} ${displayName}`
+          : undefined
+      }
     >
       <div className="managePlayersDialog__cardMain">
         <span

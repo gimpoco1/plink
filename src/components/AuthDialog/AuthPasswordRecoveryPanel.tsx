@@ -4,9 +4,7 @@ export function AuthPasswordRecoveryPanel() {
   const {
     busy,
     confirmNewPassword,
-    error,
     newPassword,
-    notice,
     setConfirmNewPassword,
     setNewPassword,
     submitNewPassword,
@@ -38,8 +36,6 @@ export function AuthPasswordRecoveryPanel() {
           }}
         />
       </label>
-      {notice ? <div className="authDialog__notice">{notice}</div> : null}
-      {error ? <div className="authDialog__error">{error}</div> : null}
       <button
         className="btn btn--primary btn--wide"
         type="button"

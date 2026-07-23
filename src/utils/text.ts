@@ -58,3 +58,24 @@ export function getGameSessionLabel(name: string): string {
   if (parsed.replayNumber) return `${parsed.title} #${parsed.replayNumber}`;
   return parsed.title;
 }
+
+export function getNextGameSessionName(
+  requestedName: string,
+  existingNames: string[],
+): string {
+  const requested = getGameDisplayName(requestedName);
+  const normalizedTitle = requested.title.toLocaleUpperCase();
+  let highestSessionNumber = 0;
+
+  existingNames.forEach((existingName) => {
+    const existing = getGameDisplayName(existingName);
+    if (existing.title.toLocaleUpperCase() !== normalizedTitle) return;
+    highestSessionNumber = Math.max(
+      highestSessionNumber,
+      existing.replayNumber ?? 1,
+    );
+  });
+
+  if (highestSessionNumber === 0) return requestedName;
+  return `${requested.title} (${highestSessionNumber + 1})`;
+}

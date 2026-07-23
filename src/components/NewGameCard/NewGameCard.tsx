@@ -1,5 +1,6 @@
 import type {
   GameTeam,
+  PastLinkedPlayer,
   PlayerProfile,
   QuickScoreValues,
   ScoreDirection,
@@ -23,7 +24,12 @@ export type NewGameInput = {
   quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
-  initialPlayers: { name: string; avatarColor: string; profileId?: string }[];
+  initialPlayers: Array<{
+    name: string;
+    avatarColor: string;
+    profileId?: string;
+    invitedUserId?: string;
+  }>;
   initialTeams?: Array<{
     id: string;
     name: string;
@@ -35,6 +41,7 @@ export type NewGameInput = {
 export type NewGameCardProps = {
   open: boolean;
   profiles: PlayerProfile[];
+  pastInvitedPlayers: PastLinkedPlayer[];
   teams: GameTeam[];
   teamMembers: TeamMember[];
   canUseTeams: boolean;

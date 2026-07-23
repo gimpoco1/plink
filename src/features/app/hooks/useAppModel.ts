@@ -66,6 +66,7 @@ import {
   Dices,
   Flag,
   GitCompareArrows,
+  Link,
   RotateCcw,
   Target,
   Timer,
@@ -78,6 +79,7 @@ import {
   LOCAL_PLAYERS_CHANGED_EVENT,
   type LocalPlayer,
 } from "../../../storage/localPlayers";
+import { getUnsavedReplayPlayers } from "../../../utils/replay";
 
 type PresetDraftIntent = "edit" | "teams-detour" | null;
 
@@ -130,6 +132,7 @@ export function useAppModel() {
     currentGame,
     createGame,
     duplicateGame,
+    getReplayInviteCandidates,
     selectGame,
     deleteGame,
     renameGame,
@@ -138,6 +141,8 @@ export function useAppModel() {
     removePlayer,
     mergePlayers,
     addPastLinkedPlayer,
+    addPastLinkedPlayersToNewGame,
+    checkPastInvitedPlayerPermissions,
     removeTeam,
     updatePlayer,
     resetScores,
@@ -153,6 +158,7 @@ export function useAppModel() {
     remoteReady: gamesReady,
     syncNotice: gameSyncNotice,
     pastLinkedPlayers,
+    pastInvitedPlayers,
   } = useGames(session, authLoading, showToast);
   const { pulseById, triggerPulse } = useScorePulse();
   const {
@@ -413,6 +419,78 @@ export function useAppModel() {
       return false;
     }
     return true;
+  }
+
+  async function chooseReplayInvitedUserIds(
+    game: Game,
+  ): Promise<string[] | null> {
+    if (!game.isShared) return [];
+
+    const candidates = await getReplayInviteCandidates(game.id);
+    if (candidates === null) return null;
+
+    const candidatePlayerIds = new Set(
+      candidates.map((candidate) => candidate.sourcePlayerId),
+    );
+    const unsavedPlayers = getUnsavedReplayPlayers(game, profiles).filter(
+      (player) => !candidatePlayerIds.has(player.id),
+    );
+    const hasInvitablePlayers = candidates.some(
+      (candidate) => candidate.canInvite,
+    );
+
+    if (candidates.length === 0 && unsavedPlayers.length === 0) return [];
+
+    const selectedUserIds = await confirmRef.current?.selectPlayers({
+      eyebrow: "New game",
+      title: "Play again",
+      message: hasInvitablePlayers
+        ? "You’ll own this new game. Select the accounts you want to invite again."
+        : "",
+      messageCase: "normal",
+      playersTitle: hasInvitablePlayers
+        ? "Players from the previous game"
+        : "Players not saved",
+      players: [
+        ...candidates.map((candidate) => ({
+          id: candidate.userId,
+          name: candidate.name,
+          avatarColor: candidate.avatarColor,
+          label: candidate.canInvite
+            ? candidate.isPreviousOwner
+              ? "Previous game owner"
+              : "Invited before"
+            : "Automatic invites off",
+          description: candidate.canInvite
+            ? undefined
+            : "Can’t be invited. They’ll be added as a player not saved, and Stats won’t count.",
+          selectedDescription: candidate.canInvite
+            ? "Invited to the new game. Their results will count toward Stats."
+            : undefined,
+          unselectedDescription: candidate.canInvite
+            ? "Added as a player not saved. Their results won’t count toward Stats."
+            : undefined,
+          disabled: !candidate.canInvite,
+        })),
+        ...unsavedPlayers.map((player) => ({
+          id: `game-only:${player.id}`,
+          name: player.name,
+          avatarColor: player.avatarColor,
+          label: "Player not saved",
+          description: "Their results won’t count toward Stats.",
+          disabled: true,
+        })),
+      ],
+      initialSelectedPlayerIds: candidates
+        .filter((candidate) => candidate.canInvite)
+        .map((candidate) => candidate.userId),
+      confirmText: "Play again",
+      cancelText: "Cancel",
+      layout: "feature",
+      tone: "default",
+    });
+
+    return selectedUserIds ?? null;
   }
 
   function returnToGameSource() {
@@ -874,7 +952,10 @@ export function useAppModel() {
     setLocalStoredPlayers(remainingLocalPlayers);
   }, [canViewSavedData, localStoredPlayers, profiles]);
 
-  async function handleCreateGame(input: Parameters<typeof createGame>[0]) {
+  async function handleCreateGame(
+    input: NewGameInput,
+    invitedPlayers: Array<{ userId: string; profileId: string }> = [],
+  ) {
     if (!guardSessionCreation()) {
       return false;
     }
@@ -890,13 +971,173 @@ export function useAppModel() {
       if (!ok) return false;
     }
 
+    const accountProfiles = profiles.filter(
+      (profile) => profile.isAccountPlayer,
+    );
+    const accountProfile = accountProfiles[0];
+    const accountProfileIds = new Set(
+      accountProfiles.map((profile) => profile.id),
+    );
+    const seenProfileIds = new Set<string>();
+    const seenInvitedUserIds = new Set<string>();
+    const normalizedInitialPlayers = input.initialPlayers.flatMap((player) => {
+      const resolvesToCurrentAccount =
+        !!accountProfile &&
+        (player.invitedUserId
+          ? player.invitedUserId === session?.user.id
+          : !!player.profileId && accountProfileIds.has(player.profileId));
+      const normalizedPlayer = resolvesToCurrentAccount
+        ? {
+            name: accountProfile.name,
+            avatarColor: accountProfile.avatarColor,
+            profileId: accountProfile.id,
+          }
+        : player;
+      const invitedUserId =
+        "invitedUserId" in normalizedPlayer
+          ? normalizedPlayer.invitedUserId
+          : undefined;
+
+      if (
+        !invitedUserId &&
+        normalizedPlayer.profileId &&
+        seenProfileIds.has(normalizedPlayer.profileId)
+      ) {
+        return [];
+      }
+      if (
+        invitedUserId &&
+        seenInvitedUserIds.has(invitedUserId)
+      ) {
+        return [];
+      }
+
+      if (!invitedUserId && normalizedPlayer.profileId) {
+        seenProfileIds.add(normalizedPlayer.profileId);
+      }
+      if (invitedUserId) {
+        seenInvitedUserIds.add(invitedUserId);
+      }
+      return [normalizedPlayer];
+    });
+
+    let resolvedInput: NewGameInput = {
+      ...input,
+      initialPlayers: normalizedInitialPlayers,
+    };
+    let openSharingAfterCreate = false;
+    const requestedInvitedPlayers = new Map<
+      string,
+      { userId: string; profileId: string }
+    >();
+    resolvedInput.initialPlayers.forEach((player) => {
+      if (!player.invitedUserId || !player.profileId) return;
+      requestedInvitedPlayers.set(player.invitedUserId, {
+        userId: player.invitedUserId,
+        profileId: player.profileId,
+      });
+    });
+    invitedPlayers.forEach((player) => {
+      if (
+        player.userId === session?.user.id ||
+        accountProfileIds.has(player.profileId)
+      ) {
+        return;
+      }
+      requestedInvitedPlayers.set(player.userId, player);
+    });
+
+    if (requestedInvitedPlayers.size > 0) {
+      const permissionResult = await checkPastInvitedPlayerPermissions([
+        ...requestedInvitedPlayers.keys(),
+      ]);
+      if (permissionResult.status === "error") {
+        return false;
+      }
+      if (permissionResult.status === "blocked") {
+        const blockedUserIds = new Set(permissionResult.blockedUserIds);
+        const blockedPlayers = resolvedInput.initialPlayers.filter(
+          (player) =>
+            !!player.invitedUserId &&
+            blockedUserIds.has(player.invitedUserId),
+        );
+        const decision = await confirmRef.current?.choose({
+          eyebrow: "Invite code required",
+          title: "How should these players join?",
+          message:
+            "Automatic invites are off for these accounts. Choose how to continue.",
+          messageCase: "normal",
+          playersTitle: "Players needing an invite code",
+          players: blockedPlayers.map((player) => ({
+            name: player.name,
+            avatarColor: player.avatarColor,
+            label: "Invited before",
+            description: "Automatic invites are off",
+          })),
+          confirmText: "Share invite code",
+          extraActionText: "Use game-only",
+          extraActionDescription: "Only in this game — no account or Stats.",
+          cancelText: "Cancel",
+          layout: "feature",
+        });
+
+        if (decision === "cancel" || !decision) return false;
+        openSharingAfterCreate = decision === "confirm";
+        resolvedInput = {
+          ...resolvedInput,
+          initialPlayers:
+            decision === "confirm"
+              ? resolvedInput.initialPlayers.filter(
+                  (player) =>
+                    !player.invitedUserId ||
+                    !blockedUserIds.has(player.invitedUserId),
+                )
+              : resolvedInput.initialPlayers.map((player) =>
+                  player.invitedUserId &&
+                  blockedUserIds.has(player.invitedUserId)
+                    ? {
+                        name: player.name,
+                        avatarColor: player.avatarColor,
+                      }
+                    : player,
+                ),
+        };
+        blockedUserIds.forEach((userId) =>
+          requestedInvitedPlayers.delete(userId),
+        );
+      }
+    }
+
+    const baseGameInput: NewGameInput = {
+      ...resolvedInput,
+      initialPlayers: resolvedInput.initialPlayers.filter(
+        (player) =>
+          !player.invitedUserId ||
+          !requestedInvitedPlayers.has(player.invitedUserId),
+      ),
+    };
+
     triggerGameStartSplash();
-    const created = createGame(input);
+    const created = createGame(
+      baseGameInput,
+      requestedInvitedPlayers.size,
+    );
     if (created) {
+      if (requestedInvitedPlayers.size > 0) {
+        const invitesAdded = await addPastLinkedPlayersToNewGame(
+          created,
+          [...requestedInvitedPlayers.values()],
+        );
+        if (!invitesAdded) {
+          cancelGameStartSplash();
+          return false;
+        }
+      }
       setPresetDraft(null);
       setPresetDraftIntent(null);
       setGameReturnTab(homeTab);
       setView("game");
+      if (openSharingAfterCreate) setSharingOpen(true);
       return true;
     }
     cancelGameStartSplash();
@@ -907,13 +1148,18 @@ export function useAppModel() {
     input: NewGameInput,
     details: {
       label: string;
-      players: { name: string; avatarColor: string }[];
+      players: {
+        name: string;
+        avatarColor: string;
+        invitedUserId?: string;
+      }[];
       teams?: Array<{
         id: string;
         name: string;
         icon?: string;
         members: { name: string; avatarColor: string }[];
       }>;
+      invitedPlayers?: Array<{ userId: string; profileId: string }>;
     },
   ) {
     const timerValue = !input.timerEnabled
@@ -991,16 +1237,41 @@ export function useAppModel() {
             ]
           : []),
       ],
-      players: input.participantMode === "teams" ? [] : details.players,
+      players:
+        input.participantMode === "teams"
+          ? []
+          : details.players.map((player) => ({
+              ...player,
+              nameIcon: player.invitedUserId
+                ? createElement(Link, {
+                    size: 14,
+                    strokeWidth: 2.5,
+                    "aria-hidden": true,
+                  })
+                : undefined,
+            })),
+      playersTitle:
+        input.participantMode !== "teams" && details.players.length
+          ? "Players"
+          : "",
       teams: details.teams,
       message:
         input.participantMode === "teams"
           ? details.teams?.length
             ? "Teams"
             : ""
-          : details.players.length
-            ? "Players"
-            : "",
+          : "",
+      messageCase: "normal",
+      rosterNotice: details.players.some((player) => player.invitedUserId)
+        ? {
+            icon: createElement(Link, {
+              size: 16,
+              strokeWidth: 2.4,
+              "aria-hidden": true,
+            }),
+            text: "This game will appear in the invited players’ accounts, and they can update the score.",
+          }
+        : undefined,
       hideCancelAction: true,
       extraActionText: "Edit",
       confirmText: "Start new game",
@@ -1016,7 +1287,7 @@ export function useAppModel() {
       return;
     }
     if (result !== "confirm") return;
-    await handleCreateGame(input);
+    await handleCreateGame(input, details.invitedPlayers);
   }
 
   function handleStoreNewGameDraft(draft: NewGameInput) {
@@ -1331,6 +1602,7 @@ export function useAppModel() {
     canViewSavedData,
     cancelGameStartSplash,
     combinedGuestAndLocalProfiles,
+    chooseReplayInvitedUserIds,
     confirmRef,
     createTeam,
     currentGame,
@@ -1370,6 +1642,7 @@ export function useAppModel() {
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
     pastLinkedPlayers,
+    pastInvitedPlayers,
     presetDraft,
     presetDraftIntent,
     presetDraftToken,

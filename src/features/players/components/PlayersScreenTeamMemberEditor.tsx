@@ -20,27 +20,36 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
       <div className="teamCard__members">
         {model.profiles
           .filter((profile) => model.editingTeamMemberIds.has(profile.id))
-          .map((profile) => (
-            <button
-              key={profile.id}
-              type="button"
-              className="teamMemberChip"
-              onClick={() => toggleMember(model, profile.id)}
-            >
-              <span
-                className="teamMemberChip__avatar"
-                style={avatarStyleFor(profile.avatarColor)}
-                aria-hidden="true"
+          .map((profile) => {
+            const isRequiredMember = model.editingTeamMemberIds.size === 1;
+            return (
+              <button
+                key={profile.id}
+                type="button"
+                className="teamMemberChip"
+                disabled={isRequiredMember}
+                title={
+                  isRequiredMember
+                    ? "A team needs at least one player."
+                    : `Remove ${profile.name} from this team`
+                }
+                onClick={() => toggleMember(model, profile.id)}
               >
-                {getInitials(profile.name)}
-              </span>
-              <span>
-                {profile.isAccountPlayer
-                  ? formatAccountPlayerName(profile.name)
-                  : profile.name}
-              </span>
-            </button>
-          ))}
+                <span
+                  className="teamMemberChip__avatar"
+                  style={avatarStyleFor(profile.avatarColor)}
+                  aria-hidden="true"
+                >
+                  {getInitials(profile.name)}
+                </span>
+                <span>
+                  {profile.isAccountPlayer
+                    ? formatAccountPlayerName(profile.name)
+                    : profile.name}
+                </span>
+              </button>
+            );
+          })}
       </div>
       <button
         type="button"
@@ -73,12 +82,19 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
               <div className="participantPicker__listContent">
                 {model.editingTeamProfiles.map((profile) => {
                   const selected = model.editingTeamMemberIds.has(profile.id);
+                  const isRequiredMember =
+                    selected && model.editingTeamMemberIds.size === 1;
                   return (
                     <button
                       key={profile.id}
                       type="button"
                       className={`teamBuilderPlayerOption${selected ? " teamBuilderPlayerOption--selected" : ""}`}
-                      disabled={!model.canUseTeams}
+                      disabled={!model.canUseTeams || isRequiredMember}
+                      title={
+                        isRequiredMember
+                          ? "A team needs at least one player."
+                          : undefined
+                      }
                       onClick={() => toggleMember(model, profile.id)}
                       aria-pressed={selected}
                     >
@@ -102,6 +118,7 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
           </div>
           <NewPlayerComposer
             className="teamBuilderCreatePlayer teamBuilderCreatePlayer--composer"
+            triggerClassName="teamBuilderCreatePlayer__trigger"
             isOpen={
               model.creatingTeamPlayer &&
               model.creatingTeamPlayerForTeamId === team.id
@@ -136,6 +153,7 @@ function toggleMember(
   profileId: string,
 ) {
   model.setEditingTeamMemberIds((current) => {
+    if (current.has(profileId) && current.size === 1) return current;
     const next = new Set(current);
     if (next.has(profileId)) next.delete(profileId);
     else next.add(profileId);

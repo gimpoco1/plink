@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
-  createForegroundRefreshHandlers,
   createRealtimeReconnectHandler,
+  subscribeToForegroundRefresh,
 } from "../utils/foregroundRefresh";
 import type { GameTeam, TeamMember, ToastState } from "../types";
 import { DEFAULT_TEAM_ICON } from "../constants";
@@ -178,10 +178,9 @@ export function useTeams(session: Session | null) {
       }
     }
 
-    const {
-      refreshOnFocus,
-      refreshWhenVisible,
-    } = createForegroundRefreshHandlers(() => void refreshRemoteTeams());
+    const unsubscribeForegroundRefresh = subscribeToForegroundRefresh(
+      () => void refreshRemoteTeams(),
+    );
 
     let teamsChannel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
       null;
@@ -221,11 +220,9 @@ export function useTeams(session: Session | null) {
       void membersChannel.subscribe();
     }
 
-    window.addEventListener("focus", refreshOnFocus);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-
     return () => {
       alive = false;
+      unsubscribeForegroundRefresh();
       if (teamsChannel) {
         void teamsChannel.unsubscribe();
         supabase?.removeChannel(teamsChannel);
@@ -234,8 +231,6 @@ export function useTeams(session: Session | null) {
         void membersChannel.unsubscribe();
         supabase?.removeChannel(membersChannel);
       }
-      window.removeEventListener("focus", refreshOnFocus);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [remoteUserId, teamMembers, teams, userId]);
 
@@ -363,6 +358,20 @@ export function useTeams(session: Session | null) {
     if (!canPersistTeams) {
       setSyncNotice({
         message: "Teams are still loading. Try again in a moment.",
+        tone: "error",
+      });
+      return;
+    }
+    const existing = teamMembers.some(
+      (member) =>
+        member.teamId === teamId && member.profileId === profileId,
+    );
+    const teamMemberCount = teamMembers.filter(
+      (member) => member.teamId === teamId,
+    ).length;
+    if (existing && teamMemberCount <= 1) {
+      setSyncNotice({
+        message: "A team needs at least one player.",
         tone: "error",
       });
       return;

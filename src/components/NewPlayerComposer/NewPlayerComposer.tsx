@@ -7,6 +7,7 @@ import "./NewPlayerComposer.css";
 
 type Props = {
   className?: string;
+  triggerClassName?: string;
   isOpen: boolean;
   showTrigger?: boolean;
   isAuthenticated: boolean;
@@ -29,6 +30,7 @@ type Props = {
 
 export function NewPlayerComposer({
   className,
+  triggerClassName,
   isOpen,
   showTrigger = true,
   isAuthenticated,
@@ -54,7 +56,13 @@ export function NewPlayerComposer({
 
   if (!isOpen && showTrigger) {
     return (
-      <button type="button" className="teamPicker__createBtn" onClick={onOpen}>
+      <button
+        type="button"
+        className={`teamPicker__createBtn${
+          triggerClassName ? ` ${triggerClassName}` : ""
+        }`}
+        onClick={onOpen}
+      >
         <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
         Add new player
       </button>

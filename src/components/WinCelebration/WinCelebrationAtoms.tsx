@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 
 const PODIUM_NAME_MAX_FONT_SIZE = 13;
 const PODIUM_NAME_MIN_FONT_SIZE = 8;
-const PODIUM_NAME_FIT_BUFFER = 2;
+const PODIUM_NAME_FIT_BUFFER = 4;
 
 export function FittedPodiumName({
   name,

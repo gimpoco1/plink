@@ -2,10 +2,6 @@ import { motion } from "framer-motion";
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
-import {
-  getUnsavedReplayPlayers,
-  linkedPlayersCarryIntoReplay,
-} from "../../../utils/replay";
 import { useAppContext } from "../context/AppContext";
 
 export function AppGameRoute() {
@@ -15,6 +11,7 @@ export function AppGameRoute() {
     addTeam,
     canViewSavedData,
     cancelGameStartSplash,
+    chooseReplayInvitedUserIds,
     combinedGuestAndLocalProfiles,
     confirmRef,
     currentGame,
@@ -181,19 +178,6 @@ export function AppGameRoute() {
         }}
         pastLinkedPlayers={pastLinkedPlayers}
         onAddPastLinkedPlayer={async (collaboratorUserId) => {
-          const linkedPlayer = pastLinkedPlayers.find(
-            (player) => player.userId === collaboratorUserId,
-          );
-          if (!linkedPlayer) return false;
-          const confirmed = await confirmRef.current?.confirm({
-            eyebrow: "Invited player",
-            title: `Add ${capitalizeFirst(linkedPlayer.name)}?`,
-            message:
-              "This game will appear in their account and they’ll be able to update it. Their results will count toward their Stats.",
-            confirmText: "Add player",
-            cancelText: "Cancel",
-          });
-          if (!confirmed) return false;
           return addPastLinkedPlayer(currentGame.id, collaboratorUserId);
         }}
         onMergePlayers={async (linkedPlayerId, rosterPlayerId) => {
@@ -318,37 +302,15 @@ export function AppGameRoute() {
           if (!guardSessionCreation()) {
             return;
           }
-          const unsavedPlayers = getUnsavedReplayPlayers(
-            currentGame,
-            profiles,
-          );
-          if (unsavedPlayers.length > 0) {
-            const linkedPlayersCarryOver = linkedPlayersCarryIntoReplay(
-              currentGame,
-            );
-            const confirmed = await confirmRef.current?.confirm({
-              eyebrow: "New game",
-              title: "Play again",
-              message: linkedPlayersCarryOver
-                ? "Invited players will be added automatically. Results for game-only players won’t be added to Stats."
-                : "This starts a separate game with the same players. Invited players won’t stay connected, and results for unsaved players won’t be added to Stats.",
-              messageCase: "normal",
-              playersTitle: linkedPlayersCarryOver
-                ? "Game-only players"
-                : "Some players aren’t saved",
-              players: unsavedPlayers.map((player) => ({
-                name: player.name,
-                avatarColor: player.avatarColor,
-              })),
-              confirmText: "Play again",
-              cancelText: "Cancel",
-              layout: "feature",
-              tone: "default",
-            });
-            if (!confirmed) return;
-          }
+          const invitedUserIds =
+            await chooseReplayInvitedUserIds(currentGame);
+          if (invitedUserIds === null) return;
           triggerGameStartSplash();
-          const duplicated = await duplicateGame(currentGame.id, profiles);
+          const duplicated = await duplicateGame(
+            currentGame.id,
+            profiles,
+            invitedUserIds,
+          );
           if (duplicated) {
             setView("game");
           } else {

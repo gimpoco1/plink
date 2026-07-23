@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { AVATAR_COLORS } from "../../constants";
+import {
+  AVATAR_COLORS,
+  REFRESH_PAST_INVITED_PLAYERS_EVENT,
+} from "../../constants";
 import type {
   PlayerProfile,
   QuickScoreValues,
@@ -28,6 +31,7 @@ function normalizePlayerName(value: string) {
 export function useNewGameCardModel(props: NewGameCardProps) {
   const {
     profiles,
+    pastInvitedPlayers,
     teams,
     teamMembers,
     canUseTeams,
@@ -64,6 +68,8 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(
     new Set(),
   );
+  const [selectedPastInvitedUserIds, setSelectedPastInvitedUserIds] =
+    useState<Set<string>>(new Set());
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(
     new Set(),
   );
@@ -84,7 +90,13 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const presetBrowserRef = useRef<HTMLDivElement | null>(null);
   const bodyInnerRef = useRef<HTMLDivElement | null>(null);
   const appliedDraftKeyRef = useRef<string | null>(null);
+  const reconciledDraftInvitesKeyRef = useRef<string | null>(null);
   const hasLoadedLocalPlayersRef = useRef(false);
+
+  useEffect(() => {
+    if (!props.open) return;
+    window.dispatchEvent(new Event(REFRESH_PAST_INVITED_PLAYERS_EVENT));
+  }, [props.open]);
   const reduceMotion = useReducedMotion();
   const [bodyContentHeight, setBodyContentHeight] = useState(0);
   const [selectedStagedPlayerIds, setSelectedStagedPlayerIds] = useState<
@@ -181,6 +193,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setTimerMinutes("5");
     setTimerSeconds("0");
     setSelectedProfileIds(new Set());
+    setSelectedPastInvitedUserIds(new Set());
     setSelectedTeamIds(new Set());
     setIsAddingPlayer(false);
     setParticipantSearch("");
@@ -224,23 +237,41 @@ export function useNewGameCardModel(props: NewGameCardProps) {
         stagedIndex,
       }));
 
-    return [...saved, ...staged];
-  }, [profiles, selectedProfileIds, stagedPlayers, selectedStagedPlayerIds]);
+    const invited = pastInvitedPlayers
+      .filter(
+        (player) =>
+          player.canInvite &&
+          selectedPastInvitedUserIds.has(player.userId),
+      )
+      .map((player) => ({
+        id: player.userId,
+        name: player.name,
+        avatarColor: player.avatarColor,
+        stagedIndex: null,
+      }));
+
+    return [...saved, ...staged, ...invited];
+  }, [
+    pastInvitedPlayers,
+    profiles,
+    selectedPastInvitedUserIds,
+    selectedProfileIds,
+    stagedPlayers,
+    selectedStagedPlayerIds,
+  ]);
 
   const selectedStagedPlayers = useMemo(
     () =>
       stagedPlayers.filter((player) => selectedStagedPlayerIds.has(player.id)),
     [stagedPlayers, selectedStagedPlayerIds],
   );
-  const visibleStagedPlayers = useMemo(
-    () =>
-      isAuthenticated
-        ? stagedPlayers.filter((player) =>
-            selectedStagedPlayerIds.has(player.id),
-          )
-        : stagedPlayers,
-    [isAuthenticated, stagedPlayers, selectedStagedPlayerIds],
-  );
+  const filteredStagedPlayers = useMemo(() => {
+    const query = participantSearch.trim().toLocaleLowerCase();
+    if (!query) return stagedPlayers;
+    return stagedPlayers.filter((player) =>
+      player.name.toLocaleLowerCase().includes(query),
+    );
+  }, [participantSearch, stagedPlayers]);
   const selectedStagedPlayersForGame = useMemo(
     () =>
       selectedStagedPlayers.map((player) => ({
@@ -249,6 +280,22 @@ export function useNewGameCardModel(props: NewGameCardProps) {
         profileId: player.id,
       })),
     [selectedStagedPlayers],
+  );
+  const selectedInvitedPlayersForGame = useMemo(
+    () =>
+      pastInvitedPlayers
+        .filter(
+          (player) =>
+            player.canInvite &&
+            selectedPastInvitedUserIds.has(player.userId),
+        )
+        .map((player) => ({
+          name: player.name,
+          avatarColor: player.avatarColor,
+          profileId: player.profileId,
+          invitedUserId: player.userId,
+        })),
+    [pastInvitedPlayers, selectedPastInvitedUserIds],
   );
 
   function toggleStagedPlayer(playerId: string) {
@@ -261,6 +308,18 @@ export function useNewGameCardModel(props: NewGameCardProps) {
         next.add(playerId);
       }
 
+      return next;
+    });
+  }
+
+  function deleteStagedPlayer(playerId: string) {
+    setStagedPlayers((current) =>
+      current.filter((player) => player.id !== playerId),
+    );
+    setSelectedStagedPlayerIds((current) => {
+      if (!current.has(playerId)) return current;
+      const next = new Set(current);
+      next.delete(playerId);
       return next;
     });
   }
@@ -361,6 +420,16 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     );
   }, [participantSearch, profiles]);
 
+  const filteredPastInvitedPlayers = useMemo(() => {
+    const savedProfileIds = new Set(profiles.map((profile) => profile.id));
+    const query = participantSearch.trim().toLocaleLowerCase();
+    return pastInvitedPlayers.filter(
+      (player) =>
+        !savedProfileIds.has(player.profileId) &&
+        (!query || player.name.toLocaleLowerCase().includes(query)),
+    );
+  }, [participantSearch, pastInvitedPlayers, profiles]);
+
   const filteredTeams = useMemo(() => {
     const query = participantSearch.trim().toLocaleLowerCase();
     if (!query) return availableTeams;
@@ -380,14 +449,10 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     selectedTeamIds.size,
   ]);
 
-  const stagedPlayerListFade = useScrollableListFade([
-    participantMode,
-    visibleStagedPlayers.length,
-  ]);
-
   useEffect(() => {
     if (!draft) {
       appliedDraftKeyRef.current = null;
+      reconciledDraftInvitesKeyRef.current = null;
       return;
     }
 
@@ -407,13 +472,15 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       timerMode: draft.timerMode,
       timerSeconds: draft.timerSeconds,
       initialPlayers: draft.initialPlayers.map(
-        (player) => player.profileId ?? player.name,
+        (player) =>
+          player.invitedUserId ?? player.profileId ?? player.name,
       ),
       initialTeams: (draft.initialTeams ?? []).map((team) => team.id),
     });
 
     if (appliedDraftKeyRef.current === draftKey) return;
     appliedDraftKeyRef.current = draftKey;
+    reconciledDraftInvitesKeyRef.current = null;
 
     setName(draft.name);
     setParticipantMode(draft.participantMode ?? "players");
@@ -445,6 +512,19 @@ export function useNewGameCardModel(props: NewGameCardProps) {
           ),
       ),
     );
+    setSelectedPastInvitedUserIds(
+      new Set(
+        draft.initialPlayers
+          .map((player) => player.invitedUserId)
+          .filter(
+            (userId): userId is string =>
+              !!userId &&
+              pastInvitedPlayers.some(
+                (player) => player.userId === userId && player.canInvite,
+              ),
+          ),
+      ),
+    );
     const teamIdsByName = new Map(
       teams.map((team) => [team.name.toLowerCase(), team.id] as const),
     );
@@ -460,8 +540,9 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     const draftLocalPlayers = draft.initialPlayers
       .filter(
         (player) =>
-          !player.profileId ||
-          !profiles.some((profile) => profile.id === player.profileId),
+          !player.invitedUserId &&
+          (!player.profileId ||
+            !profiles.some((profile) => profile.id === player.profileId)),
       )
       .map((player) => {
         const now = Date.now();
@@ -508,7 +589,55 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setIsPresetBrowserOpen(false);
     setPresetSearch("");
     setSelectedPresetInfoId(null);
-  }, [availableTeams, draft, draftToken, profiles, teams]);
+  }, [
+    availableTeams,
+    draft,
+    draftToken,
+    pastInvitedPlayers,
+    profiles,
+    teams,
+  ]);
+
+  useEffect(() => {
+    if (!draft) {
+      reconciledDraftInvitesKeyRef.current = null;
+      return;
+    }
+
+    const draftInvitedUserIds = draft.initialPlayers
+      .map((player) => player.invitedUserId)
+      .filter((userId): userId is string => !!userId);
+    if (
+      draftInvitedUserIds.length === 0 ||
+      pastInvitedPlayers.length === 0
+    ) {
+      return;
+    }
+
+    const reconciliationKey = JSON.stringify({
+      token: draftToken ?? 0,
+      invitedUserIds: draftInvitedUserIds,
+    });
+    if (reconciledDraftInvitesKeyRef.current === reconciliationKey) return;
+    reconciledDraftInvitesKeyRef.current = reconciliationKey;
+
+    const availableUserIds = new Set(
+      pastInvitedPlayers
+        .filter(
+          (player) =>
+            player.canInvite &&
+            draftInvitedUserIds.includes(player.userId),
+        )
+        .map((player) => player.userId),
+    );
+    if (availableUserIds.size === 0) return;
+
+    setSelectedPastInvitedUserIds((current) => {
+      const next = new Set(current);
+      availableUserIds.forEach((userId) => next.add(userId));
+      return next;
+    });
+  }, [draft, draftToken, pastInvitedPlayers]);
 
   useEffect(() => {
     if (!isPresetBrowserOpen) return;
@@ -554,6 +683,22 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       const next = new Set(current);
       if (next.has(profileId)) next.delete(profileId);
       else next.add(profileId);
+      return next;
+    });
+  }
+
+  function togglePastInvitedPlayer(userId: string) {
+    if (
+      !pastInvitedPlayers.some(
+        (player) => player.userId === userId && player.canInvite,
+      )
+    ) {
+      return;
+    }
+    setSelectedPastInvitedUserIds((current) => {
+      const next = new Set(current);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
       return next;
     });
   }
@@ -702,7 +847,11 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       timerMode,
       timerSeconds:
         timerMode === "countdown" ? Math.max(1, timerTotalSeconds || 0) : 300,
-      initialPlayers: [...savedPlayers, ...selectedStagedPlayersForGame],
+      initialPlayers: [
+        ...savedPlayers,
+        ...selectedStagedPlayersForGame,
+        ...selectedInvitedPlayersForGame,
+      ],
       initialTeams: selectedTeams.map((team) => ({
         id: team.id,
         name: team.name,
@@ -748,7 +897,11 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       initialPlayers:
         participantMode === "teams"
           ? []
-          : [...savedPlayers, ...selectedStagedPlayersForGame],
+          : [
+              ...savedPlayers,
+              ...selectedStagedPlayersForGame,
+              ...selectedInvitedPlayersForGame,
+            ],
       initialTeams:
         participantMode === "teams"
           ? selectedTeams.map((team) => ({
@@ -832,6 +985,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     timerSeconds,
     setTimerSeconds,
     selectedProfileIds,
+    selectedPastInvitedUserIds,
     selectedTeamIds,
     isAddingPlayer,
     setIsAddingPlayer,
@@ -855,8 +1009,9 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     bodyContentHeight,
     selectedStagedPlayerIds,
     timerTotalSeconds,
-    visibleStagedPlayers,
+    filteredStagedPlayers,
     toggleStagedPlayer,
+    deleteStagedPlayer,
     availableTeams,
     participantCount,
     canAccessTeamsMode,
@@ -865,11 +1020,12 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     canCreate,
     newPlayerValidationMessage,
     filteredProfiles,
+    filteredPastInvitedPlayers,
     filteredTeams,
     teamListFade,
-    stagedPlayerListFade,
     filteredGamePresets,
     toggleProfile,
+    togglePastInvitedPlayer,
     updateTarget,
     adjustTarget,
     applyCountdownPreset,
