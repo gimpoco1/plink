@@ -109,6 +109,7 @@ export function HomeScreen(props: HomeScreenProps) {
           <NewGameCard
             open={showForm}
             profiles={profiles}
+            pastInvitedPlayers={props.pastInvitedPlayers}
             teams={teams}
             teamMembers={teamMembers}
             canUseTeams={canUseTeams}

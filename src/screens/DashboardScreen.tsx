@@ -231,6 +231,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
           <HomeScreen
             games={props.games}
             profiles={props.profiles}
+            pastInvitedPlayers={props.pastInvitedPlayers}
             teams={props.teams}
             teamMembers={props.teamMembers}
             canUseTeams={props.canUseTeams}

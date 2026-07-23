@@ -66,7 +66,8 @@ export function GameRowCard({
     winner &&
       !isTeamsGame &&
       (game.accessRole === "collaborator"
-        ? winner.id === game.linkedPlayerIdForCurrentUser
+        ? winner.id === game.linkedPlayerIdForCurrentUser ||
+          (!!winner.profileId && accountProfileIds.has(winner.profileId))
         : !!winner.profileId && accountProfileIds.has(winner.profileId)),
   );
   const winnerName = winner

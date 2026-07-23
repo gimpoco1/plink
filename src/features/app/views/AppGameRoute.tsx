@@ -181,19 +181,6 @@ export function AppGameRoute() {
         }}
         pastLinkedPlayers={pastLinkedPlayers}
         onAddPastLinkedPlayer={async (collaboratorUserId) => {
-          const linkedPlayer = pastLinkedPlayers.find(
-            (player) => player.userId === collaboratorUserId,
-          );
-          if (!linkedPlayer) return false;
-          const confirmed = await confirmRef.current?.confirm({
-            eyebrow: "Invited player",
-            title: `Add ${capitalizeFirst(linkedPlayer.name)}?`,
-            message:
-              "This game will appear in their account and they’ll be able to update it. Their results will count toward their Stats.",
-            confirmText: "Add player",
-            cancelText: "Cancel",
-          });
-          if (!confirmed) return false;
           return addPastLinkedPlayer(currentGame.id, collaboratorUserId);
         }}
         onMergePlayers={async (linkedPlayerId, rosterPlayerId) => {

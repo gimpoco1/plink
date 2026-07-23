@@ -69,6 +69,7 @@ export type Game = {
   isShared?: boolean;
   linkedPlayerIdForCurrentUser?: string;
   hasCollaborators?: boolean;
+  invitedUserIdsByPlayerId?: Record<string, string>;
   collaboratorsCanManage: boolean;
   name: string;
   participantMode?: "players" | "teams";

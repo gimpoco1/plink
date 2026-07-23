@@ -91,3 +91,46 @@
 .swipeCard--dragging {
   transition: none;
 }
+
+.swipeRow--dropletDelete .swipeAction {
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.swipeRow--dropletDelete .swipeDelete {
+  position: relative;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 999px;
+  background: #e9566d;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(126, 25, 45, 0.2);
+  gap: 0;
+  isolation: isolate;
+}
+
+.swipeRow--dropletDelete .swipeDelete::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: #e9566d;
+  transform: translateY(-50%) rotate(45deg);
+  z-index: 0;
+}
+
+.swipeRow--dropletDelete .swipeDelete svg {
+  position: relative;
+  z-index: 1;
+}
+
+.swipeRow--dropletDelete .swipeDelete:active,
+.swipeRow--dropletDelete .swipeDelete:active::before {
+  background: #d9435c;
+}

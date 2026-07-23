@@ -1,3 +1,4 @@
+import { Link } from "lucide-react";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
 import { avatarStyleFor } from "../../utils/color";
 import {
@@ -12,7 +13,9 @@ export function ManagePlayersQueue() {
     setStagedCustomPlayers,
     stagedCount,
     stagedCustomPlayers,
+    stagedPastLinkedPlayers,
     stagedProfiles,
+    togglePastLinkedPlayer,
     toggleProfile,
   } = useManagePlayersDialogContext();
   if (stagedCount === 0) return null;
@@ -43,6 +46,31 @@ export function ManagePlayersQueue() {
           </button>
         );
       })}
+      {stagedPastLinkedPlayers.map((player) => (
+        <button
+          key={player.userId}
+          className="managePlayersDialog__queueChip"
+          type="button"
+          onClick={() => togglePastLinkedPlayer(player.userId)}
+          aria-label={`Remove ${capitalizeFirst(player.name)}`}
+        >
+          <span
+            className="managePlayersDialog__queueAvatar"
+            style={avatarStyleFor(player.avatarColor)}
+            aria-hidden="true"
+          >
+            {getInitials(player.name)}
+          </span>
+          <span>{capitalizeFirst(player.name)}</span>
+          <Link
+            className="managePlayersDialog__queueLinkedIcon"
+            size={12}
+            strokeWidth={2.5}
+            aria-hidden="true"
+          />
+          <span className="managePlayersDialog__queueRemove">×</span>
+        </button>
+      ))}
       {stagedCustomPlayers.map((player, index) => (
         <button
           key={`${player.name}-${index}`}

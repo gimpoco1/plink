@@ -484,9 +484,17 @@ async function attachCollaborationMetadata(
     (data ?? []).map((row) => row.game_id as string),
   );
   const playerIdByGameId = new Map<string, string>();
+  const invitedUserIdsByGameId = new Map<string, Record<string, string>>();
   (data ?? []).forEach((row) => {
+    const gameId = row.game_id as string;
+    const playerId = row.player_id as string;
+    const collaboratorUserId = row.user_id as string;
+    invitedUserIdsByGameId.set(gameId, {
+      ...invitedUserIdsByGameId.get(gameId),
+      [playerId]: collaboratorUserId,
+    });
     if (row.user_id === userId) {
-      playerIdByGameId.set(row.game_id as string, row.player_id as string);
+      playerIdByGameId.set(gameId, playerId);
     }
   });
   return games.map((game) => {
@@ -495,6 +503,7 @@ async function attachCollaborationMetadata(
       ...game,
       linkedPlayerIdForCurrentUser: linkedPlayerId,
       hasCollaborators: collaboratorGameIds.has(game.id),
+      invitedUserIdsByPlayerId: invitedUserIdsByGameId.get(game.id),
     };
   });
 }
@@ -801,6 +810,21 @@ export async function loadRemotePastLinkedPlayers(
   const { data, error } = await supabase.rpc("list_past_linked_players", {
     p_game_id: gameId,
   });
+  if (error) throw error;
+  return ((data ?? []) as PastLinkedPlayerRow[]).map((row) => ({
+    userId: row.collaborator_user_id,
+    profileId: row.profile_id,
+    name: row.player_name,
+    avatarColor: row.avatar_color,
+    lastLinkedAt: row.last_linked_at,
+  }));
+}
+
+export async function loadRemotePastInvitedPlayers(): Promise<
+  PastLinkedPlayer[]
+> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc("list_past_invited_players");
   if (error) throw error;
   return ((data ?? []) as PastLinkedPlayerRow[]).map((row) => ({
     userId: row.collaborator_user_id,

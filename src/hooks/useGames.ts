@@ -19,7 +19,12 @@ import type {
 } from "../types";
 import { MAX_ABS_SCORE, DEFAULT_TEAM_ICON } from "../constants";
 import { supabase } from "../lib/supabase";
-import { clampName, formatPlayerName, formatTeamName } from "../utils/text";
+import {
+  clampName,
+  formatPlayerName,
+  formatTeamName,
+  getNextGameSessionName,
+} from "../utils/text";
 import { uid } from "../utils/id";
 import { getSavedReplayProfile } from "../utils/replay";
 import {
@@ -50,6 +55,7 @@ import {
   loadRemoteGameJoinNotifications,
   loadRemoteGameRemovalNotifications,
   loadRemoteGames,
+  loadRemotePastInvitedPlayers,
   loadRemotePastLinkedPlayers,
   mergeRemoteSharedGamePlayers,
   parseRemoteGameJoinNotification,
@@ -87,7 +93,12 @@ type CreateGameInput = {
   quickScoreValues?: QuickScoreValues;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
-  initialPlayers?: { name: string; avatarColor: string; profileId?: string }[];
+  initialPlayers?: Array<{
+    name: string;
+    avatarColor: string;
+    profileId?: string;
+    invitedUserId?: string;
+  }>;
   initialTeams?: Array<{
     id: string;
     name: string;
@@ -251,6 +262,9 @@ function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
           existing?.linkedPlayerIdForCurrentUser,
         hasCollaborators:
           incoming.hasCollaborators ?? existing?.hasCollaborators,
+        invitedUserIdsByPlayerId:
+          incoming.invitedUserIdsByPlayerId ??
+          existing?.invitedUserIdsByPlayerId,
       });
     }
   }
@@ -293,6 +307,15 @@ export function useGames(
   const [pastLinkedPlayers, setPastLinkedPlayers] = useState<
     PastLinkedPlayer[]
   >([]);
+  const [pastInvitedPlayers, setPastInvitedPlayers] = useState<
+    PastLinkedPlayer[]
+  >([]);
+  const [pastInvitedPlayersRefreshTick, setPastInvitedPlayersRefreshTick] =
+    useState(0);
+  const pastLinkedPlayersCacheRef = useRef(
+    new Map<string, PastLinkedPlayer[]>(),
+  );
+  const pastLinkedPlayersGameIdRef = useRef<string | null>(null);
   const [saveRetryTick, setSaveRetryTick] = useState(0);
   const remoteSignatureRef = useRef<string | null>(null);
   const handledJoinNotificationIdsRef = useRef(new Set<string>());
@@ -320,6 +343,38 @@ export function useGames(
   useEffect(() => {
     latestSessionUserIdRef.current = sessionUserId;
   }, [sessionUserId]);
+
+  useEffect(() => {
+    let alive = true;
+    if (
+      !sessionUserId ||
+      !remoteReady ||
+      remoteUserId !== sessionUserId
+    ) {
+      if (!sessionUserId) setPastInvitedPlayers([]);
+      return () => {
+        alive = false;
+      };
+    }
+
+    loadRemotePastInvitedPlayers()
+      .then((players) => {
+        if (alive) setPastInvitedPlayers(players);
+      })
+      .catch(() => {
+        // Keep the previous suggestions until the migration is available or
+        // the next refresh succeeds.
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [
+    pastInvitedPlayersRefreshTick,
+    remoteReady,
+    remoteUserId,
+    sessionUserId,
+  ]);
 
   useEffect(() => {
     let alive = true;
@@ -477,6 +532,7 @@ export function useGames(
       }
 
       handledJoinNotificationIdsRef.current.add(notification.id);
+      setPastInvitedPlayersRefreshTick((value) => value + 1);
       showGameToast(
         `${notification.playerName} joined ${notification.gameName}`,
       );
@@ -818,19 +874,32 @@ export function useGames(
       currentGame.accessRole === "collaborator" ||
       currentGame.participantMode === "teams"
     ) {
+      pastLinkedPlayersGameIdRef.current = null;
       setPastLinkedPlayers([]);
       return () => {
         alive = false;
       };
     }
 
-    setPastLinkedPlayers([]);
+    const cacheKey = `${sessionUserId}:${currentGame.id}`;
+    const cachedPlayers = pastLinkedPlayersCacheRef.current.get(cacheKey);
+    const changedGame =
+      pastLinkedPlayersGameIdRef.current !== currentGame.id;
+    pastLinkedPlayersGameIdRef.current = currentGame.id;
+    if (cachedPlayers) {
+      setPastLinkedPlayers(cachedPlayers);
+    } else if (changedGame) {
+      setPastLinkedPlayers([]);
+    }
+
     loadRemotePastLinkedPlayers(currentGame.id)
       .then((players) => {
-        if (alive) setPastLinkedPlayers(players);
+        if (!alive) return;
+        pastLinkedPlayersCacheRef.current.set(cacheKey, players);
+        setPastLinkedPlayers(players);
       })
       .catch(() => {
-        if (alive) setPastLinkedPlayers([]);
+        if (alive && !cachedPlayers) setPastLinkedPlayers([]);
       });
 
     return () => {
@@ -850,7 +919,11 @@ export function useGames(
   }, [games]);
 
   function createGame(input: CreateGameInput): Game | null {
-    const name = clampName(input.name).toUpperCase();
+    const requestedName = clampName(input.name).toUpperCase();
+    const name = getNextGameSessionName(
+      requestedName,
+      games.map((game) => game.name),
+    );
     const startingScore = Number.isFinite(input.startingScore)
       ? Math.trunc(input.startingScore)
       : 0;
@@ -1015,17 +1088,10 @@ export function useGames(
 
     // Treat the unnumbered original as game #1, then find the highest
     // existing duplicate number so the first duplicate starts at #2.
-    const baseName = original.name.replace(/\s\(\d+\)$/, "");
-    const siblings = games.filter((g) => g.name.startsWith(baseName));
-    let maxNum = 1;
-    for (const s of siblings) {
-      const match = s.name.match(/\((\d+)\)$/);
-      if (match) {
-        maxNum = Math.max(maxNum, parseInt(match[1], 10));
-      }
-    }
-
-    const nextName = `${baseName} (${maxNum + 1})`.toUpperCase();
+    const nextName = getNextGameSessionName(
+      original.name,
+      games.map((game) => game.name),
+    ).toUpperCase();
 
     if (
       original.isShared &&
@@ -1233,23 +1299,32 @@ export function useGames(
     const game = games.find((item) => item.id === gameId);
     if (game?.isShared && sessionUserId) {
       try {
+        const removedPlayer = game.players.find(
+          (player) => player.id === playerId,
+        );
+        const removedInvitedUserId =
+          game.invitedUserIdsByPlayerId?.[playerId];
         const remoteGame = await removeRemoteSharedGamePlayer(
           sessionUserId,
           gameId,
           playerId,
         );
-        const removedLinkedPlayer = game.players.some(
-          (player) =>
-            player.id === playerId && player.joinedViaInvite === true,
-        );
+        const removedLinkedPlayer =
+          removedPlayer?.joinedViaInvite === true;
         const remainingLinkedPlayers = game.players.filter(
           (player) =>
             player.id !== playerId && player.joinedViaInvite === true,
         ).length;
+        const remainingInvitedUserIds = Object.fromEntries(
+          Object.entries(game.invitedUserIdsByPlayerId ?? {}).filter(
+            ([linkedPlayerId]) => linkedPlayerId !== playerId,
+          ),
+        );
         const updatedGame = removedLinkedPlayer
           ? {
               ...remoteGame,
               hasCollaborators: remainingLinkedPlayers > 0,
+              invitedUserIdsByPlayerId: remainingInvitedUserIds,
             }
           : remoteGame;
         remoteSignatureRef.current = markGameVersionSynced(
@@ -1259,6 +1334,33 @@ export function useGames(
         setGames((previousGames) =>
           mergeGamesById(previousGames, [updatedGame]),
         );
+        if (
+          removedLinkedPlayer &&
+          removedInvitedUserId &&
+          removedPlayer?.profileId
+        ) {
+          const pastPlayer: PastLinkedPlayer = {
+            userId: removedInvitedUserId,
+            profileId: removedPlayer.profileId,
+            name: removedPlayer.name,
+            avatarColor: removedPlayer.avatarColor,
+            lastLinkedAt: Date.now(),
+          };
+          const cacheKey = `${sessionUserId}:${gameId}`;
+          const addPastPlayer = (players: PastLinkedPlayer[]) => [
+            pastPlayer,
+            ...players.filter(
+              (player) => player.userId !== removedInvitedUserId,
+            ),
+          ];
+          setPastLinkedPlayers(addPastPlayer);
+          pastLinkedPlayersCacheRef.current.set(
+            cacheKey,
+            addPastPlayer(
+              pastLinkedPlayersCacheRef.current.get(cacheKey) ?? [],
+            ),
+          );
+        }
         removeGameInviteCode(gameId);
         return true;
       } catch (error) {
@@ -1336,11 +1438,80 @@ export function useGames(
       setPastLinkedPlayers((players) =>
         players.filter((player) => player.userId !== collaboratorUserId),
       );
+      const cacheKey = `${sessionUserId}:${gameId}`;
+      const cachedPlayers = pastLinkedPlayersCacheRef.current.get(cacheKey);
+      if (cachedPlayers) {
+        pastLinkedPlayersCacheRef.current.set(
+          cacheKey,
+          cachedPlayers.filter(
+            (player) => player.userId !== collaboratorUserId,
+          ),
+        );
+      }
       return true;
     } catch (error) {
       console.error("Failed to add the past linked player", error);
       setSyncNotice({
         message: `Could not add invited player: ${getSyncErrorMessage(error)}`,
+        tone: "error",
+      });
+      return false;
+    }
+  }
+
+  async function addPastLinkedPlayersToNewGame(
+    game: Game,
+    invitedPlayers: Array<{ userId: string; profileId: string }>,
+  ) {
+    if (!sessionUserId || invitedPlayers.length === 0) return true;
+
+    try {
+      const gamesWithNewGame = [
+        game,
+        ...games.filter((item) => item.id !== game.id),
+      ];
+      await saveRemoteGames(
+        sessionUserId,
+        gamesWithNewGame,
+        new Set([game.id]),
+      );
+
+      let updatedGame = game;
+      for (const invitedPlayer of invitedPlayers) {
+        const remoteGame = await addRemotePastLinkedPlayerToGame(
+          sessionUserId,
+          game.id,
+          invitedPlayer.userId,
+        );
+        const linkedPlayer = remoteGame.players.find(
+          (player) =>
+            player.profileId === invitedPlayer.profileId &&
+            player.joinedViaInvite === true,
+        );
+        updatedGame = {
+          ...remoteGame,
+          hasCollaborators: true,
+          invitedUserIdsByPlayerId: linkedPlayer
+            ? {
+                ...updatedGame.invitedUserIdsByPlayerId,
+                [linkedPlayer.id]: invitedPlayer.userId,
+              }
+            : updatedGame.invitedUserIdsByPlayerId,
+        };
+      }
+
+      remoteSignatureRef.current = markGameVersionSynced(
+        remoteSignatureRef.current,
+        updatedGame,
+      );
+      setGames((previousGames) =>
+        mergeGamesById(previousGames, [updatedGame]),
+      );
+      return true;
+    } catch (error) {
+      console.error("Failed to add invited players to the new game", error);
+      setSyncNotice({
+        message: `Could not add invited players: ${getSyncErrorMessage(error)}`,
         tone: "error",
       });
       return false;
@@ -2032,6 +2203,7 @@ export function useGames(
     removePlayer,
     mergePlayers,
     addPastLinkedPlayer,
+    addPastLinkedPlayersToNewGame,
     removeTeam,
     updatePlayer,
     resetScores,
@@ -2048,6 +2220,7 @@ export function useGames(
     allZero,
     remoteReady,
     pastLinkedPlayers,
+    pastInvitedPlayers,
     syncNotice,
     updateGame,
     importGames,

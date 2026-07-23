@@ -138,6 +138,7 @@ export function useAppModel() {
     removePlayer,
     mergePlayers,
     addPastLinkedPlayer,
+    addPastLinkedPlayersToNewGame,
     removeTeam,
     updatePlayer,
     resetScores,
@@ -153,6 +154,7 @@ export function useAppModel() {
     remoteReady: gamesReady,
     syncNotice: gameSyncNotice,
     pastLinkedPlayers,
+    pastInvitedPlayers,
   } = useGames(session, authLoading, showToast);
   const { pulseById, triggerPulse } = useScorePulse();
   const {
@@ -874,7 +876,10 @@ export function useAppModel() {
     setLocalStoredPlayers(remainingLocalPlayers);
   }, [canViewSavedData, localStoredPlayers, profiles]);
 
-  async function handleCreateGame(input: Parameters<typeof createGame>[0]) {
+  async function handleCreateGame(
+    input: Parameters<typeof createGame>[0],
+    invitedPlayers: Array<{ userId: string; profileId: string }> = [],
+  ) {
     if (!guardSessionCreation()) {
       return false;
     }
@@ -893,6 +898,26 @@ export function useAppModel() {
     triggerGameStartSplash();
     const created = createGame(input);
     if (created) {
+      const requestedInvitedPlayers = new Map<
+        string,
+        { userId: string; profileId: string }
+      >();
+      input.initialPlayers?.forEach((player) => {
+        if (!player.invitedUserId || !player.profileId) return;
+        requestedInvitedPlayers.set(player.invitedUserId, {
+          userId: player.invitedUserId,
+          profileId: player.profileId,
+        });
+      });
+      invitedPlayers.forEach((player) => {
+        requestedInvitedPlayers.set(player.userId, player);
+      });
+      if (requestedInvitedPlayers.size > 0) {
+        await addPastLinkedPlayersToNewGame(
+          created,
+          [...requestedInvitedPlayers.values()],
+        );
+      }
       setPresetDraft(null);
       setPresetDraftIntent(null);
       setGameReturnTab(homeTab);
@@ -914,6 +939,7 @@ export function useAppModel() {
         icon?: string;
         members: { name: string; avatarColor: string }[];
       }>;
+      invitedPlayers?: Array<{ userId: string; profileId: string }>;
     },
   ) {
     const timerValue = !input.timerEnabled
@@ -1016,7 +1042,7 @@ export function useAppModel() {
       return;
     }
     if (result !== "confirm") return;
-    await handleCreateGame(input);
+    await handleCreateGame(input, details.invitedPlayers);
   }
 
   function handleStoreNewGameDraft(draft: NewGameInput) {
@@ -1370,6 +1396,7 @@ export function useAppModel() {
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
     pastLinkedPlayers,
+    pastInvitedPlayers,
     presetDraft,
     presetDraftIntent,
     presetDraftToken,

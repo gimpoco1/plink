@@ -30,6 +30,7 @@ export function AppHomeRoute() {
     openTeamBuilderRequestToken,
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
+    pastInvitedPlayers,
     presetDraft,
     presetDraftIntent,
     presetDraftToken,
@@ -72,6 +73,7 @@ export function AppHomeRoute() {
       <DashboardScreen
         games={visibleGames}
         profiles={visibleProfiles}
+        pastInvitedPlayers={pastInvitedPlayers}
         teams={visibleTeams}
         teamMembers={visibleTeamMembers}
         canUseTeams={entitlements.canUseTeams}

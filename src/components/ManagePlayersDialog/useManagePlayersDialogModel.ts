@@ -118,6 +118,9 @@ export function useManagePlayersDialogModel(
   const [stagedProfileIds, setStagedProfileIds] = useState<Set<string>>(
     new Set(),
   );
+  const [stagedPastLinkedUserIds, setStagedPastLinkedUserIds] = useState<
+    Set<string>
+  >(new Set());
   const [stagedTeamIds, setStagedTeamIds] = useState<Set<string>>(new Set());
   const [stagedCustomPlayers, setStagedCustomPlayers] = useState<
     StagedCustomPlayer[]
@@ -154,6 +157,13 @@ export function useManagePlayersDialogModel(
     if (!q) return visibleProfiles;
     return visibleProfiles.filter((p) => p.name.toLowerCase().includes(q));
   }, [profiles, currentProfileIds, search]);
+  const filteredPastLinkedPlayers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return pastLinkedPlayers;
+    return pastLinkedPlayers.filter((player) =>
+      player.name.toLowerCase().includes(query),
+    );
+  }, [pastLinkedPlayers, search]);
 
   const currentPlayerNameValidationMessage = useMemo(() => {
     const normalizedName = clampName(editingName).trim().toLowerCase();
@@ -212,10 +222,20 @@ export function useManagePlayersDialogModel(
     takenProfileIds,
   ]);
 
-  const stagedCount = stagedProfileIds.size + stagedCustomPlayers.length;
+  const stagedCount =
+    stagedProfileIds.size +
+    stagedPastLinkedUserIds.size +
+    stagedCustomPlayers.length;
   const stagedProfiles = useMemo(
     () => profiles.filter((profile) => stagedProfileIds.has(profile.id)),
     [profiles, stagedProfileIds],
+  );
+  const stagedPastLinkedPlayers = useMemo(
+    () =>
+      pastLinkedPlayers.filter((player) =>
+        stagedPastLinkedUserIds.has(player.userId),
+      ),
+    [pastLinkedPlayers, stagedPastLinkedUserIds],
   );
   const stagedTeams = useMemo(
     () => savedTeams.filter((team) => stagedTeamIds.has(team.id)),
@@ -308,6 +328,7 @@ export function useManagePlayersDialogModel(
     setEditingName("");
     setEditingColor(AVATAR_COLORS[0]?.value ?? "#64748b");
     setStagedProfileIds(new Set());
+    setStagedPastLinkedUserIds(new Set());
     setStagedTeamIds(new Set());
     setStagedCustomPlayers([]);
   }
@@ -340,6 +361,15 @@ export function useManagePlayersDialogModel(
       } else {
         next.add(profileId);
       }
+      return next;
+    });
+  }
+
+  function togglePastLinkedPlayer(userId: string) {
+    setStagedPastLinkedUserIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
       return next;
     });
   }
@@ -398,13 +428,23 @@ export function useManagePlayersDialogModel(
   }
 
   async function addPastLinkedPlayer(collaboratorUserId: string) {
-    if (!onAddPastLinkedPlayer || addingPastLinkedUserId) return;
+    if (!onAddPastLinkedPlayer || addingPastLinkedUserId) return false;
     setAddingPastLinkedUserId(collaboratorUserId);
     try {
-      await onAddPastLinkedPlayer(collaboratorUserId);
+      return await onAddPastLinkedPlayer(collaboratorUserId);
     } finally {
       setAddingPastLinkedUserId(null);
     }
+  }
+
+  async function submitPlayers() {
+    if (stagedCount === 0 || addingPastLinkedUserId) return;
+
+    for (const userId of stagedPastLinkedUserIds) {
+      await addPastLinkedPlayer(userId);
+    }
+    onStartGame(Array.from(stagedProfileIds), stagedCustomPlayers);
+    close();
   }
 
   return {
@@ -421,6 +461,7 @@ export function useManagePlayersDialogModel(
     editingName,
     editingPlayerId,
     editingProfileId,
+    filteredPastLinkedPlayers,
     filteredProfiles,
     isAuthenticated,
     isCreating,
@@ -461,6 +502,8 @@ export function useManagePlayersDialogModel(
     showRosterImmediately,
     stagedCount,
     stagedCustomPlayers,
+    stagedPastLinkedPlayers,
+    stagedPastLinkedUserIds,
     stagedProfileIds,
     stagedProfiles,
     stagedTeamCount,
@@ -468,11 +511,13 @@ export function useManagePlayersDialogModel(
     stagedTeams,
     submit,
     submitLabel,
+    submitPlayers,
     submitTeams,
     takenProfileIds,
     teamMembersByTeamId,
     teamSubmitLabel,
     toggleProfile,
+    togglePastLinkedPlayer,
     toggleTeam,
   };
 }

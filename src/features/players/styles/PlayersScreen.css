@@ -260,7 +260,7 @@
     ),
     var(--surface);
   backdrop-filter: blur(3px);
-  padding: 14px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -383,9 +383,9 @@
 }
 
 .profileAvatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,9 +411,9 @@
   min-width: 0;
 }
 
-/* Keep title block height stable so switching to the input doesn't jump layout */
+/* Match the edit control so the compact header does not jump while editing. */
 .profileCard__titleBlock {
-  min-height: 56px; /* match avatar height */
+  min-height: 40px;
   display: flex;
   align-items: center;
 }
@@ -421,7 +421,7 @@
 .profileCard__nameText {
   color: var(--text);
   font-weight: 800;
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: -0.04em;
   line-height: 1;
 }
@@ -1046,7 +1046,11 @@
 .teamBuilderIdentity__badge--compact {
   width: 84px;
   height: 84px;
-  border-radius: 24px;
+  border-radius: 22px;
+}
+
+.teamCard--editing .teamBuilderIdentity__badge--compact {
+  border-radius: 14px;
 }
 
 .teamBuilderIdentity__badge--compact svg {
@@ -1138,7 +1142,6 @@
 .teamBuilderSearch__input::placeholder {
   color: rgba(197, 200, 179, 0.46);
   font-size: 14px;
-
 }
 
 .teamBuilder__input:focus,
@@ -1168,6 +1171,8 @@
 }
 
 .teamIconPicker.teamIconPicker--compactGrid {
+  grid-template-columns: repeat(4, minmax(72px, 112px));
+  justify-content: space-between;
   gap: 12px;
 }
 
@@ -1191,7 +1196,7 @@
 
 .teamIconPicker__option.teamIconPicker__option--compactGrid {
   min-height: 74px;
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
 .teamIconPicker__option.teamIconPicker__option--compactGrid svg {
@@ -1410,7 +1415,6 @@
   font-weight: 700;
   flex: 0 0 auto;
 }
-
 
 .teamBuilderPlayerOption__copy {
   min-width: 0;
@@ -2387,7 +2391,7 @@
 }
 
 .teamCard {
-  padding: 14px;
+  padding: 10px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background:
@@ -2431,9 +2435,9 @@
 }
 
 .teamCard__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   border: 1px solid rgba(216, 255, 79, 0.18);
   background:
     linear-gradient(180deg, rgba(216, 255, 79, 0.12), rgba(216, 255, 79, 0.05)),
@@ -2450,7 +2454,7 @@
 .teamCard__title {
   color: var(--text);
   font-size: 22px;
-  font-weight: 850;
+  font-weight: 800;
   letter-spacing: -0.04em;
 }
 
@@ -2686,8 +2690,8 @@
   }
 
   .teamBuilderIdentity__badge--compact svg {
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
   }
 
   .teamBuilderIdentity__iconEdit {
@@ -2729,6 +2733,8 @@
   }
 
   .teamIconPicker.teamIconPicker--compactGrid {
+    grid-template-columns: repeat(4, minmax(0, 62px));
+    justify-content: space-between;
     gap: 8px;
   }
 

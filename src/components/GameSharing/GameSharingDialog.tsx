@@ -44,6 +44,10 @@ export function GameSharingDialog({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
+  const [rotationLimitGameId, setRotationLimitGameId] = useState<
+    string | null
+  >(null);
+  const rotationLimitReached = rotationLimitGameId === game.id;
   const code =
     loadedCode?.gameId === game.id
       ? loadedCode.value
@@ -143,7 +147,11 @@ export function GameSharingDialog({
       const nextCode = await onRotateInvite(game.id);
       if (nextCode) setLoadedCode({ gameId: game.id, value: nextCode });
     } catch (nextError) {
-      setError(errorMessage(nextError));
+      const message = errorMessage(nextError);
+      setError(message);
+      if (message.includes("Invitation code limit reached")) {
+        setRotationLimitGameId(game.id);
+      }
     } finally {
       setRotating(false);
     }
@@ -208,7 +216,7 @@ export function GameSharingDialog({
             <button
               className="gameSharingDialog__rotate"
               type="button"
-              disabled={loading || rotating || !code}
+              disabled={loading || rotating || !code || rotationLimitReached}
               onClick={() => void rotateCode()}
             >
               {rotating ? (
@@ -221,7 +229,11 @@ export function GameSharingDialog({
               ) : (
                 <RefreshCw size={17} strokeWidth={2.3} aria-hidden="true" />
               )}
-              {rotating ? "Generating new code…" : "Generate new code"}
+              {rotating
+                ? "Generating new code…"
+                : rotationLimitReached
+                  ? "Code limit reached"
+                  : "Generate new code"}
             </button>
           ) : null}
           {game.accessRole !== "collaborator" ? (

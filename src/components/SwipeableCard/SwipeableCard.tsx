@@ -4,6 +4,7 @@ import "../../styles/swipe.css";
 type SwipeableCardProps = {
   actionWidth: number;
   disabled?: boolean;
+  rowClassName?: string;
   cardClassName: string;
   renderActions: (api: {
     closeSwipe: () => void;
@@ -19,6 +20,7 @@ type SwipeableCardProps = {
 export function SwipeableCard({
   actionWidth,
   disabled = false,
+  rowClassName,
   cardClassName,
   renderActions,
   children,
@@ -101,7 +103,7 @@ export function SwipeableCard({
 
   return (
     <div
-      className="swipeRow"
+      className={`swipeRow${rowClassName ? ` ${rowClassName}` : ""}`}
       data-open={isOpen ? "true" : "false"}
       style={{ ["--swipeW" as never]: `${actionWidth}px` }}
     >

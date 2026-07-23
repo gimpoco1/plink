@@ -1283,6 +1283,76 @@
   gap: 8px;
 }
 
+.participantOption.participantOption--invited {
+  border-color: rgba(17, 24, 10, 0.2);
+}
+
+.participantPicker__selectionNotices {
+  display: grid;
+  gap: 7px;
+}
+
+.participantPicker__selectionNotice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(17, 24, 10, 0.16);
+  border-radius: 12px;
+  background: rgba(17, 24, 10, 0.07);
+  color: rgba(17, 24, 10, 0.7);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.participantPicker__selectionNotice svg {
+  margin-top: 1px;
+  color: rgba(17, 24, 10, 0.78);
+}
+
+.participantPicker__selectionNotice strong {
+  color: rgba(17, 24, 10, 0.88);
+  font-weight: 950;
+}
+
+.participantOptionSwipe {
+  --radius: 14px;
+  --glow: none;
+}
+
+.participantOptionSwipe .card.participantOption--swipe {
+  min-height: 44px;
+  padding: 0;
+  display: block;
+  border-color: rgba(17, 24, 10, 0.12);
+  background: rgba(17, 24, 10, 0.06);
+  color: #11180f;
+}
+
+.participantOptionSwipe
+  .card.participantOption--swipe.participantOption--active {
+  border-color: rgba(17, 24, 10, 0.88);
+  background: rgba(17, 24, 10, 0.92);
+  color: var(--accent);
+}
+
+.participantOption__button {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
 .participantOption {
   width: 100%;
   min-height: 44px;
@@ -1335,6 +1405,41 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.participantOption__nameRow {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.participantOption__nameRow .participantOption__name {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.participantOption__badge {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid rgba(17, 24, 10, 0.18);
+  border-radius: 999px;
+  background: rgba(17, 24, 10, 0.08);
+  color: rgba(17, 24, 10, 0.68);
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.participantOption--active .participantOption__badge {
+  border-color: rgba(210, 255, 52, 0.42);
+  background: rgba(210, 255, 52, 0.12);
+  color: var(--accent);
 }
 
 .participantOption__hint {

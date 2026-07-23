@@ -3,6 +3,7 @@ import type {
   Game,
   GameTeam,
   HomeTab,
+  PastLinkedPlayer,
   PlayerProfile,
   TeamMember,
 } from "../../../types";
@@ -10,6 +11,7 @@ import type {
 export type DashboardScreenProps = {
   games: Game[];
   profiles: PlayerProfile[];
+  pastInvitedPlayers: PastLinkedPlayer[];
   teams: GameTeam[];
   teamMembers: TeamMember[];
   canUseTeams: boolean;
@@ -36,6 +38,7 @@ export type DashboardScreenProps = {
     details: {
       label: string;
       players: { name: string; avatarColor: string }[];
+      invitedPlayers?: Array<{ userId: string; profileId: string }>;
     },
   ) => void | Promise<void>;
   onUpsertProfile: (name: string, avatarColor: string) => PlayerProfile | null;
