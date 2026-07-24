@@ -8,6 +8,49 @@ import { useGameComments } from "../../comments/useGameComments";
 import { findWinner } from "../../../utils/ranking";
 import { useAppContext } from "../context/AppContext";
 
+const COMMENT_PREVIEW_TTL_MS = 2 * 60 * 60 * 1000;
+
+type StoredCommentPreview = {
+  key: string;
+  shownAt: number;
+};
+
+function getPreviewStorageKey(gameId: string) {
+  return `plink.commentPreview.${gameId}`;
+}
+
+function getStoredPreview(gameId: string): StoredCommentPreview | null {
+  try {
+    const raw = window.sessionStorage.getItem(getPreviewStorageKey(gameId));
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<StoredCommentPreview>;
+
+    if (typeof parsed.key !== "string" || typeof parsed.shownAt !== "number") {
+      return null;
+    }
+
+    return {
+      key: parsed.key,
+      shownAt: parsed.shownAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredPreview(gameId: string, key: string) {
+  const value: StoredCommentPreview = {
+    key,
+    shownAt: Date.now(),
+  };
+
+  window.sessionStorage.setItem(
+    getPreviewStorageKey(gameId),
+    JSON.stringify(value),
+  );
+}
+
 export function AppTopBar() {
   const {
     authDialogRef,
@@ -42,20 +85,18 @@ export function AppTopBar() {
   } | null>(null);
   const previewedCommentRef = useRef<string | null>(null);
 
-  function getPreviewStorageKey(gameId: string) {
-    return `plink.commentPreview.${gameId}`;
-  }
   const comments = useGameComments({
     gameId: currentGame?.id ?? null,
     userId: session?.user.id ?? null,
   });
+
+  const latestComment = comments.comments.at(-1);
 
   useEffect(() => {
     setCommentsOpen(false);
     setCommentPreview(null);
     previewedCommentRef.current = null;
   }, [currentGame?.id]);
-  const latestComment = comments.comments.at(-1);
 
   useEffect(() => {
     if (view !== "game" || !currentGame || !latestComment) {
@@ -64,19 +105,18 @@ export function AppTopBar() {
     }
 
     const previewKey = `${latestComment.id}:${latestComment.updatedAt}`;
-    const storageKey = getPreviewStorageKey(currentGame.id);
+    const storedPreview = getStoredPreview(currentGame.id);
 
-    const lastPreviewedKey =
-      previewedCommentRef.current ?? window.sessionStorage.getItem(storageKey);
+    const storedPreviewIsCurrent =
+      storedPreview?.key === previewKey &&
+      Date.now() - storedPreview.shownAt < COMMENT_PREVIEW_TTL_MS;
 
-    if (lastPreviewedKey === previewKey) {
+    if (previewedCommentRef.current === previewKey || storedPreviewIsCurrent) {
       return;
     }
 
-    // Mark it as seen before checking whether the dialog is open.
-    // This prevents it appearing later after the user closes the dialog.
     previewedCommentRef.current = previewKey;
-    window.sessionStorage.setItem(storageKey, previewKey);
+    saveStoredPreview(currentGame.id, previewKey);
 
     if (commentsOpen) {
       setCommentPreview(null);
