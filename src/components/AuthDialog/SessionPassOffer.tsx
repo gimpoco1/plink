@@ -1,4 +1,4 @@
-import { BarChart3, Check, History, LockKeyhole } from "lucide-react";
+import { BarChart3, Check, History, LockKeyhole, Mail } from "lucide-react";
 import { useAuthDialogContext } from "./AuthDialogContext";
 
 export function SessionPassOffer() {
@@ -63,9 +63,21 @@ export function SessionPassOffer() {
         </div>
 
         {hasSessionPass ? (
-          <div className="authDialog__sessionPassActive">
-            <Check size={17} strokeWidth={2.6} aria-hidden="true" />
-            Session Pass active · Account remains Free
+          <div className="authDialog__sessionPassActiveGroup">
+            <div className="authDialog__sessionPassActive">
+              <Check size={17} strokeWidth={2.6} aria-hidden="true" />
+              Session Pass active · Account remains Free
+            </div>
+            <a
+              className="authDialog__sessionPassSupport"
+              href="mailto:support@plinkscore.com?subject=More%20session%20capacity"
+            >
+              <Mail size={17} strokeWidth={2.3} aria-hidden="true" />
+              <span>
+                Need more sessions?
+                <strong>Contact support</strong>
+              </span>
+            </a>
           </div>
         ) : (
           <button

@@ -671,6 +671,53 @@
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+.authDialog__sessionPassActiveGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.authDialog__sessionPassSupport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  text-decoration: none;
+}
+
+.authDialog__sessionPassSupport > svg {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+}
+
+.authDialog__sessionPassSupport > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.authDialog__sessionPassSupport strong {
+  color: var(--accent);
+  font-size: inherit;
+}
+
+.authDialog__sessionPassSupport:hover,
+.authDialog__sessionPassSupport:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+}
+
 @media (max-width: 560px) {
   .authDialog__planHeader {
     align-items: stretch;

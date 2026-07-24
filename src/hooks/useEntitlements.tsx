@@ -17,7 +17,7 @@ type SubscriptionStatus =
   | "past_due"
   | "canceled";
 type EntitlementSource = "default" | "account" | "subscription" | "override";
-const FREE_SESSION_LIMIT = 2;
+const FREE_SESSION_LIMIT = 12;
 const SESSION_PASS_LIMIT = 100;
 const ACTIVE_PRO_STATUSES = new Set<SubscriptionStatus>(["active", "trialing"]);
 
