@@ -18,6 +18,7 @@ type SubscriptionStatus =
   | "canceled";
 type EntitlementSource = "default" | "account" | "subscription" | "override";
 const FREE_SESSION_LIMIT = 12;
+const SESSION_PASS_LIMIT = 100;
 const ACTIVE_PRO_STATUSES = new Set<SubscriptionStatus>(["active", "trialing"]);
 
 export type EntitlementsState = {
@@ -37,6 +38,9 @@ export type EntitlementsState = {
   canUseTeams: boolean;
   canSeeAdvancedStats: boolean;
   hasUnlimitedSessions: boolean;
+  hasSessionPass: boolean;
+  sessionPassProvider: SubscriptionProvider | null;
+  sessionPassPurchasedAt: string | null;
   maxSessions: number | null;
 };
 
@@ -109,6 +113,14 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     string | null
   >(null);
   const [hasSubscriptionRecord, setHasSubscriptionRecord] = useState(false);
+  const [hasSessionPass, setHasSessionPass] = useState(false);
+  const [sessionPassProvider, setSessionPassProvider] =
+    useState<SubscriptionProvider | null>(null);
+  const [sessionPassPurchasedAt, setSessionPassPurchasedAt] = useState<
+    string | null
+  >(null);
+  const [sessionPassLimit, setSessionPassLimit] =
+    useState(SESSION_PASS_LIMIT);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const accountPlan = getAccountPlan(session);
   const userId = session?.user.id ?? null;
@@ -127,6 +139,10 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       setSubscriptionCancelAt(null);
       setSubscriptionCanceledAt(null);
       setHasSubscriptionRecord(false);
+      setHasSessionPass(false);
+      setSessionPassProvider(null);
+      setSessionPassPurchasedAt(null);
+      setSessionPassLimit(SESSION_PASS_LIMIT);
       setResolvedUserId(userId);
       return;
     }
@@ -134,69 +150,111 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     const client = supabase;
     let alive = true;
 
-    async function refreshSubscription() {
+    async function refreshEntitlements() {
       try {
-        const { data, error } = await client
-          .from("subscriptions")
-          .select(
-            "plan,status,provider,billing_period,current_period_end,created_at,cancel_at_period_end,cancel_at,canceled_at",
-          )
-          .eq("user_id", userId)
-          .maybeSingle();
+        const [subscriptionResult, sessionPassResult] = await Promise.all([
+          client
+            .from("subscriptions")
+            .select(
+              "plan,status,provider,billing_period,current_period_end,created_at,cancel_at_period_end,cancel_at,canceled_at",
+            )
+            .eq("user_id", userId)
+            .maybeSingle(),
+          client
+            .from("session_pass_purchases")
+            .select("provider,session_limit,purchased_at,status")
+            .eq("user_id", userId)
+            .eq("status", "active")
+            .order("session_limit", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
 
         if (!alive) return;
 
-        if (error || !data) {
-          if (alive) {
-            setSubscriptionPlan(null);
-            setSubscriptionStatus(null);
-            setSubscriptionProvider(null);
-            setSubscriptionBillingPeriod(null);
-            setSubscriptionCurrentPeriodEnd(null);
-            setSubscriptionStartedAt(null);
-            setSubscriptionCancelAtPeriodEnd(false);
-            setSubscriptionCancelAt(null);
-            setSubscriptionCanceledAt(null);
-            setHasSubscriptionRecord(false);
-            setResolvedUserId(userId);
-          }
-          return;
+        const subscription = subscriptionResult.data;
+        if (subscriptionResult.error || !subscription) {
+          setSubscriptionPlan(null);
+          setSubscriptionStatus(null);
+          setSubscriptionProvider(null);
+          setSubscriptionBillingPeriod(null);
+          setSubscriptionCurrentPeriodEnd(null);
+          setSubscriptionStartedAt(null);
+          setSubscriptionCancelAtPeriodEnd(false);
+          setSubscriptionCancelAt(null);
+          setSubscriptionCanceledAt(null);
+          setHasSubscriptionRecord(false);
+        } else {
+          const normalizedPlan = normalizePlan(subscription.plan);
+          const normalizedStatus = normalizeSubscriptionStatus(
+            subscription.status,
+          );
+          const normalizedProvider = normalizeSubscriptionProvider(
+            subscription.provider,
+          );
+          const normalizedBillingPeriod = normalizeBillingPeriod(
+            subscription.billing_period,
+          );
+          const effectivePlan: SubscriptionPlan =
+            normalizedPlan === "pro" &&
+            normalizedStatus !== null &&
+            ACTIVE_PRO_STATUSES.has(normalizedStatus)
+              ? "pro"
+              : "free";
+
+          setSubscriptionPlan(effectivePlan);
+          setSubscriptionStatus(normalizedStatus);
+          setSubscriptionProvider(normalizedProvider);
+          setSubscriptionBillingPeriod(normalizedBillingPeriod);
+          setSubscriptionCurrentPeriodEnd(
+            typeof subscription.current_period_end === "string"
+              ? subscription.current_period_end
+              : null,
+          );
+          setSubscriptionStartedAt(
+            typeof subscription.created_at === "string"
+              ? subscription.created_at
+              : null,
+          );
+          setSubscriptionCancelAtPeriodEnd(
+            Boolean(subscription.cancel_at_period_end),
+          );
+          setSubscriptionCancelAt(
+            typeof subscription.cancel_at === "string"
+              ? subscription.cancel_at
+              : null,
+          );
+          setSubscriptionCanceledAt(
+            typeof subscription.canceled_at === "string"
+              ? subscription.canceled_at
+              : null,
+          );
+          setHasSubscriptionRecord(true);
         }
 
-        const normalizedPlan = normalizePlan(data.plan);
-        const normalizedStatus = normalizeSubscriptionStatus(data.status);
-        const normalizedProvider = normalizeSubscriptionProvider(data.provider);
-        const normalizedBillingPeriod = normalizeBillingPeriod(
-          data.billing_period,
-        );
-        // Fail closed: only explicit active/trialing pro records unlock Pro.
-        const effectivePlan: SubscriptionPlan =
-          normalizedPlan === "pro" &&
-          normalizedStatus !== null &&
-          ACTIVE_PRO_STATUSES.has(normalizedStatus)
-            ? "pro"
-            : "free";
-
-        setSubscriptionPlan(effectivePlan);
-        setSubscriptionStatus(normalizedStatus);
-        setSubscriptionProvider(normalizedProvider);
-        setSubscriptionBillingPeriod(normalizedBillingPeriod);
-        setSubscriptionCurrentPeriodEnd(
-          typeof data.current_period_end === "string"
-            ? data.current_period_end
-            : null,
-        );
-        setSubscriptionStartedAt(
-          typeof data.created_at === "string" ? data.created_at : null,
-        );
-        setSubscriptionCancelAtPeriodEnd(Boolean(data.cancel_at_period_end));
-        setSubscriptionCancelAt(
-          typeof data.cancel_at === "string" ? data.cancel_at : null,
-        );
-        setSubscriptionCanceledAt(
-          typeof data.canceled_at === "string" ? data.canceled_at : null,
-        );
-        setHasSubscriptionRecord(true);
+        const sessionPass = sessionPassResult.data;
+        if (sessionPassResult.error || !sessionPass) {
+          setHasSessionPass(false);
+          setSessionPassProvider(null);
+          setSessionPassPurchasedAt(null);
+          setSessionPassLimit(SESSION_PASS_LIMIT);
+        } else {
+          setHasSessionPass(true);
+          setSessionPassProvider(
+            normalizeSubscriptionProvider(sessionPass.provider),
+          );
+          setSessionPassPurchasedAt(
+            typeof sessionPass.purchased_at === "string"
+              ? sessionPass.purchased_at
+              : null,
+          );
+          setSessionPassLimit(
+            typeof sessionPass.session_limit === "number" &&
+                Number.isFinite(sessionPass.session_limit)
+              ? Math.max(SESSION_PASS_LIMIT, sessionPass.session_limit)
+              : SESSION_PASS_LIMIT,
+          );
+        }
         setResolvedUserId(userId);
       } catch {
         if (alive) {
@@ -210,13 +268,17 @@ export function useEntitlements(session: Session | null): EntitlementsState {
           setSubscriptionCancelAt(null);
           setSubscriptionCanceledAt(null);
           setHasSubscriptionRecord(false);
+          setHasSessionPass(false);
+          setSessionPassProvider(null);
+          setSessionPassPurchasedAt(null);
+          setSessionPassLimit(SESSION_PASS_LIMIT);
           setResolvedUserId(userId);
         }
       }
     }
 
     const unsubscribeForegroundRefresh = subscribeToForegroundRefresh(
-      () => void refreshSubscription(),
+      () => void refreshEntitlements(),
     );
 
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
@@ -231,15 +293,35 @@ export function useEntitlements(session: Session | null): EntitlementsState {
         filter: `user_id=eq.${userId}`,
       },
       () => {
-        void refreshSubscription();
+        void refreshEntitlements();
       },
     );
     void channel.subscribe(
-      createRealtimeReconnectHandler(() => void refreshSubscription()),
+      createRealtimeReconnectHandler(() => void refreshEntitlements()),
     );
 
-    void refreshSubscription();
-    window.addEventListener(SUBSCRIPTION_SYNCED_EVENT, refreshSubscription);
+    let sessionPassChannel: ReturnType<
+      NonNullable<typeof supabase>["channel"]
+    > | null = null;
+    sessionPassChannel = client.channel(`session-pass:${userId}`);
+    sessionPassChannel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "session_pass_purchases",
+        filter: `user_id=eq.${userId}`,
+      },
+      () => {
+        void refreshEntitlements();
+      },
+    );
+    void sessionPassChannel.subscribe(
+      createRealtimeReconnectHandler(() => void refreshEntitlements()),
+    );
+
+    void refreshEntitlements();
+    window.addEventListener(SUBSCRIPTION_SYNCED_EVENT, refreshEntitlements);
 
     return () => {
       alive = false;
@@ -248,9 +330,13 @@ export function useEntitlements(session: Session | null): EntitlementsState {
         void channel.unsubscribe();
         client.removeChannel(channel);
       }
+      if (sessionPassChannel) {
+        void sessionPassChannel.unsubscribe();
+        client.removeChannel(sessionPassChannel);
+      }
       window.removeEventListener(
         SUBSCRIPTION_SYNCED_EVENT,
-        refreshSubscription,
+        refreshEntitlements,
       );
     };
   }, [envOverridePlan, userId]);
@@ -283,12 +369,20 @@ export function useEntitlements(session: Session | null): EntitlementsState {
       canUseTeams: isPro,
       canSeeAdvancedStats: isPro,
       hasUnlimitedSessions: isPro,
-      maxSessions: isPro ? null : FREE_SESSION_LIMIT,
+      hasSessionPass,
+      sessionPassProvider,
+      sessionPassPurchasedAt,
+      maxSessions: isPro
+        ? null
+        : hasSessionPass
+          ? sessionPassLimit
+          : FREE_SESSION_LIMIT,
     };
   }, [
     accountPlan,
     envOverridePlan,
     hasSubscriptionRecord,
+    hasSessionPass,
     isLoading,
     subscriptionBillingPeriod,
     subscriptionCancelAt,
@@ -299,6 +393,9 @@ export function useEntitlements(session: Session | null): EntitlementsState {
     subscriptionPlan,
     subscriptionProvider,
     subscriptionStatus,
+    sessionPassLimit,
+    sessionPassProvider,
+    sessionPassPurchasedAt,
   ]);
 }
 

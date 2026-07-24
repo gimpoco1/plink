@@ -5,6 +5,7 @@ import { useAuthDialogContext } from "./AuthDialogContext";
 export function AuthPlanSection() {
   const {
     entitlementsLoading,
+    hasSessionPass,
     isPro,
     planSectionRef,
     renewalLabel,
@@ -25,11 +26,14 @@ export function AuthPlanSection() {
                 <div className="authDialog__planTitleWrap">
                   <span className="authDialog__accountPlayerTitle">Plan</span>
                   <strong className="authDialog__planName">
-                    <span>Free plan</span>
+                    <span>
+                      {hasSessionPass ? "Free + Session Pass" : "Free plan"}
+                    </span>
                   </strong>
                   <span className="authDialog__planMeta">
-                    Upgrade to Pro for ad-free play, advanced stats, team
-                    support, and unlimited session history
+                    {hasSessionPass
+                      ? "Keep up to 100 owned games, or choose Pro for unlimited history and every premium feature"
+                      : "Includes up to 12 saved sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
                   </span>
                 </div>
               </div>
@@ -82,7 +86,9 @@ export function AuthPlanSection() {
                         </span>
                       </span>
                     ) : (
-                      <span>Free plan</span>
+                      <span>
+                        {hasSessionPass ? "Free + Session Pass" : "Free plan"}
+                      </span>
                     )}
                   </strong>
                   <span className="authDialog__planMeta">
@@ -90,7 +96,9 @@ export function AuthPlanSection() {
                       ? source === "subscription" && renewalLabel
                         ? renewalLabel
                         : "Premium play, built for regular game nights."
-                      : "Upgrade to Pro for ad-free play, advanced stats, team support, and unlimited session history"}
+                      : hasSessionPass
+                        ? "Keep up to 100 owned games, or choose Pro for unlimited history and every premium feature"
+                        : "Includes up to 12 saved sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
                   </span>
                 </div>
                 <div className="authDialog__planHeaderRight">
@@ -112,7 +120,7 @@ export function AuthPlanSection() {
             onClick={() => setShowPlanDetails(true)}
           >
             <Crown size={16} strokeWidth={2.3} aria-hidden="true" />
-            Get Pro
+            {hasSessionPass ? "View Pro" : "View options"}
           </button>
         ) : null}
         {showPlanDetails ? <AuthPlanDetails /> : null}
