@@ -521,6 +521,156 @@
   font-weight: 800;
 }
 
+.authDialog__sessionPassDivider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 18px;
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.authDialog__sessionPassDivider::before,
+.authDialog__sessionPassDivider::after {
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+  content: "";
+}
+
+.authDialog__sessionPassDivider span {
+  flex: 0 0 auto;
+}
+
+.authDialog__sessionPass {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 8%, transparent),
+      transparent 58%
+    ),
+    color-mix(in srgb, var(--surface-2) 88%, transparent);
+}
+
+.authDialog__sessionPassHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.authDialog__sessionPassHeading > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.authDialog__sessionPassHeading strong {
+  color: var(--text);
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.authDialog__sessionPassEyebrow {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.authDialog__sessionPassValue {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.authDialog__sessionPassBenefits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.authDialog__sessionPassBenefits span,
+.authDialog__sessionPassActive {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.authDialog__sessionPassBenefits span {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+}
+
+.authDialog__sessionPassBenefits svg,
+.authDialog__sessionPassActive svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.authDialog__sessionPassLimitations {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.authDialog__sessionPassLimitations > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--text-dim);
+}
+
+.authDialog__sessionPassLimitations > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.authDialog__sessionPassLimitations strong {
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.authDialog__sessionPassLimitations span {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.authDialog__sessionPassButton {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  color: var(--accent);
+}
+
+.authDialog__sessionPassActive {
+  justify-content: center;
+  padding: 12px;
+  border-radius: 14px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
 @media (max-width: 560px) {
   .authDialog__planHeader {
     align-items: stretch;
@@ -537,6 +687,10 @@
 
   .authDialog__planOptionTop span {
     text-align: left;
+  }
+
+  .authDialog__sessionPassBenefits {
+    grid-template-columns: 1fr;
   }
 }
 

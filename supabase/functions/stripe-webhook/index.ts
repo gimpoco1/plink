@@ -5,6 +5,11 @@ import {
   mapStripeSubscriptionStatus,
   stripe,
 } from "../_shared/stripe.ts";
+import {
+  persistSessionPassPurchase,
+  revokeStripeSessionPass,
+  STRIPE_SESSION_PASS_PRODUCT_KEY,
+} from "../_shared/session_pass.ts";
 
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")?.trim();
 
@@ -27,6 +32,12 @@ function getStripeCustomerId(
 
 function getStripeSubscriptionId(
   value: string | Stripe.Subscription | null,
+) {
+  return typeof value === "string" ? value : value?.id ?? null;
+}
+
+function getStripePaymentIntentId(
+  value: string | Stripe.PaymentIntent | null,
 ) {
   return typeof value === "string" ? value : value?.id ?? null;
 }
@@ -214,6 +225,40 @@ async function syncCheckoutSessionSubscription(
   );
 }
 
+async function syncCheckoutSessionPass(
+  session: Stripe.Checkout.Session,
+) {
+  if (session.metadata?.product !== STRIPE_SESSION_PASS_PRODUCT_KEY) {
+    return false;
+  }
+  if (session.payment_status !== "paid") {
+    throw new Error(
+      `Session Pass checkout ${session.id} completed without payment.`,
+    );
+  }
+
+  const userId =
+    session.metadata.user_id ??
+    (typeof session.client_reference_id === "string"
+      ? session.client_reference_id
+      : null);
+  const transactionId = getStripePaymentIntentId(session.payment_intent);
+  if (!userId || !transactionId) {
+    throw new Error(
+      `Unable to resolve Session Pass checkout ${session.id}.`,
+    );
+  }
+
+  await persistSessionPassPurchase({
+    userId,
+    provider: "stripe",
+    productId: STRIPE_SESSION_PASS_PRODUCT_KEY,
+    transactionId,
+    purchasedAt: new Date(session.created * 1000).toISOString(),
+  });
+  return true;
+}
+
 async function syncStripeSubscriptionById(
   admin: ReturnType<typeof createAdminClient>,
   subscriptionId: string,
@@ -250,9 +295,27 @@ Deno.serve(async (request) => {
 
     switch (event.type) {
       case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded":
         {
           const session = event.data.object as Stripe.Checkout.Session;
-          await syncCheckoutSessionSubscription(admin, session);
+          if (!(await syncCheckoutSessionPass(session))) {
+            await syncCheckoutSessionSubscription(admin, session);
+          }
+        }
+        break;
+      case "charge.refunded":
+        {
+          const charge = event.data.object as Stripe.Charge;
+          const transactionId = getStripePaymentIntentId(charge.payment_intent);
+          if (
+            transactionId &&
+            charge.amount_refunded >= charge.amount
+          ) {
+            await revokeStripeSessionPass(
+              transactionId,
+              new Date(event.created * 1000).toISOString(),
+            );
+          }
         }
         break;
       case "customer.subscription.created":

@@ -50,6 +50,13 @@
   max-width: 34rem;
 }
 
+.sessionsLimitWarning__note {
+  display: block;
+  margin-top: 2px;
+  color: rgba(255, 248, 230, 0.72);
+  font-weight: 700;
+}
+
 .sessionsLimitWarning__cta {
   flex: 0 0 auto;
   gap: 8px;

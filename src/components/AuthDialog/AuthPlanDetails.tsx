@@ -1,5 +1,6 @@
 import { Check, Coffee, Croissant } from "lucide-react";
 import { useAuthDialogContext } from "./AuthDialogContext";
+import { SessionPassOffer } from "./SessionPassOffer";
 
 export function AuthPlanDetails() {
   const {
@@ -202,6 +203,7 @@ export function AuthPlanDetails() {
               <a href="/privacy.html">Privacy</a>
             </p>
           ) : null}
+          <SessionPassOffer />
         </>
       ) : (
         <>

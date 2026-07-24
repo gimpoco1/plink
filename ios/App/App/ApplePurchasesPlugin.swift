@@ -17,7 +17,8 @@ class ApplePurchasesPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private let allowedProductIds: Set<String> = [
         "com.plinkscore.app.pro.monthly",
-        "com.plinkscore.app.pro.yearly"
+        "com.plinkscore.app.pro.yearly",
+        "com.plinkscore.app.sessionpass.100"
     ]
     private var transactionUpdatesTask: Task<Void, Never>?
 
@@ -77,7 +78,7 @@ class ApplePurchasesPlugin: CAPPlugin, CAPBridgedPlugin {
         Task {
             do {
                 guard let product = try await Product.products(for: [productId]).first else {
-                    call.reject("This subscription is not available from the App Store.")
+                    call.reject("This purchase is not available from the App Store.")
                     return
                 }
 
@@ -225,7 +226,7 @@ class ApplePurchasesPlugin: CAPPlugin, CAPBridgedPlugin {
             case .networkError:
                 return "Connect to the internet and try the purchase again."
             case .notAvailableInStorefront:
-                return "This subscription is not available in your App Store region."
+                return "This purchase is not available in your App Store region."
             case .notEntitled:
                 return "This Apple Account is not allowed to make this purchase."
             default:

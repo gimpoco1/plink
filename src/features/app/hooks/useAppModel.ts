@@ -404,7 +404,9 @@ export function useAppModel() {
     const limit = entitlements.maxSessions;
     if (!limit) return;
     showToast(
-      `Free plan includes up to ${limit} sessions. Upgrade to Pro for unlimited session history.`,
+      entitlements.hasSessionPass
+        ? "Session limit reached. Subscribe to Pro for unlimited sessions. (Deleting or reusing a past session affects your Stats.)"
+        : "Session limit reached. Get more sessions or subscribe to Pro. (Deleting or reusing a past session affects your Stats.)",
     );
   }
 
@@ -1458,7 +1460,9 @@ export function useAppModel() {
     }
     if (importCapacityState === "blocked") {
       throw new Error(
-        `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to import more history.`,
+        entitlements.hasSessionPass
+          ? `Your Session Pass keeps up to ${entitlements.maxSessions} sessions. Upgrade to Pro to import more history.`
+          : `The Free plan keeps up to ${entitlements.maxSessions} sessions. Add a Session Pass or Pro to import more history and keep player Stats accurate.`,
       );
     }
 
@@ -1546,7 +1550,9 @@ export function useAppModel() {
     }
     if (restoreCapacityState === "blocked") {
       throw new Error(
-        `Free plan includes up to ${entitlements.maxSessions} sessions. Upgrade to Pro to restore larger backups.`,
+        entitlements.hasSessionPass
+          ? `Your Session Pass keeps up to ${entitlements.maxSessions} sessions. Upgrade to Pro to restore more history.`
+          : `The Free plan keeps up to ${entitlements.maxSessions} sessions. Add a Session Pass or Pro to restore more history and keep player Stats accurate.`,
       );
     }
     const importedProfiles = await importProfiles(reconciled.profiles);

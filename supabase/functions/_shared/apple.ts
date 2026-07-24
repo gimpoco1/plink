@@ -1,5 +1,9 @@
 import { importPKCS8, SignJWT } from "npm:jose@6.2.3";
 import { createAdminClient } from "./supabase.ts";
+import {
+  APPLE_SESSION_PASS_PRODUCT_ID,
+  persistSessionPassPurchase,
+} from "./session_pass.ts";
 
 enum Environment {
   PRODUCTION = "Production",
@@ -24,6 +28,7 @@ type JWSTransactionDecodedPayload = {
   bundleId?: string;
   expiresDate?: number;
   originalTransactionId?: string;
+  purchaseDate?: number;
   productId?: string;
   revocationDate?: number;
   transactionId?: string;
@@ -46,6 +51,10 @@ type StatusResponse = {
   data?: Array<{
     lastTransactions?: LastTransactionsItem[];
   }>;
+};
+
+type TransactionInfoResponse = {
+  signedTransactionInfo?: string;
 };
 
 const APPLE_BUNDLE_ID =
@@ -151,6 +160,34 @@ async function getAllSubscriptionStatuses(
   }
 
   return (await response.json()) as StatusResponse;
+}
+
+async function getTransactionInfo(
+  transactionId: string,
+  environment: Environment,
+) {
+  const response = await fetch(
+    `${APPLE_API_BASE_URL[environment]}/inApps/v1/transactions/${
+      encodeURIComponent(transactionId)
+    }`,
+    {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${await createAppleApiToken()}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const details = (await response.text()).slice(0, 500);
+    throw new Error(
+      `Apple transaction API returned ${response.status}${
+        details ? `: ${details}` : ""
+      }`,
+    );
+  }
+
+  return (await response.json()) as TransactionInfoResponse;
 }
 
 export function decodeAppleJws<T>(jws: string): T {
@@ -403,4 +440,98 @@ export async function syncAppleSubscriptionByTransaction(
 ) {
   const snapshot = await loadAppleSubscriptionSnapshot(transactionId);
   return persistAppleSubscription(snapshot, expectedUserId);
+}
+
+async function loadAppleSessionPassTransaction(
+  transactionId: string,
+  environment: Environment,
+) {
+  const response = await getTransactionInfo(transactionId, environment);
+  if (!response.signedTransactionInfo) {
+    throw new Error("Apple did not return a signed transaction.");
+  }
+
+  const transaction = decodeAppleJws<JWSTransactionDecodedPayload>(
+    response.signedTransactionInfo,
+  );
+  if (
+    transaction.bundleId !== APPLE_BUNDLE_ID ||
+    transaction.productId !== APPLE_SESSION_PASS_PRODUCT_ID ||
+    transaction.transactionId !== transactionId
+  ) {
+    throw new Error("This Apple purchase is not a Plink Session Pass.");
+  }
+
+  return transaction;
+}
+
+export async function syncAppleSessionPassByTransaction(
+  transactionId: string,
+  expectedUserId?: string,
+) {
+  const trimmedId = transactionId.trim();
+  if (!/^\d+$/.test(trimmedId)) {
+    throw new Error("A valid Apple transaction is required.");
+  }
+
+  let transaction: JWSTransactionDecodedPayload | null = null;
+  let lastError: unknown;
+  for (const environment of [
+    Environment.PRODUCTION,
+    Environment.SANDBOX,
+  ]) {
+    try {
+      transaction = await loadAppleSessionPassTransaction(
+        trimmedId,
+        environment,
+      );
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (!transaction) {
+    console.error("Apple Session Pass lookup failed", lastError);
+    throw new Error("Apple could not verify this Session Pass.");
+  }
+
+  const admin = createAdminClient();
+  let userId = expectedUserId ?? transaction.appAccountToken ?? null;
+  if (
+    expectedUserId &&
+    transaction.appAccountToken &&
+    transaction.appAccountToken.toLowerCase() !== expectedUserId.toLowerCase()
+  ) {
+    throw new Error("This Session Pass belongs to a different Plink account.");
+  }
+  if (expectedUserId && !transaction.appAccountToken) {
+    throw new Error(
+      "This Session Pass is not linked to a Plink account and cannot be restored here.",
+    );
+  }
+
+  if (!userId) {
+    const { data, error } = await admin
+      .from("session_pass_purchases")
+      .select("user_id")
+      .eq("provider", "apple")
+      .eq("transaction_id", trimmedId)
+      .maybeSingle();
+    if (error) throw error;
+    userId = data?.user_id ?? null;
+  }
+  if (!userId) {
+    throw new Error("This Session Pass is not linked to a Plink account.");
+  }
+
+  return persistSessionPassPurchase({
+    userId,
+    provider: "apple",
+    productId: APPLE_SESSION_PASS_PRODUCT_ID,
+    transactionId: trimmedId,
+    status: transaction.revocationDate ? "revoked" : "active",
+    purchasedAt: toIsoDate(transaction.purchaseDate),
+    revokedAt: toIsoDate(transaction.revocationDate),
+  });
 }

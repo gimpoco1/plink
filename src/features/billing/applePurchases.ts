@@ -4,6 +4,8 @@ export const APPLE_PRO_PRODUCT_IDS = {
   monthly: "com.plinkscore.app.pro.monthly",
   yearly: "com.plinkscore.app.pro.yearly",
 } as const;
+export const APPLE_SESSION_PASS_PRODUCT_ID =
+  "com.plinkscore.app.sessionpass.100";
 
 export type AppleBillingPeriod = keyof typeof APPLE_PRO_PRODUCT_IDS;
 
@@ -56,12 +58,25 @@ export function getAppleProducts() {
   });
 }
 
+export function getAppleSessionPassProduct() {
+  return ApplePurchases.getProducts({
+    productIds: [APPLE_SESSION_PASS_PRODUCT_ID],
+  });
+}
+
 export function purchaseAppleSubscription(
   billingPeriod: AppleBillingPeriod,
   appAccountToken: string,
 ) {
   return ApplePurchases.purchase({
     productId: APPLE_PRO_PRODUCT_IDS[billingPeriod],
+    appAccountToken,
+  });
+}
+
+export function purchaseAppleSessionPass(appAccountToken: string) {
+  return ApplePurchases.purchase({
+    productId: APPLE_SESSION_PASS_PRODUCT_ID,
     appAccountToken,
   });
 }

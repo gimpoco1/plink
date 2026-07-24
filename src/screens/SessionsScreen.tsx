@@ -39,7 +39,8 @@ export function SessionsScreen({
   onRename,
   onDelete,
 }: SessionsScreenProps) {
-  const { isLoading, isPro, maxSessions } = useEntitlementsContext();
+  const { hasSessionPass, isLoading, isPro, maxSessions } =
+    useEntitlementsContext();
   const [filter, setFilter] = useState<"all" | "inProgress" | "completed">("inProgress");
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
   const ownedSessionCount = games.filter(
@@ -127,12 +128,16 @@ export function SessionsScreen({
             </div>
             <p>
               {remainingSessions === 0
-                ? `You reached the Free plan limit of ${maxSessions} games you create.`
-                : `You can create ${remainingSessions} more Free ${
-                    remainingSessions === 1 ? "game" : "games"
-                  }.`}{" "}
-              Shared games never use this limit. Upgrade to Pro for unlimited
-              sessions of your own.
+                ? "You have no sessions left."
+                : `You have ${remainingSessions} ${
+                    remainingSessions === 1 ? "session" : "sessions"
+                  } left.`}{" "}
+              {hasSessionPass
+                ? "Subscribe to Pro for unlimited sessions."
+                : "Get more sessions or subscribe to Pro."}{" "}
+              <span className="sessionsLimitWarning__note">
+                (Deleting or reusing a past session affects player's progression and Stats)
+              </span>
             </p>
           </div>
           <button
@@ -141,7 +146,7 @@ export function SessionsScreen({
             onClick={onOpenProPlan}
           >
             <Crown size={16} strokeWidth={2.3} aria-hidden="true" />
-            Get Pro
+            {hasSessionPass ? "Get Pro" : "See options"}
           </button>
         </div>
       ) : null}
