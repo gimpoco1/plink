@@ -102,9 +102,7 @@ export function useGameComments(options: {
         setError(errorMessage(result.error));
       } else {
         setComments(
-          sortComments(
-            ((result.data ?? []) as CommentRow[]).map(rowToComment),
-          ),
+          sortComments(((result.data ?? []) as CommentRow[]).map(rowToComment)),
         );
       }
       setLoading(false);
@@ -144,11 +142,12 @@ export function useGameComments(options: {
         event: "DELETE",
         schema: "public",
         table: "game_comments",
-        filter: `game_id=eq.${gameId}`,
       },
       (payload) => {
         const removedId = (payload.old as { id?: unknown }).id;
+
         if (typeof removedId !== "string") return;
+
         setComments((current) =>
           current.filter((comment) => comment.id !== removedId),
         );
