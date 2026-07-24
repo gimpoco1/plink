@@ -68,6 +68,17 @@ export type ScoreHistoryEntry = {
   createdAt: number;
 };
 
+export type GameComment = {
+  id: string;
+  gameId: string;
+  authorUserId: string;
+  authorName: string;
+  authorAvatarColor: string;
+  body: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type ScoreDirection = "up" | "down";
 export type WinCondition = "reach_target" | "reach_zero" | "lowest";
 export type CompletionMode = "winner" | "no_winner" | "draw";

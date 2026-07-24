@@ -4,6 +4,7 @@ import {
   Flag,
   History,
   Link,
+  MessageCircle,
   Plus,
   RotateCcw,
   Settings,
@@ -16,6 +17,11 @@ type MetaItem = {
   label: string;
   tone?: "accent" | "muted";
   icon?: ReactNode;
+};
+
+type CommentPreview = {
+  authorName: string;
+  body: string;
 };
 
 type Props = {
@@ -41,6 +47,9 @@ type Props = {
   onShareGame?: () => void;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
+  onOpenComments?: () => void;
+  commentCount?: number;
+  commentPreview?: CommentPreview | null;
   onEndGame?: () => void;
   onResetGame?: () => void;
   onRename?: () => void;
@@ -69,6 +78,9 @@ export function TopBar({
   onShareGame,
   onOpenSettings,
   onOpenHistory,
+  onOpenComments,
+  commentCount = 0,
+  commentPreview,
   onEndGame,
   onResetGame,
   onRename,
@@ -172,6 +184,34 @@ export function TopBar({
       </div>
 
       <div className="topbar__actions">
+        {onOpenComments ? (
+          <div className="topbarComments">
+            <button
+              className="iconbtn topbarCommentsButton"
+              type="button"
+              onClick={onOpenComments}
+              aria-label={`Comments${commentCount ? ` (${commentCount})` : ""}`}
+            >
+              <MessageCircle size={20} strokeWidth={2.3} aria-hidden="true" />
+              {commentCount > 0 ? (
+                <span className="topbarCommentsButton__count" aria-hidden="true">
+                  {commentCount > 99 ? "99+" : commentCount}
+                </span>
+              ) : null}
+            </button>
+            {commentPreview ? (
+              <button
+                className="topbarCommentsPreview"
+                type="button"
+                onClick={onOpenComments}
+                aria-label={`Latest comment from ${commentPreview.authorName}`}
+              >
+                <strong>{commentPreview.authorName}</strong>
+                <span>{commentPreview.body}</span>
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         {showActionMenu ? (
           <div className="topbarMenu" ref={menuRef}>
             <button
