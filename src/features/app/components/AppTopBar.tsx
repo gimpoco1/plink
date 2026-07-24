@@ -1,7 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CircleUser } from "lucide-react";
 import { TopBar } from "../../../components/TopBar/TopBar";
 import { GameSharingDialog } from "../../../components/GameSharing/GameSharingDialog";
+import { GameCommentsDialog } from "../../comments/GameCommentsDialog";
+import { useGameComments } from "../../comments/useGameComments";
 import { findWinner } from "../../../utils/ranking";
 import { useAppContext } from "../context/AppContext";
 
@@ -32,6 +35,78 @@ export function AppTopBar() {
     settingsDialogRef,
     view,
   } = useAppContext();
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentPreview, setCommentPreview] = useState<{
+    authorName: string;
+    body: string;
+  } | null>(null);
+  const previewedCommentRef = useRef<string | null>(null);
+
+  function getPreviewStorageKey(gameId: string) {
+    return `plink.commentPreview.${gameId}`;
+  }
+  const comments = useGameComments({
+    gameId: currentGame?.id ?? null,
+    userId: session?.user.id ?? null,
+  });
+
+  useEffect(() => {
+    setCommentsOpen(false);
+    setCommentPreview(null);
+    previewedCommentRef.current = null;
+  }, [currentGame?.id]);
+  const latestComment = comments.comments.at(-1);
+
+  useEffect(() => {
+    if (view !== "game" || !currentGame || !latestComment) {
+      setCommentPreview(null);
+      return;
+    }
+
+    const previewKey = `${latestComment.id}:${latestComment.updatedAt}`;
+    const storageKey = getPreviewStorageKey(currentGame.id);
+
+    const lastPreviewedKey =
+      previewedCommentRef.current ?? window.sessionStorage.getItem(storageKey);
+
+    if (lastPreviewedKey === previewKey) {
+      return;
+    }
+
+    // Mark it as seen before checking whether the dialog is open.
+    // This prevents it appearing later after the user closes the dialog.
+    previewedCommentRef.current = previewKey;
+    window.sessionStorage.setItem(storageKey, previewKey);
+
+    if (commentsOpen) {
+      setCommentPreview(null);
+      return;
+    }
+
+    setCommentPreview({
+      authorName:
+        latestComment.authorUserId === comments.currentAuthorId
+          ? "You"
+          : latestComment.authorName,
+      body: latestComment.body,
+    });
+
+    const timeout = window.setTimeout(() => {
+      setCommentPreview(null);
+    }, 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    comments.currentAuthorId,
+    commentsOpen,
+    currentGame?.id,
+    latestComment?.id,
+    latestComment?.updatedAt,
+    latestComment?.authorUserId,
+    latestComment?.authorName,
+    latestComment?.body,
+    view,
+  ]);
   const canManageGame = currentGame?.accessRole !== "collaborator";
   const canManageLifecycle =
     canManageGame || currentGame?.collaboratorsCanManage === true;
@@ -140,6 +215,16 @@ export function AppTopBar() {
               ? () => setView("history")
               : undefined
           }
+          onOpenComments={
+            view === "game" && currentGame
+              ? () => {
+                  setCommentPreview(null);
+                  setCommentsOpen(true);
+                }
+              : undefined
+          }
+          commentCount={comments.comments.length}
+          commentPreview={commentPreview}
           onEndGame={
             view === "game" &&
             canManageLifecycle &&
@@ -181,6 +266,19 @@ export function AppTopBar() {
           onCollaboratorManagementChange={(enabled) =>
             setCollaboratorsCanManage(currentGame.id, enabled)
           }
+        />
+      ) : null}
+      {currentGame ? (
+        <GameCommentsDialog
+          open={commentsOpen}
+          comments={comments.comments}
+          currentAuthorId={comments.currentAuthorId}
+          loading={comments.loading}
+          error={comments.error}
+          onClose={() => setCommentsOpen(false)}
+          onAdd={comments.addComment}
+          onUpdate={comments.updateComment}
+          onDelete={comments.deleteComment}
         />
       ) : null}
     </>
