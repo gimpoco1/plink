@@ -11,6 +11,7 @@ export function AuthAccountStorage() {
     setShowAccountDetails,
     showAccountDetails,
   } = useAuthDialogContext();
+
   return (
     <div className="authDialog__storage">
       <div

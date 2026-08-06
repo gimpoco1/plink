@@ -33,7 +33,7 @@ export function AuthPlanSection() {
                   <span className="authDialog__planMeta">
                     {hasSessionPass
                       ? "Keep up to 100 owned games, or choose Pro for unlimited history and every premium feature"
-                      : "Includes up to 12 saved sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
+                      : "Includes up to 12 owned sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
                   </span>
                 </div>
               </div>
@@ -98,7 +98,7 @@ export function AuthPlanSection() {
                         : "Premium play, built for regular game nights."
                       : hasSessionPass
                         ? "Keep up to 100 owned games, or choose Pro for unlimited history and every premium feature"
-                        : "Includes up to 12 saved sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
+                        : "Includes up to 12 owned sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
                   </span>
                 </div>
                 <div className="authDialog__planHeaderRight">

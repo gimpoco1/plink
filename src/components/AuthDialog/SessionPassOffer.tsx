@@ -43,7 +43,7 @@ export function SessionPassOffer() {
         <div className="authDialog__sessionPassBenefits">
           <span>
             <History size={16} strokeWidth={2.3} aria-hidden="true" />
-            Store up to 100 sessions
+            Store up to 100 owned sessions
           </span>
           <span>
             <BarChart3 size={16} strokeWidth={2.3} aria-hidden="true" />

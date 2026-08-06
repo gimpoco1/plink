@@ -460,7 +460,7 @@ export function useAppModel() {
           avatarColor: candidate.avatarColor,
           label: candidate.canInvite
             ? candidate.isPreviousOwner
-              ? "Previous game owner"
+              ? "Previous session owner"
               : "Invited before"
             : "Automatic invites off",
           description: candidate.canInvite

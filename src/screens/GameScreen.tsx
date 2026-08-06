@@ -112,7 +112,7 @@ export function GameScreen(props: GameScreenProps) {
           <section className="empty">
             <h1 className="empty__title">
               {!canManageGame
-                ? "Waiting for the game owner."
+                ? "Waiting for the session owner."
                 : isTeamsMode
                   ? "Manage teams to start."
                   : "Manage players to start."}

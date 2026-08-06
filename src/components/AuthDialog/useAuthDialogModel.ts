@@ -156,10 +156,8 @@ export function useAuthDialogModel(
   const [showDeviceImport, setShowDeviceImport] = useState(false);
   const [showDevicePlayersImport, setShowDevicePlayersImport] = useState(false);
   const [showAccountDetails, setShowAccountDetails] = useState(false);
-  const [
-    allowPreviousPlayersToInvite,
-    setAllowPreviousPlayersToInvite,
-  ] = useState(true);
+  const [allowPreviousPlayersToInvite, setAllowPreviousPlayersToInvite] =
+    useState(true);
   const [sharingPreferenceLoading, setSharingPreferenceLoading] =
     useState(false);
   const [showPlanDetails, setShowPlanDetails] = useState(false);
@@ -567,11 +565,7 @@ export function useAuthDialogModel(
           .maybeSingle();
 
         if (!alive) return;
-        if (
-          loadError ||
-          data?.provider !== "stripe" ||
-          !data.customer_id
-        ) {
+        if (loadError || data?.provider !== "stripe" || !data.customer_id) {
           setHasStripeBillingProfile(false);
           return;
         }
@@ -1088,10 +1082,7 @@ export function useAuthDialogModel(
         };
       } finally {
         setBusy(false);
-        showNativePurchaseResult(
-          purchaseResult.message,
-          purchaseResult.tone,
-        );
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
       }
       return;
     }
@@ -1155,8 +1146,7 @@ export function useAuthDialogModel(
           };
         } else {
           purchaseResult = {
-            message:
-              "Session Pass added. You can now keep up to 100 sessions.",
+            message: "Session Pass added. You can now keep up to 100 sessions.",
             tone: "success",
           };
         }
@@ -1170,10 +1160,7 @@ export function useAuthDialogModel(
         };
       } finally {
         setBusy(false);
-        showNativePurchaseResult(
-          purchaseResult.message,
-          purchaseResult.tone,
-        );
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
       }
       return;
     }
@@ -1499,6 +1486,7 @@ export function useAuthDialogModel(
     localGames,
     localProfiles,
     localSessionSearch,
+    maxSessions,
     mode,
     newPassword,
     notice,

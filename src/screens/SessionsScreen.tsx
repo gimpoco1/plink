@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { AlertTriangle, Crown } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { AlertTriangle, Crown, Info } from "lucide-react";
 import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
 import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
@@ -41,13 +41,24 @@ export function SessionsScreen({
 }: SessionsScreenProps) {
   const { hasSessionPass, isLoading, isPro, maxSessions } =
     useEntitlementsContext();
-  const [filter, setFilter] = useState<"all" | "inProgress" | "completed">("inProgress");
+  const [filter, setFilter] = useState<"all" | "inProgress" | "completed">(
+    "inProgress",
+  );
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
   const ownedSessionCount = games.filter(
     (game) => game.accessRole !== "collaborator",
   ).length;
+  const sharedSessionCount = Math.max(0, games.length - ownedSessionCount);
   const remainingSessions =
     maxSessions === null ? null : Math.max(0, maxSessions - ownedSessionCount);
+  const showOwnedLimitInHeader = !isLoading && !isPro && maxSessions !== null;
+  const sessionsTotalLabel = isPro
+    ? `${games.length} ${games.length === 1 ? "session" : "sessions"}`
+    : `${games.length} total`;
+  const sessionsOwnedLabel =
+    showOwnedLimitInHeader && maxSessions !== null
+      ? `${ownedSessionCount}/${maxSessions} owned`
+      : null;
   const showSessionLimitWarning =
     !isLoading &&
     !isPro &&
@@ -136,7 +147,8 @@ export function SessionsScreen({
                 ? "Subscribe to Pro for unlimited sessions."
                 : "Get more sessions or subscribe to Pro."}{" "}
               <span className="sessionsLimitWarning__note">
-                (Deleting or reusing a past session affects player's progression and Stats)
+                (Deleting or reusing a past session affects player's progression
+                and Stats)
               </span>
             </p>
           </div>
@@ -153,6 +165,8 @@ export function SessionsScreen({
       <ScreenHeader
         title="Sessions"
         subtitle="Reopen recent rounds and keep your history organized."
+        totalLabel={sessionsTotalLabel}
+        ownedLabel={sessionsOwnedLabel}
       />
       {games.length > 0 ? (
         <section className="homeList" aria-label="Game history">
@@ -222,14 +236,103 @@ export function SessionsScreen({
 function ScreenHeader({
   title,
   subtitle,
+  totalLabel,
+  ownedLabel,
 }: {
   title: string;
   subtitle: string;
+  totalLabel?: string | null;
+  ownedLabel?: string | null;
 }) {
+  const [showMetaHelp, setShowMetaHelp] = useState(false);
+  const metaHelpRef = useRef<HTMLSpanElement | null>(null);
+  const metaHelpId = useId();
+  const metaHelpText = {
+    total:
+      "TOTAL: all sessions including ones you were invited but did not create.",
+    owned: "OWNED: sessions you created which count toward your plan limit.",
+  };
+
+  useEffect(() => {
+    if (!showMetaHelp) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!metaHelpRef.current?.contains(event.target as Node)) {
+        setShowMetaHelp(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setShowMetaHelp(false);
+    }
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [showMetaHelp]);
+
   return (
     <div className="tabHeader">
       <div>
-        <h2 className="tabTitle">{title}</h2>
+        <div className="sessionsTitleRow">
+          <h2 className="tabTitle">{title}</h2>
+          {totalLabel ? (
+            <span className="sessionsHeaderMetaChip">
+              <span className="sessionsHeaderMetaChip__total">
+                {totalLabel}
+              </span>
+              {ownedLabel ? (
+                <>
+                  <span
+                    className="sessionsHeaderMetaChip__sep"
+                    aria-hidden="true"
+                  >
+                    ·
+                  </span>
+                  <span className="sessionsHeaderMetaChip__owned">
+                    {ownedLabel}
+                  </span>
+                  <span
+                    className="sessionsHeaderMetaChip__help"
+                    ref={metaHelpRef}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className="sessionsHeaderMetaChip__helpBtn"
+                      aria-label="Explain session totals"
+                      aria-expanded={showMetaHelp}
+                      aria-controls={metaHelpId}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setShowMetaHelp((value) => !value);
+                      }}
+                    >
+                      <Info size={12} strokeWidth={2.4} aria-hidden="true" />
+                    </button>
+                    <span
+                      id={metaHelpId}
+                      role="tooltip"
+                      className={`sessionsHeaderMetaChip__tooltip${showMetaHelp ? " sessionsHeaderMetaChip__tooltip--open" : ""}`}
+                    >
+                      <span className="sessionsHeaderMetaChip__tooltipLine">
+                        {metaHelpText.total}
+                      </span>
+
+                      <span className="sessionsHeaderMetaChip__tooltipLine">
+                        {metaHelpText.owned}
+                      </span>
+                    </span>
+                  </span>
+                </>
+              ) : null}
+            </span>
+          ) : null}
+        </div>
         <p className="tabSubtitle">{subtitle}</p>
       </div>
     </div>
