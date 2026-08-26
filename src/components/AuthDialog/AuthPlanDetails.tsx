@@ -53,12 +53,6 @@ export function AuthPlanDetails() {
           <span className="authDialog__planBenefitIcon" aria-hidden="true">
             <Check size={15} strokeWidth={2.6} />
           </span>
-          <span>Ad-free experience</span>
-        </div>
-        <div className="authDialog__planBenefit">
-          <span className="authDialog__planBenefitIcon" aria-hidden="true">
-            <Check size={15} strokeWidth={2.6} />
-          </span>
           <span>Teams support for grouped players</span>
         </div>
         <div className="authDialog__planBenefit">

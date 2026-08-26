@@ -56,56 +56,271 @@
       .bootSplash {
         min-height: 100vh;
         min-height: 100dvh;
-        display: grid;
-        place-items: center;
-        padding: 24px;
+        display: block;
+        padding: 28px 18px 56px;
       }
 
       .bootSplash__inner {
+        width: min(980px, 100%);
+        margin: 0 auto;
         display: grid;
-        justify-items: center;
+        gap: 28px;
       }
 
-      .bootSplash__mark {
-        width: 92px;
-        height: 92px;
-        display: grid;
-        place-items: center;
-        animation: bootSplashPulse 1.7s ease-in-out infinite;
+      .bootSplash__header,
+      .bootSplash__brand,
+      .bootSplash__nav,
+      .bootSplash__actions,
+      .bootSplash__features,
+      .bootSplash__guides,
+      .bootSplash__footerLinks {
+        display: flex;
+        align-items: center;
       }
 
-      .bootSplash__mark img {
-        width: 92px;
-        height: 92px;
+      .bootSplash__header {
+        justify-content: space-between;
+        gap: 18px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid rgba(226, 238, 243, 0.14);
+      }
+
+      .bootSplash__brand {
+        gap: 10px;
+        color: var(--fallback-text);
+        font-size: 19px;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .bootSplash__brand img {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
         display: block;
-        filter:
-          drop-shadow(0 0 22px rgba(216, 255, 79, 0.12))
-          drop-shadow(0 14px 30px rgba(0, 0, 0, 0.24));
       }
 
-      @keyframes bootSplashPulse {
-        0%,
-        100% {
-          transform: translateY(0) scale(0.96);
-          opacity: 0.84;
+      .bootSplash__nav,
+      .bootSplash__footerLinks {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .bootSplash__nav a,
+      .bootSplash__footerLinks a {
+        color: rgba(244, 246, 239, 0.72);
+        font-size: 14px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .bootSplash__hero {
+        padding: 46px 0 22px;
+      }
+
+      .bootSplash__eyebrow {
+        color: var(--fallback-accent);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .bootSplash h1 {
+        max-width: 850px;
+        margin: 14px 0 0;
+        font-size: clamp(42px, 8vw, 76px);
+        line-height: 0.96;
+        letter-spacing: -0.055em;
+      }
+
+      .bootSplash__lead {
+        max-width: 720px;
+        margin: 22px 0 0;
+        color: rgba(244, 246, 239, 0.75);
+        font-size: clamp(18px, 3vw, 22px);
+        line-height: 1.55;
+      }
+
+      .bootSplash__actions {
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .bootSplash__button {
+        min-height: 46px;
+        padding: 0 18px;
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid rgba(216, 255, 79, 0.28);
+        border-radius: 999px;
+        background: rgba(216, 255, 79, 0.12);
+        color: var(--fallback-accent);
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .bootSplash__features,
+      .bootSplash__guides {
+        align-items: stretch;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .bootSplash__card {
+        padding: 20px;
+        border: 1px solid rgba(226, 238, 243, 0.14);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .bootSplash__card h2,
+      .bootSplash__card h3 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.1;
+      }
+
+      .bootSplash__card p {
+        margin: 10px 0 0;
+        color: rgba(244, 246, 239, 0.7);
+        line-height: 1.55;
+      }
+
+      .bootSplash__card a {
+        color: var(--fallback-accent);
+        font-weight: 900;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      .bootSplash__sectionTitle {
+        margin: 12px 0 -10px;
+        color: var(--fallback-accent);
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .bootSplash__footer {
+        padding-top: 22px;
+        border-top: 1px solid rgba(226, 238, 243, 0.14);
+        color: rgba(244, 246, 239, 0.55);
+        font-size: 14px;
+      }
+
+      @media (max-width: 760px) {
+        .bootSplash__header {
+          align-items: flex-start;
+          flex-direction: column;
         }
 
-        50% {
-          transform: translateY(-6px) scale(1);
-          opacity: 1;
+        .bootSplash__features,
+        .bootSplash__guides {
+          grid-template-columns: 1fr;
         }
       }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <div id="site-fallback" class="bootSplash" aria-hidden="true">
+    <main id="site-fallback" class="bootSplash">
       <div class="bootSplash__inner">
-        <div class="bootSplash__mark">
-          <img src="/favicon.png" alt="" />
-        </div>
+        <header class="bootSplash__header">
+          <a class="bootSplash__brand" href="/">
+            <img src="/favicon.png" alt="" />
+            <span>Plink</span>
+          </a>
+          <nav class="bootSplash__nav" aria-label="Main navigation">
+            <a href="/guides/index.html">Guides</a>
+            <a href="/about.html">About</a>
+            <a href="/faq.html">FAQ</a>
+            <a href="/support.html">Support</a>
+          </nav>
+        </header>
+
+        <section class="bootSplash__hero">
+          <div class="bootSplash__eyebrow">Score tracker for real game nights</div>
+          <h1>Keep scores, sessions, players, and stats in one place.</h1>
+          <p class="bootSplash__lead">
+            Plink is a scorekeeping app for board games, card games, party games,
+            team matches, and recurring casual sessions. Use it to start a
+            scoreboard quickly, track score changes, resume unfinished games, and
+            keep useful history after the winner is decided.
+          </p>
+          <div class="bootSplash__actions">
+            <a class="bootSplash__button" href="/">Open score tracker</a>
+            <a class="bootSplash__button" href="/guides/index.html">Read scorekeeping guides</a>
+          </div>
+        </section>
+
+        <section class="bootSplash__features" aria-label="Plink features">
+          <article class="bootSplash__card">
+            <h2>Live scoreboards</h2>
+            <p>
+              Track individual players or teams with custom point steps, target
+              scores, timers, dice, and clear winner rules.
+            </p>
+          </article>
+          <article class="bootSplash__card">
+            <h2>Game history</h2>
+            <p>
+              Save past sessions so results, score changes, player progress, and
+              repeated setups are easy to review later.
+            </p>
+          </article>
+          <article class="bootSplash__card">
+            <h2>Shared games</h2>
+            <p>
+              Invite other players to the same scoreboard so several accounts can
+              update the game from their own devices.
+            </p>
+          </article>
+        </section>
+
+        <h2 class="bootSplash__sectionTitle">Practical guides</h2>
+        <section class="bootSplash__guides" aria-label="Scorekeeping guides">
+          <article class="bootSplash__card">
+            <h3>How to keep score for almost any game</h3>
+            <p>
+              Choose scoring direction, targets, ending rules, and corrections before
+              the first round.
+            </p>
+            <p><a href="/guides/scorekeeping-basics.html">Read the guide</a></p>
+          </article>
+          <article class="bootSplash__card">
+            <h3>How to run a smoother game night</h3>
+            <p>
+              Prepare players, teams, timers, and recurring setups so play keeps moving.
+            </p>
+            <p><a href="/guides/game-night.html">Read the guide</a></p>
+          </article>
+          <article class="bootSplash__card">
+            <h3>How to share scorekeeping safely</h3>
+            <p>
+              Decide who owns the game, who can update scores, and how shared changes
+              stay understandable.
+            </p>
+            <p><a href="/guides/shared-scorekeeping.html">Read the guide</a></p>
+          </article>
+        </section>
+
+        <footer class="bootSplash__footer">
+          <p>
+            Plink includes guest mode, account sync, privacy controls, subscriptions,
+            one-time session passes, and account data export.
+          </p>
+          <nav class="bootSplash__footerLinks" aria-label="Footer navigation">
+            <a href="/privacy.html">Privacy Policy</a>
+            <a href="/terms.html">Terms of Use</a>
+            <a href="/support.html">Support</a>
+          </nav>
+        </footer>
       </div>
-    </div>
+    </main>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

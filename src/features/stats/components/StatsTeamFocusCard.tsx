@@ -1,30 +1,10 @@
-import { Flame, Medal, SquareActivity, Trophy } from "lucide-react";
-import { AdBannerSlot } from "../../../components/AdBannerSlot/AdBannerSlot";
-import { LockedFrame } from "../../../components/HomeLockedState/LockedFrame";
-import { StatsSkeleton } from "../../../components/HomeLockedState/StatsSkeleton";
-import { StatsAdvancedCards } from "./StatsAdvancedCards";
-import { StatsCharts } from "./StatsCharts";
-import { StatsProPreview } from "./StatsProPreview";
-import {
-  ComparisonMetricCard,
-  EntitySwatch,
-  MetricCard,
-  PanelHeader,
-  PickerButton,
-  PickerPopover,
-  StatsScreenEmpty,
-} from "./StatsScreenParts";
-import {
-  compareValues,
-  formatAveragePlacement,
-  getDisplayName,
-} from "../utils/statsUtils";
+import { EntitySwatch } from "./StatsScreenParts";
+import { getDisplayName } from "../utils/statsUtils";
 import { avatarStyleFor } from "../../../utils/color";
 import { formatAccountPlayerName, getInitials } from "../../../utils/text";
 import type { PlayerProfile } from "../../../types";
 import type { SelectableEntity } from "../types/statsTypes";
 import type { SubjectReport } from "../../../utils/advancedStats";
-import { useStatsScreenContext } from "../context/StatsScreenContext";
 
 type Props = {
   report: SubjectReport;

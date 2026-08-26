@@ -2,7 +2,6 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Crown } from "lucide-react";
 import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
-import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
 import { LocalSessionsHint } from "../components/LocalSessionsHint/LocalSessionsHint";
 import { useEntitlementsContext } from "../hooks/useEntitlements";
 import { isGameComplete } from "../utils/ranking";
@@ -135,12 +134,6 @@ export function SessionsScreen({
 
   return (
     <div className="tabContent tabContent--sessions">
-      {sessions.length > 0 ? (
-        <AdBannerSlot
-          placement="Sessions"
-          slotId={import.meta.env.VITE_ADSENSE_SESSIONS_SLOT_ID}
-        />
-      ) : null}
       {showLocalSessionsHint ? (
         <LocalSessionsHint
           className="signedInHint"

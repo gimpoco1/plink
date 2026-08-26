@@ -1,4 +1,3 @@
-import { AdBannerSlot } from "../../../components/AdBannerSlot/AdBannerSlot";
 import { LockedFrame } from "../../../components/HomeLockedState/LockedFrame";
 import { StatsSkeleton } from "../../../components/HomeLockedState/StatsSkeleton";
 import { useStatsScreenContext } from "../context/StatsScreenContext";
@@ -6,19 +5,13 @@ import { StatsSelector } from "../components/StatsSelector";
 import { StatsReport } from "../components/StatsReport";
 
 export function StatsScreenView() {
-  const { handleStatsPointerDown, isAuthenticated, onOpenAuth, primaryReport } =
+  const { handleStatsPointerDown, isAuthenticated, onOpenAuth } =
     useStatsScreenContext();
   return (
     <div
       className="tabContent tabContent--stats"
       onPointerDown={handleStatsPointerDown}
     >
-      {isAuthenticated && primaryReport?.sessions.length ? (
-        <AdBannerSlot
-          placement="Stats"
-          slotId={import.meta.env.VITE_ADSENSE_STATS_SLOT_ID}
-        />
-      ) : null}
       <div className="tabHeader">
         <div>
           <h2 className="tabTitle">Stats</h2>

@@ -56,8 +56,7 @@ export function SessionPassOffer() {
           <div>
             <strong>Does not unlock Pro</strong>
             <span>
-              Ads remain. Teams, advanced Stats, and other Pro features stay
-              locked.
+              Teams, advanced Stats, and other Pro features stay locked.
             </span>
           </div>
         </div>
