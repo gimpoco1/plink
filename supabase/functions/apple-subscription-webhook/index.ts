@@ -1,5 +1,10 @@
-import { decodeAppleJws, syncAppleSubscriptionByTransaction } from "../_shared/apple.ts";
+import {
+  decodeAppleJws,
+  syncAppleSessionPassByTransaction,
+  syncAppleSubscriptionByTransaction,
+} from "../_shared/apple.ts";
 import { jsonResponse } from "../_shared/cors.ts";
+import { APPLE_SESSION_PASS_PRODUCT_ID } from "../_shared/session_pass.ts";
 
 type NotificationPayload = {
   data?: {
@@ -10,6 +15,7 @@ type NotificationPayload = {
 };
 
 type TransactionPayload = {
+  productId?: string;
   transactionId?: string;
 };
 
@@ -39,7 +45,11 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: "Missing transaction ID." }, { status: 400 });
     }
 
-    await syncAppleSubscriptionByTransaction(transaction.transactionId);
+    if (transaction.productId === APPLE_SESSION_PASS_PRODUCT_ID) {
+      await syncAppleSessionPassByTransaction(transaction.transactionId);
+    } else {
+      await syncAppleSubscriptionByTransaction(transaction.transactionId);
+    }
     return jsonResponse({ received: true });
   } catch (error) {
     const message =

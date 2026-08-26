@@ -181,7 +181,7 @@ export function useStatsScreenModel(props: StatsScreenProps) {
               ? formatAccountPlayerName(profile.name)
               : profile.name,
             subtitle: gameOwnerProfileIds.has(profile.id)
-              ? `Game owner · ${sessionCount}`
+              ? `Session owner · ${sessionCount}`
               : invitedProfileIds.has(profile.id)
                 ? `Invited player · ${sessionCount}`
                 : sessionCount,

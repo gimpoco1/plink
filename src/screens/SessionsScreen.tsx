@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Crown } from "lucide-react";
 import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
@@ -38,20 +38,41 @@ export function SessionsScreen({
   onRename,
   onDelete,
 }: SessionsScreenProps) {
-  const { isLoading, isPro, maxSessions } = useEntitlementsContext();
-  const [filter, setFilter] = useState<"all" | "inProgress" | "completed">("inProgress");
+  const { hasSessionPass, isLoading, isPro, maxSessions } =
+    useEntitlementsContext();
+  const [filter, setFilter] = useState<
+    "all" | "inProgress" | "completed" | "owned" | "invited"
+  >("inProgress");
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
+
   const ownedSessionCount = games.filter(
     (game) => game.accessRole !== "collaborator",
   ).length;
+  const sharedSessionCount = games.filter(
+    (game) =>
+      game.accessRole === "collaborator" ||
+      game.players.some((player) => player.joinedViaInvite === true),
+  ).length;
+  const hasSharedSessions = sharedSessionCount > 0;
   const remainingSessions =
     maxSessions === null ? null : Math.max(0, maxSessions - ownedSessionCount);
+  const showOwnedLimitInHeader = !isLoading && !isPro && maxSessions !== null;
+  const sessionsTotalLabel = isPro
+    ? `${games.length} ${games.length === 1 ? "session" : "sessions"}`
+    : showOwnedLimitInHeader && maxSessions !== null && !hasSharedSessions
+      ? `${ownedSessionCount}/${maxSessions} sessions`
+      : `${games.length} total`;
+  const sessionsOwnedLabel =
+    showOwnedLimitInHeader && maxSessions !== null && hasSharedSessions
+      ? `${ownedSessionCount}/${maxSessions} owned`
+      : null;
   const showSessionLimitWarning =
     !isLoading &&
     !isPro &&
     maxSessions !== null &&
     remainingSessions !== null &&
     remainingSessions <= 2;
+
   const dateFormat = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -61,6 +82,7 @@ export function SessionsScreen({
       }),
     [],
   );
+
   const accountProfileIds = useMemo(
     () =>
       new Set(
@@ -71,20 +93,30 @@ export function SessionsScreen({
     [profiles],
   );
 
+  useEffect(() => {
+    if (!hasSharedSessions && (filter === "owned" || filter === "invited")) {
+      setFilter("inProgress");
+    }
+  }, [filter, hasSharedSessions]);
+
   const sessions = useMemo(() => {
     const filtered = games.filter((game) => {
       const completed = isGameComplete(game);
+      const isOwned = game.accessRole !== "collaborator";
       if (filter === "inProgress") return !completed;
       if (filter === "completed") return completed;
+      if (filter === "owned") return isOwned;
+      if (filter === "invited") return !isOwned;
       return true;
     });
     return [...filtered].sort((a, b) => {
-      if (sort === "name")
+      if (sort === "name") {
         return (
           getGameDisplayName(a.name).title.localeCompare(
             getGameDisplayName(b.name).title,
           ) || b.updatedAt - a.updatedAt
         );
+      }
       if (sort === "oldest") return a.createdAt - b.createdAt;
       return b.createdAt - a.createdAt;
     });
@@ -120,12 +152,17 @@ export function SessionsScreen({
             </div>
             <p>
               {remainingSessions === 0
-                ? `You reached the Free plan limit of ${maxSessions} games you create.`
-                : `You can create ${remainingSessions} more Free ${
-                    remainingSessions === 1 ? "game" : "games"
-                  }.`}{" "}
-              Shared games never use this limit. Upgrade to Pro for unlimited
-              sessions of your own.
+                ? "You have no sessions left."
+                : `You have ${remainingSessions} ${
+                    remainingSessions === 1 ? "session" : "sessions"
+                  } left.`}{" "}
+              {hasSessionPass
+                ? "Subscribe to Pro for unlimited sessions."
+                : "Get more sessions or subscribe to Pro."}{" "}
+              <span className="sessionsLimitWarning__note">
+                (Deleting or reusing a past session affects player's progression
+                and Stats)
+              </span>
             </p>
           </div>
           <button
@@ -134,7 +171,7 @@ export function SessionsScreen({
             onClick={onOpenProPlan}
           >
             <Crown size={16} strokeWidth={2.3} aria-hidden="true" />
-            Get Pro
+            {hasSessionPass ? "Get Pro" : "See options"}
           </button>
         </div>
       ) : null}
@@ -150,7 +187,14 @@ export function SessionsScreen({
               role="group"
               aria-label="Filter sessions"
             >
-              {(["all", "inProgress", "completed"] as const).map((value) => (
+              {(
+                [
+                  "all",
+                  "inProgress",
+                  "completed",
+                  ...(hasSharedSessions ? (["owned", "invited"] as const) : []),
+                ] as const
+              ).map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -161,7 +205,11 @@ export function SessionsScreen({
                     ? "Done"
                     : value === "inProgress"
                       ? "In Progress"
-                      : value[0].toUpperCase() + value.slice(1)}
+                      : value === "owned"
+                        ? "Owned"
+                        : value === "invited"
+                          ? "Invited"
+                          : value[0].toUpperCase() + value.slice(1)}
                 </button>
               ))}
             </div>
@@ -214,10 +262,45 @@ function ScreenHeader({
   title: string;
   subtitle: string;
 }) {
+  const [showMetaHelp, setShowMetaHelp] = useState(false);
+  const [showUpgradeHelp, setShowUpgradeHelp] = useState(false);
+  const metaHelpRef = useRef<HTMLSpanElement | null>(null);
+  const upgradeHelpRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    if (!showMetaHelp && !showUpgradeHelp) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      const insideMeta = metaHelpRef.current?.contains(target);
+      const insideUpgrade = upgradeHelpRef.current?.contains(target);
+      if (!insideMeta && !insideUpgrade) {
+        setShowMetaHelp(false);
+        setShowUpgradeHelp(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setShowMetaHelp(false);
+        setShowUpgradeHelp(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [showMetaHelp, showUpgradeHelp]);
+
   return (
     <div className="tabHeader">
       <div>
-        <h2 className="tabTitle">{title}</h2>
+        <div className="sessionsTitleRow">
+          <h2 className="tabTitle">{title}</h2>
+        </div>
         <p className="tabSubtitle">{subtitle}</p>
       </div>
     </div>

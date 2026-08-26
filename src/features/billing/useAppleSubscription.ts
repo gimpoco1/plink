@@ -3,10 +3,13 @@ import type { Session } from "@supabase/supabase-js";
 import { isNativeIOSApp } from "../../lib/nativePlatform";
 import {
   APPLE_PRO_PRODUCT_IDS,
+  APPLE_SESSION_PASS_PRODUCT_ID,
   addAppleTransactionListener,
   finishAppleTransaction,
   getAppleProducts,
+  getAppleSessionPassProduct,
   getCurrentAppleEntitlements,
+  purchaseAppleSessionPass,
   purchaseAppleSubscription,
   restoreApplePurchases,
   showAppleManageSubscriptions,
@@ -14,15 +17,20 @@ import {
   type AppleProduct,
   type AppleTransaction,
 } from "./applePurchases";
+import { syncAppleSessionPass } from "./appleSessionPassSync";
 import { syncAppleSubscription } from "./appleSubscriptionSync";
 
 export function useAppleSubscription(session: Session | null) {
   const nativeIOS = isNativeIOSApp();
   const [products, setProducts] = useState<AppleProduct[]>([]);
+  const [sessionPassProduct, setSessionPassProduct] =
+    useState<AppleProduct | null>(null);
   const [isLoadingProducts, setIsLoadingProducts] = useState(nativeIOS);
+  const [isLoadingSessionPass, setIsLoadingSessionPass] = useState(nativeIOS);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [sessionPassError, setSessionPassError] = useState<string | null>(null);
   const syncingTransactionsRef = useRef(
-    new Map<string, ReturnType<typeof syncAppleSubscription>>(),
+    new Map<string, Promise<unknown>>(),
   );
   const userId = session?.user.id ?? null;
 
@@ -30,7 +38,11 @@ export function useAppleSubscription(session: Session | null) {
     const pendingSync = syncingTransactionsRef.current.get(transaction.id);
     if (pendingSync) return pendingSync;
 
-    const nextSync = syncAppleSubscription(transaction)
+    const verification =
+      transaction.productId === APPLE_SESSION_PASS_PRODUCT_ID
+        ? syncAppleSessionPass(transaction)
+        : syncAppleSubscription(transaction);
+    const nextSync = verification
       .then(async (result) => {
         await finishAppleTransaction(transaction.id);
         return result;
@@ -45,27 +57,57 @@ export function useAppleSubscription(session: Session | null) {
   const loadProducts = useCallback(async () => {
     if (!nativeIOS) {
       setProducts([]);
+      setSessionPassProduct(null);
       setIsLoadingProducts(false);
+      setIsLoadingSessionPass(false);
       setProductsError(null);
+      setSessionPassError(null);
       return;
     }
 
     setIsLoadingProducts(true);
+    setIsLoadingSessionPass(true);
     setProductsError(null);
-    try {
-      const { products: loadedProducts } = await getAppleProducts();
+    setSessionPassError(null);
+    const [subscriptionsResult, sessionPassResult] = await Promise.allSettled([
+      getAppleProducts(),
+      getAppleSessionPassProduct(),
+    ]);
+
+    if (subscriptionsResult.status === "fulfilled") {
+      const loadedProducts = subscriptionsResult.value.products;
       if (loadedProducts.length !== Object.keys(APPLE_PRO_PRODUCT_IDS).length) {
-        throw new Error("Some App Store subscriptions are unavailable.");
+        setProducts([]);
+        setProductsError(
+          "Subscriptions are unavailable right now. Check your connection and try again.",
+        );
+      } else {
+        setProducts(loadedProducts);
       }
-      setProducts(loadedProducts);
-    } catch {
+    } else {
       setProducts([]);
       setProductsError(
         "Subscriptions are unavailable right now. Check your connection and try again.",
       );
-    } finally {
-      setIsLoadingProducts(false);
     }
+
+    if (sessionPassResult.status === "fulfilled") {
+      const product = sessionPassResult.value.products.find(
+        (candidate) => candidate.id === APPLE_SESSION_PASS_PRODUCT_ID,
+      );
+      setSessionPassProduct(product ?? null);
+      setSessionPassError(
+        product ? null : "The Session Pass is not available from the App Store yet.",
+      );
+    } else {
+      setSessionPassProduct(null);
+      setSessionPassError(
+        "The Session Pass is unavailable right now. Try again later.",
+      );
+    }
+
+    setIsLoadingProducts(false);
+    setIsLoadingSessionPass(false);
   }, [nativeIOS]);
 
   useEffect(() => {
@@ -117,23 +159,54 @@ export function useAppleSubscription(session: Session | null) {
     return result;
   }
 
+  async function purchaseSessionPass() {
+    if (!userId) throw new Error("Sign in before buying a Session Pass.");
+    const result = await purchaseAppleSessionPass(userId);
+    if (result.status !== "purchased") return result;
+    await syncTransaction(result.transaction);
+    return result;
+  }
+
   async function restore() {
     if (!userId) throw new Error("Sign in before restoring purchases.");
     const { transactions } = await restoreApplePurchases();
     if (transactions.length === 0) {
-      return syncAppleSubscription();
+      const subscription = await syncAppleSubscription();
+      return {
+        active: subscription?.active ?? false,
+        sessionPassActive: false,
+      };
     }
 
     const results = await Promise.all(transactions.map(syncTransaction));
-    return results.find((result) => result?.active) ?? results[0] ?? null;
+    const subscription = results.find(
+      (result) =>
+        !!result &&
+        typeof result === "object" &&
+        "billingPeriod" in result,
+    ) as { active?: boolean } | undefined;
+    const sessionPass = results.find(
+      (result) =>
+        !!result &&
+        typeof result === "object" &&
+        "sessionLimit" in result,
+    ) as { active?: boolean } | undefined;
+    return {
+      active: subscription?.active ?? false,
+      sessionPassActive: sessionPass?.active ?? false,
+    };
   }
 
   return {
     isAvailable: nativeIOS,
     isLoadingProducts,
+    isLoadingSessionPass,
     productsError,
+    sessionPassError,
+    sessionPassProduct,
     productsByPeriod,
     purchase,
+    purchaseSessionPass,
     reloadProducts: loadProducts,
     restore,
     showManageSubscriptions: showAppleManageSubscriptions,

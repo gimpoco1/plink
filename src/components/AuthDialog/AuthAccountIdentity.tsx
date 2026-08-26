@@ -38,20 +38,12 @@ export function AuthAccountIdentity() {
         >
           <div className="authDialog__accountIdentityTop">
             <span className="authDialog__accountPlayerTitle">Email</span>
-            {!entitlementsLoading ? (
-              <span
-                className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
-                  isPro ? "pro" : "free"
-                }`}
-              >
-                {isPro ? "PRO" : "FREE"}
-              </span>
-            ) : null}
           </div>
           <span className="authDialog__accountEmail">{session.user.email}</span>
         </div>
       ) : null}
       <section className="authDialog__accountPlayerSection">
+        <span className="authDialog__accountPlayerTitle">Account Player</span>
         <article
           className={`authDialog__accountPlayerCard${
             editingAccountPlayer && accountPlayer

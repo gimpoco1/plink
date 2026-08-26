@@ -181,7 +181,7 @@ export function PlayerCard({
                   ) : null}
                 </div>
                 {isGameOwner ? (
-                  <span className="who__ownerTag">Game owner</span>
+                  <span className="who__ownerTag">Session owner</span>
                 ) : null}
               </div>
             </div>

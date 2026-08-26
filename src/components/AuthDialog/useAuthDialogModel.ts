@@ -111,6 +111,8 @@ export function useAuthDialogModel(
   } = props;
   const {
     isLoading: entitlementsLoading,
+    hasSessionPass,
+    maxSessions,
     source,
     isPro,
     subscriptionCancelAt,
@@ -154,10 +156,8 @@ export function useAuthDialogModel(
   const [showDeviceImport, setShowDeviceImport] = useState(false);
   const [showDevicePlayersImport, setShowDevicePlayersImport] = useState(false);
   const [showAccountDetails, setShowAccountDetails] = useState(false);
-  const [
-    allowPreviousPlayersToInvite,
-    setAllowPreviousPlayersToInvite,
-  ] = useState(true);
+  const [allowPreviousPlayersToInvite, setAllowPreviousPlayersToInvite] =
+    useState(true);
   const [sharingPreferenceLoading, setSharingPreferenceLoading] =
     useState(false);
   const [showPlanDetails, setShowPlanDetails] = useState(false);
@@ -565,11 +565,7 @@ export function useAuthDialogModel(
           .maybeSingle();
 
         if (!alive) return;
-        if (
-          loadError ||
-          data?.provider !== "stripe" ||
-          !data.customer_id
-        ) {
+        if (loadError || data?.provider !== "stripe" || !data.customer_id) {
           setHasStripeBillingProfile(false);
           return;
         }
@@ -1014,7 +1010,10 @@ export function useAuthDialogModel(
   }
 
   async function requestBillingUrl(
-    functionName: "create-checkout-session" | "create-customer-portal-session",
+    functionName:
+      | "create-checkout-session"
+      | "create-customer-portal-session"
+      | "create-session-pass-checkout",
     body: Record<string, unknown>,
     fallback: string,
   ) {
@@ -1083,10 +1082,7 @@ export function useAuthDialogModel(
         };
       } finally {
         setBusy(false);
-        showNativePurchaseResult(
-          purchaseResult.message,
-          purchaseResult.tone,
-        );
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
       }
       return;
     }
@@ -1113,6 +1109,85 @@ export function useAuthDialogModel(
     }
   }
 
+  async function startSessionPassPurchase() {
+    if (!session) {
+      setError("Sign in before buying a Session Pass.");
+      return;
+    }
+    if (hasSessionPass) {
+      showTransferToast(
+        `Your account can already keep up to ${maxSessions ?? 100} sessions.`,
+        "default",
+      );
+      return;
+    }
+
+    if (isNativeIOSApp()) {
+      let purchaseResult: ToastState = {
+        message: "The Session Pass purchase could not be completed.",
+        tone: "error",
+      };
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await appleSubscription.purchaseSessionPass();
+        if (result.status === "cancelled") {
+          purchaseResult = {
+            message: "Purchase cancelled.",
+            tone: "default",
+          };
+        } else if (result.status === "pending") {
+          purchaseResult = {
+            message:
+              "Your Session Pass purchase is waiting for App Store approval.",
+            tone: "default",
+          };
+        } else {
+          purchaseResult = {
+            message: "Session Pass added. You can now keep up to 100 sessions.",
+            tone: "success",
+          };
+        }
+      } catch (err) {
+        purchaseResult = {
+          message: getBillingErrorMessage(
+            err,
+            "The Session Pass purchase could not be completed.",
+          ),
+          tone: "error",
+        };
+      } finally {
+        setBusy(false);
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
+      }
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    setTransferToast(null);
+    try {
+      const url = await requestBillingUrl(
+        "create-session-pass-checkout",
+        { origin: window.location.origin },
+        "Session Pass checkout is not available yet.",
+      );
+      await openUrl(url);
+    } catch (err) {
+      setError(
+        getBillingErrorMessage(
+          err,
+          "Session Pass checkout is not available yet.",
+        ),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function restoreSubscription() {
     if (!session) {
       setError("Sign in before managing a subscription.");
@@ -1125,11 +1200,16 @@ export function useAuthDialogModel(
       setTransferToast(null);
       try {
         const result = await appleSubscription.restore();
+        const restoredBoth = result.active && result.sessionPassActive;
         showTransferToast(
-          result?.active
-            ? "Your Plink Pro purchase has been restored."
-            : "No active Plink Pro purchase was found for this Apple Account.",
-          result?.active ? "success" : "default",
+          restoredBoth
+            ? "Your Plink Pro subscription and Session Pass were restored."
+            : result.active
+              ? "Your Plink Pro purchase has been restored."
+              : result.sessionPassActive
+                ? "Your Session Pass has been restored."
+                : "No restorable Plink purchases were found for this Apple Account.",
+          result.active || result.sessionPassActive ? "success" : "default",
         );
       } catch (err) {
         showTransferToast(
@@ -1391,9 +1471,13 @@ export function useAuthDialogModel(
     handleBillingPeriodRadioKeyDown,
     hasFilteredLocalGames,
     hasStripeBillingProfile,
+    hasSessionPass,
     appleProductsByPeriod: appleSubscription.productsByPeriod,
     appleProductsError: appleSubscription.productsError,
     appleProductsLoading: appleSubscription.isLoadingProducts,
+    appleSessionPassError: appleSubscription.sessionPassError,
+    appleSessionPassLoading: appleSubscription.isLoadingSessionPass,
+    appleSessionPassProduct: appleSubscription.sessionPassProduct,
     includeGames,
     includeProfiles,
     isAwaitingSignupConfirmation,
@@ -1402,6 +1486,7 @@ export function useAuthDialogModel(
     localGames,
     localProfiles,
     localSessionSearch,
+    maxSessions,
     mode,
     newPassword,
     notice,
@@ -1463,6 +1548,7 @@ export function useAuthDialogModel(
     sinceLabel,
     source,
     subscriptionProvider,
+    startSessionPassPurchase,
     startUpgradeFlow,
     submit,
     submitNewPassword,

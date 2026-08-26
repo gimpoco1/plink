@@ -28,3 +28,22 @@ Plink is a playful score tracker for board games, card games, party games, and a
 - Clean and focused interface.
 - Keeps your sessions and player history organized.
 
+## Session Pass billing setup
+
+The Session Pass is a permanent account entitlement that raises the owned-game
+history limit from 12 to 100. It does not unlock Pro features, and shared games
+do not consume its allowance.
+
+Before enabling the purchase in production:
+
+1. Apply `supabase/migrations/20260724090000_session_pass_entitlements.sql`.
+2. Deploy `sync-apple-session-pass`, `create-session-pass-checkout`,
+   `apple-subscription-webhook`, and `stripe-webhook`.
+3. In App Store Connect, create a non-consumable In-App Purchase with product ID
+   `com.plinkscore.app.sessionpass.100`.
+4. In Stripe, create a one-time Session Pass price and set its ID as the
+   `STRIPE_PRICE_SESSION_PASS_100` Edge Function secret.
+5. Ensure the existing Apple server API and Stripe webhook secrets are set, and
+   that the Stripe webhook listens for Checkout completion and refund events.
+
+Do not expose `STRIPE_PRICE_SESSION_PASS_100` as a Vite client variable.

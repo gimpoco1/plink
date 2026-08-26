@@ -50,28 +50,69 @@
   max-width: 34rem;
 }
 
+.sessionsLimitWarning__note {
+  display: block;
+  margin-top: 2px;
+  color: rgba(255, 248, 230, 0.72);
+  font-weight: 700;
+}
+
 .sessionsLimitWarning__cta {
   flex: 0 0 auto;
   gap: 8px;
   margin-left: auto;
 }
 
+.sessionsTitleRow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+
 .sessionsToolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   padding: 0px 0px 16px;
 }
 
 .sessionsToolbar__group {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   gap: 8px;
+  padding-right: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 1) 0,
+    rgba(0, 0, 0, 1) calc(100% - 24px),
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 1) 0,
+    rgba(0, 0, 0, 1) calc(100% - 24px),
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.sessionsToolbar__group::-webkit-scrollbar {
+  display: none;
 }
 
 .sessionsFilterChip {
+  flex: 0 0 auto;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-dim);
@@ -93,6 +134,8 @@
 }
 
 .sessionsSortControl {
+  flex: 0 0 auto;
+  margin-left: auto;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-dim);
@@ -134,7 +177,7 @@
 
 .gameRows {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 

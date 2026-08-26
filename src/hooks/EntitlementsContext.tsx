@@ -18,6 +18,9 @@ const fallbackState: EntitlementsState = {
   canUseTeams: false,
   canSeeAdvancedStats: false,
   hasUnlimitedSessions: false,
+  hasSessionPass: false,
+  sessionPassProvider: null,
+  sessionPassPurchasedAt: null,
   maxSessions: 12,
 };
 
