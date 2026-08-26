@@ -28,8 +28,8 @@ export function AuthPlanSection() {
                     <span>Free plan</span>
                   </strong>
                   <span className="authDialog__planMeta">
-                    Upgrade to Pro for ad-free play, advanced stats, team
-                    support, and unlimited session history
+                    Upgrade to Pro for advanced stats, team support, and
+                    unlimited session history
                   </span>
                 </div>
               </div>
@@ -90,7 +90,7 @@ export function AuthPlanSection() {
                       ? source === "subscription" && renewalLabel
                         ? renewalLabel
                         : "Premium play, built for regular game nights."
-                      : "Upgrade to Pro for ad-free play, advanced stats, team support, and unlimited session history"}
+                      : "Upgrade to Pro for advanced stats, team support, and unlimited session history"}
                   </span>
                 </div>
                 <div className="authDialog__planHeaderRight">

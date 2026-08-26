@@ -1,4 +1,3 @@
-import { AdBannerSlot } from "../../../components/AdBannerSlot/AdBannerSlot";
 import { LockedFrame } from "../../../components/HomeLockedState/LockedFrame";
 import { PlayersSkeleton } from "../../../components/HomeLockedState/PlayersSkeleton";
 import { LocalSessionsHint } from "../../../components/LocalSessionsHint/LocalSessionsHint";
@@ -14,7 +13,6 @@ export function PlayersScreenView() {
     onOpenAuth,
     pendingLocalProfilesCount,
     pendingLocalSessionsCount,
-    profiles,
     showLocalSessionsHint,
   } = usePlayersScreenContext();
 
@@ -29,12 +27,6 @@ export function PlayersScreenView() {
           profileCount={pendingLocalProfilesCount}
           onDismiss={onDismissLocalSessionsHint}
           onAdd={onOpenAuth}
-        />
-      ) : null}
-      {isAuthenticated && profiles.length > 0 ? (
-        <AdBannerSlot
-          placement="Players"
-          slotId={import.meta.env.VITE_ADSENSE_PLAYERS_SLOT_ID}
         />
       ) : null}
       <PlayersScreenHeader />

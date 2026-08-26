@@ -1,57 +1,5 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
-import { Flame, Medal, SquareActivity, Trophy } from "lucide-react";
-import { LockedFrame } from "../components/HomeLockedState/LockedFrame";
-import { StatsSkeleton } from "../components/HomeLockedState/StatsSkeleton";
-import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
-import { useEntitlementsContext } from "../hooks/useEntitlements";
 import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
-import {
-  buildPlayerReports,
-  buildTeamReports,
-  type SubjectReport,
-} from "../utils/advancedStats";
-import { avatarStyleFor } from "../utils/color";
-import { formatAccountPlayerName, getInitials } from "../utils/text";
-import { StatsAdvancedCards } from "../features/stats/components/StatsAdvancedCards";
-import { StatsCharts } from "../features/stats/components/StatsCharts";
-import { StatsProPreview } from "../features/stats/components/StatsProPreview";
-import {
-  ComparisonMetricCard,
-  EntitySwatch,
-  MetricCard,
-  PanelHeader,
-  PickerButton,
-  PickerPopover,
-  StatsScreenEmpty,
-} from "../features/stats/components/StatsScreenParts";
-import {
-  ALL_CHART_GAMES,
-  STATUS_LABELS,
-  type OpenChartGamePicker,
-  type OpenPicker,
-  type SelectableEntity,
-} from "../features/stats/types/statsTypes";
-import {
-  buildChartAxis,
-  compareValues,
-  filterGamesForChart,
-  formatAveragePlacement,
-  formatPlacement,
-  formatSessionCount,
-  getDefaultComparePlayerId,
-  getDefaultPrimaryPlayerId,
-  getDisplayName,
-  buildHeadToHeadSummary,
-  buildStreakHistorySummary,
-  getStatusTone,
-  mergeCompareTrend,
-} from "../features/stats/utils/statsUtils";
+import { ALL_CHART_GAMES } from "../features/stats/types/statsTypes";
 import { useStatsScreenModel } from "../features/stats/hooks/useStatsScreenModel";
 import "../features/stats/styles/StatsScreen.css";
 

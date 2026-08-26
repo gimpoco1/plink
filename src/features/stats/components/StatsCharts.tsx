@@ -1,12 +1,8 @@
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart as RechartsLineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -20,9 +16,7 @@ import {
   releaseChartFocus,
 } from "./StatsChartPrimitives";
 import {
-  ChartGamePicker,
   ChartLegend,
-  CompareChartTooltip,
   PanelHeader,
 } from "./StatsScreenParts";
 import type { CompareChartPoint, OpenChartGamePicker } from "../types/statsTypes";

@@ -316,8 +316,6 @@ values in the workflow's **Environment > Environment Variables** section:
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 VITE_STRIPE_PUBLISHABLE_KEY
-VITE_SHOW_AD_SLOTS=false
-VITE_SHOW_AD_PLACEHOLDERS=false
 ```
 
 Copy the first three values from the production `.env.local`. Mark sensitive
@@ -391,14 +389,6 @@ Main client vars:
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
 - `VITE_ENTITLEMENTS_OVERRIDE_PLAN`
-
-Ads/testing vars:
-
-- `VITE_ADSENSE_CLIENT_ID`
-- `VITE_ADSENSE_SESSIONS_SLOT_ID`
-- `VITE_ADSENSE_PLAYERS_SLOT_ID`
-- `VITE_SHOW_AD_SLOTS`
-- `VITE_SHOW_AD_PLACEHOLDERS`
 
 Notes:
 
