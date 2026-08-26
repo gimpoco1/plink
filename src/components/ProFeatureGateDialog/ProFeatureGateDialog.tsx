@@ -77,10 +77,6 @@ export const ProFeatureGateDialog = forwardRef<
               </li>
               <li>
                 <Check size={16} strokeWidth={2.8} aria-hidden="true" />
-                <span>Ad-free experience</span>
-              </li>
-              <li>
-                <Check size={16} strokeWidth={2.8} aria-hidden="true" />
                 <span>Advanced player stats and reporting</span>
               </li>
               <li>

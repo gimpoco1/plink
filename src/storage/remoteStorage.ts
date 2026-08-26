@@ -1244,7 +1244,20 @@ export async function saveRemoteGames(
   }
 }
 
-export async function loadRemoteProfiles(
+function isJwtIssuedInFutureError(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) {
+    return false;
+  }
+  return /jwt issued at future/i.test(
+    String((error as { message?: unknown }).message ?? ""),
+  );
+}
+
+function waitForJwtClockSync() {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, 2_000));
+}
+
+async function loadRemoteProfilesOnce(
   userId: string,
 ): Promise<PlayerProfile[]> {
   if (!supabase) return [];
@@ -1267,6 +1280,21 @@ export async function loadRemoteProfiles(
   return (legacyResult.data ?? []).map((row) =>
     rowToProfile(row as ProfileRow),
   );
+}
+
+export async function loadRemoteProfiles(
+  userId: string,
+): Promise<PlayerProfile[]> {
+  try {
+    return await loadRemoteProfilesOnce(userId);
+  } catch (error) {
+    if (!isJwtIssuedInFutureError(error)) throw error;
+
+    // Supabase can briefly reject a just-minted token while its Auth and Data
+    // API clocks converge. Retry once rather than showing a login-time failure.
+    await waitForJwtClockSync();
+    return loadRemoteProfilesOnce(userId);
+  }
 }
 
 export async function saveRemoteProfiles(

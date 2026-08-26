@@ -1,43 +1,12 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import type {
-  Game,
-  GameTeam,
-  PlayerProfile,
-  ScoreDirection,
-  TeamMember,
-  WinCondition,
-} from "../../../types";
-import {
-  NewGameCard,
-  type NewGameInput,
-} from "../../../components/NewGameCard/NewGameCard";
-import { HomeGuestPreview } from "../../../components/HomeGuestPreview/HomeGuestPreview";
-import { LocalSessionsHint } from "../../../components/LocalSessionsHint/LocalSessionsHint";
-import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { HOME_NEW_GAME_OPEN_KEY } from "../../../constants";
-import { avatarStyleFor } from "../../../utils/color";
 import {
   formatAccountPlayerName,
   getGameDisplayName,
   getNextGameSessionName,
 } from "../../../utils/text";
-import { getInitials } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
 import "../styles/HomeScreen.css";
-import {
-  BarChart3,
-  ArrowDownUp,
-  Cloud,
-  Dices,
-  Flag,
-  GitCompareArrows,
-  History,
-  RotateCcw,
-  Sparkles,
-  Target,
-  Timer,
-  Users,
-} from "lucide-react";
 
 import type { HomeScreenProps, QuickSetup } from "../types/homeScreenTypes";
 
@@ -45,27 +14,10 @@ export function useHomeScreenModel(props: HomeScreenProps) {
   const {
     games,
     profiles,
-    teams,
-    teamMembers,
-    canUseTeams,
     isAuthenticated,
-    showLocalSessionsHint,
-    pendingLocalSessionsCount,
-    pendingLocalProfilesCount,
     isCreating,
-    presetDraft,
-    presetDraftToken,
     onCreatingChange,
-    onOpenAuth,
-    onOpenProFeatureAuth,
-    onOpenLocalImport,
-    onOpenProPlan,
-    onDismissLocalSessionsHint,
-    onOpenTeamsTab,
-    onCreate,
     onStartQuickSetup,
-    onUpsertProfile,
-    onEnter,
   } = props;
 
   const [persistedNewGameOpen, setPersistedNewGameOpen] = useState<

@@ -1,31 +1,6 @@
-import { Flame, Medal, SquareActivity, Trophy } from "lucide-react";
-import { AdBannerSlot } from "../../../components/AdBannerSlot/AdBannerSlot";
-import { LockedFrame } from "../../../components/HomeLockedState/LockedFrame";
-import { StatsSkeleton } from "../../../components/HomeLockedState/StatsSkeleton";
-import { StatsAdvancedCards } from "./StatsAdvancedCards";
-import { StatsCharts } from "./StatsCharts";
-import { StatsProPreview } from "./StatsProPreview";
-import {
-  ComparisonMetricCard,
-  EntitySwatch,
-  MetricCard,
-  PanelHeader,
-  PickerButton,
-  PickerPopover,
-  StatsScreenEmpty,
-} from "./StatsScreenParts";
-import {
-  compareValues,
-  formatAveragePlacement,
-  formatPlacement,
-  getDisplayName,
-  getStatusTone,
-} from "../utils/statsUtils";
-import { avatarStyleFor } from "../../../utils/color";
-import { formatAccountPlayerName, getInitials } from "../../../utils/text";
-import type { PlayerProfile } from "../../../types";
-import { STATUS_LABELS, type SelectableEntity } from "../types/statsTypes";
-import type { SubjectReport } from "../../../utils/advancedStats";
+import { PanelHeader } from "./StatsScreenParts";
+import { formatPlacement, getStatusTone } from "../utils/statsUtils";
+import { STATUS_LABELS } from "../types/statsTypes";
 import { useStatsScreenContext } from "../context/StatsScreenContext";
 
 export function StatsMetaPanels() {

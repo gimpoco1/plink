@@ -4,18 +4,6 @@
   .tabWindow {
     padding: 12px;
   }
-
-  .tabContent--sessions > .adBannerSlot:first-child,
-  .tabContent--players > .adBannerSlot:first-child,
-  .tabContent--stats > .adBannerSlot:first-child {
-    margin-top: -12px;
-  }
-}
-
-.tabContent--sessions > .adBannerSlot:first-child,
-.tabContent--players > .adBannerSlot:first-child,
-.tabContent--stats > .adBannerSlot:first-child {
-  margin-top: -24px;
 }
 
 .homeContainer {

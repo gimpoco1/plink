@@ -5,51 +5,28 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Flame, Medal, SquareActivity, Trophy } from "lucide-react";
-import { LockedFrame } from "../../../components/HomeLockedState/LockedFrame";
-import { StatsSkeleton } from "../../../components/HomeLockedState/StatsSkeleton";
-import { AdBannerSlot } from "../../../components/AdBannerSlot/AdBannerSlot";
 import { useEntitlementsContext } from "../../../hooks/useEntitlements";
-import type { Game, GameTeam, PlayerProfile, TeamMember } from "../../../types";
+import type { Game, PlayerProfile } from "../../../types";
 import {
   buildPlayerReports,
   buildTeamReports,
-  type SubjectReport,
 } from "../../../utils/advancedStats";
-import { avatarStyleFor } from "../../../utils/color";
-import { formatAccountPlayerName, getInitials } from "../../../utils/text";
-import { StatsAdvancedCards } from "../components/StatsAdvancedCards";
-import { StatsCharts } from "../components/StatsCharts";
-import { StatsProPreview } from "../components/StatsProPreview";
-import {
-  ComparisonMetricCard,
-  EntitySwatch,
-  MetricCard,
-  PanelHeader,
-  PickerButton,
-  PickerPopover,
-  StatsScreenEmpty,
-} from "../components/StatsScreenParts";
+import { formatAccountPlayerName } from "../../../utils/text";
 import {
   ALL_CHART_GAMES,
-  STATUS_LABELS,
   type OpenChartGamePicker,
   type OpenPicker,
   type SelectableEntity,
 } from "../types/statsTypes";
 import {
   buildChartAxis,
-  compareValues,
   filterGamesForChart,
-  formatAveragePlacement,
-  formatPlacement,
   formatSessionCount,
   getDefaultComparePlayerId,
   getDefaultPrimaryPlayerId,
   getDisplayName,
   buildHeadToHeadSummary,
   buildStreakHistorySummary,
-  getStatusTone,
   mergeCompareTrend,
 } from "../utils/statsUtils";
 
@@ -111,9 +88,6 @@ export function useStatsScreenModel(props: StatsScreenProps) {
     profiles,
     teams,
     teamMembers,
-    isAuthenticated,
-    onOpenAuth,
-    onOpenProPlan,
   } = props;
 
   const { canSeeAdvancedStats, canUseTeams } = useEntitlementsContext();
