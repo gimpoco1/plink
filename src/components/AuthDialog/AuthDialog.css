@@ -143,6 +143,9 @@
   border: 1px solid transparent;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .authDialog__accountPlanBadge--free {
@@ -188,6 +191,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 0;
+  padding-top: 5px;
 }
 
 .authDialog__planCard {
@@ -243,7 +247,7 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  margin-top: 16px;
+  margin-top: 56px;
 }
 
 .authDialog__planBody {
@@ -298,6 +302,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  position: relative;
 }
 
 .authDialog__planTitleWrap {

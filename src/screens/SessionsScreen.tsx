@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Crown, Info } from "lucide-react";
+import { AlertTriangle, Crown } from "lucide-react";
 import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
 import { AdBannerSlot } from "../components/AdBannerSlot/AdBannerSlot";
@@ -41,22 +41,30 @@ export function SessionsScreen({
 }: SessionsScreenProps) {
   const { hasSessionPass, isLoading, isPro, maxSessions } =
     useEntitlementsContext();
-  const [filter, setFilter] = useState<"all" | "inProgress" | "completed">(
-    "inProgress",
-  );
+  const [filter, setFilter] = useState<
+    "all" | "inProgress" | "completed" | "owned" | "invited"
+  >("inProgress");
   const [sort, setSort] = useState<"recent" | "oldest" | "name">("recent");
+
   const ownedSessionCount = games.filter(
     (game) => game.accessRole !== "collaborator",
   ).length;
-  const sharedSessionCount = Math.max(0, games.length - ownedSessionCount);
+  const sharedSessionCount = games.filter(
+    (game) =>
+      game.accessRole === "collaborator" ||
+      game.players.some((player) => player.joinedViaInvite === true),
+  ).length;
+  const hasSharedSessions = sharedSessionCount > 0;
   const remainingSessions =
     maxSessions === null ? null : Math.max(0, maxSessions - ownedSessionCount);
   const showOwnedLimitInHeader = !isLoading && !isPro && maxSessions !== null;
   const sessionsTotalLabel = isPro
     ? `${games.length} ${games.length === 1 ? "session" : "sessions"}`
-    : `${games.length} total`;
+    : showOwnedLimitInHeader && maxSessions !== null && !hasSharedSessions
+      ? `${ownedSessionCount}/${maxSessions} sessions`
+      : `${games.length} total`;
   const sessionsOwnedLabel =
-    showOwnedLimitInHeader && maxSessions !== null
+    showOwnedLimitInHeader && maxSessions !== null && hasSharedSessions
       ? `${ownedSessionCount}/${maxSessions} owned`
       : null;
   const showSessionLimitWarning =
@@ -65,6 +73,7 @@ export function SessionsScreen({
     maxSessions !== null &&
     remainingSessions !== null &&
     remainingSessions <= 2;
+
   const dateFormat = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -74,6 +83,7 @@ export function SessionsScreen({
       }),
     [],
   );
+
   const accountProfileIds = useMemo(
     () =>
       new Set(
@@ -84,20 +94,30 @@ export function SessionsScreen({
     [profiles],
   );
 
+  useEffect(() => {
+    if (!hasSharedSessions && (filter === "owned" || filter === "invited")) {
+      setFilter("inProgress");
+    }
+  }, [filter, hasSharedSessions]);
+
   const sessions = useMemo(() => {
     const filtered = games.filter((game) => {
       const completed = isGameComplete(game);
+      const isOwned = game.accessRole !== "collaborator";
       if (filter === "inProgress") return !completed;
       if (filter === "completed") return completed;
+      if (filter === "owned") return isOwned;
+      if (filter === "invited") return !isOwned;
       return true;
     });
     return [...filtered].sort((a, b) => {
-      if (sort === "name")
+      if (sort === "name") {
         return (
           getGameDisplayName(a.name).title.localeCompare(
             getGameDisplayName(b.name).title,
           ) || b.updatedAt - a.updatedAt
         );
+      }
       if (sort === "oldest") return a.createdAt - b.createdAt;
       return b.createdAt - a.createdAt;
     });
@@ -165,8 +185,6 @@ export function SessionsScreen({
       <ScreenHeader
         title="Sessions"
         subtitle="Reopen recent rounds and keep your history organized."
-        totalLabel={sessionsTotalLabel}
-        ownedLabel={sessionsOwnedLabel}
       />
       {games.length > 0 ? (
         <section className="homeList" aria-label="Game history">
@@ -176,7 +194,14 @@ export function SessionsScreen({
               role="group"
               aria-label="Filter sessions"
             >
-              {(["all", "inProgress", "completed"] as const).map((value) => (
+              {(
+                [
+                  "all",
+                  "inProgress",
+                  "completed",
+                  ...(hasSharedSessions ? (["owned", "invited"] as const) : []),
+                ] as const
+              ).map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -187,7 +212,11 @@ export function SessionsScreen({
                     ? "Done"
                     : value === "inProgress"
                       ? "In Progress"
-                      : value[0].toUpperCase() + value.slice(1)}
+                      : value === "owned"
+                        ? "Owned"
+                        : value === "invited"
+                          ? "Invited"
+                          : value[0].toUpperCase() + value.slice(1)}
                 </button>
               ))}
             </div>
@@ -236,34 +265,33 @@ export function SessionsScreen({
 function ScreenHeader({
   title,
   subtitle,
-  totalLabel,
-  ownedLabel,
 }: {
   title: string;
   subtitle: string;
-  totalLabel?: string | null;
-  ownedLabel?: string | null;
 }) {
   const [showMetaHelp, setShowMetaHelp] = useState(false);
+  const [showUpgradeHelp, setShowUpgradeHelp] = useState(false);
   const metaHelpRef = useRef<HTMLSpanElement | null>(null);
-  const metaHelpId = useId();
-  const metaHelpText = {
-    total:
-      "TOTAL: all sessions including ones you were invited but did not create.",
-    owned: "OWNED: sessions you created which count toward your plan limit.",
-  };
+  const upgradeHelpRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
-    if (!showMetaHelp) return;
+    if (!showMetaHelp && !showUpgradeHelp) return;
 
     function handlePointerDown(event: PointerEvent) {
-      if (!metaHelpRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideMeta = metaHelpRef.current?.contains(target);
+      const insideUpgrade = upgradeHelpRef.current?.contains(target);
+      if (!insideMeta && !insideUpgrade) {
         setShowMetaHelp(false);
+        setShowUpgradeHelp(false);
       }
     }
 
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setShowMetaHelp(false);
+      if (event.key === "Escape") {
+        setShowMetaHelp(false);
+        setShowUpgradeHelp(false);
+      }
     }
 
     window.addEventListener("pointerdown", handlePointerDown);
@@ -272,66 +300,13 @@ function ScreenHeader({
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("keydown", handleEscape);
     };
-  }, [showMetaHelp]);
+  }, [showMetaHelp, showUpgradeHelp]);
 
   return (
     <div className="tabHeader">
       <div>
         <div className="sessionsTitleRow">
           <h2 className="tabTitle">{title}</h2>
-          {totalLabel ? (
-            <span className="sessionsHeaderMetaChip">
-              <span className="sessionsHeaderMetaChip__total">
-                {totalLabel}
-              </span>
-              {ownedLabel ? (
-                <>
-                  <span
-                    className="sessionsHeaderMetaChip__sep"
-                    aria-hidden="true"
-                  >
-                    ·
-                  </span>
-                  <span className="sessionsHeaderMetaChip__owned">
-                    {ownedLabel}
-                  </span>
-                  <span
-                    className="sessionsHeaderMetaChip__help"
-                    ref={metaHelpRef}
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      className="sessionsHeaderMetaChip__helpBtn"
-                      aria-label="Explain session totals"
-                      aria-expanded={showMetaHelp}
-                      aria-controls={metaHelpId}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        setShowMetaHelp((value) => !value);
-                      }}
-                    >
-                      <Info size={12} strokeWidth={2.4} aria-hidden="true" />
-                    </button>
-                    <span
-                      id={metaHelpId}
-                      role="tooltip"
-                      className={`sessionsHeaderMetaChip__tooltip${showMetaHelp ? " sessionsHeaderMetaChip__tooltip--open" : ""}`}
-                    >
-                      <span className="sessionsHeaderMetaChip__tooltipLine">
-                        {metaHelpText.total}
-                      </span>
-
-                      <span className="sessionsHeaderMetaChip__tooltipLine">
-                        {metaHelpText.owned}
-                      </span>
-                    </span>
-                  </span>
-                </>
-              ) : null}
-            </span>
-          ) : null}
         </div>
         <p className="tabSubtitle">{subtitle}</p>
       </div>

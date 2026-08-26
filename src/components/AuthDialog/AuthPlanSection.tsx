@@ -24,7 +24,18 @@ export function AuthPlanSection() {
             <div className="authDialog__planToggleHeader authDialog__planToggleHeader--static">
               <div className="authDialog__planTop">
                 <div className="authDialog__planTitleWrap">
-                  <span className="authDialog__accountPlayerTitle">Plan</span>
+                  <div className="authDialog__accountIdentityTop">
+                    <span className="authDialog__accountPlayerTitle">Plan</span>
+                    {!entitlementsLoading ? (
+                      <span
+                        className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
+                          isPro ? "pro" : "free"
+                        }`}
+                      >
+                        {isPro ? "PRO" : "FREE"}
+                      </span>
+                    ) : null}
+                  </div>{" "}
                   <strong className="authDialog__planName">
                     <span>
                       {hasSessionPass ? "Free + Session Pass" : "Free plan"}
@@ -66,7 +77,18 @@ export function AuthPlanSection() {
             >
               <div className="authDialog__planTop">
                 <div className="authDialog__planTitleWrap">
-                  <span className="authDialog__accountPlayerTitle">Plan</span>
+                  <div className="authDialog__accountIdentityTop">
+                    <span className="authDialog__accountPlayerTitle">Plan</span>
+                    {!entitlementsLoading ? (
+                      <span
+                        className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
+                          isPro ? "pro" : "free"
+                        }`}
+                      >
+                        {isPro ? "PRO" : "FREE"}
+                      </span>
+                    ) : null}
+                  </div>
                   <strong className="authDialog__planName">
                     {isPro ? (
                       <span className="authDialog__planNameMain">
