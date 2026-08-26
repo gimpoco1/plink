@@ -232,9 +232,9 @@ async function syncCheckoutSessionPass(
     return false;
   }
   if (session.payment_status !== "paid") {
-    throw new Error(
-      `Session Pass checkout ${session.id} completed without payment.`,
-    );
+    // Async payment methods can emit checkout.session.completed before the
+    // payment settles. async_payment_succeeded will persist the entitlement.
+    return true;
   }
 
   const userId =
