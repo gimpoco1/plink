@@ -2,8 +2,10 @@ import { motion } from "framer-motion";
 import { Boxes, Target } from "lucide-react";
 import { useNewGameCardContext } from "./NewGameCardContext";
 import { SectionLabel } from "./NewGameAtoms";
+import { useI18n } from "../../i18n/I18nContext";
 
 export function NewGameScoreSettings() {
+  const { t } = useI18n();
   const {
     sectionVariants,
     sectionTransition,
@@ -23,12 +25,12 @@ export function NewGameScoreSettings() {
     >
       <label className="field newSessionNameField">
         <SectionLabel icon={<Boxes size={16} strokeWidth={2} />}>
-          Game name
+          {t("new.gameName")}
         </SectionLabel>{" "}
         <input
           className="input input--featured"
           value={name}
-          placeholder="e.g. Tressette"
+          placeholder={t("new.exampleName")}
           onChange={(event) => setName(event.target.value)}
         />
       </label>
@@ -39,7 +41,7 @@ export function NewGameScoreSettings() {
               ? "Start"
               : manualEndOnly
                 ? "Ref"
-                : "Target"}
+                : t("new.target")}
           </SectionLabel>{" "}
           <input
             className="targetControl__value"

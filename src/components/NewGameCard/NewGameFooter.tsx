@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { useNewGameCardContext } from "./NewGameCardContext";
 import { TimerChoice, TimerInput } from "./NewGameAtoms";
+import { useI18n } from "../../i18n/I18nContext";
 
 export function NewGameFooter() {
+  const { t } = useI18n();
   const {
     ruleNeedsMorePlayers,
     sectionVariants,
@@ -110,7 +112,7 @@ export function NewGameFooter() {
           reduceMotion ? undefined : canCreate ? { y: -1 } : undefined
         }
       >
-        Start Game
+        {t("new.startGame")}
       </motion.button>
     </>
   );

@@ -33,6 +33,7 @@ import {
 } from "../../storage/remoteStorage";
 import type { Game, PlayerProfile, ToastState, ToastTone } from "../../types";
 import { formatPlayerName } from "../../utils/text";
+import { LANGUAGE_DIALOG_REOPEN_KEY } from "../../i18n/I18nContext";
 
 export type AuthDialogHandle = {
   open: () => void;
@@ -173,6 +174,23 @@ export function useAuthDialogModel(
   const [selectedLocalProfileIds, setSelectedLocalProfileIds] = useState<
     string[]
   >(() => localProfiles.map((profile) => profile.id));
+
+  useEffect(() => {
+    let shouldReopen = false;
+    try {
+      shouldReopen =
+        window.sessionStorage.getItem(LANGUAGE_DIALOG_REOPEN_KEY) === "true";
+      if (shouldReopen) {
+        window.sessionStorage.removeItem(LANGUAGE_DIALOG_REOPEN_KEY);
+      }
+    } catch {
+      return;
+    }
+
+    if (!shouldReopen || dialogRef.current?.open) return;
+    dialogRef.current?.showModal();
+    onOpenChange?.(true);
+  }, [onOpenChange]);
   const selectedLocalGameIdsRef = useRef(selectedLocalGameIds);
   const selectedLocalProfileIdsRef = useRef(selectedLocalProfileIds);
   const normalizedLocalSessionSearch = localSessionSearch.trim().toLowerCase();

@@ -2,8 +2,10 @@ import { Fragment } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Info, Library, Search, X } from "lucide-react";
 import { useNewGameCardContext } from "./NewGameCardContext";
+import { useI18n } from "../../i18n/I18nContext";
 
 export function NewGameHeader() {
+  const { t } = useI18n();
   const {
     sectionVariants,
     sectionTransition,
@@ -26,12 +28,12 @@ export function NewGameHeader() {
       transition={sectionTransition}
     >
       <div className="newSessionHeader__copy">
-        <div className="newSessionHeader__eyebrow">New session</div>
+        <div className="newSessionHeader__eyebrow">{t("new.session")}</div>
         <div className="newSessionHeader__choice">
           <div className="newSessionHeader__manual">
-            <span>Build the match</span>
+            <span>{t("new.buildMatch")}</span>
           </div>
-          <span className="newSessionHeader__or">or</span>
+          <span className="newSessionHeader__or">{t("new.or")}</span>
           <button
             type="button"
             className="gamePresetBrowser__trigger"
@@ -39,7 +41,7 @@ export function NewGameHeader() {
             onClick={() => setIsPresetBrowserOpen((current) => !current)}
           >
             <Library size={15} strokeWidth={2.4} aria-hidden="true" />
-            Browse games
+            {t("new.browseGames")}
           </button>
         </div>
         <AnimatePresence initial={false}>

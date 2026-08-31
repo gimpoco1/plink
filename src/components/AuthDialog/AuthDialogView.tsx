@@ -4,6 +4,7 @@ import { AuthAccountPanel } from "./AuthAccountPanel";
 import { useAuthDialogContext } from "./AuthDialogContext";
 import { AuthPasswordRecoveryPanel } from "./AuthPasswordRecoveryPanel";
 import { AuthSignedOutPanel } from "./AuthSignedOutPanel";
+import { LanguageSelector } from "../LanguageSelector/LanguageSelector";
 
 export function AuthDialogView() {
   const {
@@ -67,6 +68,7 @@ export function AuthDialogView() {
             ×
           </button>
         </div>
+        {!recoveryMode ? <LanguageSelector /> : null}
         {dialogToast ? (
           <div
             className={`authDialog__toast authDialog__toast--${dialogToast.tone}`}

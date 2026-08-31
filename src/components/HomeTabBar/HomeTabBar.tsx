@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Home, BarChart3, Users, GalleryVerticalEnd, type LucideIcon } from "lucide-react";
 import type { HomeTab } from "../../types";
 import "./HomeTabBar.css";
+import { useI18n } from "../../i18n/I18nContext";
 
 type HomeTabBarProps = {
   activeTab: HomeTab;
@@ -16,27 +17,27 @@ type HomeTabBarProps = {
 
 const tabs: Array<{
   id: HomeTab;
-  label: string;
+  labelKey: "tabs.home" | "tabs.sessions" | "tabs.stats" | "tabs.players";
   Icon: LucideIcon;
 }> = [
   {
     id: "home",
-    label: "Home",
+    labelKey: "tabs.home",
     Icon: Home,
   },
   {
     id: "sessions",
-    label: "Sessions",
+    labelKey: "tabs.sessions",
     Icon: GalleryVerticalEnd,
   },
   {
     id: "stats",
-    label: "Stats",
+    labelKey: "tabs.stats",
     Icon: BarChart3,
   },
   {
     id: "players",
-    label: "Players",
+    labelKey: "tabs.players",
     Icon: Users,
   },
 ];
@@ -51,6 +52,7 @@ export function HomeTabBar({
   onOpenProFeatureAuth,
   onOpenProPlan,
 }: HomeTabBarProps) {
+  const { t } = useI18n();
   const [showPlayersMenu, setShowPlayersMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const canAccessTeamsView = isAuthenticated && canUseTeams;
@@ -89,13 +91,13 @@ export function HomeTabBar({
           : ""
       }`}
     >
-      {tabs.map(({ id, label, Icon }) => {
+      {tabs.map(({ id, labelKey, Icon }) => {
         const isPlayersTab = id === "players";
         const visibleLabel = isPlayersTab
           ? playersView === "teams"
-            ? "Teams"
-            : "Players"
-          : label;
+            ? t("tabs.teams")
+            : t("tabs.players")
+          : t(labelKey);
         return (
           <div
             key={id}
@@ -103,7 +105,7 @@ export function HomeTabBar({
             ref={isPlayersTab ? menuRef : undefined}
           >
             {isPlayersTab && showPlayersMenu ? (
-              <div className="tabSwitcher" role="menu" aria-label="Players view">
+              <div className="tabSwitcher" role="menu" aria-label={t("tabs.playersView")}>
                 <button
                   type="button"
                   role="menuitemradio"
@@ -111,7 +113,7 @@ export function HomeTabBar({
                   className="tabSwitcher__item"
                   onClick={() => choosePlayersView("players")}
                 >
-                  Players
+                  {t("tabs.players")}
                 </button>
                 <button
                   type="button"
@@ -123,9 +125,9 @@ export function HomeTabBar({
                   }`}
                   onClick={() => choosePlayersView("teams")}
                 >
-                  Teams
+                  {t("tabs.teams")}
                   {!canAccessTeamsView ? (
-                    <span className="tabSwitcher__badge">Pro</span>
+                    <span className="tabSwitcher__badge">{t("common.pro")}</span>
                   ) : null}
                 </button>
               </div>

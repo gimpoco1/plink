@@ -10,8 +10,10 @@ import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRost
 import { SwipeableCard } from "../SwipeableCard/SwipeableCard";
 import { useNewGameCardContext } from "./NewGameCardContext";
 import { SelectionStateIcon } from "./NewGameAtoms";
+import { useI18n } from "../../i18n/I18nContext";
 
 export function NewGamePlayers() {
+  const { t } = useI18n();
   const {
     filteredStagedPlayers,
     selectedStagedPlayerIds,
@@ -77,7 +79,7 @@ export function NewGamePlayers() {
             className="participantPicker__group"
             searchValue={participantSearch}
             onSearchChange={setParticipantSearch}
-            searchPlaceholder="Search players"
+            searchPlaceholder={t("new.searchPlayers")}
             searchAriaLabel="Search saved players"
             clearAriaLabel="Clear player search"
             showSearch={
