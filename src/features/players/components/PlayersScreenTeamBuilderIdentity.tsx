@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 import { TeamIconPicker } from "./PlayersScreenParts";
 import { usePlayersScreenContext } from "../context/PlayersScreenContext";
@@ -15,8 +16,7 @@ export function TeamBuilderIdentityStep() {
     <>
       <div className="teamBuilder__intro">
         <p className="teamBuilder__lede">
-          Set your team&apos;s visual identity for saved rosters and team-based
-          matchmaking.
+          {translate("copy.setYourTeamSVisualIdentityForSavedRostersAndTeamBased")}
         </p>
       </div>
       <section className="teamBuilderCard teamBuilderCard--identity">
@@ -31,7 +31,7 @@ export function TeamBuilderIdentityStep() {
               className="teamBuilder__sectionEyebrow"
               htmlFor="team-builder-name"
             >
-              Team name
+              {translate("copy.teamName")}
             </label>
             <div className="teamBuilderIdentity__nameRow">
               <input
@@ -55,11 +55,13 @@ export function TeamBuilderIdentityStep() {
           </div>
         </div>
         <div className="teamBuilderCard__group">
-          <div className="teamBuilderCard__label">Choose your insignia</div>
+          <div className="teamBuilderCard__label">
+            {translate("copy.chooseYourInsignia")}
+          </div>
           <TeamIconPicker
             value={newTeamIcon}
             onChange={setNewTeamIcon}
-            label="new team"
+            label={translate("copy.newTeam")}
             layout="grid"
             density="compact"
           />

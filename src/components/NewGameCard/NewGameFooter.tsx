@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { motion } from "framer-motion";
 import { useNewGameCardContext } from "./NewGameCardContext";
 import { TimerChoice, TimerInput } from "./NewGameAtoms";
@@ -35,8 +36,20 @@ export function NewGameFooter() {
           transition={sectionTransition}
         >
           {lowScoreNeedsMorePlayers
-            ? `Lowest wins mode requires at least 2 ${participantMode === "teams" ? "teams" : "players"}.`
-            : `Win by 2 requires at least 2 ${participantMode === "teams" ? "teams" : "players"}.`}
+            ? translate("dynamic.lowestWinsModeRequiresAtLeast2", [
+                translate(
+                  participantMode === "teams"
+                    ? "common.teams"
+                    : "common.players",
+                ),
+              ])
+            : translate("dynamic.winBy2RequiresAtLeast2", [
+                translate(
+                  participantMode === "teams"
+                    ? "common.teams"
+                    : "common.players",
+                ),
+              ])}
         </motion.p>
       ) : null}
 
@@ -49,19 +62,18 @@ export function NewGameFooter() {
           <div
             className="timerPanel__modes"
             role="tablist"
-            aria-label="Timer mode"
+            aria-label={translate("copy.timerMode")}
           >
             <TimerChoice
               active={timerMode === "countdown"}
               onClick={() => setTimerMode("countdown")}
             >
-              Countdown
-            </TimerChoice>
+              {translate("copy.countdown")}</TimerChoice>
             <TimerChoice
               active={timerMode === "stopwatch"}
               onClick={() => setTimerMode("stopwatch")}
             >
-              Stopwatch
+              {translate("copy.stopwatch")}
             </TimerChoice>
           </div>
           {timerMode === "countdown" ? (
@@ -80,12 +92,12 @@ export function NewGameFooter() {
               </div>
               <div className="timerPanel__inputs">
                 <TimerInput
-                  label="Min"
+                  label={translate("copy.min")}
                   value={timerMinutes}
                   onChange={setTimerMinutes}
                 />
                 <TimerInput
-                  label="Sec"
+                  label={translate("copy.sec")}
                   value={timerSeconds}
                   onChange={setTimerSeconds}
                   max={59}
@@ -94,7 +106,7 @@ export function NewGameFooter() {
             </div>
           ) : (
             <div className="timerPanel__note">
-              Stopwatch starts at 0 and counts up.
+              {translate("copy.stopwatchStartsAt0AndCountsUp")}
             </div>
           )}
         </motion.div>

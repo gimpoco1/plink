@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import {
   Area,
   AreaChart,
@@ -65,9 +66,11 @@ export function StatsTrendCharts(props: Props) {
     <>
       <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader
-          title={
-            activeKind === "players" ? "Wins over time" : "Team wins over time"
-          }
+          title={translate(
+            activeKind === "players"
+              ? "copy.winsOverTime"
+              : "copy.teamWinsOverTime",
+          )}
           count={winsComparisonTrend.length}
         />
         <ChartGamePicker
@@ -164,13 +167,15 @@ export function StatsTrendCharts(props: Props) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="emptyMsg">No sessions tracked yet.</div>
+          <div className="emptyMsg">
+            {translate("copy.noSessionsTrackedYet")}
+          </div>
         )}
       </LockedChartCard>
 
       <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader
-          title="Running win rate"
+          title={translate("copy.runningWinRate")}
           count={rateComparisonTrend.length}
         />
         <ChartGamePicker
@@ -252,7 +257,7 @@ export function StatsTrendCharts(props: Props) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="emptyMsg">No trend yet.</div>
+          <div className="emptyMsg">{translate("copy.noTrendYet")}</div>
         )}
       </LockedChartCard>
     </>

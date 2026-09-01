@@ -1,7 +1,10 @@
 import type { Game, Player, PlayerProfile } from "../types";
 
 function getReplayNameKey(name: string) {
-  return name.trim().replace(/\s+#\d+$/i, "").toLocaleLowerCase();
+  return name
+    .trim()
+    .replace(/\s+#\d+$/i, "")
+    .toLocaleLowerCase();
 }
 
 export function getSavedReplayProfile(

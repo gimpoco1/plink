@@ -1920,6 +1920,12 @@
   .newSessionOptions {
     grid-template-columns: repeat(14, minmax(0, 1fr));
   }
+  .modeCard__copy strong {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .targetControl__value {
     font-size: 21px;
   }
@@ -1963,9 +1969,17 @@
     max-width: none;
   }
   .modeCard {
-    min-height: 48px;
+    min-height: 58px;
+    align-items: center;
     gap: 8px;
     padding: 8px 9px;
+  }
+  .modeCard__copy strong {
+    font-size: 11.5px;
+    line-height: 1.15;
+  }
+  .modeCard__copy span {
+    display: none;
   }
   .participantModeSwitch {
     width: 100%;
@@ -1974,9 +1988,6 @@
   }
   .participantModeSwitch__option {
     min-width: 0;
-  }
-  .modeCard__copy span {
-    display: none;
   }
   .targetControl__head {
     grid-template-columns: minmax(0, 1fr) minmax(3.8ch, 0.7fr);

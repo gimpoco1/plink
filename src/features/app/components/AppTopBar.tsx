@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CircleUser } from "lucide-react";
@@ -128,7 +129,7 @@ export function AppTopBar() {
     setCommentPreview({
       authorName:
         latestComment.authorUserId === comments.currentAuthorId
-          ? "You"
+          ? translate("copy.you")
           : latestComment.authorName,
       body: latestComment.body,
     });
@@ -181,14 +182,22 @@ export function AppTopBar() {
               : undefined
           }
           backLabel={
-            view === "history" ? t("topbar.backToGame") : t("topbar.backToGames")
+            view === "history"
+              ? t("topbar.backToGame")
+              : t("topbar.backToGames")
           }
           showBackButton={view !== "home" && !!currentGame}
           showActionMenu={view === "game" && !!currentGame}
           primaryActionLabel={
-            view === "home" && homeTab !== "home" && homeTab !== "players"
+            view === "home" &&
+            !!session &&
+            homeTab !== "home" &&
+            homeTab !== "players"
               ? t("topbar.newGame")
               : undefined
+          }
+          showLanguageSelector={
+            view === "home" && !authLoading && !session
           }
           authLabel={
             view === "home"
@@ -284,9 +293,9 @@ export function AppTopBar() {
               ? async () => {
                   if (!currentGame) return;
                   const ok = await confirmRef.current?.confirm({
-                    title: "Reset game",
-                    message: "Reset all scores to 0?",
-                    confirmText: "Reset",
+                    title: translate("copy.resetGame"),
+                    message: translate("copy.resetAllScoresTo0"),
+                    confirmText: translate("copy.reset"),
                     tone: "danger",
                   });
                   if (!ok) return;

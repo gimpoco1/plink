@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Trash2 } from "lucide-react";
 import type { GameTeam, PlayerProfile } from "../../../types";
 import { SwipeableCard } from "../../../components/SwipeableCard/SwipeableCard";
@@ -20,15 +21,22 @@ export type TeamCardData = {
 export function TeamsList() {
   const { canUseTeams, teams } = usePlayersScreenContext();
   return (
-    <section className="teamsSection" aria-label="Saved teams">
+    <section
+      className="teamsSection"
+      aria-label={translate("copy.savedTeams")}
+    >
       {!teams.length ? (
         <div className="emptyMsg">
           {canUseTeams
-            ? "No teams yet."
+            ? translate("copy.noTeamsYet")
             : "Upgrade to Pro to create saved teams."}
         </div>
       ) : (
-        <div className="teamsList" role="list" aria-label="Teams">
+        <div
+          className="teamsList"
+          role="list"
+          aria-label={translate("home.teams")}
+        >
           {teams.map((team) => (
             <TeamCard key={team.id} team={team} />
           ))}
@@ -83,11 +91,10 @@ function TeamCard({ team }: { team: GameTeam }) {
             model.onDeleteTeam(team.id);
             if (isEditing) model.closeTeamEditor();
           }}
-          aria-label={`Delete team ${team.name}`}
+          aria-label={translate("dynamic.deleteTeam", [team.name])}
         >
           <Trash2 size={20} strokeWidth={2.2} aria-hidden="true" />
-          Delete
-        </button>
+          {translate("copy.delete")}</button>
       )}
     >
       {() =>

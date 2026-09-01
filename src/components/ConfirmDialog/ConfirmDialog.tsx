@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { ConfirmDialogBody } from "./ConfirmDialogBody";
 import {
@@ -35,8 +36,8 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
       bodyTitle: "",
       message: "",
       messageCase: "default",
-      confirmText: "Confirm",
-      cancelText: "Cancel",
+      confirmText: translate("copy.confirm"),
+      cancelText: translate("copy.cancel"),
       hideCancelAction: false,
       extraActionText: "",
       extraActionDescription: "",
@@ -156,9 +157,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
             playerSelectionResolverRef.current = resolve;
           });
         },
-        selectPlayers: async (
-          next: ConfirmPlayerMultiSelectionOptions,
-        ) => {
+        selectPlayers: async (next: ConfirmPlayerMultiSelectionOptions) => {
           setPromptOptions(null);
           setIsPlayerSelection(false);
           setIsPlayerMultiSelection(true);
@@ -263,9 +262,9 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                     ? closePlayerSelection(null)
                     : isPlayerMultiSelection
                       ? closePlayerMultiSelection(null)
-                    : closeWith("cancel")
+                      : closeWith("cancel")
               }
-              aria-label="Close"
+              aria-label={translate("copy.close")}
             >
               ×
             </button>
@@ -308,12 +307,12 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 type="button"
                 onClick={() =>
                   isPrompt
-                  ? closePrompt(null)
-                  : isPlayerSelection
-                    ? closePlayerSelection(null)
-                    : isPlayerMultiSelection
-                      ? closePlayerMultiSelection(null)
-                    : closeWith("cancel")
+                    ? closePrompt(null)
+                    : isPlayerSelection
+                      ? closePlayerSelection(null)
+                      : isPlayerMultiSelection
+                        ? closePlayerMultiSelection(null)
+                        : closeWith("cancel")
                 }
               >
                 {options.cancelText ?? "Cancel"}

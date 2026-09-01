@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { BarChart3, Check, History, LockKeyhole, Mail } from "lucide-react";
 import { useAuthDialogContext } from "./AuthDialogContext";
 
@@ -23,40 +24,39 @@ export function SessionPassOffer() {
   return (
     <>
       <div className="authDialog__sessionPassDivider" aria-hidden="true">
-        <span>Or choose sessions only</span>
+        <span>{translate("copy.orChooseSessionsOnly")}</span>
       </div>
       <section className="authDialog__sessionPass">
         <div className="authDialog__sessionPassHeading">
           <div>
             <span className="authDialog__sessionPassEyebrow">
-              One-time · Sessions only
+              {translate("copy.oneTimeSessionsOnly")}
             </span>
-            <strong>Session Pass</strong>
+            <strong>{translate("copy.sessionPass")}</strong>
           </div>
         </div>
 
         <p className="authDialog__sessionPassValue">
-          Keep more game history so player Stats are based on more of the games
-          they’ve played.
+          {translate("copy.keepMoreGameHistorySoPlayerStatsAreBasedOnMoreOf")}
         </p>
 
         <div className="authDialog__sessionPassBenefits">
           <span>
             <History size={16} strokeWidth={2.3} aria-hidden="true" />
-            Store up to 100 owned sessions
+            {translate("copy.storeUpTo100OwnedSessions")}
           </span>
           <span>
             <BarChart3 size={16} strokeWidth={2.3} aria-hidden="true" />
-            More complete Stats history
+            {translate("copy.moreCompleteStatsHistory")}
           </span>
         </div>
 
         <div className="authDialog__sessionPassLimitations">
           <LockKeyhole size={18} strokeWidth={2.3} aria-hidden="true" />
           <div>
-            <strong>Does not unlock Pro</strong>
+            <strong>{translate("copy.doesNotUnlockPro")}</strong>
             <span>
-              Teams, advanced Stats, and other Pro features stay locked.
+              {translate("copy.teamsAdvancedStatsAndOtherProFeaturesStayLocked")}
             </span>
           </div>
         </div>
@@ -65,7 +65,7 @@ export function SessionPassOffer() {
           <div className="authDialog__sessionPassActiveGroup">
             <div className="authDialog__sessionPassActive">
               <Check size={17} strokeWidth={2.6} aria-hidden="true" />
-              Session Pass active · Account remains Free
+              {translate("copy.sessionPassActiveAccountRemainsFree")}
             </div>
             <a
               className="authDialog__sessionPassSupport"
@@ -73,8 +73,8 @@ export function SessionPassOffer() {
             >
               <Mail size={17} strokeWidth={2.3} aria-hidden="true" />
               <span>
-                Need more sessions?
-                <strong>Contact support</strong>
+                {translate("copy.needMoreSessions")}
+                <strong>{translate("copy.contactSupport")}</strong>
               </span>
             </a>
           </div>
@@ -90,12 +90,12 @@ export function SessionPassOffer() {
             }
           >
             {busy
-              ? "Working..."
+              ? translate("copy.working")
               : appleSessionPassError
-                ? "Try App Store again"
+                ? translate("copy.tryAppStoreAgain")
                 : appleSessionPassLoading
-                  ? "Connecting to App Store…"
-                  : `Buy Session Pass${price ? ` · ${price}` : ""}`}
+                  ? translate("copy.connectingToAppStore")
+                  : translate("dynamic.buySessionPass", [price ? ` · ${price}` : ""])}
           </button>
         )}
 

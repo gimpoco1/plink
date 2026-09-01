@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { motion } from "framer-motion";
 import { ArrowDownUp, Dices, Flag, Timer, Trophy } from "lucide-react";
 import { useNewGameCardContext } from "./NewGameCardContext";
@@ -30,8 +31,8 @@ export function NewGameRules() {
     >
       <ModeButton
         icon={<ArrowDownUp size={22} strokeWidth={2.3} />}
-        title="Lowest wins"
-        description="Lowest score wins."
+        title={translate("copy.lowestWins")}
+        description={translate("copy.lowestScoreWins")}
         active={winCondition === "lowest"}
         onClick={() => {
           setScoreDirection("up");
@@ -42,15 +43,15 @@ export function NewGameRules() {
       />
       <ModeButton
         icon={<Flag size={22} strokeWidth={2.3} />}
-        title="Manual finish"
-        description="End from the game menu."
+        title={translate("copy.manualFinish")}
+        description={translate("copy.endFromTheGameMenu")}
         active={manualEndOnly}
         onClick={() => setManualEndOnly((value) => !value)}
       />
       <ModeButton
         icon={<Trophy size={22} strokeWidth={2.3} />}
-        title="Win by 2"
-        description="Leader needs a 2 point gap."
+        title={translate("copy.winBy2")}
+        description={translate("copy.leaderNeedsA2PointGap")}
         active={winByTwo}
         onClick={() => {
           if (winCondition === "reach_zero") return;
@@ -60,21 +61,21 @@ export function NewGameRules() {
       />
       <ModeButton
         icon={<Timer size={22} strokeWidth={2.3} />}
-        title="Timer"
+        title={translate("copy.timer")}
         description={
           timerEnabled
             ? timerMode === "stopwatch"
-              ? "Stopwatch active"
+              ? translate("copy.stopwatchActive")
               : `${timerMinutes || "0"}m ${timerSeconds || "0"}s`
-            : "No timer for this game."
+            : translate("copy.noTimerForThisGame")
         }
         active={timerEnabled}
         onClick={() => setTimerEnabled((value) => !value)}
       />
       <ModeButton
         icon={<Dices size={22} strokeWidth={2.3} />}
-        title="Dice"
-        description={diceEnabled ? "Ready during the game." : "No dice roller."}
+        title={translate("copy.dice")}
+        description={diceEnabled ? translate("copy.readyDuringTheGame") : translate("copy.noDiceRoller")}
         active={diceEnabled}
         onClick={() => setDiceEnabled((value) => !value)}
       />

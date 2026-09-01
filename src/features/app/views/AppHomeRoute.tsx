@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { motion } from "framer-motion";
 import { DashboardScreen } from "../../../screens/DashboardScreen";
 import { useAppContext } from "../context/AppContext";
@@ -117,13 +118,15 @@ export function AppHomeRoute() {
         onDeleteProfile={async (profileId) => {
           const profile = profiles.find((p) => p.id === profileId);
           if (profile?.isAccountPlayer) {
-            showToast("Your account player cannot be deleted.");
+            showToast(translate("copy.yourAccountPlayerCannotBeDeleted"));
             return;
           }
           const ok = await confirmRef.current?.confirm({
-            title: "Delete saved player",
-            message: `Delete "${profile?.name || "this player"}"? They will be removed from your list.`,
-            confirmText: "Delete",
+            title: translate("copy.deleteSavedPlayer"),
+            message: translate("dynamic.deleteTheyWillBeRemovedFromYourList", [
+              profile?.name || translate("common.thisPlayer"),
+            ]),
+            confirmText: translate("copy.delete"),
             tone: "danger",
           });
           if (ok) {
@@ -137,9 +140,11 @@ export function AppHomeRoute() {
         onDeleteTeam={async (teamId) => {
           const team = teams.find((item) => item.id === teamId);
           const ok = await confirmRef.current?.confirm({
-            title: "Delete team",
-            message: `Delete "${team?.name ?? "this team"}"? This removes the team only. Saved players will stay in your roster.`,
-            confirmText: "Delete",
+            title: translate("copy.deleteTeam"),
+            message: translate("dynamic.deleteThisRemovesTheTeamOnlySavedPlayersWillStayInYour", [
+              team?.name ?? translate("common.thisTeam"),
+            ]),
+            confirmText: translate("copy.delete"),
             tone: "danger",
           });
           if (ok) deleteSavedTeam(teamId);
@@ -172,12 +177,12 @@ export function AppHomeRoute() {
           const g = games.find((x) => x.id === gameId);
           if (!g) return;
           const nextName = await confirmRef.current?.prompt({
-            title: "Rename session",
+            title: translate("copy.renameSession"),
             message:
-              "Choose a clear name so this session is easy to find later.",
+              translate("copy.chooseAClearNameSoThisSessionIsEasyToFindLater"),
             initialValue: g.name,
-            placeholder: "Session name",
-            confirmText: "Save name",
+            placeholder: translate("copy.sessionName"),
+            confirmText: translate("copy.saveName"),
             maxLength: 28,
           });
           if (nextName) {
@@ -191,11 +196,11 @@ export function AppHomeRoute() {
         }}
         onDelete={async (gameId) => {
           const g = games.find((x) => x.id === gameId);
-          const label = g ? g.name : "this game";
+          const label = g ? g.name : translate("common.thisGame");
           const ok = await confirmRef.current?.confirm({
-            title: "Delete game",
-            message: `Delete "${label}"? This removes the game and its scores.`,
-            confirmText: "Delete",
+            title: translate("copy.deleteGame"),
+            message: translate("dynamic.deleteThisRemovesTheGameAndItsScores", [label]),
+            confirmText: translate("copy.delete"),
             tone: "danger",
           });
           if (!ok) return;

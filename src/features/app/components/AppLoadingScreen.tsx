@@ -1,10 +1,11 @@
+import { translate } from "../../../i18n/translate";
 export function AppLoadingScreen() {
   return (
     <div
       className="appLoading"
       role="status"
       aria-live="polite"
-      aria-label="Loading"
+      aria-label={translate("copy.loading")}
     >
       <div className="appLoading__inner">
         <div className="appLoading__mark" aria-hidden="true">

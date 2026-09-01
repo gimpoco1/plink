@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import type { ProfileStats, TeamStats } from "../../utils/profileStats";
 import type { WinCondition } from "../../types";
 import { Medal, Share2, Target } from "lucide-react";
@@ -93,16 +94,16 @@ export function WinCelebration(props: WinCelebrationProps) {
           </div>
           <div className="winFx__eyebrow">
             {isDraw
-              ? "Draw"
+              ? translate("copy.draw")
               : isCompletedWithoutWinner || isSingleParticipantCompletion
-                ? "Finished"
-                : "Winner"}
+                ? translate("copy.finished")
+                : translate("copy.winner")}
           </div>
           <div className="winFx__name">
             {isDraw
-              ? "Draw game"
+              ? translate("copy.drawGame")
               : isCompletedWithoutWinner
-                ? "No winner"
+                ? translate("copy.noWinner")
                 : winnerName}
           </div>
           <div className="winFx__titleBlock">
@@ -150,7 +151,7 @@ export function WinCelebration(props: WinCelebrationProps) {
                 {statsBadgeDate ? (
                   <>
                     <span className="winFx__playerStatsBadgeLabel">
-                      Last updated:
+                      {translate("copy.lastUpdated")}
                     </span>
                     <span>{statsBadgeDate}</span>
                   </>
@@ -174,11 +175,11 @@ export function WinCelebration(props: WinCelebrationProps) {
               </div>
               <div className="winFx__playerStat">
                 <strong>{winnerStats.gamesPlayed}</strong>
-                <span>Sessions</span>
+                <span>{translate("tabs.sessions")}</span>
               </div>
               <div className="winFx__playerStat">
                 <strong>{winnerStats.topWonGame?.name ?? "—"}</strong>
-                <span>Top game</span>
+                <span>{translate("copy.topGame")}</span>
               </div>
             </div>
           </section>
@@ -195,12 +196,12 @@ export function WinCelebration(props: WinCelebrationProps) {
               <Share2 size={18} strokeWidth={2.5} aria-hidden="true" />
               <span>
                 {shareStatus === "preparing"
-                  ? "Creating card"
+                  ? translate("copy.creatingCard")
                   : shareStatus === "copied"
-                    ? "Copied"
+                    ? translate("copy.copied")
                     : shareStatus === "error"
-                      ? "Share failed"
-                      : "Share win"}
+                      ? translate("copy.shareFailed")
+                      : translate("copy.shareWin")}
               </span>
             </button>
           ) : null}
@@ -209,22 +210,20 @@ export function WinCelebration(props: WinCelebrationProps) {
             className="winFx__btn winFx__btn--ghost"
             onClick={onDismiss}
           >
-            Continue
-          </button>
+            {translate("copy.continue")}</button>
           <button
             type="button"
             className="winFx__btn winFx__btn--ghost"
             onClick={onBackToHome}
           >
-            Back to sessions
+            {translate("copy.backToSessions")}
           </button>
           <button
             type="button"
             className="winFx__btn winFx__btn--primary"
             onClick={onReplay}
           >
-            Play again
-          </button>
+            {translate("copy.playAgain")}</button>
         </div>
       </div>
 

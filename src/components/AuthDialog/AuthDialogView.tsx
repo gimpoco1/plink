@@ -1,10 +1,10 @@
+import { translate } from "../../i18n/translate";
 import { useEffect } from "react";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { AuthAccountPanel } from "./AuthAccountPanel";
 import { useAuthDialogContext } from "./AuthDialogContext";
 import { AuthPasswordRecoveryPanel } from "./AuthPasswordRecoveryPanel";
 import { AuthSignedOutPanel } from "./AuthSignedOutPanel";
-import { LanguageSelector } from "../LanguageSelector/LanguageSelector";
 
 export function AuthDialogView() {
   const {
@@ -51,9 +51,13 @@ export function AuthDialogView() {
       <div className="dialog__form authDialog__form">
         <div className="dialog__head">
           <div className="authDialog__headCopy dialog__titleWrap">
-            <div className="dialog__eyebrow">Profile and sync</div>
+            {session ? (
+              <div className="dialog__eyebrow">
+                {translate("copy.profileAndSettings")}
+              </div>
+            ) : null}
             <div className="dialog__title">
-              {recoveryMode ? "Reset password" : "Account"}
+              {recoveryMode ? "Reset password" : translate("topbar.account")}
             </div>
           </div>
           <button
@@ -63,12 +67,11 @@ export function AuthDialogView() {
               onOpenChange?.(false);
               dialogRef.current?.close();
             }}
-            aria-label="Close"
+            aria-label={translate("copy.close")}
           >
             ×
           </button>
         </div>
-        {!recoveryMode ? <LanguageSelector /> : null}
         {dialogToast ? (
           <div
             className={`authDialog__toast authDialog__toast--${dialogToast.tone}`}
@@ -90,9 +93,10 @@ export function AuthDialogView() {
         {!hasSupabaseConfig ? (
           <div className="authDialog__panel">
             <p className="authDialog__text">
-              Configure <code>VITE_SUPABASE_URL</code> and{" "}
-              <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to enable login and
-              cloud sync.
+              {translate("copy.configure")} <code>VITE_SUPABASE_URL</code>{" "}
+              {translate("copy.and")}{" "}
+              <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>{" "}
+              {translate("copy.enableLoginAndCloudSync")}
             </p>
           </div>
         ) : recoveryMode ? (

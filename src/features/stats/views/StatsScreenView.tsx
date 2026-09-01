@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { LockedFrame } from "../../../components/HomeLockedState/LockedFrame";
 import { StatsSkeleton } from "../../../components/HomeLockedState/StatsSkeleton";
 import { useStatsScreenContext } from "../context/StatsScreenContext";
@@ -14,15 +15,17 @@ export function StatsScreenView() {
     >
       <div className="tabHeader">
         <div>
-          <h2 className="tabTitle">Stats</h2>
+          <h2 className="tabTitle">{translate("tabs.stats")}</h2>
           <p className="tabSubtitle">
-            Pick a player or team and compare their form, wins, and trends over
-            time.
+            {translate("copy.pickAPlayerOrTeamAndCompareTheirFormWinsAndTrends")}
           </p>
         </div>
       </div>
       {!isAuthenticated ? (
-        <LockedFrame title="Sign in to unlock stats." onSignIn={onOpenAuth}>
+        <LockedFrame
+          title={translate("copy.signInToUnlockStats")}
+          onSignIn={onOpenAuth}
+        >
           <StatsSkeleton />
         </LockedFrame>
       ) : (

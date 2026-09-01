@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { avatarStyleFor } from "../../../utils/color";
 import { getInitials } from "../../../utils/text";
 import { ColorPicker } from "./PlayersScreenParts";
@@ -24,7 +25,7 @@ export function NewPlayerForm() {
         <input
           autoFocus
           className="editInput createCard__input"
-          placeholder="Player Name"
+          placeholder={translate("copy.playerName2")}
           value={newName}
           onChange={(event) => setNewName(event.target.value)}
           onKeyDown={(event) => {
@@ -37,7 +38,7 @@ export function NewPlayerForm() {
         <ColorPicker
           value={newColor}
           onChange={setNewColor}
-          label="new player"
+          label={translate("copy.newPlayer")}
         />
       </div>
       <div className="createCard__actions">
@@ -45,14 +46,14 @@ export function NewPlayerForm() {
           className="btn btn--ghost btn--sm"
           onClick={() => onAddingPlayerChange(false)}
         >
-          Cancel
+          {translate("copy.cancel")}
         </button>
         <button
           className="btn btn--primary btn--sm"
           disabled={!newName.trim()}
           onClick={createProfile}
         >
-          Create
+          {translate("copy.create")}
         </button>
       </div>
     </div>

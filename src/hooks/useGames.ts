@@ -1,3 +1,4 @@
+import { translate } from "../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -229,7 +230,7 @@ function getSyncErrorMessage(error: unknown) {
     const value = (error as { message?: unknown }).message;
     if (typeof value === "string" && value) message = value;
   }
-  if (!message) return "Unknown sync error";
+  if (!message) return translate("copy.unknownSyncError");
   return message
     .replace(/collaborators/gi, "invited players")
     .replace(/collaborator/gi, "invited player")
@@ -253,8 +254,8 @@ function getRemovedGamesNotice(removedGames: Game[]) {
     return `You've been removed from ${removedGames[0].name}`;
   }
   return removedGames.length === 1
-    ? `"${removedGames[0].name}" was removed from your account.`
-    : `${removedGames.length} games were removed from your account.`;
+    ? translate("dynamic.wasRemovedFromYourAccount", [removedGames[0].name])
+    : translate("dynamic.gamesWereRemovedFromYourAccount", [removedGames.length]);
 }
 
 function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
@@ -356,11 +357,7 @@ export function useGames(
 
   useEffect(() => {
     let alive = true;
-    if (
-      !sessionUserId ||
-      !remoteReady ||
-      remoteUserId !== sessionUserId
-    ) {
+    if (!sessionUserId || !remoteReady || remoteUserId !== sessionUserId) {
       if (!sessionUserId) setPastInvitedPlayers([]);
       return () => {
         alive = false;
@@ -379,12 +376,7 @@ export function useGames(
     return () => {
       alive = false;
     };
-  }, [
-    pastInvitedPlayersRefreshTick,
-    remoteReady,
-    remoteUserId,
-    sessionUserId,
-  ]);
+  }, [pastInvitedPlayersRefreshTick, remoteReady, remoteUserId, sessionUserId]);
 
   useEffect(() => {
     let alive = true;
@@ -416,7 +408,7 @@ export function useGames(
             });
           } else if (changed.length > 0) {
             setSyncNotice({
-              message: "Your games were updated.",
+              message: translate("copy.yourGamesWereUpdated"),
               tone: "default",
             });
           }
@@ -480,7 +472,7 @@ export function useGames(
         setCurrentGameId(null);
         setRemoteUserId(null);
         setSyncNotice({
-          message: `Could not load games: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotLoadGames", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         setRemoteReady(true);
@@ -519,7 +511,9 @@ export function useGames(
       setCurrentGameId((current) =>
         current === notification.gameId ? null : current,
       );
-      showGameToast(`You've been removed from ${notification.gameName}`);
+      showGameToast(
+        translate("dynamic.youVeBeenRemovedFrom", [notification.gameName]),
+      );
       void dismissRemoteGameRemovalNotification(
         activeUserId,
         notification.id,
@@ -556,9 +550,8 @@ export function useGames(
 
     async function refreshJoinNotifications() {
       try {
-        const notifications = await loadRemoteGameJoinNotifications(
-          activeUserId,
-        );
+        const notifications =
+          await loadRemoteGameJoinNotifications(activeUserId);
         if (!alive) return;
         notifications.forEach(handleJoinNotification);
       } catch {
@@ -568,9 +561,8 @@ export function useGames(
 
     async function refreshRemovalNotifications() {
       try {
-        const notifications = await loadRemoteGameRemovalNotifications(
-          activeUserId,
-        );
+        const notifications =
+          await loadRemoteGameRemovalNotifications(activeUserId);
         if (!alive) return;
         notifications.forEach(handleRemovalNotification);
       } catch {
@@ -595,14 +587,11 @@ export function useGames(
           );
           const reconciledRemoteGames = remoteGames.map((remoteGame) => {
             const previousGame = previousById.get(remoteGame.id);
-            return previousGame &&
-              previousGame.updatedAt > remoteGame.updatedAt
+            return previousGame && previousGame.updatedAt > remoteGame.updatedAt
               ? previousGame
               : remoteGame;
           });
-          const remoteSignature = getGameSyncSignature(
-            reconciledRemoteGames,
-          );
+          const remoteSignature = getGameSyncSignature(reconciledRemoteGames);
           const previousSignature = getGameSyncSignature(previousGames);
           const lastSyncedSignature = remoteSignatureRef.current;
 
@@ -639,8 +628,7 @@ export function useGames(
             );
             return remote.players.some(
               (player) =>
-                !!player.profileId &&
-                !previousProfileIds.has(player.profileId),
+                !!player.profileId && !previousProfileIds.has(player.profileId),
             );
           });
           if (removed.length > 0) {
@@ -650,7 +638,7 @@ export function useGames(
             });
           } else if (changed.length > 0 && !includesJoinedPlayer) {
             setSyncNotice({
-              message: "Your games were updated.",
+              message: translate("copy.yourGamesWereUpdated"),
               tone: "default",
             });
           }
@@ -727,10 +715,7 @@ export function useGames(
           table: "games",
         },
         (payload) => {
-          const changedGame = parseRemoteGameChange(
-            payload.new,
-            activeUserId,
-          );
+          const changedGame = parseRemoteGameChange(payload.new, activeUserId);
           if (changedGame) {
             remoteSignatureRef.current = markGameVersionSynced(
               remoteSignatureRef.current,
@@ -771,9 +756,7 @@ export function useGames(
           refreshPastLinkedPlayers();
         },
       );
-      void channel.subscribe(
-        createRealtimeReconnectHandler(refreshAll),
-      );
+      void channel.subscribe(createRealtimeReconnectHandler(refreshAll));
     }
 
     void refreshJoinNotifications();
@@ -868,7 +851,7 @@ export function useGames(
         failedSaveNoticeSignatureRef.current = nextSignature;
         console.error("Failed to save games to Supabase", error);
         setSyncNotice({
-          message: `Could not save games: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotSaveGames", [getSyncErrorMessage(error)]),
           tone: "error",
         });
       })
@@ -934,8 +917,7 @@ export function useGames(
 
     const cacheKey = `${sessionUserId}:${currentGame.id}`;
     const cachedPlayers = pastLinkedPlayersCacheRef.current.get(cacheKey);
-    const changedGame =
-      pastLinkedPlayersGameIdRef.current !== currentGame.id;
+    const changedGame = pastLinkedPlayersGameIdRef.current !== currentGame.id;
     pastLinkedPlayersGameIdRef.current = currentGame.id;
     if (cachedPlayers) {
       setPastLinkedPlayers(cachedPlayers);
@@ -1112,7 +1094,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to delete the shared game", error);
         setSyncNotice({
-          message: `Could not delete game: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotDeleteGame", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -1151,10 +1133,7 @@ export function useGames(
       games.map((game) => game.name),
     ).toUpperCase();
 
-    if (
-      original.isShared &&
-      sessionUserId
-    ) {
+    if (original.isShared && sessionUserId) {
       try {
         const replayedGame = await replayRemoteSharedGame(
           sessionUserId,
@@ -1175,7 +1154,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to replay the shared game", error);
         setSyncNotice({
-          message: `Could not start game: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotStartGame", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return null;
@@ -1231,7 +1210,7 @@ export function useGames(
     } catch (error) {
       console.error("Failed to load replay invite candidates", error);
       setSyncNotice({
-        message: `Could not prepare game: ${getSyncErrorMessage(error)}`,
+        message: translate("dynamic.couldNotPrepareGame", [getSyncErrorMessage(error)]),
         tone: "error",
       });
       return null;
@@ -1260,7 +1239,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to rename the shared game", error);
         setSyncNotice({
-          message: `Could not rename game: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotRenameGame", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -1343,7 +1322,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to add a player to the shared game", error);
         setSyncNotice({
-          message: `Could not add player: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotAddPlayer", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -1376,18 +1355,15 @@ export function useGames(
         const removedPlayer = game.players.find(
           (player) => player.id === playerId,
         );
-        const removedInvitedUserId =
-          game.invitedUserIdsByPlayerId?.[playerId];
+        const removedInvitedUserId = game.invitedUserIdsByPlayerId?.[playerId];
         const remoteGame = await removeRemoteSharedGamePlayer(
           sessionUserId,
           gameId,
           playerId,
         );
-        const removedLinkedPlayer =
-          removedPlayer?.joinedViaInvite === true;
+        const removedLinkedPlayer = removedPlayer?.joinedViaInvite === true;
         const remainingLinkedPlayers = game.players.filter(
-          (player) =>
-            player.id !== playerId && player.joinedViaInvite === true,
+          (player) => player.id !== playerId && player.joinedViaInvite === true,
         ).length;
         const remainingInvitedUserIds = Object.fromEntries(
           Object.entries(game.invitedUserIdsByPlayerId ?? {}).filter(
@@ -1441,7 +1417,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to remove the shared game player", error);
         setSyncNotice({
-          message: `Could not remove player: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotRemovePlayer", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -1478,14 +1454,12 @@ export function useGames(
         remoteSignatureRef.current,
         updatedGame,
       );
-      setGames((previousGames) =>
-        mergeGamesById(previousGames, [updatedGame]),
-      );
+      setGames((previousGames) => mergeGamesById(previousGames, [updatedGame]));
       return true;
     } catch (error) {
       console.error("Failed to merge the shared game players", error);
       setSyncNotice({
-        message: `Could not merge players: ${getSyncErrorMessage(error)}`,
+        message: translate("dynamic.couldNotMergePlayers", [getSyncErrorMessage(error)]),
         tone: "error",
       });
       return false;
@@ -1507,9 +1481,7 @@ export function useGames(
         remoteSignatureRef.current,
         updatedGame,
       );
-      setGames((previousGames) =>
-        mergeGamesById(previousGames, [updatedGame]),
-      );
+      setGames((previousGames) => mergeGamesById(previousGames, [updatedGame]));
       setPastLinkedPlayers((players) =>
         players.filter((player) => player.userId !== collaboratorUserId),
       );
@@ -1527,7 +1499,7 @@ export function useGames(
     } catch (error) {
       console.error("Failed to add the past linked player", error);
       setSyncNotice({
-        message: `Could not add invited player: ${getSyncErrorMessage(error)}`,
+        message: translate("dynamic.couldNotAddInvitedPlayer", [getSyncErrorMessage(error)]),
         tone: "error",
       });
       return false;
@@ -1587,9 +1559,7 @@ export function useGames(
         remoteSignatureRef.current,
         updatedGame,
       );
-      setGames((previousGames) =>
-        mergeGamesById(previousGames, [updatedGame]),
-      );
+      setGames((previousGames) => mergeGamesById(previousGames, [updatedGame]));
       return true;
     } catch (error) {
       remoteSignatureRef.current = markGameDeletedSynced(
@@ -1598,7 +1568,7 @@ export function useGames(
       );
       console.error("Failed to add invited players to the new game", error);
       setSyncNotice({
-        message: `Could not add invited players: ${getSyncErrorMessage(error)}`,
+        message: translate("dynamic.couldNotAddInvitedPlayers", [getSyncErrorMessage(error)]),
         tone: "error",
       });
       return false;
@@ -1633,7 +1603,7 @@ export function useGames(
     } catch (error) {
       console.error("Failed to check invited player permissions", error);
       setSyncNotice({
-        message: `Could not check invite permissions: ${getSyncErrorMessage(error)}`,
+        message: translate("dynamic.couldNotCheckInvitePermissions", [getSyncErrorMessage(error)]),
         tone: "error",
       });
       return { status: "error", blockedUserIds: [] };
@@ -1649,7 +1619,9 @@ export function useGames(
   ) {
     const now = Date.now();
     const game = games.find((item) => item.id === gameId);
-    const currentPlayer = game?.players.find((player) => player.id === playerId);
+    const currentPlayer = game?.players.find(
+      (player) => player.id === playerId,
+    );
     if (!currentPlayer) return false;
 
     if (game?.isShared && sessionUserId) {
@@ -1695,7 +1667,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update the shared game player", error);
         setSyncNotice({
-          message: `Could not update player: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotUpdatePlayer", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -1841,7 +1813,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to reset the shared game", error);
         setSyncNotice({
-          message: `Could not reset game: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotResetGame", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -1885,7 +1857,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update the shared game score", error);
         setSyncNotice({
-          message: `Could not update score: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotUpdateScore", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -1983,9 +1955,7 @@ export function useGames(
       remoteSignatureRef.current,
       joinedGame,
     );
-    setGames((currentGames) =>
-      mergeGamesById(currentGames, [joinedGame]),
-    );
+    setGames((currentGames) => mergeGamesById(currentGames, [joinedGame]));
     setCurrentGameId(gameId);
     return joinedGame;
   }
@@ -2061,7 +2031,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update the shared game settings", error);
         setSyncNotice({
-          message: `Could not update settings: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotUpdateSettings", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -2108,10 +2078,7 @@ export function useGames(
     return true;
   }
 
-  async function setCollaboratorsCanManage(
-    gameId: string,
-    enabled: boolean,
-  ) {
+  async function setCollaboratorsCanManage(gameId: string, enabled: boolean) {
     const game = games.find((item) => item.id === gameId);
     if (game?.isShared && sessionUserId) {
       if (game.accessRole === "collaborator") return false;
@@ -2133,7 +2100,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update collaborator permissions", error);
         setSyncNotice({
-          message: `Could not update permissions: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotUpdatePermissions", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -2175,7 +2142,7 @@ export function useGames(
       } catch (error) {
         console.error("Failed to end the shared game", error);
         setSyncNotice({
-          message: `Could not end game: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotEndGame", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         return false;
@@ -2200,10 +2167,7 @@ export function useGames(
     games.forEach((game) => {
       if (!game.isShared || game.accessRole === "collaborator") return;
       game.players.forEach((player) => {
-        if (
-          player.profileId !== profileId ||
-          player.joinedViaInvite === true
-        ) {
+        if (player.profileId !== profileId || player.joinedViaInvite === true) {
           return;
         }
         void updatePlayer(game.id, player.id, updates);

@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { EntitySwatch } from "./StatsScreenParts";
 import { getDisplayName } from "../utils/statsUtils";
 import { avatarStyleFor } from "../../../utils/color";
@@ -26,9 +27,9 @@ export function StatsTeamFocusCard({
           <span className="statsEyebrow">{eyebrow}</span>
           <h3>{getDisplayName(report)}</h3>
           <p>
-            {memberProfiles.length} member
-            {memberProfiles.length === 1 ? "" : "s"} tracked across{" "}
-            {report.gamesPlayed} team sessions.
+            {memberProfiles.length} {translate("copy.member")}
+            {memberProfiles.length === 1 ? "" : "s"} {translate("copy.trackedAcross")}{" "}
+            {report.gamesPlayed} {translate("copy.teamSessions")}
           </p>
         </div>
       </div>

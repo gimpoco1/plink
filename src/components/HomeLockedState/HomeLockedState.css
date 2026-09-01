@@ -103,7 +103,8 @@
   font-size: 24px;
   line-height: 1.12;
   letter-spacing: -0.04em;
-  max-width: 16ch;
+  max-width: 100%;
+  text-wrap: balance;
 }
 
 .lockedFrame__action {

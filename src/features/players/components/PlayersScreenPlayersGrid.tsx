@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Check, Pencil, Trash2, Undo2 } from "lucide-react";
 import type { PlayerProfile } from "../../../types";
 import { SwipeableCard } from "../../../components/SwipeableCard/SwipeableCard";
@@ -11,7 +12,9 @@ export function PlayersGrid() {
   return (
     <div className="profilesGrid">
       {!profiles.length && !addingPlayer ? (
-        <div className="emptyMsg">No saved players yet.</div>
+        <div className="emptyMsg">
+          {translate("copy.noSavedPlayersYet")}
+        </div>
       ) : (
         profiles.map((profile) => (
           <ProfileCard key={profile.id} profile={profile} />
@@ -39,7 +42,7 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
             closeSwipe();
             model.onDeleteProfile(profile.id);
           }}
-          aria-label={`Delete player ${profile.name}`}
+          aria-label={translate("dynamic.deletePlayer", [profile.name])}
         >
           <Trash2 size={20} strokeWidth={2.2} aria-hidden="true" />
         </button>
@@ -100,7 +103,7 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
           ) : null}
           {stats?.sessionResults.length ? (
             <GamesDropdown
-              title="Sessions"
+              title={translate("tabs.sessions")}
               sessionResults={stats.sessionResults}
             />
           ) : null}
@@ -123,7 +126,7 @@ function ProfileActions({
       <button
         className="profileEditBtn"
         type="button"
-        aria-label={`Edit ${profile.name}`}
+        aria-label={translate("dynamic.edit", [profile.name])}
         onClick={() => model.startEditing(profile)}
       >
         <Pencil size={18} strokeWidth={2.3} aria-hidden="true" />
@@ -136,7 +139,7 @@ function ProfileActions({
         <button
           className="profileUndoBtn"
           type="button"
-          aria-label={`Undo changes for ${profile.name}`}
+          aria-label={translate("dynamic.undoChangesFor", [profile.name])}
           onClick={model.undoEdit}
         >
           <Undo2 size={18} strokeWidth={2.2} aria-hidden="true" />
@@ -145,7 +148,7 @@ function ProfileActions({
       <button
         className="profileEditBtn profileEditBtn--active"
         type="button"
-        aria-label={`Finish editing ${profile.name}`}
+        aria-label={translate("dynamic.finishEditing", [profile.name])}
         onClick={() => model.finishRename(profile.id)}
       >
         <Check size={18} strokeWidth={2.3} aria-hidden="true" />

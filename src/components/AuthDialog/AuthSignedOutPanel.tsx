@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Check, Eye, EyeOff, Mail } from "lucide-react";
 import { FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
@@ -42,7 +43,7 @@ export function AuthSignedOutPanel() {
             setShowPassword(false);
           }}
         >
-          Sign in
+          {translate("topbar.signIn")}
         </button>
         <button
           className={`authDialog__switchBtn${mode === "signup" ? " authDialog__switchBtn--active" : ""}`}
@@ -54,7 +55,7 @@ export function AuthSignedOutPanel() {
             setShowPassword(false);
           }}
         >
-          Register
+          {translate("copy.register")}
         </button>
       </div>
 
@@ -69,12 +70,11 @@ export function AuthSignedOutPanel() {
                 >
                   <Check size={18} strokeWidth={2.8} />
                 </span>
-                <span>Check your inbox</span>
+                <span>{translate("copy.checkYourInbox")}</span>
               </strong>
               <p>
-                We sent a confirmation link to{" "}
-                <span>{signupConfirmationEmail}</span>. Open the email and
-                confirm the account before signing in.
+                {translate("copy.weSentAConfirmationLinkTo")}{" "}
+                <span>{signupConfirmationEmail}</span>{translate("copy.openTheEmailAndConfirmTheAccountBeforeSigningIn")}
               </p>
             </div>
             <div className="authDialog__confirmationActions">
@@ -84,7 +84,9 @@ export function AuthSignedOutPanel() {
                 onClick={openEmailApp}
               >
                 <Mail size={16} strokeWidth={2.2} aria-hidden="true" />
-                <div style={{ marginLeft: "8px" }}>Open email app</div>
+                <div style={{ marginLeft: "8px" }}>
+                  {translate("copy.openEmailApp")}
+                </div>
               </button>
               <button
                 className="btn btn--ghost btn--wide"
@@ -95,7 +97,7 @@ export function AuthSignedOutPanel() {
                   setError(null);
                 }}
               >
-                Use another email
+                {translate("copy.useAnotherEmail")}
               </button>
             </div>
           </div>
@@ -103,20 +105,20 @@ export function AuthSignedOutPanel() {
           <>
             {mode === "signup" ? (
               <label className="authField">
-                <span>Name</span>
+                <span>{translate("copy.name")}</span>
                 <input
                   className="input"
                   type="text"
                   autoComplete="name"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder={translate("copy.yourName")}
                 />
               </label>
             ) : null}
 
             <label className="authField">
-              <span>Email</span>
+              <span>{translate("copy.email")}</span>
               <input
                 className="input"
                 type="email"
@@ -128,7 +130,7 @@ export function AuthSignedOutPanel() {
             </label>
 
             <label className="authField">
-              <span>Password</span>
+              <span>{translate("copy.password")}</span>
               <div className="authDialog__passwordField">
                 <input
                   className="input authDialog__passwordInput"
@@ -147,8 +149,8 @@ export function AuthSignedOutPanel() {
                   className="authDialog__passwordToggle"
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  title={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? translate("copy.hidePassword") : translate("copy.showPassword")}
+                  title={showPassword ? translate("copy.hidePassword") : translate("copy.showPassword")}
                 >
                   {showPassword ? (
                     <EyeOff size={17} strokeWidth={2.1} />
@@ -166,7 +168,7 @@ export function AuthSignedOutPanel() {
                 onClick={() => void sendPasswordReset()}
                 disabled={busy || !email.trim()}
               >
-                Forgot password?
+                {translate("copy.forgotPassword")}
               </button>
             ) : null}
 
@@ -183,22 +185,24 @@ export function AuthSignedOutPanel() {
             >
               {busy && !oauthProvider
                 ? mode === "signin"
-                  ? "Signing in..."
-                  : "Creating account..."
+                  ? translate("copy.signingIn")
+                  : translate("copy.creatingAccount")
                 : mode === "signin"
-                  ? "Sign in"
-                  : "Create account"}
+                  ? translate("topbar.signIn")
+                  : translate("copy.createAccount")}
             </button>
 
             <div className="authDialog__divider" aria-hidden="true">
               <span>
-                {mode === "signin" ? "or continue with" : "or register with"}
+                {mode === "signin"
+                  ? translate("copy.orContinueWith")
+                  : translate("copy.orRegisterWith")}
               </span>
             </div>
 
             <div
               className="authDialog__providerRow"
-              aria-label="Social sign-in options"
+              aria-label={translate("copy.socialSignInOptions")}
             >
               <button
                 className="authDialog__providerBtn"
@@ -207,11 +211,11 @@ export function AuthSignedOutPanel() {
                 disabled={busy}
                 aria-label={
                   oauthProvider === "google"
-                    ? "Connecting to Google"
-                    : "Continue with Google"
+                    ? translate("copy.connectingToGoogle")
+                    : translate("copy.continueWithGoogle")
                 }
                 aria-busy={oauthProvider === "google"}
-                title="Continue with Google"
+                title={translate("copy.continueWithGoogle")}
               >
                 <span
                   className="authDialog__providerIcon authDialog__providerIcon--google"
@@ -227,11 +231,11 @@ export function AuthSignedOutPanel() {
                 disabled={busy}
                 aria-label={
                   oauthProvider === "apple"
-                    ? "Connecting to Apple"
-                    : "Continue with Apple"
+                    ? translate("copy.connectingToApple")
+                    : translate("copy.continueWithApple")
                 }
                 aria-busy={oauthProvider === "apple"}
-                title="Continue with Apple"
+                title={translate("copy.continueWithApple")}
               >
                 <span
                   className="authDialog__providerIcon authDialog__providerIcon--apple"
@@ -243,10 +247,13 @@ export function AuthSignedOutPanel() {
             </div>
           </>
         )}
-        <div className="authDialog__links" aria-label="Account links">
-          <a href="/privacy.html">Privacy</a>
+        <div
+          className="authDialog__links"
+          aria-label={translate("copy.accountLinks")}
+        >
+          <a href="/privacy.html">{translate("copy.privacy")}</a>
           <span aria-hidden="true">·</span>
-          <a href="/support.html">Support</a>
+          <a href="/support.html">{translate("copy.support")}</a>
         </div>
       </div>
     </>

@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { ChevronDown, FileUp, Plus } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { formatPlayerName, getInitials } from "../../utils/text";
@@ -28,9 +29,11 @@ export function AuthTransferImport() {
   } = useAuthDialogContext();
   return (
     <div className="authDialog__transferBlock">
-      <div className="authDialog__transferTitle">Add to account</div>
+      <div className="authDialog__transferTitle">
+        {translate("copy.addToAccount")}
+      </div>
       <p className="authDialog__text">
-        Choose sessions or players you want saved in this account.
+        {translate("copy.chooseSessionsOrPlayersYouWantSavedInThisAccount")}
       </p>
       <div className="authDialog__transferActions">
         <div
@@ -47,7 +50,7 @@ export function AuthTransferImport() {
             disabled={busy || localGames.length === 0}
             aria-expanded={showDeviceImport}
           >
-            <span>Sessions on this device</span>
+            <span>{translate("copy.sessionsOnThisDevice")}</span>
             <span
               className={`authDialog__deviceToggleChevron${showDeviceImport ? " authDialog__deviceToggleChevron--open" : ""}`}
               aria-hidden="true"
@@ -66,8 +69,8 @@ export function AuthTransferImport() {
                     onChange={(event) =>
                       setLocalSessionSearch(event.target.value)
                     }
-                    placeholder="Search sessions or players"
-                    aria-label="Search sessions saved on this device"
+                    placeholder={translate("copy.searchSessionsOrPlayers")}
+                    aria-label={translate("copy.searchSessionsSavedOnThisDevice")}
                   />
 
                   {filteredLocalGames.length >= 2 ? (
@@ -78,7 +81,7 @@ export function AuthTransferImport() {
                         onChange={toggleFilteredLocalGames}
                         disabled={!hasFilteredLocalGames}
                       />
-                      <span>Select all</span>
+                      <span>{translate("copy.selectAll")}</span>
                     </label>
                   ) : null}
                 </div>
@@ -101,9 +104,9 @@ export function AuthTransferImport() {
 
                           <span
                             className="authDialog__sessionAvatars"
-                            aria-label={`${game.players.length} player${
-                              game.players.length === 1 ? "" : "s"
-                            }`}
+                            aria-label={translate("dynamic.player", [
+                              game.players.length,
+                            ])}
                           >
                             {game.players.slice(0, 4).map((player) => (
                               <span
@@ -129,7 +132,7 @@ export function AuthTransferImport() {
 
                   {!hasFilteredLocalGames ? (
                     <div className="authDialog__deviceEmpty">
-                      No sessions match your search.
+                      {translate("copy.noSessionsMatchYourSearch")}
                     </div>
                   ) : null}
                 </div>
@@ -152,12 +155,10 @@ export function AuthTransferImport() {
                   <span className="authDialog__actionIcon" aria-hidden="true">
                     <Plus size={16} strokeWidth={2.4} />
                   </span>
-                  <span>{busy ? "Working..." : "Add selected to account"}</span>
+                  <span>{busy ? translate("copy.working") : translate("copy.addSelectedToAccount")}</span>
                 </button>
                 <p className="authDialog__deviceActionNote">
-                  Added sessions move to your account and are removed from this
-                  device&apos;s local storage. They may not be available offline
-                  when signed out.
+                  {translate("copy.addedSessionsMoveToYourAccountAndAreRemovedFromThisDevice")}
                 </p>
               </div>
             </div>
@@ -178,7 +179,7 @@ export function AuthTransferImport() {
             disabled={busy || localProfiles.length === 0}
             aria-expanded={showDevicePlayersImport}
           >
-            <span>Players on this device</span>
+            <span>{translate("copy.playersOnThisDevice")}</span>
             <span
               className={`authDialog__deviceToggleChevron${showDevicePlayersImport ? " authDialog__deviceToggleChevron--open" : ""}`}
               aria-hidden="true"
@@ -232,12 +233,10 @@ export function AuthTransferImport() {
                   <span className="authDialog__actionIcon" aria-hidden="true">
                     <Plus size={16} strokeWidth={2.4} />
                   </span>
-                  <span>{busy ? "Working..." : "Add selected to account"}</span>
+                  <span>{busy ? translate("copy.working") : translate("copy.addSelectedToAccount")}</span>
                 </button>
                 <p className="authDialog__deviceActionNote">
-                  Added players move to your account and are removed from this
-                  device&apos;s local storage. They may not be available offline
-                  when signed out.
+                  {translate("copy.addedPlayersMoveToYourAccountAndAreRemovedFromThisDevice")}
                 </p>
               </div>
             </div>
@@ -254,7 +253,7 @@ export function AuthTransferImport() {
           <span className="authDialog__actionIcon" aria-hidden="true">
             <FileUp size={15} strokeWidth={2.1} />
           </span>
-          <span>Restore from backup file</span>
+          <span>{translate("copy.restoreFromBackupFile")}</span>
         </button>
       </div>
     </div>

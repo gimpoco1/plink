@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { ArrowUpRight, Check, Plus, Trash2, Users, X } from "lucide-react";
 import type { GameTeam, PlayerProfile } from "../../types";
 import { avatarStyleFor } from "../../utils/color";
@@ -30,11 +31,11 @@ export function ManageTeamsSection() {
       <div className="managePlayersDialog__sectionHeaderRow managePlayersDialog__sectionHeaderRow--teams">
         <div className="managePlayersDialog__titleRow">
           <div className="managePlayersDialog__simpleTitle">
-            Teams in this game
+            {translate("copy.teamsInThisGame")}
           </div>
           <span
             className="managePlayersDialog__countChip managePlayersDialog__countChip--teams"
-            aria-label={`${currentTeams.length} teams in this game`}
+            aria-label={translate("dynamic.teamsInThisGame", [currentTeams.length])}
           >
             {currentTeams.length}
           </span>
@@ -53,8 +54,8 @@ export function ManageTeamsSection() {
                   className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
                   type="button"
                   onClick={() => void onDeleteTeam(team.id, team.name)}
-                  aria-label={`Remove ${team.name}`}
-                  title="Remove"
+                  aria-label={translate("dynamic.remove", [team.name])}
+                  title={translate("copy.remove")}
                 >
                   <X size={15} strokeWidth={2.7} aria-hidden="true" />
                 </button>
@@ -64,7 +65,7 @@ export function ManageTeamsSection() {
         </div>
       ) : (
         <div className="managePlayersDialog__empty">
-          No teams in this game yet.
+          {translate("copy.noTeamsInThisGameYet")}
         </div>
       )}
 
@@ -74,18 +75,18 @@ export function ManageTeamsSection() {
         listMaxHeight="170px"
         searchValue={search}
         onSearchChange={setSearch}
-        listTriggerLabel="Add teams"
+        listTriggerLabel={translate("copy.addTeams")}
         listTitle="Your teams"
-        collapseLabel="Hide teams"
-        searchPlaceholder="Search teams"
-        searchAriaLabel="Search saved teams"
-        clearAriaLabel="Clear team search"
+        collapseLabel={translate("copy.hideTeams")}
+        searchPlaceholder={translate("copy.searchTeams")}
+        searchAriaLabel={translate("copy.searchSavedTeams")}
+        clearAriaLabel={translate("copy.clearTeamSearch")}
         emptyState={
           search
-            ? "No saved teams match that search."
+            ? translate("copy.noSavedTeamsMatchThatSearch")
             : savedTeams.length > 0
-              ? "All saved teams are already in this game."
-              : "No saved teams yet. Create one from the Teams tab."
+              ? translate("copy.allSavedTeamsAreAlreadyInThisGame")
+              : translate("copy.noSavedTeamsYetCreateOneFromTheTeamsTab")
         }
         footerContent={
           <TeamsModeNotice
@@ -112,9 +113,9 @@ export function ManageTeamsSection() {
                     type="button"
                     onClick={() => toggleTeam(team.id)}
                     aria-label={
-                      isStaged ? `Remove ${team.name}` : `Add ${team.name}`
+                      isStaged ? translate("dynamic.remove", [team.name]) : translate("dynamic.add", [team.name])
                     }
-                    title={isStaged ? "Queued" : "Add"}
+                    title={isStaged ? translate("copy.queued") : translate("copy.add")}
                     disabled={!canUseTeams}
                   >
                     {isStaged ? (
@@ -127,8 +128,8 @@ export function ManageTeamsSection() {
                     className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
                     type="button"
                     onClick={() => void onDeleteSavedTeam(team.id, team.name)}
-                    aria-label={`Delete saved team ${team.name}`}
-                    title="Delete saved team"
+                    aria-label={translate("dynamic.deleteSavedTeam", [team.name])}
+                    title={translate("copy.deleteSavedTeam")}
                   >
                     <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
                   </button>
@@ -169,7 +170,10 @@ function ManageTeamCard({
             {members.length > 0 ? (
               <div
                 className="managePlayersDialog__teamMembers"
-                aria-label={`${team.name} ${saved ? "saved " : ""}members`}
+                aria-label={translate(
+                  saved ? "dynamic.savedMembers" : "dynamic.members",
+                  [team.name],
+                )}
               >
                 {members.slice(0, 5).map((member) => (
                   <span
@@ -191,7 +195,9 @@ function ManageTeamCard({
             ) : null}
           </div>
           {saved && members.length === 0 ? (
-            <span className="managePlayersDialog__meta">Saved team</span>
+            <span className="managePlayersDialog__meta">
+              {translate("copy.savedTeam")}
+            </span>
           ) : null}
         </div>
         <div className="managePlayersDialog__actionsRow">{action}</div>
@@ -208,8 +214,12 @@ function TeamsModeNotice({ onOpenTeams }: { onOpenTeams: () => void }) {
           <Users size={18} strokeWidth={2.3} />
         </div>
         <div className="managePlayersDialog__modeNoticeCopy">
-          <span className="managePlayersDialog__modeNoticeTag">Teams only</span>
-          <span>To add more teams, create them in the Teams tab first.</span>
+          <span className="managePlayersDialog__modeNoticeTag">
+            {translate("copy.teamsOnly")}
+          </span>
+          <span>
+            {translate("copy.toAddMoreTeamsCreateThemInTheTeamsTabFirst")}
+          </span>
         </div>
       </div>
       <button
@@ -217,7 +227,7 @@ function TeamsModeNotice({ onOpenTeams }: { onOpenTeams: () => void }) {
         type="button"
         onClick={onOpenTeams}
       >
-        <span>Add new teams</span>
+        <span>{translate("copy.addNewTeams")}</span>
         <ArrowUpRight size={15} strokeWidth={2.3} aria-hidden="true" />
       </button>
     </div>

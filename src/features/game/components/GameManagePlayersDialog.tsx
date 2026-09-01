@@ -44,7 +44,9 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
   return (
     <ManagePlayersDialog
       ref={managePlayersDialogRef}
-      participantMode={game.participantMode === "teams" ? "teams" : "players"}
+      participantMode={
+        game.participantMode === "teams" ? "teams" : "players"
+      }
       profiles={profiles}
       savedTeams={teams}
       savedTeamMembers={teamMembers}
@@ -60,9 +62,7 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
         game.accessRole === "collaborator" ? [] : pastLinkedPlayers
       }
       onAddPastLinkedPlayer={
-        game.accessRole === "collaborator"
-          ? undefined
-          : onAddPastLinkedPlayer
+        game.accessRole === "collaborator" ? undefined : onAddPastLinkedPlayer
       }
       onMergePlayers={
         game.accessRole === "collaborator" ? undefined : onMergePlayers

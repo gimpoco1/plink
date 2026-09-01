@@ -16,7 +16,12 @@ import { PLAYERS_VIEW_STORAGE_KEY } from "../constants";
 import type { DashboardScreenProps } from "../features/dashboard/types/dashboardScreenTypes";
 import "../features/dashboard/styles/DashboardScreen.css";
 
-const tabs: HomeTab[] = ["home", "sessions", "stats", "players"];
+const tabs: HomeTab[] = [
+  "home",
+  "sessions",
+  "stats",
+  "players",
+];
 
 export function DashboardScreen(props: DashboardScreenProps) {
   const [isCreating, setIsCreating] = useState(false);

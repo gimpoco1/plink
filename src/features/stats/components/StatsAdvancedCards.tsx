@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Check, CircleX, Lock, Minus, Swords, Trophy } from "lucide-react";
 import { STATUS_LABELS } from "../types/statsTypes";
 import type {
@@ -33,8 +34,8 @@ export function StatsAdvancedCards({
       >
         <div className="statsAdvancedCard__content">
           <div className="statsPanel__head">
-            <h3>Streak history</h3>
-            {isLocked ? <span>Pro</span> : null}
+            <h3>{translate("copy.streakHistory")}</h3>
+            {isLocked ? <span>{translate("common.pro")}</span> : null}
           </div>
           {visibleStreakSummary ? (
             <div className="statsStreakRows">
@@ -45,12 +46,15 @@ export function StatsAdvancedCards({
             </div>
           ) : (
             <p className="emptyMsg">
-              Play completed sessions to build streak history.
+              {translate("copy.playCompletedSessionsToBuildStreakHistory")}
             </p>
           )}
         </div>
         {isLocked ? (
-          <ProOverlay onUpgrade={onUpgrade} label="Unlock streak history" />
+          <ProOverlay
+            onUpgrade={onUpgrade}
+            label={translate("copy.unlockStreakHistory")}
+          />
         ) : null}
       </article>
 
@@ -59,8 +63,8 @@ export function StatsAdvancedCards({
       >
         <div className="statsAdvancedCard__content">
           <div className="statsPanel__head">
-            <h3>Head-to-head</h3>
-            {isLocked ? <span>Pro</span> : null}
+            <h3>{translate("copy.headToHead")}</h3>
+            {isLocked ? <span>{translate("common.pro")}</span> : null}
           </div>
           {visibleHeadToHeadSummary ? (
             <div className="statsHeadToHead">
@@ -68,7 +72,7 @@ export function StatsAdvancedCards({
                 <strong>{visibleHeadToHeadSummary.primaryWins}</strong>
                 <span>
                   <Swords size={14} strokeWidth={2.4} aria-hidden="true" />
-                  {visibleHeadToHeadSummary.sharedCompleted} shared
+                  {visibleHeadToHeadSummary.sharedCompleted} {translate("copy.shared2")}
                 </span>
                 <strong>{visibleHeadToHeadSummary.secondaryWins}</strong>
               </div>
@@ -77,23 +81,26 @@ export function StatsAdvancedCards({
                 <span>{visibleHeadToHeadSummary.secondaryName}</span>
               </div>
               <div className="statsHeadToHead__chips">
-                <span>{visibleHeadToHeadSummary.draws} draws</span>
-                <span>{visibleHeadToHeadSummary.sharedWins} together</span>
+                <span>{visibleHeadToHeadSummary.draws} {translate("copy.draws2")}</span>
+                <span>{visibleHeadToHeadSummary.sharedWins} {translate("copy.together")}</span>
                 <span>
-                  {visibleHeadToHeadSummary.completedWithoutWinner} no winner
+                  {visibleHeadToHeadSummary.completedWithoutWinner} {translate("copy.noWinner2")}
                 </span>
-                <span>{visibleHeadToHeadSummary.inProgress} live</span>
+                <span>{visibleHeadToHeadSummary.inProgress} {translate("copy.live")}</span>
               </div>
             </div>
           ) : (
             <p className="emptyMsg">
-              Compare two {activeKind === "teams" ? "teams" : "players"} to
-              see their shared sessions.
+              {translate("copy.compareTwo")}{" "}
+              {activeKind === "teams" ? translate("copy.teams") : translate("copy.players")} {translate("copy.toSeeTheirSharedSessions")}
             </p>
           )}
         </div>
         {isLocked ? (
-          <ProOverlay onUpgrade={onUpgrade} label="Unlock head-to-head" />
+          <ProOverlay
+            onUpgrade={onUpgrade}
+            label={translate("copy.unlockHeadToHead")}
+          />
         ) : null}
       </article>
     </div>
@@ -106,27 +113,27 @@ function StreakRow({ summary }: { summary: StreakSubjectSummary }) {
       <div className="statsStreakRow__name">
         <strong>{summary.name}</strong>
         <span>
-          {summary.completed} completed session
+          {summary.completed} {translate("copy.completedSession")}
           {summary.completed === 1 ? "" : "s"}
         </span>
       </div>
       <div className="statsStreakRow__metrics">
         <span>
-          Current <b>{summary.current ? `${summary.current}x` : "—"}</b>
+          {translate("copy.current")} <b>{summary.current ? `${summary.current}x` : "—"}</b>
         </span>
         <span>
-          Best <b>{summary.best ? `${summary.best}x` : "—"}</b>
+          {translate("copy.best")} <b>{summary.best ? `${summary.best}x` : "—"}</b>
         </span>
       </div>
       <div className="statsStreakFormWrap">
         {summary.form.length ? (
           <span className="statsStreakFormWrap__label">
-            Last {summary.form.length} completed · newest right
+            {translate("copy.last")} {summary.form.length} {translate("copy.completedNewestRight")}
           </span>
         ) : null}
         <div
           className="statsStreakForm"
-          aria-label={`${summary.name} recent form`}
+          aria-label={translate("dynamic.recentForm", [summary.name])}
         >
           {summary.form.length ? (
             summary.form.map((status, index) => (
@@ -139,7 +146,9 @@ function StreakRow({ summary }: { summary: StreakSubjectSummary }) {
               </span>
             ))
           ) : (
-            <span className="statsStreakForm__empty">No form yet</span>
+            <span className="statsStreakForm__empty">
+              {translate("copy.noFormYet")}
+            </span>
           )}
         </div>
       </div>
@@ -176,7 +185,7 @@ function ProOverlay({
     <div className="statsAdvancedLock">
       <span>
         <Lock size={13} strokeWidth={2.4} aria-hidden="true" />
-        Pro charts
+        {translate("copy.proCharts")}
       </span>
       <button type="button" onClick={onUpgrade}>
         {label}

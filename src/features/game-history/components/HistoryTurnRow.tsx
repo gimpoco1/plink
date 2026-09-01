@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Clock3 } from "lucide-react";
 import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 import { avatarStyleFor } from "../../../utils/color";
@@ -42,11 +43,11 @@ export function HistoryTurnRow({
         </div>
         <div className="historyInfo__meta">
           <span className="historyTurnLabel">
-            Turn <strong>{turn.turnNumber}</strong>
+            {translate("copy.turn")} <strong>{turn.turnNumber}</strong>
           </span>
           <span
             className="historyTimeChip"
-            aria-label={`Scored at ${timeLabel}`}
+            aria-label={translate("dynamic.scoredAt", [timeLabel])}
           >
             <Clock3 size={11} strokeWidth={2.5} aria-hidden="true" />
             {timeLabel}
@@ -61,9 +62,9 @@ export function HistoryTurnRow({
                 {getInitials(turn.updatedBy.name)}
               </span>
               <span>
-                Updated by{" "}
+                {translate("copy.updatedBy")}{" "}
                 {turn.updatedBy.isCurrentUser
-                  ? "You"
+                  ? translate("copy.you")
                   : capitalizeFirst(turn.updatedBy.name)}
               </span>
             </span>

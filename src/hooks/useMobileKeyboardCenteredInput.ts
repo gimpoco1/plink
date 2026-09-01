@@ -32,10 +32,7 @@ export function useMobileKeyboardCenteredInput(isActive: boolean) {
     const currentInput = inputRef.current;
     if (!currentInput) return;
     const input: HTMLInputElement = currentInput;
-    if (
-      !isNativeApp() &&
-      !window.matchMedia(MOBILE_VIEWPORT_QUERY).matches
-    ) {
+    if (!isNativeApp() && !window.matchMedia(MOBILE_VIEWPORT_QUERY).matches) {
       return;
     }
 

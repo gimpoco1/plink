@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useManagePlayersDialogContext } from "./ManagePlayersDialogContext";
 import { ManagePlayersCurrentSection } from "./ManagePlayersCurrentSection";
 import { ManagePlayersSavedSection } from "./ManagePlayersSavedSection";
@@ -27,16 +28,20 @@ export function ManagePlayersDialogView() {
       <div className="dialog__form">
         <div className="dialog__head managePlayersDialog__head">
           <div>
-            <div className="managePlayersDialog__eyebrow">Game roster</div>
+            <div className="managePlayersDialog__eyebrow">
+              {translate("copy.gameRoster")}
+            </div>
             <div className="dialog__title">
-              {isTeamsGame ? "Manage teams" : "Manage players"}
+              {isTeamsGame
+                ? translate("topbar.manageTeams")
+                : translate("topbar.managePlayers")}
             </div>
           </div>
           <button
             className="iconbtn"
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={translate("copy.close")}
           >
             ×
           </button>

@@ -1,5 +1,6 @@
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { translate } from "../i18n/translate";
 import { isNativeApp } from "../lib/nativePlatform";
 
 type BackupDownloadInput = {
@@ -11,10 +12,7 @@ function isShareCancellation(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
-async function shareNativeBackup({
-  contents,
-  filename,
-}: BackupDownloadInput) {
+async function shareNativeBackup({ contents, filename }: BackupDownloadInput) {
   const writtenFile = await Filesystem.writeFile({
     path: filename,
     data: contents,
@@ -24,8 +22,8 @@ async function shareNativeBackup({
 
   try {
     await Share.share({
-      title: "Plink backup",
-      text: "Backup file for Plink sessions and players.",
+      title: translate("copy.plinkBackup"),
+      text: translate("copy.plinkBackupFile"),
       files: [writtenFile.uri],
       dialogTitle: "Save Plink backup",
     });
@@ -37,10 +35,7 @@ async function shareNativeBackup({
   }
 }
 
-function downloadBackupInBrowser({
-  contents,
-  filename,
-}: BackupDownloadInput) {
+function downloadBackupInBrowser({ contents, filename }: BackupDownloadInput) {
   const blob = new Blob([contents], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -82,8 +77,8 @@ export async function shareOrDownloadBackup(input: BackupDownloadInput) {
     try {
       await navigator.share({
         files: [file!],
-        title: "Plink backup",
-        text: "Backup file for Plink sessions and players.",
+      title: translate("copy.plinkBackup"),
+      text: translate("copy.plinkBackupFile"),
       });
       return;
     } catch (error) {

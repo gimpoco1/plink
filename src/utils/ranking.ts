@@ -2,11 +2,7 @@ import type { Game, Player } from "../types";
 import { getGameParticipants } from "./gameParticipants";
 import { hasGameEnded, shouldSortLowToHigh } from "./scoring";
 
-export function sortPlayers(
-  a: Player,
-  b: Player,
-  lowToHigh = false,
-): number {
+export function sortPlayers(a: Player, b: Player, lowToHigh = false): number {
   if (a.score !== b.score) {
     return lowToHigh ? a.score - b.score : b.score - a.score;
   }
@@ -38,9 +34,7 @@ export function findWinner(
     participantMode: game.participantMode,
     players,
     teams: game.teams ?? [],
-  }).sort((a, b) =>
-    sortPlayers(a, b, shouldSortLowToHigh(game)),
-  );
+  }).sort((a, b) => sortPlayers(a, b, shouldSortLowToHigh(game)));
   const winner = sorted[0] ?? null;
   if (!winner) return null;
   const tiedWinner = sorted[1];

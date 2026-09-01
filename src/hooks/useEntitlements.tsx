@@ -11,11 +11,7 @@ export type SubscriptionPlan = "free" | "pro";
 export type SubscriptionBillingPeriod = "monthly" | "yearly";
 export type SubscriptionProvider = "stripe" | "apple";
 type SubscriptionStatus =
-  | "active"
-  | "trialing"
-  | "inactive"
-  | "past_due"
-  | "canceled";
+  "active" | "trialing" | "inactive" | "past_due" | "canceled";
 type EntitlementSource = "default" | "account" | "subscription" | "override";
 const FREE_SESSION_LIMIT = 12;
 const SESSION_PASS_LIMIT = 100;
@@ -119,8 +115,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
   const [sessionPassPurchasedAt, setSessionPassPurchasedAt] = useState<
     string | null
   >(null);
-  const [sessionPassLimit, setSessionPassLimit] =
-    useState(SESSION_PASS_LIMIT);
+  const [sessionPassLimit, setSessionPassLimit] = useState(SESSION_PASS_LIMIT);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
   const accountPlan = getAccountPlan(session);
   const userId = session?.user.id ?? null;
@@ -250,7 +245,7 @@ export function useEntitlements(session: Session | null): EntitlementsState {
           );
           setSessionPassLimit(
             typeof sessionPass.session_limit === "number" &&
-                Number.isFinite(sessionPass.session_limit)
+              Number.isFinite(sessionPass.session_limit)
               ? Math.max(SESSION_PASS_LIMIT, sessionPass.session_limit)
               : SESSION_PASS_LIMIT,
           );

@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { ChevronDown } from "lucide-react";
 import { AuthTransferBody } from "./AuthTransferBody";
 import { useAuthDialogContext } from "./AuthDialogContext";
@@ -14,10 +15,11 @@ export function AuthTransferSection() {
         aria-controls="auth-data-tools"
       >
         <span className="authDialog__transferHead">
-          <span className="authDialog__label">Data transfer</span>
+          <span className="authDialog__label">
+            {translate("copy.dataTransfer")}
+          </span>
           <span className="authDialog__text">
-            Add device sessions to this account, restore a backup, or download a
-            copy.
+            {translate("copy.addDeviceSessionsToThisAccountRestoreABackupOrDownloadA")}
           </span>
         </span>
         <span

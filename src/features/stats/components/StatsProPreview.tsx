@@ -1,4 +1,11 @@
-import { BarChart3, Flame, GitCompareArrows, Lock, TrendingUp } from "lucide-react";
+import { translate } from "../../../i18n/translate";
+import {
+  BarChart3,
+  Flame,
+  GitCompareArrows,
+  Lock,
+  TrendingUp,
+} from "lucide-react";
 
 export function StatsProPreview({ onUpgrade }: { onUpgrade: () => void }) {
   return (
@@ -6,38 +13,38 @@ export function StatsProPreview({ onUpgrade }: { onUpgrade: () => void }) {
       <div className="statsProPreview__copy">
         <span className="statsProPreview__badge">
           <Lock size={13} strokeWidth={2.4} aria-hidden="true" />
-          Pro stats
+          {translate("copy.proStats")}
         </span>
-        <h3>Advanced reports</h3>
+        <h3>{translate("copy.advancedReports")}</h3>
         <p>
-          Turn your sessions into trends, matchups, streaks, and game-level form.
+          {translate("copy.turnYourSessionsIntoTrendsMatchupsStreaksAndGameLevelForm")}
         </p>
       </div>
 
       <div className="statsProPreview__mock" aria-hidden="true">
         <div className="statsProPreview__mockHeader">
-          <span>Player report</span>
-          <strong>Preview</strong>
+          <span>{translate("copy.playerReport")}</span>
+          <strong>{translate("copy.preview")}</strong>
         </div>
         <div className="statsProPreview__mockStats">
           <span>
             <b>68%</b>
-            Win rate
+            {translate("copy.winRate")}
           </span>
           <span>
             <b>5x</b>
-            Best streak
+            {translate("copy.bestStreak")}
           </span>
           <span>
             <b>12</b>
-            H2H games
+            {translate("copy.h2hGames")}
           </span>
         </div>
         <svg
           className="statsProPreview__chart"
           viewBox="0 0 320 92"
           role="img"
-          aria-label="Preview chart"
+          aria-label={translate("copy.previewChart")}
         >
           <g className="statsProPreview__grid">
             <line x1="0" x2="320" y1="18" y2="18" />
@@ -70,24 +77,24 @@ export function StatsProPreview({ onUpgrade }: { onUpgrade: () => void }) {
       <div className="statsProPreview__features">
         <span>
           <TrendingUp size={14} strokeWidth={2.4} aria-hidden="true" />
-          Trend charts
+          {translate("copy.trendCharts")}
         </span>
         <span>
           <BarChart3 size={14} strokeWidth={2.4} aria-hidden="true" />
-          Game filters
+          {translate("copy.gameFilters")}
         </span>
         <span>
           <Flame size={14} strokeWidth={2.4} aria-hidden="true" />
-          Streak history
+          {translate("copy.streakHistory")}
         </span>
         <span>
           <GitCompareArrows size={14} strokeWidth={2.4} aria-hidden="true" />
-          Head-to-head
+          {translate("copy.headToHead")}
         </span>
       </div>
 
       <button type="button" onClick={onUpgrade}>
-        Unlock reports
+        {translate("copy.unlockReports")}
       </button>
     </section>
   );

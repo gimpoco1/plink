@@ -1,3 +1,4 @@
+import { getCurrentLanguage, translate } from "../../i18n/translate";
 import {
   useEffect,
   useImperativeHandle,
@@ -247,7 +248,7 @@ export function useAuthDialogModel(
     const date = new Date(effectiveSubscriptionEndDate);
     if (Number.isNaN(date.getTime())) return null;
 
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(getCurrentLanguage(), {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -266,15 +267,15 @@ export function useAuthDialogModel(
       subscriptionCancelAtPeriodEnd &&
       (subscriptionStatus === "active" || subscriptionStatus === "trialing")
     ) {
-      return `Ends on ${formattedSubscriptionEndDate}`;
+      return translate("dynamic.endsOn", [formattedSubscriptionEndDate]);
     }
 
     if (subscriptionStatus === "active" || subscriptionStatus === "trialing") {
-      return `Renews on ${formattedSubscriptionEndDate}`;
+      return translate("dynamic.renewsOn", [formattedSubscriptionEndDate]);
     }
 
     if (subscriptionStatus === "canceled") {
-      return `Ends on ${formattedSubscriptionEndDate}`;
+      return translate("dynamic.endsOn", [formattedSubscriptionEndDate]);
     }
 
     return null;
@@ -290,10 +291,10 @@ export function useAuthDialogModel(
     const date = new Date(subscriptionStartedAt);
     if (Number.isNaN(date.getTime())) return null;
 
-    return `Since ${new Intl.DateTimeFormat(undefined, {
-      month: "short",
-      year: "numeric",
-    }).format(date)}`;
+    return translate("dynamic.since", [new Intl.DateTimeFormat(getCurrentLanguage(), {
+        month: "short",
+        year: "numeric",
+      }).format(date)]);
   }, [source, subscriptionStartedAt]);
   const billingPeriodOptions = ["monthly", "yearly"] as const;
 
@@ -474,7 +475,7 @@ export function useAuthDialogModel(
         setRecoveryMode(true);
         setNotice(null);
         setTransferToast({
-          message: "Enter a new password for your account.",
+          message: translate("copy.enterANewPasswordForYourAccount"),
           tone: "default",
         });
         setError(null);
@@ -528,7 +529,7 @@ export function useAuthDialogModel(
       const message =
         event instanceof CustomEvent && typeof event.detail === "string"
           ? event.detail
-          : "Authentication failed.";
+          : translate("copy.authenticationFailed");
       resetNativeOAuth();
       setError(message);
       setNotice(null);
@@ -656,7 +657,7 @@ export function useAuthDialogModel(
     } catch (saveError) {
       console.error("Failed to update sharing preference", saveError);
       setAllowPreviousPlayersToInvite(previous);
-      setError("Could not update sharing preference.");
+      setError(translate("copy.couldNotUpdateSharingPreference"));
     } finally {
       setSharingPreferenceLoading(false);
     }
@@ -734,7 +735,7 @@ export function useAuthDialogModel(
 
   async function signInWithProvider(provider: Provider) {
     if (!supabase) {
-      setError("Supabase is not configured yet.");
+      setError(translate("copy.supabaseIsNotConfiguredYet"));
       return;
     }
 
@@ -770,13 +771,13 @@ export function useAuthDialogModel(
       nativeOAuthPendingRef.current = false;
       setOauthProvider(null);
       setBusy(false);
-      setError(getAuthErrorMessage(err, "Could not start sign-in."));
+      setError(getAuthErrorMessage(err, translate("copy.couldNotStartSignIn")));
     }
   }
 
   async function submit() {
     if (!supabase) {
-      setError("Supabase is not configured yet.");
+      setError(translate("copy.supabaseIsNotConfiguredYet"));
       return;
     }
 
@@ -784,7 +785,7 @@ export function useAuthDialogModel(
     const trimmedAccountName = formatPlayerName(accountName);
     if (!trimmedEmail || !password) return;
     if (mode === "signup" && !trimmedAccountName) {
-      setError("Enter your player name.");
+      setError(translate("copy.enterYourPlayerName"));
       return;
     }
 
@@ -823,7 +824,7 @@ export function useAuthDialogModel(
         if (isExistingAccountSignUpResponse(data.user)) {
           setSignupConfirmationEmail(null);
           setError(
-            "An account with this email already exists. Sign in instead.",
+            translate("copy.anAccountWithThisEmailAlreadyExistsSignInInstead"),
           );
           return;
         }
@@ -838,7 +839,7 @@ export function useAuthDialogModel(
         }
       }
     } catch (err) {
-      setError(getAuthErrorMessage(err, "Authentication failed."));
+      setError(getAuthErrorMessage(err, translate("copy.authenticationFailed")));
     } finally {
       setBusy(false);
     }
@@ -846,13 +847,13 @@ export function useAuthDialogModel(
 
   async function sendPasswordReset() {
     if (!supabase) {
-      setError("Supabase is not configured yet.");
+      setError(translate("copy.supabaseIsNotConfiguredYet"));
       return;
     }
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      setError("Enter your email first.");
+      setError(translate("copy.enterYourEmailFirst"));
       return;
     }
 
@@ -870,9 +871,9 @@ export function useAuthDialogModel(
         },
       );
       if (resetError) throw resetError;
-      setNotice("Check your email for a password reset link.");
+      setNotice(translate("copy.checkYourEmailForAPasswordResetLink"));
     } catch (err) {
-      setError(getAuthErrorMessage(err, "Could not send reset link."));
+      setError(getAuthErrorMessage(err, translate("copy.couldNotSendResetLink")));
     } finally {
       setBusy(false);
     }
@@ -880,17 +881,17 @@ export function useAuthDialogModel(
 
   async function submitNewPassword() {
     if (!supabase) {
-      setError("Supabase is not configured yet.");
+      setError(translate("copy.supabaseIsNotConfiguredYet"));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("Enter a password with at least 6 characters.");
+      setError(translate("copy.enterAPasswordWithAtLeast6Characters"));
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      setError("Passwords do not match.");
+      setError(translate("copy.passwordsDoNotMatch"));
       return;
     }
 
@@ -907,10 +908,10 @@ export function useAuthDialogModel(
       setNewPassword("");
       setConfirmNewPassword("");
       setRecoveryMode(false);
-      setNotice("Password updated.");
+      setNotice(translate("copy.passwordUpdated"));
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not update password.",
+        err instanceof Error ? err.message : translate("copy.couldNotUpdatePassword"),
       );
     } finally {
       setBusy(false);
@@ -940,10 +941,10 @@ export function useAuthDialogModel(
       });
       setAccountDraftName(name);
       setEditingAccountPlayer(false);
-      setNotice("Account player updated.");
+      setNotice(translate("copy.accountPlayerUpdated"));
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not update player name.",
+        err instanceof Error ? err.message : translate("copy.couldNotUpdatePlayerName"),
       );
     } finally {
       setBusy(false);
@@ -964,7 +965,7 @@ export function useAuthDialogModel(
         dialogRef.current.close();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign out failed.");
+      setError(err instanceof Error ? err.message : translate("copy.signOutFailed"));
     } finally {
       setBusy(false);
     }
@@ -973,13 +974,13 @@ export function useAuthDialogModel(
   function formatTransferParts(result: DataTransferResult) {
     return [
       result.games
-        ? `${result.games} session${result.games === 1 ? "" : "s"}`
+        ? translate("dynamic.session", [result.games])
         : "",
       result.profiles
-        ? `${result.profiles} player${result.profiles === 1 ? "" : "s"}`
+        ? translate("dynamic.player", [result.profiles])
         : "",
       result.teams
-        ? `${result.teams} team${result.teams === 1 ? "" : "s"}`
+        ? translate("dynamic.team", [result.teams])
         : "",
     ].filter(Boolean);
   }
@@ -993,7 +994,7 @@ export function useAuthDialogModel(
     try {
       await openExternalUrl(url);
     } catch {
-      showTransferToast("This link is not valid.", "error");
+      showTransferToast(translate("copy.thisLinkIsNotValid"), "error");
     }
   }
 
@@ -1059,12 +1060,12 @@ export function useAuthDialogModel(
 
   async function startUpgradeFlow() {
     if (!session) {
-      setError("Sign in before starting a subscription.");
+      setError(translate("copy.signInBeforeStartingASubscription"));
       return;
     }
     if (isNativeIOSApp()) {
       let purchaseResult: ToastState = {
-        message: "The purchase could not be completed.",
+        message: translate("copy.thePurchaseCouldNotBeCompleted"),
         tone: "error",
       };
       setBusy(true);
@@ -1075,18 +1076,17 @@ export function useAuthDialogModel(
         const result = await appleSubscription.purchase(selectedBillingPeriod);
         if (result.status === "cancelled") {
           purchaseResult = {
-            message: "Purchase cancelled.",
+            message: translate("copy.purchaseCancelled"),
             tone: "default",
           };
         } else if (result.status === "pending") {
           purchaseResult = {
-            message:
-              "Your purchase is waiting for approval. Pro will unlock automatically once Apple approves it.",
+            message: translate("copy.purchaseWaitingForApproval"),
             tone: "default",
           };
         } else {
           purchaseResult = {
-            message: "Welcome to Plink Pro!",
+            message: translate("copy.welcomeToPlinkPro"),
             tone: "success",
           };
         }
@@ -1094,7 +1094,7 @@ export function useAuthDialogModel(
         purchaseResult = {
           message: getBillingErrorMessage(
             err,
-            "The purchase could not be completed.",
+            translate("copy.thePurchaseCouldNotBeCompleted"),
           ),
           tone: "error",
         };
@@ -1129,12 +1129,12 @@ export function useAuthDialogModel(
 
   async function startSessionPassPurchase() {
     if (!session) {
-      setError("Sign in before buying a Session Pass.");
+      setError(translate("copy.signInBeforeBuyingASessionPass"));
       return;
     }
     if (hasSessionPass) {
       showTransferToast(
-        `Your account can already keep up to ${maxSessions ?? 100} sessions.`,
+        translate("dynamic.yourAccountCanAlreadyKeepUpToSessions", [maxSessions ?? 100]),
         "default",
       );
       return;
@@ -1142,7 +1142,7 @@ export function useAuthDialogModel(
 
     if (isNativeIOSApp()) {
       let purchaseResult: ToastState = {
-        message: "The Session Pass purchase could not be completed.",
+        message: translate("copy.theSessionPassPurchaseCouldNotBeCompleted"),
         tone: "error",
       };
       setBusy(true);
@@ -1153,18 +1153,17 @@ export function useAuthDialogModel(
         const result = await appleSubscription.purchaseSessionPass();
         if (result.status === "cancelled") {
           purchaseResult = {
-            message: "Purchase cancelled.",
+            message: translate("copy.purchaseCancelled"),
             tone: "default",
           };
         } else if (result.status === "pending") {
           purchaseResult = {
-            message:
-              "Your Session Pass purchase is waiting for App Store approval.",
+            message: translate("copy.sessionPassWaitingForApproval"),
             tone: "default",
           };
         } else {
           purchaseResult = {
-            message: "Session Pass added. You can now keep up to 100 sessions.",
+            message: translate("copy.sessionPassAddedYouCanNowKeepUpTo100Sessions"),
             tone: "success",
           };
         }
@@ -1172,7 +1171,7 @@ export function useAuthDialogModel(
         purchaseResult = {
           message: getBillingErrorMessage(
             err,
-            "The Session Pass purchase could not be completed.",
+            translate("copy.theSessionPassPurchaseCouldNotBeCompleted"),
           ),
           tone: "error",
         };
@@ -1208,7 +1207,7 @@ export function useAuthDialogModel(
 
   async function restoreSubscription() {
     if (!session) {
-      setError("Sign in before managing a subscription.");
+      setError(translate("copy.signInBeforeManagingASubscription"));
       return;
     }
     if (isNativeIOSApp()) {
@@ -1249,12 +1248,12 @@ export function useAuthDialogModel(
       const url = await requestBillingUrl(
         "create-customer-portal-session",
         { origin: window.location.origin },
-        "Billing portal is not available yet.",
+        translate("copy.billingPortalIsNotAvailableYet"),
       );
       await openUrl(url);
     } catch (err) {
       setError(
-        getBillingErrorMessage(err, "Billing portal is not available yet."),
+        getBillingErrorMessage(err, translate("copy.billingPortalIsNotAvailableYet")),
       );
     } finally {
       setBusy(false);
@@ -1292,7 +1291,7 @@ export function useAuthDialogModel(
 
   async function deleteAccount() {
     if (!supabase || !session) {
-      setError("Sign in before deleting your account.");
+      setError(translate("copy.signInBeforeDeletingYourAccount"));
       return;
     }
     if (busy) return;
@@ -1368,7 +1367,7 @@ export function useAuthDialogModel(
         showTransferToast(
           result.skippedTeamContent
             ? "Only team-based sessions were selected. Upgrade to Pro to import them."
-            : "Nothing new to import from this device.",
+            : translate("copy.nothingNewToImportFromThisDevice"),
         );
         return;
       }
@@ -1377,12 +1376,12 @@ export function useAuthDialogModel(
         ? " Team-based sessions were skipped because this account is on Free plan."
         : "";
       showTransferToast(
-        `Imported ${parts.join(" , ")} to your account.${skippedTeamContentLabel}`,
+        translate("dynamic.importedToYourAccount", [parts.join(" , "), skippedTeamContentLabel]),
         "success",
       );
     } catch (err) {
       showTransferToast(
-        err instanceof Error ? err.message : "Import failed.",
+        err instanceof Error ? err.message : translate("copy.importFailed"),
         "error",
       );
     } finally {
@@ -1392,7 +1391,7 @@ export function useAuthDialogModel(
 
   async function runImportFromFile(file: File) {
     if (!includeGames && !includeProfiles) {
-      setError("Select games, players, or both first.");
+      setError(translate("copy.selectGamesPlayersOrBothFirst"));
       return;
     }
     if (!onImportBackupFile) return;
@@ -1424,7 +1423,7 @@ export function useAuthDialogModel(
       );
     } catch (err) {
       showTransferToast(
-        err instanceof Error ? err.message : "Import from file failed.",
+        err instanceof Error ? err.message : translate("copy.importFromFileFailed"),
         "error",
       );
     } finally {
@@ -1435,7 +1434,7 @@ export function useAuthDialogModel(
 
   async function runDownloadBackupFile() {
     if (!includeGames && !includeProfiles) {
-      setError("Select games, players, or both first.");
+      setError(translate("copy.selectGamesPlayersOrBothFirst"));
       return;
     }
     if (!onDownloadBackupFile) return;
@@ -1449,7 +1448,7 @@ export function useAuthDialogModel(
       await onDownloadBackupFile(transferSelection);
     } catch (err) {
       showTransferToast(
-        err instanceof Error ? err.message : "Backup download failed.",
+        err instanceof Error ? err.message : translate("copy.backupDownloadFailed"),
         "error",
       );
     } finally {

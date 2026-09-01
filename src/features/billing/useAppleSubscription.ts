@@ -29,9 +29,7 @@ export function useAppleSubscription(session: Session | null) {
   const [isLoadingSessionPass, setIsLoadingSessionPass] = useState(nativeIOS);
   const [productsError, setProductsError] = useState<string | null>(null);
   const [sessionPassError, setSessionPassError] = useState<string | null>(null);
-  const syncingTransactionsRef = useRef(
-    new Map<string, Promise<unknown>>(),
-  );
+  const syncingTransactionsRef = useRef(new Map<string, Promise<unknown>>());
   const userId = session?.user.id ?? null;
 
   const syncTransaction = useCallback((transaction: AppleTransaction) => {
@@ -97,7 +95,9 @@ export function useAppleSubscription(session: Session | null) {
       );
       setSessionPassProduct(product ?? null);
       setSessionPassError(
-        product ? null : "The Session Pass is not available from the App Store yet.",
+        product
+          ? null
+          : "The Session Pass is not available from the App Store yet.",
       );
     } else {
       setSessionPassProduct(null);
@@ -181,15 +181,11 @@ export function useAppleSubscription(session: Session | null) {
     const results = await Promise.all(transactions.map(syncTransaction));
     const subscription = results.find(
       (result) =>
-        !!result &&
-        typeof result === "object" &&
-        "billingPeriod" in result,
+        !!result && typeof result === "object" && "billingPeriod" in result,
     ) as { active?: boolean } | undefined;
     const sessionPass = results.find(
       (result) =>
-        !!result &&
-        typeof result === "object" &&
-        "sessionLimit" in result,
+        !!result && typeof result === "object" && "sessionLimit" in result,
     ) as { active?: boolean } | undefined;
     return {
       active: subscription?.active ?? false,

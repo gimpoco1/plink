@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getCurrentLanguage, translate } from "../../../i18n/translate";
 import type { Game, ScoreHistoryEntry } from "../../../types";
 import { getGameParticipants } from "../../../utils/gameParticipants";
 
@@ -84,11 +85,10 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
   const hasInvitedUpdaterHistory = ownerPlayerId
     ? [...recordedUpdaterIds].some((playerId) => playerId !== ownerPlayerId)
     : recordedUpdaterIds.size > 1;
-  const showUpdaterAttribution =
-    hasInvitedPlayer || hasInvitedUpdaterHistory;
+  const showUpdaterAttribution = hasInvitedPlayer || hasInvitedUpdaterHistory;
   const timeFormat = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, {
+      new Intl.DateTimeFormat(getCurrentLanguage(), {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
@@ -97,12 +97,12 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
   );
   const shortDate = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }),
+      new Intl.DateTimeFormat(getCurrentLanguage(), { day: "numeric", month: "short" }),
     [],
   );
   const longDate = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, {
+      new Intl.DateTimeFormat(getCurrentLanguage(), {
         day: "numeric",
         month: "short",
         year: "numeric",
@@ -135,15 +135,16 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
         avatarColor: entry.avatarColor,
       };
       const current = result[result.length - 1];
-      const updatedBy = showUpdaterAttribution && entry.updatedByPlayerId
-        ? {
-            id: entry.updatedByPlayerId,
-            name: entry.updatedByPlayerName ?? "Unknown player",
-            avatarColor: entry.updatedByAvatarColor ?? "#6f7b8f",
-            isCurrentUser:
-              entry.updatedByPlayerId === currentUserPlayerId,
-          }
-        : undefined;
+      const updatedBy =
+        showUpdaterAttribution && entry.updatedByPlayerId
+          ? {
+              id: entry.updatedByPlayerId,
+              name:
+                entry.updatedByPlayerName ?? translate("copy.unknownPlayer"),
+              avatarColor: entry.updatedByAvatarColor ?? "#6f7b8f",
+              isCurrentUser: entry.updatedByPlayerId === currentUserPlayerId,
+            }
+          : undefined;
       if (
         current &&
         current.subjectId === subject.id &&
@@ -170,7 +171,12 @@ export function useGameHistory(game: Game, selectedSubjectId: string) {
       }
     }
     return result;
-  }, [currentUserPlayerId, entries, showUpdaterAttribution, subjectsByPlayerId]);
+  }, [
+    currentUserPlayerId,
+    entries,
+    showUpdaterAttribution,
+    subjectsByPlayerId,
+  ]);
   const playerOptions = useMemo(() => {
     const subjects = new Map<string, HistorySubject>();
     for (const action of actions) {

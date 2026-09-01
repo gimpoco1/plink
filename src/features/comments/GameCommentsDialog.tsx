@@ -1,3 +1,4 @@
+import { getCurrentLanguage, translate } from "../../i18n/translate";
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import type { GameComment } from "../../types";
@@ -17,7 +18,7 @@ type Props = {
 };
 
 function formatCommentTime(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getCurrentLanguage(), {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -87,14 +88,16 @@ export function GameCommentsDialog({
       <div className="gameCommentsDialog__layout">
         <div className="dialog__head gameCommentsDialog__head">
           <div className="dialog__titleWrap">
-            <div className="dialog__eyebrow">Game notes</div>
-            <div className="dialog__title">Comments</div>
+            <div className="dialog__eyebrow">
+              {translate("copy.gameNotes")}
+            </div>
+            <div className="dialog__title">{translate("copy.comments")}</div>
           </div>
           <button
             className="iconbtn"
             type="button"
             onClick={onClose}
-            aria-label="Close comments"
+            aria-label={translate("copy.closeComments")}
           >
             ×
           </button>
@@ -106,12 +109,16 @@ export function GameCommentsDialog({
           aria-live="polite"
         >
           {loading && comments.length === 0 ? (
-            <div className="gameCommentsDialog__empty">Loading comments…</div>
+            <div className="gameCommentsDialog__empty">
+              {translate("copy.loadingComments")}
+            </div>
           ) : comments.length === 0 ? (
             <div className="gameCommentsDialog__empty">
               <MessageCircle size={28} strokeWidth={1.8} aria-hidden="true" />
-              <strong>No comments yet</strong>
-              <span>Add a note you can return to later.</span>
+              <strong>{translate("copy.noCommentsYet")}</strong>
+              <span>
+                {translate("copy.addANoteYouCanReturnToLater")}
+              </span>
             </div>
           ) : (
             comments.map((comment) => {
@@ -127,7 +134,7 @@ export function GameCommentsDialog({
                   </span>
                   <div className="gameComment__content">
                     <div className="gameComment__meta">
-                      <strong>{isOwn ? "You" : comment.authorName}</strong>
+                      <strong>{isOwn ? translate("copy.you") : comment.authorName}</strong>
                       <time
                         dateTime={new Date(comment.createdAt).toISOString()}
                       >
@@ -147,7 +154,7 @@ export function GameCommentsDialog({
                           setEditingId(comment.id);
                           setDraft(comment.body);
                         }}
-                        aria-label="Edit comment"
+                        aria-label={translate("copy.editComment")}
                       >
                         <Pencil
                           size={15}
@@ -158,7 +165,7 @@ export function GameCommentsDialog({
                       <button
                         type="button"
                         onClick={() => void onDelete(comment.id)}
-                        aria-label="Delete comment"
+                        aria-label={translate("copy.deleteComment")}
                       >
                         <Trash2
                           size={15}
@@ -190,7 +197,7 @@ export function GameCommentsDialog({
                 setDraft("");
               }}
             >
-              Cancel edit
+              {translate("copy.cancelEdit")}
             </button>
           ) : null}
           <div className="gameCommentsDialog__inputRow">
@@ -198,8 +205,8 @@ export function GameCommentsDialog({
               value={draft}
               maxLength={500}
               rows={1}
-              placeholder="Add a comment…"
-              aria-label="Comment"
+              placeholder={translate("copy.addAComment")}
+              aria-label={translate("copy.comment")}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
                 if (

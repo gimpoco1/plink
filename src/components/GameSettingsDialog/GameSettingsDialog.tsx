@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { ScoreDirection, WinCondition } from "../../types";
 import { MAX_ABS_SCORE } from "../../constants";
@@ -158,14 +159,18 @@ export const GameSettingsDialog = forwardRef<
       >
         <div className="dialog__head">
           <div className="dialog__titleWrap">
-            <div className="dialog__eyebrow">Session rules</div>
-            <div className="dialog__title">Game settings</div>
+            <div className="dialog__eyebrow">
+              {translate("copy.sessionRules")}
+            </div>
+            <div className="dialog__title">
+              {translate("topbar.gameSettings")}
+            </div>
           </div>
           <button
             className="iconbtn"
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={translate("copy.close")}
           >
             ×
           </button>
@@ -182,7 +187,7 @@ export const GameSettingsDialog = forwardRef<
           ) : null}
 
           <label className="field">
-            <span className="field__label">Game name</span>
+            <span className="field__label">{translate("new.gameName")}</span>
             <input
               className="input"
               value={name}
@@ -195,10 +200,10 @@ export const GameSettingsDialog = forwardRef<
           <label className="field">
             <span className="field__label">
               {winCondition === "reach_zero"
-                ? "Starting score"
+                ? translate("copy.startingScore")
                 : manualEndOnly
-                  ? "Reference target"
-                  : "Target score"}
+                  ? translate("copy.referenceTarget")
+                  : translate("copy.targetScore")}
             </span>
             <input
               className="input"
@@ -222,11 +227,14 @@ export const GameSettingsDialog = forwardRef<
             }
           />
 
-          <div className="settingsModeGrid" aria-label="Game rules">
+          <div
+            className="settingsModeGrid"
+            aria-label={translate("copy.gameRules")}
+          >
             <SettingsModeButton
               icon={<ArrowDownUp size={22} strokeWidth={2.3} />}
-              title="Lowest wins"
-              description="Lowest score wins."
+              title={translate("copy.lowestWins")}
+              description={translate("copy.lowestScoreWins")}
               active={winCondition === "lowest"}
               onClick={() => {
                 setScoreDirection("up");
@@ -237,15 +245,15 @@ export const GameSettingsDialog = forwardRef<
             />
             <SettingsModeButton
               icon={<Flag size={22} strokeWidth={2.3} />}
-              title="Manual finish"
-              description="End from the game menu."
+              title={translate("copy.manualFinish")}
+              description={translate("copy.endFromTheGameMenu")}
               active={manualEndOnly}
               onClick={() => setManualEndOnly((value) => !value)}
             />
             <SettingsModeButton
               icon={<Trophy size={22} strokeWidth={2.3} />}
-              title="Win by 2"
-              description="Leader needs a 2 point gap."
+              title={translate("copy.winBy2")}
+              description={translate("copy.leaderNeedsA2PointGap")}
               active={winByTwo}
               disabled={winCondition === "reach_zero"}
               onClick={() => {
@@ -256,21 +264,21 @@ export const GameSettingsDialog = forwardRef<
             />
             <SettingsModeButton
               icon={<Timer size={22} strokeWidth={2.3} />}
-              title="Timer"
+              title={translate("copy.timer")}
               description={
                 timerEnabled
                   ? timerMode === "stopwatch"
-                    ? "Stopwatch active."
+                    ? translate("copy.stopwatchActive2")
                     : `${timerMinutes || "0"}m ${timerSecondsRaw || "0"}s`
-                  : "No timer for this game."
+                  : translate("copy.noTimerForThisGame")
               }
               active={timerEnabled}
               onClick={() => setTimerEnabled((value) => !value)}
             />
             <SettingsModeButton
               icon={<Dices size={22} strokeWidth={2.3} />}
-              title="Dice"
-              description="Dice roller available during the game."
+              title={translate("copy.dice")}
+              description={translate("copy.diceRollerAvailableDuringTheGame")}
               active={diceEnabled}
               onClick={() => setDiceEnabled((value) => !value)}
             />
@@ -311,14 +319,14 @@ export const GameSettingsDialog = forwardRef<
 
         <div className="dialog__actions">
           <button className="btn btn--ghost" type="button" onClick={close}>
-            Cancel
+            {translate("copy.cancel")}
           </button>
           <button
             className="btn btn--primary"
             type="submit"
             disabled={!canSave}
           >
-            Save
+            {translate("copy.save")}
           </button>
         </div>
       </form>

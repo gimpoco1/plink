@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Check, Plus, Search } from "lucide-react";
 import type { GameTeam } from "../../../types";
 import { NewPlayerComposer } from "../../../components/NewPlayerComposer/NewPlayerComposer";
@@ -11,9 +12,11 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
   return (
     <section className="teamBuilderCard teamCard__builderSection teamCard__builderSection--flat">
       <div className="teamBuilderCard__head">
-        <div className="teamBuilderCard__label">Team players</div>
+        <div className="teamBuilderCard__label">
+          {translate("copy.teamPlayers")}
+        </div>
         <div className="teamBuilderCard__badge">
-          {model.editingTeamMemberIds.size} member
+          {model.editingTeamMemberIds.size} {translate("copy.member")}
           {model.editingTeamMemberIds.size === 1 ? "" : "s"}
         </div>
       </div>
@@ -30,8 +33,8 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
                 disabled={isRequiredMember}
                 title={
                   isRequiredMember
-                    ? "A team needs at least one player."
-                    : `Remove ${profile.name} from this team`
+                    ? translate("copy.aTeamNeedsAtLeastOnePlayer")
+                    : translate("dynamic.removeFromThisTeam", [profile.name])
                 }
                 onClick={() => toggleMember(model, profile.id)}
               >
@@ -57,7 +60,7 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
         onClick={() => model.toggleTeamAddPlayers(team.id)}
       >
         <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
-        <span>{isAddingPlayers ? "Hide players" : "Add players"}</span>
+        <span>{isAddingPlayers ? translate("copy.hidePlayers") : translate("copy.addPlayers")}</span>
       </button>
       {isAddingPlayers ? (
         <div className="teamEditor__addPanel teamEditor__addPanel--builder">
@@ -65,7 +68,7 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
             <Search size={18} strokeWidth={2.4} aria-hidden="true" />
             <input
               className="teamBuilderSearch__input"
-              placeholder="Search players..."
+              placeholder={translate("copy.searchPlayers")}
               value={model.editingTeamSearch}
               onChange={(event) =>
                 model.setEditingTeamSearch(event.target.value)
@@ -92,7 +95,7 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
                       disabled={!model.canUseTeams || isRequiredMember}
                       title={
                         isRequiredMember
-                          ? "A team needs at least one player."
+                          ? translate("copy.aTeamNeedsAtLeastOnePlayer")
                           : undefined
                       }
                       onClick={() => toggleMember(model, profile.id)}

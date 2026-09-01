@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { StatsScreenEmpty } from "./StatsScreenParts";
 import { useStatsScreenContext } from "../context/StatsScreenContext";
 import { StatsOverview } from "./StatsOverview";
@@ -10,8 +11,8 @@ export function StatsReport() {
       <StatsScreenEmpty
         title={
           activeKind === "players"
-            ? "No saved players yet"
-            : "No saved teams yet"
+            ? translate("copy.noSavedPlayersYet2")
+            : translate("copy.noSavedTeamsYet")
         }
         copy={
           activeKind === "players"

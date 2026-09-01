@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useMemo } from "react";
 import {
   Check,
@@ -64,18 +65,18 @@ export function GameRowCard({
   }, [participants, winner]);
   const winnerIsCurrentAccount = Boolean(
     winner &&
-      !isTeamsGame &&
-      (game.accessRole === "collaborator"
-        ? winner.id === game.linkedPlayerIdForCurrentUser ||
-          (!!winner.profileId && accountProfileIds.has(winner.profileId))
-        : !!winner.profileId && accountProfileIds.has(winner.profileId)),
+    !isTeamsGame &&
+    (game.accessRole === "collaborator"
+      ? winner.id === game.linkedPlayerIdForCurrentUser ||
+        (!!winner.profileId && accountProfileIds.has(winner.profileId))
+      : !!winner.profileId && accountProfileIds.has(winner.profileId)),
   );
   const winnerName = winner
     ? winnerIsCurrentAccount
-      ? "You"
+      ? translate("copy.you")
       : isTeamsGame
-      ? (winningParticipant?.name ?? capitalizeFirst(winner.name))
-      : capitalizeFirst(winner.name)
+        ? (winningParticipant?.name ?? capitalizeFirst(winner.name))
+        : capitalizeFirst(winner.name)
     : null;
   const participantCount = isTeamsGame
     ? game.teams.length
@@ -97,10 +98,10 @@ export function GameRowCard({
                 closeSwipe();
                 onRename();
               }}
-              aria-label={`Rename game ${game.name}`}
+              aria-label={translate("dynamic.renameGame", [game.name])}
             >
               <Pencil size={18} strokeWidth={2} aria-hidden="true" />
-              Rename
+              {translate("copy.rename")}
             </button>
           ) : null}
           <button
@@ -110,11 +111,10 @@ export function GameRowCard({
               closeSwipe();
               onDuplicate();
             }}
-            aria-label={`Play ${game.name} again`}
+              aria-label={translate("dynamic.playAgain", [game.name])}
           >
             <Copy size={18} strokeWidth={2} aria-hidden="true" />
-            Play again
-          </button>
+            {translate("copy.playAgain")}</button>
           {canManageGame ? (
             <button
               className="swipeDelete"
@@ -123,11 +123,10 @@ export function GameRowCard({
                 closeSwipe();
                 onDelete();
               }}
-              aria-label={`Delete game ${game.name}`}
+              aria-label={translate("dynamic.deleteGame", [game.name])}
             >
               <Trash2 size={18} strokeWidth={2} aria-hidden="true" />
-              Delete
-            </button>
+              {translate("copy.delete")}</button>
           ) : null}
         </>
       )}
@@ -145,7 +144,7 @@ export function GameRowCard({
               onEnter();
             }
           }}
-          aria-label={`Open ${game.name}`}
+          aria-label={translate("dynamic.open", [game.name])}
         >
           <div className="gameRow__head">
             <div className="gameRow__titleGroup">
@@ -160,24 +159,24 @@ export function GameRowCard({
               {hasInvitedPlayers ? (
                 <span
                   className="gameRow__modeBadge gameRow__modeBadge--shared"
-                  aria-label="Shared game"
+                  aria-label={translate("copy.sharedGame")}
                 >
                   <Link size={14} strokeWidth={2.3} aria-hidden="true" />
-                  <span>Shared</span>
+                  <span>{translate("copy.shared")}</span>
                 </span>
               ) : null}
               {isTeamsGame ? (
                 <span
                   className="gameRow__modeBadge gameRow__modeBadge--teams"
-                  aria-label="Team game"
+                  aria-label={translate("copy.teamGame")}
                 >
                   <Users size={14} strokeWidth={2.3} aria-hidden="true" />
-                  <span>Teams</span>
+                  <span>{translate("home.teams")}</span>
                 </span>
               ) : null}
               <div
                 className="gameRow__date"
-                aria-label={`Created ${createdLabel}`}
+              aria-label={translate("dynamic.created", [createdLabel])}
               >
                 {createdLabel}
               </div>
@@ -194,14 +193,16 @@ export function GameRowCard({
                     color="black"
                   />
                 </span>
-                <span className="gameRow__winnerLabel">Won by</span>
+                <span className="gameRow__winnerLabel">
+                  {translate("copy.wonBy")}
+                </span>
                 <strong>{winnerName}</strong>
               </span>
             ) : null}
             {complete && draw ? (
               <span className="gameRow__detail">
                 <span className="gameRow__statusDot" aria-hidden="true" />
-                Draw
+                {translate("copy.draw")}
               </span>
             ) : null}
             {complete && (isSoloCompletion || (!winner && !draw)) ? (
@@ -209,19 +210,20 @@ export function GameRowCard({
                 <span className="gameRow__statusCheck" aria-hidden="true">
                   <Check size={12} strokeWidth={3} />
                 </span>
-                Completed
-              </span>
+                {translate("copy.completed")}</span>
             ) : null}
             {!complete ? (
               <span className="gameRow__detail">
                 <span className="gameRow__statusDot" aria-hidden="true" />
-                In progress
+                {translate("copy.inProgress2")}
               </span>
             ) : null}
             <span className="gameRow__detail">
               <Crosshair size={15} strokeWidth={2.3} aria-hidden="true" />
               <span>
-                {game.winCondition === "reach_zero" ? "Start" : "Target"}
+                {game.winCondition === "reach_zero"
+                  ? translate("home.start")
+                  : translate("new.target")}
               </span>
               <strong>
                 {game.winCondition === "reach_zero"
@@ -238,9 +240,10 @@ export function GameRowCard({
             </span>
             <span
               className="gameRow__detail gameRow__players"
-              aria-label={`${
-                isTeamsGame ? "Team" : "Player"
-              } count ${participantCount}`}
+          aria-label={translate("dynamic.participantCount", [
+            translate(isTeamsGame ? "common.team" : "common.player"),
+            participantCount,
+          ])}
             >
               {isTeamsGame ? (
                 <Users size={15} strokeWidth={2.3} aria-hidden="true" />
@@ -253,8 +256,8 @@ export function GameRowCard({
                   ? "team"
                   : "player"
                 : isTeamsGame
-                  ? "teams"
-                  : "players"}
+                  ? translate("copy.teams")
+                  : translate("copy.players")}
             </span>
           </div>
         </button>

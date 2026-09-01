@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { motion } from "framer-motion";
 import { Users } from "lucide-react";
 import { useNewGameCardContext } from "./NewGameCardContext";
@@ -34,7 +35,7 @@ export function NewGameParticipants() {
       <div
         className="participantModeSwitch"
         role="tablist"
-        aria-label="Participant mode"
+        aria-label={translate("copy.participantMode")}
       >
         <button
           type="button"
@@ -65,7 +66,9 @@ export function NewGameParticipants() {
         >
           {t("tabs.teams")}
           {!canAccessTeamsMode ? (
-            <span className="participantModeSwitch__badge">{t("common.pro")}</span>
+            <span className="participantModeSwitch__badge">
+              {t("common.pro")}
+            </span>
           ) : null}
         </button>
       </div>

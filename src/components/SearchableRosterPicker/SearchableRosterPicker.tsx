@@ -84,9 +84,7 @@ export function SearchableRosterPicker({
     const node = listRef.current;
     if (!node || !hasItems || !shouldShowList) {
       setFadeState((current) =>
-        current.top || current.bottom
-          ? { top: false, bottom: false }
-          : current,
+        current.top || current.bottom ? { top: false, bottom: false } : current,
       );
       return;
     }

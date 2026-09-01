@@ -1,3 +1,4 @@
+import { translate } from "./i18n/translate";
 export const STORAGE_KEY = "plink:v1";
 export const PROFILES_STORAGE_KEY = "plink:profiles:v1";
 export const GAMES_STORAGE_KEY = "plink:games:v1";
@@ -19,23 +20,23 @@ export const MAX_ABS_SCORE = 999999;
 export const DEFAULT_QUICK_SCORE_VALUES = [1, 2] as const;
 export const DEFAULT_TEAM_ICON = "dumbbell";
 export const TEAM_ICONS = [
-  { id: "dumbbell", label: "Training" },
-  { id: "trophy", label: "Champions" },
-  { id: "shield", label: "Defense" },
-  { id: "flag", label: "Flag" },
-  { id: "target", label: "Target" },
-  { id: "zap", label: "Fast" },
-  { id: "flame", label: "Fire" },
-  { id: "star", label: "All stars" },
+  { id: "dumbbell", label: translate("copy.training") },
+  { id: "trophy", label: translate("copy.champions") },
+  { id: "shield", label: translate("copy.defense") },
+  { id: "flag", label: translate("copy.flag") },
+  { id: "target", label: translate("new.target") },
+  { id: "zap", label: translate("copy.fast") },
+  { id: "flame", label: translate("copy.fire") },
+  { id: "star", label: translate("copy.allStars") },
 ] as const;
 
 export const AVATAR_COLORS = [
-  { id: "graphite", label: "Graphite", value: "#6b7890" },
-  { id: "sky", label: "Sky", value: "#36aeea" },
-  { id: "aqua", label: "Aqua", value: "#31cfc3" },
-  { id: "mint", label: "Mint", value: "#47d97d" },
-  { id: "lime", label: "Lime", value: "#9fbe38" },
-  { id: "coral", label: "Coral", value: "#f36f85" },
-  { id: "violet", label: "Violet", value: "#9276e8" },
-  { id: "stone", label: "Stone", value: "#aba39b" },
+  { id: "graphite", label: translate("copy.graphite"), value: "#6b7890" },
+  { id: "sky", label: translate("copy.sky"), value: "#36aeea" },
+  { id: "aqua", label: translate("copy.aqua"), value: "#31cfc3" },
+  { id: "mint", label: translate("copy.mint"), value: "#47d97d" },
+  { id: "lime", label: translate("copy.lime"), value: "#9fbe38" },
+  { id: "coral", label: translate("copy.coral"), value: "#f36f85" },
+  { id: "violet", label: translate("copy.violet"), value: "#9276e8" },
+  { id: "stone", label: translate("copy.stone"), value: "#aba39b" },
 ] as const;

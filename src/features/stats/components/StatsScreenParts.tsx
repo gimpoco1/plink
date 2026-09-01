@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import type { ReactNode } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { avatarStyleFor } from "../../../utils/color";
@@ -109,7 +110,11 @@ export function PickerPopover({
           type="text"
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder={kind === "players" ? "Search players" : "Search teams"}
+          placeholder={
+            kind === "players"
+              ? translate("new.searchPlayers")
+              : translate("copy.searchTeams")
+          }
         />
       </label>
       <div className="statsPickerPopover__list">
@@ -133,7 +138,9 @@ export function PickerPopover({
             </button>
           ))
         ) : (
-          <div className="statsPickerPopover__empty">No matches found.</div>
+          <div className="statsPickerPopover__empty">
+            {translate("copy.noMatchesFound")}
+          </div>
         )}
       </div>
     </div>

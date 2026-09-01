@@ -1,9 +1,6 @@
+import { translate } from "../../i18n/translate";
 import { useMemo, useState } from "react";
-import type {
-  Player,
-  QuickScoreValues,
-  WinCondition,
-} from "../../types";
+import type { Player, QuickScoreValues, WinCondition } from "../../types";
 import { MAX_ABS_SCORE } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
@@ -91,7 +88,7 @@ export function TeamScoreCard({
       <div className="cardHeader">
         <div className="cardHeader__left">
           {showRank ? (
-            <div className="rank" aria-label={`Rank ${rank}`}>
+            <div className="rank" aria-label={translate("dynamic.rank", [rank])}>
               #{rank}
             </div>
           ) : null}
@@ -105,7 +102,7 @@ export function TeamScoreCard({
               </div>
               <div
                 className="teamScoreCard__membersCompact"
-                aria-label={`${name} members`}
+                aria-label={translate("dynamic.members", [name])}
               >
                 {members.slice(0, 5).map((member) => (
                   <span
@@ -121,7 +118,9 @@ export function TeamScoreCard({
                 {overflowCount > 0 ? (
                   <span
                     className="teamScoreCard__memberOverflow"
-                    aria-label={`${overflowCount} more members`}
+                    aria-label={translate("dynamic.moreMembers", [
+                      overflowCount,
+                    ])}
                   >
                     +{overflowCount}
                   </span>
@@ -129,7 +128,10 @@ export function TeamScoreCard({
               </div>
             </div>
             {isWinner ? (
-              <div className="winnerMark" aria-label="Winner">
+              <div
+                className="winnerMark"
+                aria-label={translate("copy.winner")}
+              >
                 <Trophy size={24} strokeWidth={2.2} aria-hidden="true" />
               </div>
             ) : null}
@@ -138,7 +140,7 @@ export function TeamScoreCard({
         <div className="cardHeader__right">
           <div
             className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`}
-            aria-label={`Score ${currentScore}`}
+            aria-label={translate("dynamic.score", [currentScore])}
           >
             {currentScore}
           </div>
@@ -148,7 +150,7 @@ export function TeamScoreCard({
       <div
         className="progressContainer"
         role="progressbar"
-        aria-label={`${name} progress to target`}
+        aria-label={translate("dynamic.progressToTarget", [name])}
         aria-valuemin={0}
         aria-valuemax={
           winCondition === "reach_zero"
@@ -172,7 +174,10 @@ export function TeamScoreCard({
                 key={delta}
                 type="button"
                 className="dot dot--neg"
-                aria-label={`Subtract ${Math.abs(delta)} points from ${name}`}
+                  aria-label={translate("dynamic.subtractPoints", [
+                    Math.abs(delta),
+                    name,
+                  ])}
                 onClick={() => onDelta(id, delta)}
               >
                 {delta}
@@ -187,7 +192,7 @@ export function TeamScoreCard({
               inputMode="numeric"
               placeholder="0"
               value={customRaw}
-              aria-label={`Custom point amount for ${name}`}
+              aria-label={translate("dynamic.customPointAmountFor", [name])}
               onChange={(event) => {
                 const digits = event.target.value.replace(/[^\d]/g, "");
                 if (!digits) {
@@ -208,7 +213,7 @@ export function TeamScoreCard({
             <div className="podButtons">
               <button
                 className="podBtn podBtn--neg"
-                aria-label={`Subtract custom points from ${name}`}
+                  aria-label={translate("dynamic.subtractCustomPoints", [name])}
                 type="button"
                 disabled={!canApplyCustom}
                 onClick={() => {
@@ -220,7 +225,7 @@ export function TeamScoreCard({
               </button>
               <button
                 className="podBtn podBtn--pos"
-                aria-label={`Add custom points to ${name}`}
+                aria-label={translate("dynamic.addCustomPointsTo", [name])}
                 type="button"
                 disabled={!canApplyCustom}
                 onClick={() => {
@@ -239,7 +244,7 @@ export function TeamScoreCard({
                 key={delta}
                 type="button"
                 className="dot dot--pos"
-                aria-label={`Add ${delta} points to ${name}`}
+                aria-label={translate("dynamic.addPointsTo", [delta, name])}
                 onClick={() => onDelta(id, delta)}
               >
                 +{delta}

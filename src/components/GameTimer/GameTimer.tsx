@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, TimerReset, TriangleAlert } from "lucide-react";
 import {
@@ -80,9 +81,7 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
 
   const totalMs = Math.max(1, durationSeconds) * 1000;
   const normalizeElapsedMs = (value: number) =>
-    mode === "countdown"
-      ? Math.min(totalMs, value)
-      : Math.max(0, value);
+    mode === "countdown" ? Math.min(totalMs, value) : Math.max(0, value);
 
   const activeElapsed = useMemo(() => {
     if (!isRunning || startedAtRef.current === null) {
@@ -98,10 +97,10 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
   const isDone = mode === "countdown" && displayMs <= 0;
   const hasProgress = elapsedMs > 0 || (isRunning && activeElapsed > 0);
   const actionLabel = isRunning
-    ? "Pause"
+    ? translate("copy.pause")
     : hasProgress && !isDone
-      ? "Resume"
-      : "Start";
+      ? translate("copy.resume")
+      : translate("home.start");
 
   useEffect(() => {
     if (!isDone || !isRunning) return;
@@ -192,7 +191,7 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
       {isOpen ? (
         <div className="gameTimer__panel">
           <div className="gameTimer__mode">
-            {mode === "countdown" ? "Countdown" : "Stopwatch"}
+            {mode === "countdown" ? translate("copy.countdown") : "Stopwatch"}
           </div>
           <div className="gameTimer__quickAdjust">
             <button
@@ -224,8 +223,7 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
               type="button"
               onClick={reset}
             >
-              Reset
-            </button>
+              {translate("copy.reset")}</button>
           </div>
         </div>
       ) : null}
@@ -234,24 +232,24 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
           className="gameTimer__alert"
           type="button"
           onClick={reset}
-          aria-label="Time's up. Reset timer"
+          aria-label={translate("copy.timeSUpResetTimer")}
         >
           <TriangleAlert size={14} strokeWidth={2.4} aria-hidden="true" />
-          <span>Time&apos;s up</span>
+          <span>{translate("copy.timeAposSUp")}</span>
         </button>
       ) : null}
       <div className="gameTimer__dock">
         <div
           className="gameTimer__fab"
           role="group"
-          aria-label="Timer controls"
+          aria-label={translate("copy.timerControls")}
         >
           <div className="gameTimer__fabRow">
             <button
               className="gameTimer__fabMain"
               type="button"
               onClick={() => setIsOpen((value) => !value)}
-              aria-label="Open timer"
+              aria-label={translate("copy.openTimer")}
             >
               <TimerReset size={18} strokeWidth={2.2} aria-hidden="true" />
               <span>{formatClock(displayMs)}</span>

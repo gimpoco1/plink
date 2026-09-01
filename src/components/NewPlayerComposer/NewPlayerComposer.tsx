@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Plus } from "lucide-react";
 import { AVATAR_COLORS } from "../../constants";
 import { useMobileKeyboardCenteredInput } from "../../hooks/useMobileKeyboardCenteredInput";
@@ -64,7 +65,7 @@ export function NewPlayerComposer({
         onClick={onOpen}
       >
         <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
-        Add new player
+        {translate("copy.addNewPlayer")}
       </button>
     );
   }
@@ -77,7 +78,7 @@ export function NewPlayerComposer({
       className={`newPlayerComposer${className ? ` ${className}` : ""}`}
     >
       <div className="newPlayerComposer__header">
-        <span>Player name</span>
+        <span>{translate("copy.playerName")}</span>
       </div>
       <div className="newPlayerComposer__top">
         <label className="field newPlayerComposer__field">
@@ -93,7 +94,7 @@ export function NewPlayerComposer({
               ref={nameInputRef}
               id={inputId}
               className="input input--sm newPlayerComposer__input"
-              placeholder="e.g. John"
+              placeholder={translate("copy.eGJohn")}
               value={name}
               disabled={disabled}
               aria-invalid={!!validationMessage}
@@ -111,8 +112,7 @@ export function NewPlayerComposer({
           disabled={!canAdd}
           onClick={onAdd}
         >
-          Add
-        </button>
+          {translate("copy.add")}</button>
       </div>
       {validationMessage ? (
         <div className="newPlayerComposer__error" role="alert">
@@ -121,7 +121,9 @@ export function NewPlayerComposer({
       ) : null}
 
       <div className="newPlayerComposer__colors">
-        <div className="newPlayerComposer__label">Player color</div>
+        <div className="newPlayerComposer__label">
+          {translate("copy.playerColor")}
+        </div>
         <div className="newPlayerComposer__swatches">
           {AVATAR_COLORS.map((entry) => (
             <button
@@ -132,7 +134,7 @@ export function NewPlayerComposer({
               data-active={color === entry.value}
               disabled={disabled}
               onClick={() => onColorChange(entry.value)}
-              aria-label={`Use ${entry.id} color`}
+                      aria-label={translate("dynamic.useColor", [entry.id])}
               aria-pressed={color === entry.value}
             />
           ))}
@@ -142,7 +144,9 @@ export function NewPlayerComposer({
       {showPersistenceControls || showCancelButton ? (
         <div
           className={`newPlayerComposer__footer${
-            !showPersistenceControls ? " newPlayerComposer__footer--actionsOnly" : ""
+            !showPersistenceControls
+              ? " newPlayerComposer__footer--actionsOnly"
+              : ""
           }`}
         >
           {showPersistenceControls ? (
@@ -152,7 +156,7 @@ export function NewPlayerComposer({
                 type="button"
                 onClick={onOpenAuth}
               >
-                <strong>Sign in to save player</strong>
+                <strong>{translate("copy.signInToSavePlayer")}</strong>
               </button>
             ) : (
               <label className="saveProfileOption newPlayerComposer__save">
@@ -161,7 +165,7 @@ export function NewPlayerComposer({
                   checked={saveAsProfile}
                   onChange={(e) => onSaveAsProfileChange(e.target.checked)}
                 />
-                <span>Save player in your account</span>
+                <span>{translate("copy.savePlayerInYourAccount")}</span>
               </label>
             )
           ) : null}
@@ -172,7 +176,7 @@ export function NewPlayerComposer({
               type="button"
               onClick={onCancel}
             >
-              Cancel
+              {translate("copy.cancel")}
             </button>
           ) : null}
         </div>

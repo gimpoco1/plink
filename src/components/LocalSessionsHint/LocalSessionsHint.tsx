@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Plus, X } from "lucide-react";
 import "./LocalSessionsHint.css";
 
@@ -18,23 +19,26 @@ export function LocalSessionsHint({
 }: LocalSessionsHintProps) {
   const parts = [
     sessionCount > 0
-      ? `${sessionCount} session${sessionCount === 1 ? "" : "s"}`
+      ? translate("dynamic.session", [sessionCount])
       : "",
     profileCount > 0
-      ? `${profileCount} player${profileCount === 1 ? "" : "s"}`
+      ? translate("dynamic.player", [profileCount])
       : "",
   ].filter(Boolean);
-  const isPlural = sessionCount + profileCount !== 1;
+  const totalCount = sessionCount + profileCount;
   const message =
     parts.length === 2
-      ? `${parts[0]} and ${parts[1]} are saved on this device but are not in your account yet. Add them now?`
-      : `${parts[0] ?? parts[1]} ${isPlural ? "are" : "is"} saved on this device but ${isPlural ? "are" : "is"} not in your account yet. Add ${isPlural ? "them" : "it"} now?`;
+      ? translate("dynamic.andAreSavedOnThisDeviceButAreNotInYourAccount", [parts[0], parts[1]])
+      : translate("dynamic.savedOnThisDeviceButNotInYourAccountYetAddNow", [
+          totalCount,
+          parts[0] ?? parts[1],
+        ]);
   const eyebrow =
     sessionCount > 0 && profileCount > 0
-      ? "Local sessions and players found"
+      ? translate("copy.localSessionsAndPlayersFound")
       : profileCount > 0
-        ? "Local players found"
-        : "Local sessions found";
+        ? translate("copy.localPlayersFound")
+        : translate("copy.localSessionsFound");
 
   return (
     <div className={`localSessionsHint${className ? ` ${className}` : ""}`}>
@@ -42,7 +46,7 @@ export function LocalSessionsHint({
         className="localSessionsHint__dismiss"
         type="button"
         onClick={onDismiss}
-        aria-label="Dismiss local sessions notice"
+        aria-label={translate("copy.dismissLocalSessionsNotice")}
       >
         <X size={16} strokeWidth={2.4} aria-hidden="true" />
       </button>
@@ -58,7 +62,7 @@ export function LocalSessionsHint({
         onClick={onAdd}
       >
         <Plus size={17} strokeWidth={2.3} aria-hidden="true" />
-        Let's add
+        {translate("copy.letSAdd")}
       </button>
     </div>
   );

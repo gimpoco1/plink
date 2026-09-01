@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Check, Info, Link, LockKeyhole, Plus } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { capitalizeFirst, getInitials } from "../../utils/text";
@@ -45,27 +46,27 @@ export function ManagePlayersSavedSection() {
         className="managePlayersDialog__savedPicker"
         listMaxHeight="240px"
         showListImmediately={showRosterImmediately}
-        listTriggerLabel="Add players"
+        listTriggerLabel={translate("copy.addPlayers")}
         searchValue={search}
         onSearchChange={setSearch}
-        listTitle={isAuthenticated ? "Players" : "Add players"}
-        collapseLabel="Hide players"
-        searchPlaceholder="Search players"
-        searchAriaLabel="Search saved players"
-        clearAriaLabel="Clear player search"
+        listTitle={isAuthenticated ? translate("tabs.players") : translate("copy.addPlayers")}
+        collapseLabel={translate("copy.hidePlayers")}
+        searchPlaceholder={translate("new.searchPlayers")}
+        searchAriaLabel={translate("copy.searchSavedPlayers")}
+        clearAriaLabel={translate("copy.clearPlayerSearch")}
         showSearch={
           isAuthenticated &&
           (profiles.length > 0 || pastLinkedPlayers.length > 0 || !!search)
         }
         emptyState={
           search
-            ? "No players match that search."
+            ? translate("copy.noPlayersMatchThatSearch")
             : isAuthenticated &&
                 (profiles.length > 0 || pastLinkedPlayers.length > 0)
-              ? "Every available player is already in this game."
+              ? translate("copy.everyAvailablePlayerIsAlreadyInThisGame")
               : isAuthenticated
-                ? "No saved players yet."
-                : "Add a player for this game below."
+                ? translate("copy.noSavedPlayersYet")
+                : translate("copy.addAPlayerForThisGameBelow")
         }
         listFooterContent={
           stagedPastLinkedUserIds.size > 0 ||
@@ -75,28 +76,24 @@ export function ManagePlayersSavedSection() {
                 <div className="managePlayersDialog__selectionNotice">
                   <Link size={15} strokeWidth={2.4} aria-hidden="true" />
                   <span>
-                    <strong>Invited players</strong>
-                    This game appears in their accounts and they can update the
-                    score. Their results count toward their Stats.
+                    <strong>{translate("copy.invitedPlayers")}</strong>
+                    {translate("copy.thisGameAppearsInTheirAccountsAndTheyCanUpdateTheScore")}
                   </span>
                 </div>
               ) : null}
-              {filteredPastLinkedPlayers.some(
-                (player) => !player.canInvite,
-              ) ? (
+              {filteredPastLinkedPlayers.some((player) => !player.canInvite) ? (
                 <div className="managePlayersDialog__selectionNotice managePlayersDialog__selectionNotice--blocked">
                   <Info size={15} strokeWidth={2.4} aria-hidden="true" />
                   <span>
-                    <strong>Invite code required</strong>
-                    Players marked “Code only” turned off automatic invites.
-                    Share a new code for them to join.
+                    <strong>{translate("copy.inviteCodeRequired")}</strong>
+                    {translate("copy.playersMarkedCodeOnlyTurnedOffAutomaticInvitesShareANewCode")}
                   </span>
                 </div>
               ) : null}
             </div>
           ) : null
         }
-        createButtonLabel="Add new player"
+        createButtonLabel={translate("copy.addNewPlayer")}
         onCreateButtonClick={openComposer}
         footerContent={
           <NewPlayerComposer
@@ -153,8 +150,7 @@ export function ManagePlayersSavedSection() {
                   </span>
                   <span className="managePlayersDialog__invitedBadge">
                     <Link size={9} strokeWidth={2.7} aria-hidden="true" />
-                    Invited before
-                  </span>
+                    {translate("copy.invitedBefore")}</span>
                 </span>
               </span>
               <span
@@ -163,14 +159,14 @@ export function ManagePlayersSavedSection() {
                     ? " managePlayersDialog__invitedState--selected"
                     : blocked
                       ? " managePlayersDialog__invitedState--blocked"
-                    : ""
+                      : ""
                 }`}
                 aria-hidden="true"
               >
                 {blocked ? (
                   <>
                     <LockKeyhole size={13} strokeWidth={2.5} />
-                    Code only
+                    {translate("copy.codeOnly")}
                   </>
                 ) : selected ? (
                   <Check size={15} strokeWidth={3} />
@@ -197,8 +193,7 @@ export function ManagePlayersSavedSection() {
           }}
         >
           <Link size={16} strokeWidth={2.4} aria-hidden="true" />
-          Share invite code
-        </button>
+          {translate("copy.shareInviteCode")}</button>
       ) : null}
       <ManagePlayersQueue />
     </section>

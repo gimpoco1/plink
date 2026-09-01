@@ -123,10 +123,8 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         const localProfile = player.profileId
           ? profilesById.get(player.profileId)
           : undefined;
-        const invitedUserId =
-          game.invitedUserIdsByPlayerId?.[player.id];
-        const savedProfile =
-          !invitedUserId ? localProfile : undefined;
+        const invitedUserId = game.invitedUserIdsByPlayerId?.[player.id];
+        const savedProfile = !invitedUserId ? localProfile : undefined;
         const identityKey = invitedUserId
           ? `invited:${invitedUserId}`
           : player.profileId
@@ -254,10 +252,11 @@ export function useHomeScreenModel(props: HomeScreenProps) {
       {
         label: setup.label,
         players: setup.suggestedPlayers.map((player) => ({
-          name: player.profileId &&
+          name:
+            player.profileId &&
             profilesById.get(player.profileId)?.isAccountPlayer
-            ? formatAccountPlayerName(player.name)
-            : player.name,
+              ? formatAccountPlayerName(player.name)
+              : player.name,
           avatarColor: player.avatarColor,
           invitedUserId: player.invitedUserId,
         })),

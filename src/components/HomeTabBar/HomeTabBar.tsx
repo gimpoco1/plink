@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Home, BarChart3, Users, GalleryVerticalEnd, type LucideIcon } from "lucide-react";
+import {
+  Home,
+  BarChart3,
+  Users,
+  GalleryVerticalEnd,
+  type LucideIcon,
+} from "lucide-react";
 import type { HomeTab } from "../../types";
 import "./HomeTabBar.css";
 import { useI18n } from "../../i18n/I18nContext";
@@ -105,7 +111,11 @@ export function HomeTabBar({
             ref={isPlayersTab ? menuRef : undefined}
           >
             {isPlayersTab && showPlayersMenu ? (
-              <div className="tabSwitcher" role="menu" aria-label={t("tabs.playersView")}>
+              <div
+                className="tabSwitcher"
+                role="menu"
+                aria-label={t("tabs.playersView")}
+              >
                 <button
                   type="button"
                   role="menuitemradio"
@@ -127,7 +137,9 @@ export function HomeTabBar({
                 >
                   {t("tabs.teams")}
                   {!canAccessTeamsView ? (
-                    <span className="tabSwitcher__badge">{t("common.pro")}</span>
+                    <span className="tabSwitcher__badge">
+                      {t("common.pro")}
+                    </span>
                   ) : null}
                 </button>
               </div>

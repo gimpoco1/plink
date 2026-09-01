@@ -13,7 +13,13 @@ const languageFlags = {
   it: "🇮🇹",
 } as const;
 
-export function LanguageSelector() {
+type LanguageSelectorProps = {
+  variant?: "settings" | "topbar";
+};
+
+export function LanguageSelector({
+  variant = "settings",
+}: LanguageSelectorProps) {
   const { language, setLanguage, t } = useI18n();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -40,25 +46,42 @@ export function LanguageSelector() {
   }, [open]);
 
   return (
-    <section className="languageSelector">
-      <span className="languageSelector__icon" aria-hidden="true">
-        <Languages size={17} strokeWidth={2.4} />
-      </span>
-      <div className="languageSelector__copy">
-        <span className="languageSelector__title">{t("language.label")}</span>
-      </div>
+    <section className={`languageSelector languageSelector--${variant}`}>
+      {variant === "settings" ? (
+        <>
+          <span className="languageSelector__icon" aria-hidden="true">
+            <Languages size={17} strokeWidth={2.4} />
+          </span>
+          <div className="languageSelector__copy">
+            <span className="languageSelector__title">
+              {t("language.label")}
+            </span>
+          </div>
+        </>
+      ) : null}
       <div className="languageSelector__dropdown" ref={dropdownRef}>
         <button
           className="languageSelector__trigger"
           type="button"
           aria-haspopup="listbox"
           aria-expanded={open}
+          aria-label={`${t("language.label")}: ${languageLabels[language]}`}
           onClick={() => setOpen((value) => !value)}
         >
-          <span className="languageSelector__flag" aria-hidden="true">
-            {languageFlags[language]}
-          </span>
-          <span>{languageLabels[language]}</span>
+          {variant === "topbar" ? (
+            <span className="languageSelector__initials" aria-hidden="true">
+              {language.toUpperCase()}
+            </span>
+          ) : (
+            <>
+              <span className="languageSelector__flag" aria-hidden="true">
+                {languageFlags[language]}
+              </span>
+              <span className="languageSelector__value">
+                {languageLabels[language]}
+              </span>
+            </>
+          )}
           <ChevronDown
             className={`languageSelector__chevron${
               open ? " languageSelector__chevron--open" : ""
@@ -88,13 +111,15 @@ export function LanguageSelector() {
                     setOpen(false);
                     return;
                   }
-                  try {
-                    window.sessionStorage.setItem(
-                      LANGUAGE_DIALOG_REOPEN_KEY,
-                      "true",
-                    );
-                  } catch {
-                    // Reload still applies the persisted language preference.
+                  if (variant === "settings") {
+                    try {
+                      window.sessionStorage.setItem(
+                        LANGUAGE_DIALOG_REOPEN_KEY,
+                        "true",
+                      );
+                    } catch {
+                      // Reload still applies the persisted language preference.
+                    }
                   }
                   setLanguage(option);
                   window.location.reload();

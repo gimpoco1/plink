@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { getCurrentLanguage, translate } from "../i18n/translate";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Crown } from "lucide-react";
 import type { Game, PlayerProfile } from "../types";
 import { GameRowCard } from "../components/GameRowCard/GameRowCard";
@@ -56,16 +57,6 @@ export function SessionsScreen({
   const hasSharedSessions = sharedSessionCount > 0;
   const remainingSessions =
     maxSessions === null ? null : Math.max(0, maxSessions - ownedSessionCount);
-  const showOwnedLimitInHeader = !isLoading && !isPro && maxSessions !== null;
-  const sessionsTotalLabel = isPro
-    ? `${games.length} ${games.length === 1 ? "session" : "sessions"}`
-    : showOwnedLimitInHeader && maxSessions !== null && !hasSharedSessions
-      ? `${ownedSessionCount}/${maxSessions} sessions`
-      : `${games.length} total`;
-  const sessionsOwnedLabel =
-    showOwnedLimitInHeader && maxSessions !== null && hasSharedSessions
-      ? `${ownedSessionCount}/${maxSessions} owned`
-      : null;
   const showSessionLimitWarning =
     !isLoading &&
     !isPro &&
@@ -75,7 +66,7 @@ export function SessionsScreen({
 
   const dateFormat = useMemo(
     () =>
-      new Intl.DateTimeFormat(undefined, {
+      new Intl.DateTimeFormat(getCurrentLanguage(), {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -148,20 +139,17 @@ export function SessionsScreen({
           <div className="sessionsLimitWarning__content">
             <div className="sessionsLimitWarning__eyebrow">
               <AlertTriangle size={16} strokeWidth={2.4} aria-hidden="true" />
-              <span>Session limit</span>
+              <span>{translate("copy.sessionLimit")}</span>
             </div>
             <p>
               {remainingSessions === 0
-                ? "You have no sessions left."
-                : `You have ${remainingSessions} ${
-                    remainingSessions === 1 ? "session" : "sessions"
-                  } left.`}{" "}
+                ? translate("copy.noSessionsLeft")
+                : translate("dynamic.sessionsLeft", [remainingSessions])}{" "}
               {hasSessionPass
-                ? "Subscribe to Pro for unlimited sessions."
-                : "Get more sessions or subscribe to Pro."}{" "}
+                ? translate("copy.subscribeToProForUnlimitedSessions")
+                : translate("copy.getMoreSessionsOrSubscribeToPro")}{" "}
               <span className="sessionsLimitWarning__note">
-                (Deleting or reusing a past session affects player's progression
-                and Stats)
+                {translate("copy.deletingOrReusingAPastSessionAffectsPlayerSProgressionAndStats")}
               </span>
             </p>
           </div>
@@ -171,21 +159,26 @@ export function SessionsScreen({
             onClick={onOpenProPlan}
           >
             <Crown size={16} strokeWidth={2.3} aria-hidden="true" />
-            {hasSessionPass ? "Get Pro" : "See options"}
+            {hasSessionPass
+              ? translate("copy.getPro")
+              : translate("copy.seeOptions")}
           </button>
         </div>
       ) : null}
       <ScreenHeader
-        title="Sessions"
-        subtitle="Reopen recent rounds and keep your history organized."
+        title={translate("tabs.sessions")}
+        subtitle={translate("copy.reopenRecentRoundsAndKeepYourHistoryOrganized")}
       />
       {games.length > 0 ? (
-        <section className="homeList" aria-label="Game history">
+        <section
+          className="homeList"
+          aria-label={translate("topbar.gameHistory")}
+        >
           <div className="sessionsToolbar">
             <div
               className="sessionsToolbar__group"
               role="group"
-              aria-label="Filter sessions"
+              aria-label={translate("copy.filterSessions")}
             >
               {(
                 [
@@ -202,13 +195,13 @@ export function SessionsScreen({
                   onClick={() => setFilter(value)}
                 >
                   {value === "completed"
-                    ? "Done"
+                    ? translate("copy.done")
                     : value === "inProgress"
-                      ? "In Progress"
+                      ? translate("copy.inProgress")
                       : value === "owned"
-                        ? "Owned"
+                        ? translate("copy.owned")
                         : value === "invited"
-                          ? "Invited"
+                          ? translate("copy.invited")
                           : value[0].toUpperCase() + value.slice(1)}
                 </button>
               ))}
@@ -217,14 +210,14 @@ export function SessionsScreen({
               type="button"
               className={`sessionsSortControl${sort !== "recent" ? " sessionsSortControl--active" : ""}`}
               onClick={cycleSort}
-              aria-label={`Sort sessions: ${sort}`}
+                  aria-label={translate("dynamic.sortSessions", [sort])}
             >
               <span className="sessionsSortControl__label">
                 {sort === "recent"
-                  ? "Newest"
+                  ? translate("copy.newest")
                   : sort === "oldest"
-                    ? "Oldest"
-                    : "Name"}
+                    ? translate("copy.oldest")
+                    : translate("copy.name")}
               </span>
               <SortIcon mode={sort} />
             </button>
@@ -245,11 +238,13 @@ export function SessionsScreen({
               ))}
             </div>
           ) : (
-            <div className="emptyMsg">No sessions match this view.</div>
+            <div className="emptyMsg">
+              {translate("copy.noSessionsMatchThisView")}
+            </div>
           )}
         </section>
       ) : (
-        <div className="emptyMsg">No sessions yet.</div>
+        <div className="emptyMsg">{translate("copy.noSessionsYet")}</div>
       )}
     </div>
   );

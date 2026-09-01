@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { motion } from "framer-motion";
 import { Boxes, Target } from "lucide-react";
 import { useNewGameCardContext } from "./NewGameCardContext";
@@ -38,9 +39,9 @@ export function NewGameScoreSettings() {
         <label className="targetControl__head">
           <SectionLabel icon={<Target size={16} strokeWidth={2.4} />}>
             {winCondition === "reach_zero"
-              ? "Start"
+              ? translate("home.start")
               : manualEndOnly
-                ? "Ref"
+                ? translate("copy.ref")
                 : t("new.target")}
           </SectionLabel>{" "}
           <input
@@ -51,10 +52,10 @@ export function NewGameScoreSettings() {
             inputMode="numeric"
             aria-label={
               winCondition === "reach_zero"
-                ? "Starting score"
+                ? translate("copy.startingScore")
                 : manualEndOnly
-                  ? "Reference target"
-                  : "Target score"
+                  ? translate("copy.referenceTarget")
+                  : translate("copy.targetScore")
             }
             onChange={(event) => updateTarget(event.target.value)}
           />
@@ -65,8 +66,8 @@ export function NewGameScoreSettings() {
             className="targetControl__stepBtn"
             aria-label={
               winCondition === "reach_zero"
-                ? "Decrease starting score"
-                : "Decrease target score"
+                ? translate("copy.decreaseStartingScore")
+                : translate("copy.decreaseTargetScore")
             }
             onClick={() => adjustTarget(-1)}
           >
@@ -77,8 +78,8 @@ export function NewGameScoreSettings() {
             className="targetControl__stepBtn"
             aria-label={
               winCondition === "reach_zero"
-                ? "Increase starting score"
-                : "Increase target score"
+                ? translate("copy.increaseStartingScore")
+                : translate("copy.increaseTargetScore")
             }
             onClick={() => adjustTarget(1)}
           >

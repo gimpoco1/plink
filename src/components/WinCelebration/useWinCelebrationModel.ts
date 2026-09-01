@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useEffect, useRef, useState } from "react";
 import { toBlob } from "html-to-image";
 
@@ -27,6 +28,9 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
 
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const shareCardRef = useRef<HTMLDivElement>(null);
+  const winByTwoSuffix = winByTwo
+    ? translate("common.winByTwoSuffix")
+    : "";
 
   useEffect(() => {
     document.body.classList.add("winFx-scrollLock");
@@ -51,55 +55,50 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
   const statsLabels =
     isSingleParticipantCompletion && !isTeamGame
       ? {
-          title: "Player stats",
-          total: "Total wins",
-          rate: "Win rate",
-          streak: "Win streak",
-          aria: "Updated player stats",
+          title: translate("copy.playerStats"),
+          total: translate("copy.totalWins"),
+          rate: translate("copy.winRate"),
+          streak: translate("copy.winStreak"),
+          aria: translate("copy.updatedPlayerStats"),
         }
       : isTeamGame
         ? {
-            title: "Team stats",
-            total: "Team wins",
-            rate: "Win rate",
-            streak: "Win streak",
-            aria: "Updated team stats",
+            title: translate("copy.teamStats"),
+            total: translate("copy.teamWins"),
+            rate: translate("copy.winRate"),
+            streak: translate("copy.winStreak"),
+            aria: translate("copy.updatedTeamStats"),
           }
         : {
-            title: "Winner stats",
-            total: "Total wins",
-            rate: "Win rate",
-            streak: "Win streak",
-            aria: "Updated winner stats",
+            title: translate("copy.winnerStats"),
+            total: translate("copy.totalWins"),
+            rate: translate("copy.winRate"),
+            streak: translate("copy.winStreak"),
+            aria: translate("copy.updatedWinnerStats"),
           };
   const resultHint = isSingleParticipantCompletion
-    ? "Session completed"
+    ? translate("copy.sessionCompleted")
     : isCompletedWithoutWinner
-      ? "Ended without a winner"
+      ? translate("copy.endedWithoutAWinner")
       : manualEndOnly
-        ? "Ended manually"
+        ? translate("copy.endedManually")
         : winCondition === "reach_zero"
-          ? `Started at ${startingScore}, reached 0${
-              winByTwo ? " · Win by 2" : ""
-            }`
+          ? translate("dynamic.startedAtReachedZero", [
+              startingScore,
+              winByTwoSuffix,
+            ])
           : winCondition === "lowest"
-            ? `Lowest score wins${winByTwo ? " · Win by 2" : ""}`
-            : `Target ${targetScore} points${winByTwo ? " · Win by 2" : ""}`;
+            ? translate("dynamic.lowestScoreWins", [winByTwoSuffix])
+            : translate("dynamic.targetPoints", [targetScore, winByTwoSuffix]);
   const targetLabel = manualEndOnly
     ? targetScore > 0
-      ? `Reference ${targetScore} point${Math.abs(targetScore) === 1 ? "" : "s"}${
-          winByTwo ? " · Win by 2" : ""
-        }`
-      : "Manual end"
+      ? translate("dynamic.referencePoint", [targetScore, "", winByTwoSuffix])
+      : translate("copy.manualEnd")
     : winCondition === "reach_zero"
-      ? `Start ${startingScore}, reach ${targetScore}${
-          winByTwo ? " · Win by 2" : ""
-        }`
+      ? translate("dynamic.startReach", [startingScore, targetScore, winByTwoSuffix])
       : winCondition === "lowest"
-        ? `Lowest score wins${winByTwo ? " · Win by 2" : ""}`
-        : `Target ${targetScore} point${Math.abs(targetScore) === 1 ? "" : "s"}${
-            winByTwo ? " · Win by 2" : ""
-          }`;
+        ? translate("dynamic.lowestScoreWins", [winByTwoSuffix])
+        : translate("dynamic.targetPoint", [targetScore, "", winByTwoSuffix]);
   const heroWinStreak =
     !isDraw &&
     !isCompletedWithoutWinner &&
@@ -120,7 +119,8 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
   const shareText = canShareWin
     ? buildWinShareText({
         gameName,
-        winnerName: winnerName ?? winnerStanding?.name ?? "Winner",
+        winnerName:
+          winnerName ?? winnerStanding?.name ?? translate("copy.winner"),
         targetLabel,
         isTeamGame,
         winnerStats,
@@ -176,12 +176,12 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
   }
 
   const dialogLabel = isDraw
-    ? `${gameName} ended in a draw`
+    ? translate("dynamic.endedInADraw", [gameName])
     : isCompletedWithoutWinner
-      ? `${gameName} ended without a winner`
+      ? translate("dynamic.endedWithoutWinner", [gameName])
       : isSingleParticipantCompletion
-        ? `${gameName} completed by ${winnerName}`
-        : `${winnerName} wins ${gameName}`;
+        ? translate("dynamic.completedBy", [gameName, winnerName])
+        : translate("dynamic.wins", [winnerName, gameName]);
 
   return {
     ...props,

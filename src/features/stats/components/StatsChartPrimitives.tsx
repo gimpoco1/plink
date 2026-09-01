@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import type { CSSProperties, ReactNode } from "react";
 import { Lock } from "lucide-react";
 
@@ -33,10 +34,10 @@ export function LockedChartCard({
         <div className="statsAdvancedLock">
           <span>
             <Lock size={13} strokeWidth={2.4} aria-hidden="true" />
-            Pro charts
+            {translate("copy.proCharts")}
           </span>
           <button type="button" onClick={onUnlock}>
-            Unlock charts
+            {translate("copy.unlockCharts")}
           </button>
         </div>
       ) : null}

@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Player } from "../../../types";
 import {
@@ -176,7 +177,7 @@ export function useGameScreenModel(props: GameScreenProps) {
     if (unassignedPlayers.length > 0 || groupedTeams.length === 0) {
       groupedTeams.push({
         id: "unassigned",
-        name: groupedTeams.length > 0 ? "Unassigned" : "Players",
+        name: groupedTeams.length > 0 ? "Unassigned" : translate("tabs.players"),
         players: unassignedPlayers,
         isUnassigned: true,
       });

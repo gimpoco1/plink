@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { TeamBuilderIdentityStep } from "./PlayersScreenTeamBuilderIdentity";
 import { TeamBuilderMembersStep } from "./PlayersScreenTeamBuilderMembers";
@@ -19,18 +20,20 @@ export function TeamBuilder() {
         <button
           type="button"
           className="teamBuilder__close"
-          aria-label="Close team builder"
+          aria-label={translate("copy.closeTeamBuilder")}
           onClick={closeTeamBuilder}
         >
           <X size={22} strokeWidth={2.4} aria-hidden="true" />
         </button>
         <div className="teamBuilder__headerCopy">
-          <div className="teamBuilder__eyebrow">Build Team</div>
+          <div className="teamBuilder__eyebrow">
+            {translate("copy.buildTeam")}
+          </div>
           <h3 className="teamBuilder__title">
             {newTeamStep === 1 ? "Team Identity" : "Recruit Players"}
           </h3>
         </div>
-        <div className="teamBuilder__step">Step {newTeamStep} of 2</div>
+        <div className="teamBuilder__step">{translate("copy.step")} {newTeamStep} {translate("copy.of2")}</div>
       </div>
       <div className="teamBuilder__progress" aria-hidden="true">
         <span
@@ -55,7 +58,7 @@ export function TeamBuilder() {
             onClick={() => setNewTeamStep(1)}
           >
             <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
-            Back
+            {translate("copy.back")}
           </button>
         ) : null}
         <button
@@ -73,7 +76,7 @@ export function TeamBuilder() {
             else createTeam();
           }}
         >
-          {newTeamStep === 1 ? "Continue" : "Create team"}
+          {newTeamStep === 1 ? translate("copy.continue") : translate("copy.createTeam")}
           <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
         </button>
       </div>

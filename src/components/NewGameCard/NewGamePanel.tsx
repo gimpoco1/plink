@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { motion } from "framer-motion";
 import { useNewGameCardContext } from "./NewGameCardContext";
 import { NewGameHeader } from "./NewGameHeader";
@@ -50,7 +51,7 @@ export function NewGamePanel() {
           +
         </motion.span>
         <span className="newGamePanel__triggerCopy">
-          <strong>New game</strong>
+          <strong>{translate("topbar.newGame")}</strong>
         </span>
       </motion.button>
 

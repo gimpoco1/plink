@@ -1,3 +1,4 @@
+import { translate } from "../i18n/translate";
 import { Fragment } from "react";
 import { NewGameCard } from "../components/NewGameCard/NewGameCard";
 import { HomeGuestPreview } from "../components/HomeGuestPreview/HomeGuestPreview";
@@ -80,9 +81,7 @@ export function HomeScreen(props: HomeScreenProps) {
               <br />
               {t("home.titleLineTwo")}
             </h1>
-            <p className="homeHero__copy">
-              {t("home.copy")}
-            </p>
+            <p className="homeHero__copy">{t("home.copy")}</p>
           </div>
         </div>
         {resumableGame ? (
@@ -131,13 +130,13 @@ export function HomeScreen(props: HomeScreenProps) {
       </section>
 
       {quickSetups.length > 0 ? (
-          <section className="quickSetups" aria-label={t("home.frequentGames")}>
+        <section className="quickSetups" aria-label={t("home.frequentGames")}>
           <div className="quickSetups__head">
             <div>
-              <div className="quickSetups__title">{t("home.frequentGames")}</div>
-              <p className="quickSetups__copy">
-                {t("home.frequentGamesCopy")}
-              </p>
+              <div className="quickSetups__title">
+                {t("home.frequentGames")}
+              </div>
+              <p className="quickSetups__copy">{t("home.frequentGamesCopy")}</p>
             </div>
           </div>
           <div className="quickSetups__grid">
@@ -184,7 +183,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     setup.suggestedTeams.length > 0 ? (
                       <div
                         className="quickSetupCard__teams"
-                        aria-label="Preset teams"
+                        aria-label={translate("copy.presetTeams")}
                       >
                         {setup.suggestedTeams.slice(0, 4).map((team, index) => (
                           <Fragment
@@ -206,7 +205,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     ) : setup.suggestedPlayers.length > 0 ? (
                       <div
                         className="quickSetupCard__players"
-                        aria-label="Preset players"
+                        aria-label={translate("copy.presetPlayers")}
                       >
                         {setup.suggestedPlayers
                           .slice(0, 4)
@@ -230,7 +229,9 @@ export function HomeScreen(props: HomeScreenProps) {
                   </div>
                 </div>
                 <div className="quickSetupCard__action">
-                  <span className="quickSetupCard__actionLabel">{t("home.start")}</span>
+                  <span className="quickSetupCard__actionLabel">
+                    {t("home.start")}
+                  </span>
                   <span
                     className="quickSetupCard__actionIcon"
                     aria-hidden="true"

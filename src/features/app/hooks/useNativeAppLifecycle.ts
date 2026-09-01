@@ -139,10 +139,7 @@ export function useNativeAppLifecycle() {
     }
 
     function setKeyboardOpen(isOpen: boolean) {
-      document.documentElement.classList.toggle(
-        "native-keyboard-open",
-        isOpen,
-      );
+      document.documentElement.classList.toggle("native-keyboard-open", isOpen);
     }
 
     const listenerHandles = Promise.all([
@@ -153,10 +150,7 @@ export function useNativeAppLifecycle() {
         if (!isActive) return;
         window.dispatchEvent(new Event("plink:app-resumed"));
       }),
-      Browser.addListener(
-        "browserFinished",
-        repairLayoutAfterBrowserDismissal,
-      ),
+      Browser.addListener("browserFinished", repairLayoutAfterBrowserDismissal),
       Keyboard.addListener("keyboardWillShow", () => setKeyboardOpen(true)),
       Keyboard.addListener("keyboardDidShow", () => setKeyboardOpen(true)),
       Keyboard.addListener("keyboardDidHide", () => setKeyboardOpen(false)),

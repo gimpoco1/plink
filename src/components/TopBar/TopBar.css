@@ -50,6 +50,7 @@
   display: flex;
   align-items: center;
   justify-self: end;
+  flex-wrap: nowrap;
   gap: 6px;
   min-width: 0;
 }
@@ -68,6 +69,7 @@
 /* Authentication */
 
 .topbarAuth {
+  flex: 0 0 auto;
   height: 50px;
   max-width: 170px;
   padding: 0 12px;
@@ -95,6 +97,11 @@
 }
 
 .topbarAuth--icon {
+  display: inline-grid;
+  place-items: center;
+  width: 50px;
+  min-width: 50px;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
@@ -102,6 +109,8 @@
 }
 
 .topbarAuth--text {
+  min-width: max-content;
+  max-width: none;
   height: 40px;
   min-height: 40px;
   padding: 0 16px;
@@ -569,6 +578,7 @@
 .topbarPrimaryAction {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 8px;
 
   height: 42px;
@@ -583,6 +593,8 @@
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
 
   cursor: pointer;
 
@@ -591,8 +603,47 @@
 
 .topbarPrimaryAction svg {
   display: block;
+  flex: 0 0 auto;
   width: 16px;
   height: 16px;
+}
+
+/* Signed-out language control */
+
+.languageSelector.languageSelector--topbar {
+  display: block;
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+.languageSelector--topbar .languageSelector__dropdown {
+  width: auto;
+}
+
+.languageSelector--topbar .languageSelector__trigger {
+  width: auto;
+  min-width: 50px;
+  min-height: 42px;
+  padding: 0 10px 0 14px;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  gap: 5px;
+  border-color: rgba(var(--topbar-accent-rgb), 0.24);
+  border-radius: 999px;
+  background: rgba(var(--topbar-accent-rgb), 0.1);
+  color: var(--topbar-accent);
+}
+
+.languageSelector--topbar .languageSelector__initials {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.languageSelector--topbar .languageSelector__menu {
+  right: 0;
+  left: auto;
+  min-width: 154px;
 }
 
 /* Mobile */
@@ -649,10 +700,30 @@
     padding: 0 12px;
   }
 
+  .languageSelector--topbar .languageSelector__trigger {
+    min-width: 50px;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 9px 0 13px;
+  }
+
   .topbarAuth {
     max-width: 92px;
     padding: 0 10px;
     font-size: 11px;
+  }
+
+  .topbarAuth--icon {
+    width: 50px;
+    min-width: 50px;
+    padding: 0;
+  }
+
+  .topbarAuth--text {
+    min-width: max-content;
+    max-width: none;
+    padding: 0 14px;
   }
 }
 

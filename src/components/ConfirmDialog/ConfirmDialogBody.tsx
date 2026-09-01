@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { ArrowRight, Check } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
@@ -35,7 +36,10 @@ export function ConfirmDialogBody({
       ) : null}
       <ConfirmDetails options={options} />
       {options.settingChips?.length ? (
-        <div className="dialog__settingChips" aria-label="Game settings">
+        <div
+          className="dialog__settingChips"
+          aria-label={translate("topbar.gameSettings")}
+        >
           {options.settingChips.map((chip) => (
             <span
               key={chip.label}
@@ -61,7 +65,10 @@ export function ConfirmDialogBody({
         </div>
       ) : null}
       {options.highlights?.length ? (
-        <div className="dialog__highlights" aria-label="Game details">
+        <div
+          className="dialog__highlights"
+          aria-label={translate("copy.gameDetails")}
+        >
           {options.highlights.map((highlight) => (
             <span key={highlight} className="dialog__highlightChip">
               {highlight}
@@ -72,9 +79,7 @@ export function ConfirmDialogBody({
       {options.message && hasRoster ? (
         <p
           className={`dialog__message${
-            options.messageCase === "normal"
-              ? " dialog__message--normal"
-              : ""
+            options.messageCase === "normal" ? " dialog__message--normal" : ""
           }`}
         >
           {options.message}
@@ -101,9 +106,7 @@ export function ConfirmDialogBody({
       {options.message && !hasRoster ? (
         <p
           className={`dialog__message${
-            options.messageCase === "normal"
-              ? " dialog__message--normal"
-              : ""
+            options.messageCase === "normal" ? " dialog__message--normal" : ""
           }`}
         >
           {options.message}
@@ -128,7 +131,10 @@ function ConfirmDetails({ options }: { options: ConfirmOptions }) {
   if (!options.details?.length) return null;
   if (options.layout !== "feature") {
     return (
-      <div className="dialog__detailList" aria-label="Game details">
+      <div
+        className="dialog__detailList"
+        aria-label={translate("copy.gameDetails")}
+      >
         {options.details.map((detail) => (
           <div
             key={`${detail.label}-${detail.value}`}
@@ -143,7 +149,10 @@ function ConfirmDetails({ options }: { options: ConfirmOptions }) {
   }
   if (options.detailFlow) {
     return (
-      <div className="dialog__detailFlow" aria-label="Merge workflow">
+      <div
+        className="dialog__detailFlow"
+        aria-label={translate("copy.mergeWorkflow")}
+      >
         {options.details.map((detail, index) => (
           <div
             className="dialog__detailFlowPart"
@@ -161,12 +170,12 @@ function ConfirmDetails({ options }: { options: ConfirmOptions }) {
     );
   }
   return (
-    <div className="dialog__detailCards" aria-label="Game details">
+    <div
+      className="dialog__detailCards"
+      aria-label={translate("copy.gameDetails")}
+    >
       {options.details.map((detail) => (
-        <DetailCard
-          detail={detail}
-          key={`${detail.label}-${detail.value}`}
-        />
+        <DetailCard detail={detail} key={`${detail.label}-${detail.value}`} />
       ))}
     </div>
   );
@@ -203,7 +212,7 @@ function DetailCard({
 function ConfirmTeams({ options }: { options: ConfirmOptions }) {
   if (!options.teams?.length) return null;
   return (
-    <div className="dialog__teamList" aria-label="Teams">
+    <div className="dialog__teamList" aria-label={translate("home.teams")}>
       {options.teams.map((team) => (
         <div key={`${team.id}-${team.name}`} className="dialog__teamItem">
           <span className="dialog__teamIcon" aria-hidden="true">
@@ -213,7 +222,9 @@ function ConfirmTeams({ options }: { options: ConfirmOptions }) {
             <span className="dialog__teamName">{team.name}</span>
             <span className="dialog__teamMeta">
               {team.members.length}{" "}
-              {team.members.length === 1 ? "player" : "players"}
+              {team.members.length === 1
+                ? "player"
+                : translate("copy.players")}
             </span>
           </span>
           {team.members.length ? (
@@ -255,24 +266,22 @@ function ConfirmPlayers({
   return (
     <div className="dialog__playerSection">
       {options.playersTitle ? (
-        <div className="dialog__playerSectionTitle">
-          {options.playersTitle}
-        </div>
+        <div className="dialog__playerSectionTitle">{options.playersTitle}</div>
       ) : null}
       <div
         className={`dialog__playerList${
           selectable ? " dialog__playerList--selectable" : ""
         }`}
-        aria-label="Players"
+        aria-label={translate("tabs.players")}
       >
         {options.players.map((player) => {
           const selected =
             selectable &&
             Boolean(
               player.id &&
-                (multiSelectable
-                  ? selectedPlayerIds.includes(player.id)
-                  : player.id === selectedPlayerId),
+              (multiSelectable
+                ? selectedPlayerIds.includes(player.id)
+                : player.id === selectedPlayerId),
             );
           const className = `dialog__playerItem${
             player.label ? " dialog__playerItem--identity" : ""
@@ -297,8 +306,8 @@ function ConfirmPlayers({
                   {player.nameIcon ? (
                     <span
                       className="dialog__playerNameIcon"
-                      aria-label="Invited player"
-                      title="Invited player"
+                      aria-label={translate("copy.invitedPlayer")}
+                      title={translate("copy.invitedPlayer")}
                     >
                       {player.nameIcon}
                     </span>
@@ -306,21 +315,18 @@ function ConfirmPlayers({
                 </span>
                 {(
                   selected
-                    ? player.selectedDescription ?? player.description
-                    : player.unselectedDescription ?? player.description
+                    ? (player.selectedDescription ?? player.description)
+                    : (player.unselectedDescription ?? player.description)
                 ) ? (
                   <span className="dialog__playerDescription">
                     {selected
-                      ? player.selectedDescription ?? player.description
-                      : player.unselectedDescription ?? player.description}
+                      ? (player.selectedDescription ?? player.description)
+                      : (player.unselectedDescription ?? player.description)}
                   </span>
                 ) : null}
               </span>
               {selectable && !player.disabled ? (
-                <span
-                  className="dialog__playerCheck"
-                  aria-hidden="true"
-                >
+                <span className="dialog__playerCheck" aria-hidden="true">
                   {selected ? <Check size={15} strokeWidth={3} /> : null}
                 </span>
               ) : null}

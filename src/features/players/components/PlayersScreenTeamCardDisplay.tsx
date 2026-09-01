@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Pencil } from "lucide-react";
 import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 import { avatarStyleFor } from "../../../utils/color";
@@ -37,7 +38,7 @@ export function TeamCardDisplay({ data }: { data: TeamCardData }) {
           <div>
             <div className="teamCard__title">{data.team.name}</div>
             <div className="teamCard__meta">
-              {data.members.length} player{data.members.length === 1 ? "" : "s"}
+              {translate("dynamic.player", [data.members.length])}
             </div>
           </div>
         </div>
@@ -45,7 +46,7 @@ export function TeamCardDisplay({ data }: { data: TeamCardData }) {
           <button
             className="profileEditBtn"
             type="button"
-            aria-label={`Edit ${data.team.name}`}
+            aria-label={translate("dynamic.edit", [data.team.name])}
             onClick={startEditing}
           >
             <Pencil size={18} strokeWidth={2.3} aria-hidden="true" />
@@ -76,11 +77,16 @@ export function TeamCardDisplay({ data }: { data: TeamCardData }) {
             </button>
           ))
         ) : (
-          <div className="teamCard__empty">No players in this team yet.</div>
+          <div className="teamCard__empty">
+            {translate("copy.noPlayersInThisTeamYet")}
+          </div>
         )}
       </div>
       {stats?.sessionResults.length ? (
-        <GamesDropdown title="Sessions" sessionResults={stats.sessionResults} />
+        <GamesDropdown
+          title={translate("tabs.sessions")}
+          sessionResults={stats.sessionResults}
+        />
       ) : null}
     </>
   );

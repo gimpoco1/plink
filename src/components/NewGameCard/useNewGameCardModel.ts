@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import {
@@ -58,8 +59,9 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const [manualEndOnly, setManualEndOnly] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [diceEnabled, setDiceEnabled] = useState(false);
-  const [quickScoreValues, setQuickScoreValues] =
-    useState<QuickScoreValues>([1, 2]);
+  const [quickScoreValues, setQuickScoreValues] = useState<QuickScoreValues>([
+    1, 2,
+  ]);
   const [timerMode, setTimerMode] = useState<"countdown" | "stopwatch">(
     "countdown",
   );
@@ -68,8 +70,9 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const [selectedProfileIds, setSelectedProfileIds] = useState<Set<string>>(
     new Set(),
   );
-  const [selectedPastInvitedUserIds, setSelectedPastInvitedUserIds] =
-    useState<Set<string>>(new Set());
+  const [selectedPastInvitedUserIds, setSelectedPastInvitedUserIds] = useState<
+    Set<string>
+  >(new Set());
   const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(
     new Set(),
   );
@@ -240,8 +243,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     const invited = pastInvitedPlayers
       .filter(
         (player) =>
-          player.canInvite &&
-          selectedPastInvitedUserIds.has(player.userId),
+          player.canInvite && selectedPastInvitedUserIds.has(player.userId),
       )
       .map((player) => ({
         id: player.userId,
@@ -286,8 +288,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       pastInvitedPlayers
         .filter(
           (player) =>
-            player.canInvite &&
-            selectedPastInvitedUserIds.has(player.userId),
+            player.canInvite && selectedPastInvitedUserIds.has(player.userId),
         )
         .map((player) => ({
           name: player.name,
@@ -408,7 +409,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       );
 
     return alreadyExists
-      ? "A player with that name already exists."
+      ? translate("copy.aPlayerWithThatNameAlreadyExists")
       : undefined;
   }, [newPlayerName, profiles, stagedPlayers]);
 
@@ -472,8 +473,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       timerMode: draft.timerMode,
       timerSeconds: draft.timerSeconds,
       initialPlayers: draft.initialPlayers.map(
-        (player) =>
-          player.invitedUserId ?? player.profileId ?? player.name,
+        (player) => player.invitedUserId ?? player.profileId ?? player.name,
       ),
       initialTeams: (draft.initialTeams ?? []).map((team) => team.id),
     });
@@ -589,14 +589,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setIsPresetBrowserOpen(false);
     setPresetSearch("");
     setSelectedPresetInfoId(null);
-  }, [
-    availableTeams,
-    draft,
-    draftToken,
-    pastInvitedPlayers,
-    profiles,
-    teams,
-  ]);
+  }, [availableTeams, draft, draftToken, pastInvitedPlayers, profiles, teams]);
 
   useEffect(() => {
     if (!draft) {
@@ -607,10 +600,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     const draftInvitedUserIds = draft.initialPlayers
       .map((player) => player.invitedUserId)
       .filter((userId): userId is string => !!userId);
-    if (
-      draftInvitedUserIds.length === 0 ||
-      pastInvitedPlayers.length === 0
-    ) {
+    if (draftInvitedUserIds.length === 0 || pastInvitedPlayers.length === 0) {
       return;
     }
 
@@ -625,8 +615,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       pastInvitedPlayers
         .filter(
           (player) =>
-            player.canInvite &&
-            draftInvitedUserIds.includes(player.userId),
+            player.canInvite && draftInvitedUserIds.includes(player.userId),
         )
         .map((player) => player.userId),
     );

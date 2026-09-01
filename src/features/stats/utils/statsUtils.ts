@@ -1,6 +1,13 @@
+import { getCurrentLanguage, translate } from "../../../i18n/translate";
 import type { Game } from "../../../types";
-import type { ReportStatusKind, SubjectReport } from "../../../utils/advancedStats";
-import { formatAccountPlayerName, getGameDisplayName } from "../../../utils/text";
+import type {
+  ReportStatusKind,
+  SubjectReport,
+} from "../../../utils/advancedStats";
+import {
+  formatAccountPlayerName,
+  getGameDisplayName,
+} from "../../../utils/text";
 import {
   ALL_CHART_GAMES,
   type CompareChartPoint,
@@ -162,15 +169,15 @@ function formatAxisDate(timestamp: number, rangeMs: number) {
   const date = new Date(timestamp);
   const day = 24 * 60 * 60 * 1000;
   if (rangeMs > 365 * day * 2) {
-    return new Intl.DateTimeFormat(undefined, { year: "numeric" }).format(date);
+    return new Intl.DateTimeFormat(getCurrentLanguage(), { year: "numeric" }).format(date);
   }
   if (rangeMs > 90 * day) {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(getCurrentLanguage(), {
       month: "short",
       year: "numeric",
     }).format(date);
   }
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getCurrentLanguage(), {
     day: "2-digit",
     month: "short",
   }).format(date);
@@ -234,7 +241,7 @@ export function formatAveragePlacement(value: number | null) {
 }
 
 export function formatSessionCount(value: number) {
-  return `${value} session${value === 1 ? "" : "s"}`;
+  return translate("dynamic.session", [value]);
 }
 
 export function formatPlacement(value: number | null, total: number) {
@@ -267,7 +274,9 @@ export function buildStreakHistorySummary(
   };
 }
 
-function buildStreakSubjectSummary(report: SubjectReport): StreakSubjectSummary {
+function buildStreakSubjectSummary(
+  report: SubjectReport,
+): StreakSubjectSummary {
   const completedSessions = report.sessions
     .filter((session) => session.resultKind !== "in_progress")
     .sort((a, b) => a.createdAt - b.createdAt);
@@ -288,9 +297,7 @@ function buildStreakSubjectSummary(report: SubjectReport): StreakSubjectSummary 
     current: report.currentWinStreak,
     best,
     completed: completedSessions.length,
-    form: completedSessions
-      .slice(-10)
-      .map((session) => session.resultKind),
+    form: completedSessions.slice(-10).map((session) => session.resultKind),
   };
 }
 
@@ -373,7 +380,9 @@ export function buildHeadToHeadSummary(
 }
 
 function buildSessionBySourceGame(report: SubjectReport) {
-  const sessions = [...report.sessions].sort((a, b) => b.createdAt - a.createdAt);
+  const sessions = [...report.sessions].sort(
+    (a, b) => b.createdAt - a.createdAt,
+  );
   const byGame = new Map<string, (typeof sessions)[number]>();
   sessions.forEach((session) => {
     const sourceGameId = getTrendGroupKey(session.id);

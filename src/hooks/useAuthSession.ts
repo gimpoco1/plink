@@ -8,10 +8,7 @@ import {
 import { PASSWORD_RECOVERY_EVENT } from "../lib/nativePlatform";
 import { subscribeToForegroundRefresh } from "../utils/foregroundRefresh";
 
-function areSessionsEquivalent(
-  current: Session | null,
-  next: Session | null,
-) {
+function areSessionsEquivalent(current: Session | null, next: Session | null) {
   if (current === next) return true;
   if (!current || !next) return false;
 

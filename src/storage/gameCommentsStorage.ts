@@ -45,9 +45,6 @@ export function loadLocalGameComments(gameId: string) {
   }
 }
 
-export function saveLocalGameComments(
-  gameId: string,
-  comments: GameComment[],
-) {
+export function saveLocalGameComments(gameId: string, comments: GameComment[]) {
   localStorage.setItem(storageKey(gameId), JSON.stringify(comments));
 }

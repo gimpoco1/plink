@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Link, LoaderCircle, RefreshCw } from "lucide-react";
 import { CollaboratorManagementControl } from "../CollaboratorManagementControl/CollaboratorManagementControl";
@@ -23,7 +24,7 @@ function errorMessage(error: unknown) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message) return message;
   }
-  return "Could not create an invitation. Please try again.";
+  return translate("copy.couldNotCreateAnInvitationPleaseTryAgain");
 }
 
 export function GameSharingDialog({
@@ -44,9 +45,9 @@ export function GameSharingDialog({
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
-  const [rotationLimitGameId, setRotationLimitGameId] = useState<
-    string | null
-  >(null);
+  const [rotationLimitGameId, setRotationLimitGameId] = useState<string | null>(
+    null,
+  );
   const rotationLimitReached = rotationLimitGameId === game.id;
   const code =
     loadedCode?.gameId === game.id
@@ -134,7 +135,7 @@ export function GameSharingDialog({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      setError("Could not copy the code. You can select it manually.");
+      setError(translate("copy.couldNotCopyTheCodeYouCanSelectItManually"));
     }
   }
 
@@ -170,14 +171,18 @@ export function GameSharingDialog({
       <div className="dialog__form gameSharingDialog__form">
         <div className="dialog__head">
           <div className="dialog__titleWrap">
-            <div className="dialog__eyebrow">Shared game</div>
-            <div className="dialog__title">Invite players</div>
+            <div className="dialog__eyebrow">
+              {translate("copy.sharedGame")}
+            </div>
+            <div className="dialog__title">
+              {translate("topbar.invitePlayers")}
+            </div>
           </div>
           <button
             className="iconbtn"
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={translate("copy.close")}
           >
             ×
           </button>
@@ -189,8 +194,7 @@ export function GameSharingDialog({
               <Link size={22} strokeWidth={2.3} />
             </span>
             <p>
-              Share this code. When someone joins, their account player is added
-              and they can update the score from their device.
+              {translate("copy.shareThisCodeWhenSomeoneJoinsTheirAccountPlayerIsAddedAnd")}
             </p>
           </div>
 
@@ -206,7 +210,7 @@ export function GameSharingDialog({
                 className="gameSharingDialog__loader"
                 size={32}
                 strokeWidth={2.4}
-                aria-label="Loading invitation code"
+                aria-label={translate("copy.loadingInvitationCode")}
               />
             ) : (
               "—"
@@ -230,10 +234,10 @@ export function GameSharingDialog({
                 <RefreshCw size={17} strokeWidth={2.3} aria-hidden="true" />
               )}
               {rotating
-                ? "Generating new code…"
+                ? translate("copy.generatingNewCode")
                 : rotationLimitReached
-                  ? "Code limit reached"
-                  : "Generate new code"}
+                  ? translate("copy.codeLimitReached")
+                  : translate("copy.generateNewCode")}
             </button>
           ) : null}
           {game.accessRole !== "collaborator" ? (
@@ -251,8 +255,7 @@ export function GameSharingDialog({
 
         <div className="dialog__actions">
           <button className="btn btn--ghost" type="button" onClick={onClose}>
-            Done
-          </button>
+            {translate("copy.done")}</button>
           <button
             className="btn btn--primary"
             type="button"
@@ -264,7 +267,7 @@ export function GameSharingDialog({
             ) : (
               <Copy size={17} strokeWidth={2.3} aria-hidden="true" />
             )}
-            {copied ? "Copied" : "Copy code"}
+            {copied ? translate("copy.copied") : translate("copy.copyCode")}
           </button>
         </div>
       </div>

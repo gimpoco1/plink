@@ -121,7 +121,9 @@ export function parseBackupPayload(raw: string): BackupPayload {
     games: sanitizeGames(payload.games),
     profiles: sanitizeProfiles(payload.profiles),
     teams: sanitizeBackupTeams(payload.teams),
-    teamMembers: dedupeTeamMembers(sanitizeBackupTeamMembers(payload.teamMembers)),
+    teamMembers: dedupeTeamMembers(
+      sanitizeBackupTeamMembers(payload.teamMembers),
+    ),
   };
 }
 
@@ -170,7 +172,9 @@ export function getGameImportSignature(game: Game) {
       score: player.score,
       createdAt: player.createdAt,
       reachedAt: player.reachedAt,
-      teamName: player.teamId ? teamNamesById.get(player.teamId) ?? null : null,
+      teamName: player.teamId
+        ? (teamNamesById.get(player.teamId) ?? null)
+        : null,
     })),
   });
 }
@@ -226,7 +230,10 @@ export function prepareBackupImport(
     };
     importedProfiles.push(clonedProfile);
     existingProfilesById.set(clonedProfile.id, clonedProfile);
-    existingProfilesByName.set(normalizeName(clonedProfile.name), clonedProfile);
+    existingProfilesByName.set(
+      normalizeName(clonedProfile.name),
+      clonedProfile,
+    );
     profileIdMap.set(profile.id, clonedProfile.id);
   }
 

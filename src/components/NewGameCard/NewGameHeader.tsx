@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Fragment } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Info, Library, Search, X } from "lucide-react";
@@ -64,18 +65,18 @@ export function NewGameHeader() {
                     : { duration: 0.16, ease: "easeOut" }
                 }
                 role="dialog"
-                aria-label="Browse game presets"
+                aria-label={translate("copy.browseGamePresets")}
               >
                 <label className="gamePresetBrowser__search">
                   <Search size={16} strokeWidth={2.4} aria-hidden="true" />
                   <input
                     value={presetSearch}
-                    placeholder="Search cards, sports, pub games"
+                    placeholder={translate("copy.searchCardsSportsPubGames")}
                     onChange={(event) => setPresetSearch(event.target.value)}
                   />
                 </label>
                 <p className="gamePresetBrowser__hint">
-                  Pick a game. Edit anything after.
+                  {translate("copy.pickAGameEditAnythingAfter")}
                 </p>
                 <div className="gamePresetBrowser__list">
                   {filteredGamePresets.length > 0 ? (
@@ -93,7 +94,10 @@ export function NewGameHeader() {
                               <button
                                 className="gamePresetCard__info"
                                 type="button"
-                                aria-label={`Show ${preset.name} scoring reminder`}
+                                aria-label={translate(
+                                  "dynamic.showScoringReminder",
+                                  [preset.name],
+                                )}
                                 onClick={(event) => {
                                   event.stopPropagation();
                                   setSelectedPresetInfoId((current) =>
@@ -112,7 +116,7 @@ export function NewGameHeader() {
                           <span className="gamePresetCard__facts">
                             <span>
                               {preset.winCondition === "reach_zero"
-                                ? `${preset.startingScore} start`
+                                ? translate("dynamic.start", [preset.startingScore])
                                 : `${preset.targetScore} pts`}
                             </span>
                             <span>
@@ -157,12 +161,12 @@ export function NewGameHeader() {
                           >
                             <div className="gamePresetInfo__head">
                               <div>
-                                <span>Rules reminder</span>
+                                <span>{translate("copy.rulesReminder")}</span>
                                 <strong>{preset.name}</strong>
                               </div>
                               <button
                                 type="button"
-                                aria-label="Close scoring reminder"
+                                aria-label={translate("copy.closeScoringReminder")}
                                 onClick={() => setSelectedPresetInfoId(null)}
                               >
                                 <X
@@ -184,7 +188,7 @@ export function NewGameHeader() {
                     ))
                   ) : (
                     <div className="gamePresetBrowser__empty">
-                      No preset matches that search.
+                      {translate("copy.noPresetMatchesThatSearch")}
                     </div>
                   )}
                 </div>
@@ -196,7 +200,7 @@ export function NewGameHeader() {
       <button
         className="newSessionHeader__dismiss"
         type="button"
-        aria-label="Close new game"
+        aria-label={translate("copy.closeNewGame")}
         onClick={() => onOpenChange(false)}
       >
         <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">

@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useAuthDialogContext } from "./AuthDialogContext";
 
 export function AuthPasswordRecoveryPanel() {
@@ -12,7 +13,7 @@ export function AuthPasswordRecoveryPanel() {
   return (
     <div className="authDialog__panel">
       <label className="authField">
-        <span>New password</span>
+        <span>{translate("copy.newPassword")}</span>
         <input
           className="input"
           type="password"
@@ -23,7 +24,7 @@ export function AuthPasswordRecoveryPanel() {
         />
       </label>
       <label className="authField">
-        <span>Confirm password</span>
+        <span>{translate("copy.confirmPassword")}</span>
         <input
           className="input"
           type="password"
@@ -42,7 +43,7 @@ export function AuthPasswordRecoveryPanel() {
         onClick={() => void submitNewPassword()}
         disabled={busy || !newPassword || !confirmNewPassword}
       >
-        {busy ? "Updating..." : "Update password"}
+        {busy ? translate("copy.updating") : translate("copy.updatePassword")}
       </button>
     </div>
   );

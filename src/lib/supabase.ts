@@ -94,11 +94,15 @@ export function loadPersistedSupabaseSession(): Session | null {
       parsed &&
       typeof parsed === "object" &&
       "currentSession" in parsed &&
-      isStoredSessionLike((parsed as { currentSession?: unknown }).currentSession)
+      isStoredSessionLike(
+        (parsed as { currentSession?: unknown }).currentSession,
+      )
     ) {
-      const currentSession = (parsed as {
-        currentSession: Omit<Session, "user"> & { user?: User };
-      }).currentSession;
+      const currentSession = (
+        parsed as {
+          currentSession: Omit<Session, "user"> & { user?: User };
+        }
+      ).currentSession;
       if (currentSession.user) return currentSession as Session;
 
       const rawUser = storage.getItem(`${SUPABASE_AUTH_STORAGE_KEY}-user`);

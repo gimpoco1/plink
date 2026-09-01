@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Check, Coffee, Croissant } from "lucide-react";
 import { useAuthDialogContext } from "./AuthDialogContext";
 import { SessionPassOffer } from "./SessionPassOffer";
@@ -37,8 +38,8 @@ export function AuthPlanDetails() {
       {!isPro ? (
         <div className="authDialog__planHero authDialog__planHero--copyOnly">
           <div className="authDialog__planHeroCopy">
-            <strong>Need more than the basics?</strong>
-            <span>You're missing out on:</span>
+            <strong>{translate("copy.needMoreThanTheBasics")}</strong>
+            <span>{translate("copy.youReMissingOutOn")}</span>
           </div>
         </div>
       ) : null}
@@ -47,25 +48,25 @@ export function AuthPlanDetails() {
           <span className="authDialog__planBenefitIcon" aria-hidden="true">
             <Check size={15} strokeWidth={2.6} />
           </span>
-          <span>Unlimited saved sessions</span>
+          <span>{translate("copy.unlimitedSavedSessions")}</span>
         </div>
         <div className="authDialog__planBenefit">
           <span className="authDialog__planBenefitIcon" aria-hidden="true">
             <Check size={15} strokeWidth={2.6} />
           </span>
-          <span>Teams support for grouped players</span>
+          <span>{translate("copy.teamsSupportForGroupedPlayers")}</span>
         </div>
         <div className="authDialog__planBenefit">
           <span className="authDialog__planBenefitIcon" aria-hidden="true">
             <Check size={15} strokeWidth={2.6} />
           </span>
-          <span>Advanced player stats and reporting</span>
+          <span>{translate("copy.advancedPlayerStatsAndReporting")}</span>
         </div>
         <div className="authDialog__planBenefit">
           <span className="authDialog__planBenefitIcon" aria-hidden="true">
             <Check size={15} strokeWidth={2.6} />
           </span>
-          <span>Support our work</span>
+          <span>{translate("copy.supportOurWork")}</span>
         </div>
       </div>
 
@@ -74,7 +75,7 @@ export function AuthPlanDetails() {
           <div
             className="authDialog__planOptions"
             role="radiogroup"
-            aria-label="Choose billing period"
+            aria-label={translate("copy.chooseBillingPeriod")}
           >
             <button
               ref={(node) => {
@@ -93,15 +94,15 @@ export function AuthPlanDetails() {
               onKeyDown={(event) => handleBillingPeriodRadioKeyDown(event, 0)}
             >
               <div className="authDialog__planOptionTop">
-                <strong>Monthly</strong>
+                <strong>{translate("copy.monthly")}</strong>
                 <span>
-                  {monthlyPrice ?? "Loading price…"}
-                  {monthlyPrice ? " / month" : ""}
+                  {monthlyPrice ?? translate("copy.loadingPrice")}
+                  {monthlyPrice ? translate("copy.month") : ""}
                 </span>
               </div>
               <small className="authDialog__planEquivalent">
                 <span className="authDialog__planEquivalentLabel">
-                  Equivalent to:
+                  {translate("copy.equivalentTo")}
                 </span>
                 <span className="authDialog__planEquivalentValue">
                   <Coffee size={14} strokeWidth={2.2} aria-hidden="true" />
@@ -127,19 +128,19 @@ export function AuthPlanDetails() {
               onKeyDown={(event) => handleBillingPeriodRadioKeyDown(event, 1)}
             >
               <div className="authDialog__planOptionTop">
-                <strong>Yearly</strong>
+                <strong>{translate("copy.yearly")}</strong>
                 <span>
-                  {yearlyPrice ?? "Loading price…"}
-                  {yearlyPrice ? " / year" : ""}
+                  {yearlyPrice ?? translate("copy.loadingPrice")}
+                  {yearlyPrice ? translate("copy.year") : ""}
                 </span>
               </div>
               <small className="authDialog__planEquivalent">
                 <span className="authDialog__planEquivalentLabel">
-                  Equivalent to:
+                  {translate("copy.equivalentTo")}
                 </span>
                 <span className="authDialog__planEquivalentValue">
                   <Coffee size={14} strokeWidth={2.2} aria-hidden="true" />
-                  <span>/ month</span>
+                  <span>{translate("copy.month2")}</span>
                 </span>
               </small>
             </button>
@@ -154,14 +155,14 @@ export function AuthPlanDetails() {
               }
             >
               {busy
-                ? "Working..."
+                ? translate("copy.working")
                 : appleProductsError
-                  ? "Try App Store again"
+                  ? translate("copy.tryAppStoreAgain")
                   : purchaseUnavailable
-                    ? "Connecting to App Store…"
+                    ? translate("copy.connectingToAppStore")
                     : selectedBillingPeriod === "monthly"
-                      ? "Subscribe monthly"
-                      : "Subscribe yearly"}
+                      ? translate("copy.subscribeMonthly")
+                      : translate("copy.subscribeYearly")}
             </button>
             {isNativeIOS ? (
               <button
@@ -170,7 +171,7 @@ export function AuthPlanDetails() {
                 disabled={busy}
                 onClick={restoreSubscription}
               >
-                {busy ? "Working..." : "Restore purchases"}
+                {busy ? translate("copy.working") : translate("copy.restorePurchases")}
               </button>
             ) : hasStripeBillingProfile ? (
               <button
@@ -179,7 +180,7 @@ export function AuthPlanDetails() {
                 disabled={busy}
                 onClick={restoreSubscription}
               >
-                Manage billing
+                {translate("copy.manageBilling")}
               </button>
             ) : null}
           </div>
@@ -190,11 +191,9 @@ export function AuthPlanDetails() {
           ) : null}
           {isNativeIOS ? (
             <p className="authDialog__planLegal">
-              Payment is charged to your Apple Account. The subscription
-              renews automatically unless cancelled at least 24 hours before
-              the current period ends. You can manage or cancel it in your App
-              Store account settings. <a href="/terms.html">Terms</a> ·{" "}
-              <a href="/privacy.html">Privacy</a>
+              {translate("copy.paymentIsChargedToYourAppleAccountTheSubscriptionRenewsAutomaticallyUnless")}{" "}
+              <a href="/terms.html">{translate("copy.terms")}</a> ·{" "}
+              <a href="/privacy.html">{translate("copy.privacy")}</a>
             </p>
           ) : null}
           <SessionPassOffer />
@@ -215,10 +214,10 @@ export function AuthPlanDetails() {
                 onClick={manageSubscription}
               >
                 {busy
-                  ? "Working..."
+                  ? translate("copy.working")
                   : isNativeIOS && subscriptionProvider === "stripe"
-                    ? "Manage on web"
-                    : "Manage subscription"}
+                    ? translate("copy.manageOnWeb")
+                    : translate("copy.manageSubscription")}
               </button>
             </div>
           ) : null}

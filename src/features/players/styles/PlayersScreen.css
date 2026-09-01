@@ -206,6 +206,8 @@
 .playersScreenHeader__content {
   width: 100%;
   min-width: 0;
+  container-type: inline-size;
+  container-name: players-header;
 }
 
 .playersScreenHeader__titleRow {
@@ -249,6 +251,12 @@
 .playersScreenHeader__action[disabled] {
   opacity: 0.48;
   cursor: default;
+}
+
+@container players-header (max-width: 399px) {
+  .playersScreenCount {
+    display: none;
+  }
 }
 
 .playersCreateSlot {
