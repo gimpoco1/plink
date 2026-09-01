@@ -12,7 +12,9 @@ export function TeamBuilderMembersStep() {
     <>
       <div className="teamBuilder__intro">
         <p className="teamBuilder__lede">
-          {translate("copy.assembleYourTeamFromSavedProfilesOrCreateNewRecruitsOnThe")}
+          {translate(
+            "copy.assembleYourTeamFromSavedProfilesOrCreateNewRecruitsOnThe",
+          )}
         </p>
       </div>
       <section className="teamBuilderCard">
@@ -21,8 +23,7 @@ export function TeamBuilderMembersStep() {
             {translate("copy.choosePlayers")}
           </div>
           <div className="teamBuilderCard__badge">
-            {model.newTeamSelectedProfiles.length} {translate("copy.member")}
-            {model.newTeamSelectedProfiles.length === 1 ? "" : "s"}
+            {translate("copy.member", [model.newTeamSelectedProfiles.length])}
           </div>
         </div>
         <SearchableRosterPicker

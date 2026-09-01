@@ -112,7 +112,8 @@ export function NewPlayerComposer({
           disabled={!canAdd}
           onClick={onAdd}
         >
-          {translate("copy.add")}</button>
+          {translate("copy.add")}
+        </button>
       </div>
       {validationMessage ? (
         <div className="newPlayerComposer__error" role="alert">
@@ -134,7 +135,9 @@ export function NewPlayerComposer({
               data-active={color === entry.value}
               disabled={disabled}
               onClick={() => onColorChange(entry.value)}
-                      aria-label={translate("dynamic.useColor", [entry.id])}
+              aria-label={translate("dynamic.useColor", [
+                translate(entry.label),
+              ])}
               aria-pressed={color === entry.value}
             />
           ))}

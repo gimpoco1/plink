@@ -1,4 +1,4 @@
-import { translate } from "./i18n/translate";
+import type { TranslationKey } from "./i18n/translate";
 export const STORAGE_KEY = "plink:v1";
 export const PROFILES_STORAGE_KEY = "plink:profiles:v1";
 export const GAMES_STORAGE_KEY = "plink:games:v1";
@@ -22,23 +22,27 @@ export const MAX_ABS_SCORE = 999999;
 export const DEFAULT_QUICK_SCORE_VALUES = [1, 2] as const;
 export const DEFAULT_TEAM_ICON = "dumbbell";
 export const TEAM_ICONS = [
-  { id: "dumbbell", label: translate("copy.training") },
-  { id: "trophy", label: translate("copy.champions") },
-  { id: "shield", label: translate("copy.defense") },
-  { id: "flag", label: translate("copy.flag") },
-  { id: "target", label: translate("new.target") },
-  { id: "zap", label: translate("copy.fast") },
-  { id: "flame", label: translate("copy.fire") },
-  { id: "star", label: translate("copy.allStars") },
+  { id: "dumbbell", label: "copy.training" as TranslationKey },
+  { id: "trophy", label: "copy.champions" as TranslationKey },
+  { id: "shield", label: "copy.defense" as TranslationKey },
+  { id: "flag", label: "copy.flag" as TranslationKey },
+  { id: "target", label: "new.target" as TranslationKey },
+  { id: "zap", label: "copy.fast" as TranslationKey },
+  { id: "flame", label: "copy.fire" as TranslationKey },
+  { id: "star", label: "copy.allStars" as TranslationKey },
 ] as const;
 
 export const AVATAR_COLORS = [
-  { id: "graphite", label: translate("copy.graphite"), value: "#6b7890" },
-  { id: "sky", label: translate("copy.sky"), value: "#36aeea" },
-  { id: "aqua", label: translate("copy.aqua"), value: "#31cfc3" },
-  { id: "mint", label: translate("copy.mint"), value: "#47d97d" },
-  { id: "lime", label: translate("copy.lime"), value: "#9fbe38" },
-  { id: "coral", label: translate("copy.coral"), value: "#f36f85" },
-  { id: "violet", label: translate("copy.violet"), value: "#9276e8" },
-  { id: "stone", label: translate("copy.stone"), value: "#aba39b" },
+  {
+    id: "graphite",
+    label: "copy.graphite" as TranslationKey,
+    value: "#6b7890",
+  },
+  { id: "sky", label: "copy.sky" as TranslationKey, value: "#36aeea" },
+  { id: "aqua", label: "copy.aqua" as TranslationKey, value: "#31cfc3" },
+  { id: "mint", label: "copy.mint" as TranslationKey, value: "#47d97d" },
+  { id: "lime", label: "copy.lime" as TranslationKey, value: "#9fbe38" },
+  { id: "coral", label: "copy.coral" as TranslationKey, value: "#f36f85" },
+  { id: "violet", label: "copy.violet" as TranslationKey, value: "#9276e8" },
+  { id: "stone", label: "copy.stone" as TranslationKey, value: "#aba39b" },
 ] as const;

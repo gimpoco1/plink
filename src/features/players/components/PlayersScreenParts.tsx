@@ -96,7 +96,10 @@ export function TeamIconPicker({
           key={icon.id}
           type="button"
           className={`teamIconPicker__option${layout === "grid" ? " teamIconPicker__option--grid" : ""}${compactGrid ? " teamIconPicker__option--compactGrid" : ""}${value === icon.id ? " teamIconPicker__option--active" : ""}`}
-          aria-label={translate("dynamic.useIconFor", [icon.label, label])}
+          aria-label={translate("dynamic.useIconFor", [
+            translate(icon.label),
+            label,
+          ])}
           aria-pressed={value === icon.id}
           onClick={() => onChange(icon.id)}
         >
@@ -130,7 +133,10 @@ export function ColorPicker({
           className={`colorDot ${value === color.value ? "active" : ""}`}
           style={{ backgroundColor: color.value }}
           onClick={() => !disabled && onChange(color.value)}
-          aria-label={translate("dynamic.useColorFor", [color.id, label])}
+          aria-label={translate("dynamic.useColorFor", [
+            translate(color.label),
+            label,
+          ])}
           aria-pressed={value === color.value}
           aria-disabled={disabled}
           disabled={disabled}

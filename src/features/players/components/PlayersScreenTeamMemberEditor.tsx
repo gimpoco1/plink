@@ -16,8 +16,7 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
           {translate("copy.teamPlayers")}
         </div>
         <div className="teamBuilderCard__badge">
-          {model.editingTeamMemberIds.size} {translate("copy.member")}
-          {model.editingTeamMemberIds.size === 1 ? "" : "s"}
+          {translate("copy.member", [model.editingTeamMemberIds.size])}
         </div>
       </div>
       <div className="teamCard__members">
@@ -60,7 +59,11 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
         onClick={() => model.toggleTeamAddPlayers(team.id)}
       >
         <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
-        <span>{isAddingPlayers ? translate("copy.hidePlayers") : translate("copy.addPlayers")}</span>
+        <span>
+          {isAddingPlayers
+            ? translate("copy.hidePlayers")
+            : translate("copy.addPlayers")}
+        </span>
       </button>
       {isAddingPlayers ? (
         <div className="teamEditor__addPanel teamEditor__addPanel--builder">

@@ -138,7 +138,7 @@ export function AuthAccountIdentity() {
                       onKeyDown={(event) =>
                         handleAccountColorRadioKeyDown(event, index)
                       }
-                      aria-label={color.label}
+                      aria-label={translate(color.label)}
                       aria-checked={color.value === accountDraftColor}
                       role="radio"
                       tabIndex={color.value === accountDraftColor ? 0 : -1}

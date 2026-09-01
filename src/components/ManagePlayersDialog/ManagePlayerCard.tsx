@@ -131,9 +131,7 @@ export function ManagePlayerCard(props: Props) {
         <div className="managePlayersDialog__mergeFooter">
           <span className="managePlayersDialog__mergeFooterCopy">
             <GitMerge size={15} strokeWidth={2.4} aria-hidden="true" />
-            <span>
-              {translate("copy.anotherPlayerFoundWithSameName")}
-            </span>
+            <span>{translate("copy.anotherPlayerFoundWithSameName")}</span>
           </span>
           <button
             className="managePlayersDialog__mergeBtn"
@@ -141,15 +139,14 @@ export function ManagePlayerCard(props: Props) {
             onClick={() =>
               void model.onMergePlayers?.(player.id, mergeCandidate.id)
             }
-                              aria-label={translate("dynamic.mergeInto", [
-                                mergeCandidate.name,
-                                displayName,
-                              ])}
-                              title={translate("dynamic.mergeWith", [
-                                mergeCandidate.name,
-                              ])}
+            aria-label={translate("dynamic.mergeInto", [
+              mergeCandidate.name,
+              displayName,
+            ])}
+            title={translate("dynamic.mergeWith", [mergeCandidate.name])}
           >
-            {translate("copy.merge")}</button>
+            {translate("copy.merge")}
+          </button>
         </div>
       ) : null}
     </article>
@@ -187,7 +184,7 @@ function PlayerEditor({
             type="button"
             onClick={onSave}
             disabled={!clampName(editingName) || !!validationMessage}
-                aria-label={translate("dynamic.save", [name])}
+            aria-label={translate("dynamic.save", [name])}
             title={translate("copy.save")}
           >
             <Check size={15} strokeWidth={3} aria-hidden="true" />
@@ -196,7 +193,7 @@ function PlayerEditor({
             className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--cancel"
             type="button"
             onClick={onCancel}
-                aria-label={translate("dynamic.cancelEditing", [name])}
+            aria-label={translate("dynamic.cancelEditing", [name])}
             title={translate("copy.cancel")}
           >
             <X size={15} strokeWidth={2.6} aria-hidden="true" />
@@ -219,7 +216,7 @@ function PlayerEditor({
             }
             style={{ backgroundColor: color.value }}
             onClick={() => setEditingColor(color.value)}
-            aria-label={color.label}
+            aria-label={translate(color.label)}
             aria-checked={color.value === editingColor}
             role="radio"
           />
@@ -297,10 +294,13 @@ function PlayerIdentity({
                 className={`iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--add${isStaged ? " managePlayersDialog__actionBtn--queued" : ""}`}
                 type="button"
                 onClick={() => model.toggleProfile(profile.id)}
-            aria-label={translate(isStaged ? "dynamic.remove" : "dynamic.add", [
-              displayName,
-            ])}
-                title={isStaged ? translate("copy.queued") : translate("copy.add")}
+                aria-label={translate(
+                  isStaged ? "dynamic.remove" : "dynamic.add",
+                  [displayName],
+                )}
+                title={
+                  isStaged ? translate("copy.queued") : translate("copy.add")
+                }
               >
                 {isStaged ? (
                   <Check size={15} strokeWidth={3} aria-hidden="true" />
@@ -315,7 +315,7 @@ function PlayerIdentity({
               className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
               type="button"
               onClick={onEdit}
-            aria-label={translate("dynamic.edit", [displayName])}
+              aria-label={translate("dynamic.edit", [displayName])}
               title={translate("copy.edit")}
             >
               <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />

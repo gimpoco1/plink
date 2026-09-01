@@ -85,15 +85,15 @@ function prioritizeProfiles(
 
 function buildTeamSummary(profiles: PlayerProfile[]) {
   if (!profiles.length) {
-    return "This team is ready for recruitment. Add at least one player to complete the roster and unlock the final save step.";
+    return translate("copy.teamSummaryReadyForRecruitment");
   }
   if (profiles.length === 1) {
-    return "Solo setup mode. Add more players to balance coverage before deployment.";
+    return translate("copy.teamSummarySoloMode");
   }
   if (profiles.length < 4) {
-    return "Solid core. Add one or two more players to give the team more lineup options.";
+    return translate("copy.teamSummarySolidCore");
   }
-  return "Well-rounded roster. Enough depth for rotation, tempo, and matchup flexibility.";
+  return translate("copy.teamSummaryWellRounded");
 }
 
 export function usePlayersScreenModel(props: PlayersScreenProps) {
@@ -488,7 +488,10 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
     (editingName !== editingOriginalName ||
       editingColor !== editingOriginalColor),
   );
-  const titleActionLabel = activeView === "players" ? translate("copy.newPlayer2") : translate("copy.newTeam2");
+  const titleActionLabel =
+    activeView === "players"
+      ? translate("copy.newPlayer2")
+      : translate("copy.newTeam2");
 
   return {
     activeCountLabel,
