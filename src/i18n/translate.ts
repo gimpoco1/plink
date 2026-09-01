@@ -25,18 +25,18 @@ function getSupportedLanguage(locale: string | null): Language | null {
 export function getCurrentLanguage(): Language {
   if (typeof window === "undefined") return "en";
 
-  const activeDocumentLanguage = getSupportedLanguage(
-    document.documentElement.lang || null,
-  );
-  if (activeDocumentLanguage) return activeDocumentLanguage;
-
   try {
     const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
     const supportedStoredLanguage = getSupportedLanguage(storedLanguage);
     if (supportedStoredLanguage) return supportedStoredLanguage;
   } catch {
-    // Fall back to the device language when local storage is unavailable.
+    // Fall back to the current document language / device language when storage is unavailable.
   }
+
+  const activeDocumentLanguage = getSupportedLanguage(
+    document.documentElement.lang || null,
+  );
+  if (activeDocumentLanguage) return activeDocumentLanguage;
 
   const preferredLanguages = [
     ...(window.navigator.languages ?? []),
