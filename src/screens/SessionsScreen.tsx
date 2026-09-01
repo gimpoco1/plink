@@ -199,7 +199,7 @@ export function SessionsScreen({
                   onClick={() => setFilter(value)}
                 >
                   {value === "completed"
-                    ? translate("copy.done")
+                    ? translate("copy.completed")
                     : value === "inProgress"
                       ? translate("copy.inProgress")
                       : value === "owned"

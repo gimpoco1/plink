@@ -7,6 +7,8 @@ type Props = {
   onJoin: (code: string) => Promise<void>;
 };
 
+const INVITE_CODE_PATTERN = /^(?:[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
+
 function errorMessage(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: unknown }).message;
@@ -27,7 +29,7 @@ export function JoinGameDialog({ onJoin }: Props) {
   }
 
   async function submit() {
-    if (code.length !== 8 || loading) return;
+    if (!INVITE_CODE_PATTERN.test(code) || loading) return;
     setLoading(true);
     setError("");
     try {
@@ -104,7 +106,7 @@ export function JoinGameDialog({ onJoin }: Props) {
                 autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="AB12CD34"
+                placeholder="AB12"
                 onChange={(event) => {
                   setCode(
                     event.target.value
@@ -143,7 +145,7 @@ export function JoinGameDialog({ onJoin }: Props) {
             <button
               className="btn btn--primary"
               type="submit"
-              disabled={code.length !== 8 || loading}
+              disabled={!INVITE_CODE_PATTERN.test(code) || loading}
             >
               {loading ? translate("copy.joining") : translate("copy.joinGame")}
             </button>

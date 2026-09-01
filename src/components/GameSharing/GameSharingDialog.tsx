@@ -19,6 +19,8 @@ type Props = {
   onCollaboratorManagementChange: (enabled: boolean) => void;
 };
 
+const INVITE_CODE_PATTERN = /^(?:[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
+
 function errorMessage(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: unknown }).message;
@@ -111,7 +113,7 @@ export function GameSharingDialog({
       },
       (payload) => {
         const nextCode = (payload.new as { code?: unknown }).code;
-        if (typeof nextCode !== "string" || !/^[A-F0-9]{8}$/.test(nextCode)) {
+        if (typeof nextCode !== "string" || !INVITE_CODE_PATTERN.test(nextCode)) {
           return;
         }
         saveGameInviteCode(game.id, nextCode);
