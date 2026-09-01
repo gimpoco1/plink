@@ -149,7 +149,9 @@ export function SessionsScreen({
                 ? translate("copy.subscribeToProForUnlimitedSessions")
                 : translate("copy.getMoreSessionsOrSubscribeToPro")}{" "}
               <span className="sessionsLimitWarning__note">
-                {translate("copy.deletingOrReusingAPastSessionAffectsPlayerSProgressionAndStats")}
+                {translate(
+                  "copy.deletingOrReusingAPastSessionAffectsPlayerSProgressionAndStats",
+                )}
               </span>
             </p>
           </div>
@@ -167,7 +169,9 @@ export function SessionsScreen({
       ) : null}
       <ScreenHeader
         title={translate("tabs.sessions")}
-        subtitle={translate("copy.reopenRecentRoundsAndKeepYourHistoryOrganized")}
+        subtitle={translate(
+          "copy.reopenRecentRoundsAndKeepYourHistoryOrganized",
+        )}
       />
       {games.length > 0 ? (
         <section
@@ -202,7 +206,7 @@ export function SessionsScreen({
                         ? translate("copy.owned")
                         : value === "invited"
                           ? translate("copy.invited")
-                          : value[0].toUpperCase() + value.slice(1)}
+                          : translate("copy.all")}
                 </button>
               ))}
             </div>
@@ -210,7 +214,7 @@ export function SessionsScreen({
               type="button"
               className={`sessionsSortControl${sort !== "recent" ? " sessionsSortControl--active" : ""}`}
               onClick={cycleSort}
-                  aria-label={translate("dynamic.sortSessions", [sort])}
+              aria-label={translate("dynamic.sortSessions", [sort])}
             >
               <span className="sessionsSortControl__label">
                 {sort === "recent"
