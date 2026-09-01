@@ -19,7 +19,8 @@ type Props = {
   onCollaboratorManagementChange: (enabled: boolean) => void;
 };
 
-const INVITE_CODE_PATTERN = /^(?:[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
+const INVITE_CODE_PATTERN =
+  /^(?:[A-Z]{3}\d{2}|[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
 
 function errorMessage(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {

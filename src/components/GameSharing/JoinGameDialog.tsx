@@ -7,7 +7,8 @@ type Props = {
   onJoin: (code: string) => Promise<void>;
 };
 
-const INVITE_CODE_PATTERN = /^(?:[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
+const INVITE_CODE_PATTERN =
+  /^(?:[A-Z]{3}\d{2}|[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
 
 function errorMessage(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
@@ -106,7 +107,7 @@ export function JoinGameDialog({ onJoin }: Props) {
                 autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="AB12"
+                placeholder="ABC12"
                 onChange={(event) => {
                   setCode(
                     event.target.value
