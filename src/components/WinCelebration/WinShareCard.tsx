@@ -1,3 +1,4 @@
+import { getCurrentLanguage, translate } from "../../i18n/translate";
 import type { RefObject } from "react";
 import { Crown, Target } from "lucide-react";
 import type { ProfileStats, TeamStats } from "../../utils/profileStats";
@@ -22,27 +23,31 @@ export function buildWinShareText({
 }) {
   const winnerStanding =
     standings.find((entry) => entry.isWinner) ?? standings[0] ?? null;
-  const subject = isTeamGame ? "team" : "player";
+  const subject = translate(isTeamGame ? "common.team" : "common.player");
   const lines = [
-    `${winnerName} just won ${gameName}.`,
+    translate("dynamic.justWon", [winnerName, gameName]),
     targetLabel,
-    winnerStanding ? `Winning ${subject} score: ${winnerStanding.score}` : null,
+    winnerStanding ? translate("dynamic.winningScore", [subject, winnerStanding.score]) : null,
     winnerStats
-      ? `Updated stats: ${winnerStats.wins} win${
-          winnerStats.wins === 1 ? "" : "s"
-        } · ${winnerStats.completedGames > 0 ? `${winnerStats.winRate}%` : "—"} win rate${
+      ? translate("dynamic.updatedStatsWinWinRate", [
+          winnerStats.wins,
+          winnerStats.completedGames > 0 ? `${winnerStats.winRate}%` : "—",
           winnerStats.currentWinStreak > 1
-            ? ` · ${winnerStats.currentWinStreak}x streak`
-            : ""
-        }`
+            ? translate("dynamic.winStreakSuffix", [
+                winnerStats.currentWinStreak,
+              ])
+            : "",
+        ])
       : null,
     standings.length > 1
-      ? `Final standings: ${standings
-          .slice(0, 3)
-          .map((entry) => `#${entry.rank} ${entry.name} (${entry.score})`)
-          .join(" · ")}`
+      ? translate("dynamic.finalStandings", [
+          standings
+            .slice(0, 3)
+            .map((entry) => `#${entry.rank} ${entry.name} (${entry.score})`)
+            .join(" · "),
+        ])
       : null,
-    "Sent from Plink.",
+    translate("copy.sentFromPlink"),
   ];
 
   return lines.filter((line): line is string => Boolean(line)).join("\n");
@@ -72,7 +77,7 @@ function formatScore(score: number) {
 }
 
 export function formatStatsSnapshotDate(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getCurrentLanguage(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -115,7 +120,7 @@ export function WinShareCard({
   winnerStats: ProfileStats | TeamStats | null;
   standings: Standing[];
 }) {
-  const shareDate = new Intl.DateTimeFormat(undefined, {
+  const shareDate = new Intl.DateTimeFormat(getCurrentLanguage(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -135,7 +140,7 @@ export function WinShareCard({
         <div className="winShareCard__shell">
           <header className="winShareCard__hero">
             <div className="winShareCard__meta">
-              <span>Winner</span>
+              <span>{translate("copy.winner")}</span>
             </div>
             <h1>{winnerName}</h1>
             <div className="winShareCard__sessionMeta">
@@ -152,13 +157,13 @@ export function WinShareCard({
           <div className="winShareCard__stats">
             <ShareStat
               value={String(winnerStats?.wins ?? "—")}
-              label={isTeamGame ? "Team wins" : "Total wins"}
+              label={isTeamGame ? translate("copy.teamWins") : translate("copy.totalWins")}
             />
             <ShareStat
               value={
                 winnerStats?.completedGames ? `${winnerStats.winRate}%` : "—"
               }
-              label="Win rate"
+              label={translate("copy.winRate")}
               accent
             />
             <ShareStat
@@ -167,12 +172,12 @@ export function WinShareCard({
                   ? `${winnerStats?.currentWinStreak}x`
                   : "—"
               }
-              label="Win streak"
+              label={translate("copy.winStreak")}
             />
           </div>
 
           <section className="winShareCard__standings">
-            <h2>Final standings</h2>
+            <h2>{translate("copy.finalStandings")}</h2>
             <div className="winSharePodium">
               {podiumEntries.map((entry, index) => {
                 const slotRank = index === 0 ? 2 : index === 1 ? 1 : 3;
@@ -243,15 +248,15 @@ export function WinShareCard({
 
           <footer className="winShareCard__footer">
             <div>
-              <span>Winning score</span>
+              <span>{translate("copy.winningScore")}</span>
               <strong>{winnerStanding?.score ?? "—"}</strong>
             </div>
             <div>
-              <span>Date</span>
+              <span>{translate("copy.date")}</span>
               <strong>{shareDate}</strong>
             </div>
             <div>
-              <span>Sent from</span>
+              <span>{translate("copy.sentFrom")}</span>
               <strong>Plink</strong>
             </div>
           </footer>

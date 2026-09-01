@@ -12,7 +12,10 @@ export function StatsSkeleton() {
         <div className="statsSearch statsSearch--skeleton" />
         <div className="statsSelectorGrid">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div className="statsSelectorCard statsSelectorCard--skeleton" key={index}>
+            <div
+              className="statsSelectorCard statsSelectorCard--skeleton"
+              key={index}
+            >
               <div className="statsSelectorCard__avatar skeletonAvatar" />
               <div className="statsSelectorCard__copy">
                 <div className="skeletonText skeletonText--sm skeletonText--med" />
@@ -36,7 +39,10 @@ export function StatsSkeleton() {
 
       <div className="statsKpiGrid">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div className="statsMetricCard statsMetricCard--skeleton" key={index}>
+          <div
+            className="statsMetricCard statsMetricCard--skeleton"
+            key={index}
+          >
             <span className="skeletonText skeletonText--xs skeletonText--short" />
             <div className="skeletonNumber" />
             <div className="skeletonText skeletonText--sm" />

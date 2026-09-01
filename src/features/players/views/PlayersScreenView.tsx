@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { LockedFrame } from "../../../components/HomeLockedState/LockedFrame";
 import { PlayersSkeleton } from "../../../components/HomeLockedState/PlayersSkeleton";
 import { LocalSessionsHint } from "../../../components/LocalSessionsHint/LocalSessionsHint";
@@ -31,7 +32,10 @@ export function PlayersScreenView() {
       ) : null}
       <PlayersScreenHeader />
       {!isAuthenticated ? (
-        <LockedFrame title="Sign in to save players." onSignIn={onOpenAuth}>
+        <LockedFrame
+          title={translate("copy.signInToSavePlayers")}
+          onSignIn={onOpenAuth}
+        >
           <PlayersSkeleton />
         </LockedFrame>
       ) : (

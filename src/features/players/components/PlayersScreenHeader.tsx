@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Plus } from "lucide-react";
 import { usePlayersScreenContext } from "../context/PlayersScreenContext";
 
@@ -24,7 +25,9 @@ export function PlayersScreenHeader() {
         <div className="playersScreenHeader__titleRow">
           <div className="playersScreenHeader__titleGroup">
             <h2 className="tabTitle">
-              {isAuthenticated && activeView === "teams" ? "Teams" : "Players"}
+              {isAuthenticated && activeView === "teams"
+                ? translate("home.teams")
+                : translate("tabs.players")}
             </h2>
             {isAuthenticated ? (
               <span className="playersScreenCount">{activeCountLabel}</span>
@@ -50,14 +53,14 @@ export function PlayersScreenHeader() {
         </div>
         <p className="tabSubtitle">
           {!isAuthenticated || activeView === "players"
-            ? "Reuse profiles and track cumulative results across sessions."
-            : "Build reusable groups for team-based games."}
+            ? translate("copy.playersScreenDescription")
+            : translate("copy.teamsScreenDescription")}
         </p>
         {isAuthenticated ? (
           <div
             className="playersHeaderSwitch"
             role="tablist"
-            aria-label="Players view"
+            aria-label={translate("tabs.playersView")}
           >
             <button
               type="button"
@@ -69,7 +72,7 @@ export function PlayersScreenHeader() {
                 closeTeamBuilder();
               }}
             >
-              Individuals
+              {translate("new.individuals")}
             </button>
             <button
               type="button"
@@ -79,9 +82,11 @@ export function PlayersScreenHeader() {
               className={`playersHeaderSwitch__option${activeView === "teams" ? " playersHeaderSwitch__option--active" : ""}${!canAccessTeamsView ? " playersHeaderSwitch__option--locked" : ""}`}
               onClick={handleTeamsViewPress}
             >
-              Teams
+              {translate("home.teams")}
               {!canAccessTeamsView ? (
-                <span className="playersHeaderSwitch__badge">Pro</span>
+                <span className="playersHeaderSwitch__badge">
+                  {translate("common.pro")}
+                </span>
               ) : null}
             </button>
           </div>

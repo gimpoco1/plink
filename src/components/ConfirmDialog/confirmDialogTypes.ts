@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import type { ReactNode } from "react";
 
 export type ConfirmPlayer = {
@@ -94,14 +95,14 @@ export type ConfirmDialogHandle = {
 
 export function resolveConfirmEyebrow(next: ConfirmOptions): string {
   if (next.eyebrow?.trim()) return next.eyebrow;
-  if (next.tone === "danger") return "Danger zone";
-  if (next.layout === "feature") return "Game setup";
+  if (next.tone === "danger") return translate("copy.dangerZone");
+  if (next.layout === "feature") return translate("copy.gameSetup");
   const title = next.title.toLowerCase();
-  if (title.includes("delete")) return "Delete check";
-  if (title.includes("remove")) return "Roster change";
-  if (title.includes("reset")) return "Score reset";
+  if (title.includes("delete")) return translate("copy.deleteCheck");
+  if (title.includes("remove")) return translate("copy.rosterChange");
+  if (title.includes("reset")) return translate("copy.scoreReset");
   if (title.includes("not signed in") || title.includes("sign in")) {
-    return "Guest mode";
+    return translate("copy.guestMode");
   }
   return "Quick confirm";
 }

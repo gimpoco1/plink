@@ -39,7 +39,10 @@ export function loadTimerSnapshot(gameId: string): TimerSnapshot | null {
   }
 }
 
-export function saveTimerSnapshot(gameId: string, snapshot: TimerSnapshot | null) {
+export function saveTimerSnapshot(
+  gameId: string,
+  snapshot: TimerSnapshot | null,
+) {
   const storageKey = getTimerStorageKey(gameId);
   if (
     !snapshot ||

@@ -34,8 +34,7 @@ function handleVisibilityChange() {
 function attachForegroundListeners() {
   if (foregroundListenersAttached) return;
   foregroundListenersAttached = true;
-  backgroundedAt =
-    document.visibilityState === "hidden" ? Date.now() : null;
+  backgroundedAt = document.visibilityState === "hidden" ? Date.now() : null;
   window.addEventListener("blur", markBackgrounded);
   window.addEventListener("focus", refreshIfStale);
   document.addEventListener("visibilitychange", handleVisibilityChange);

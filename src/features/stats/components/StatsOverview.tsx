@@ -1,15 +1,10 @@
+import { translate } from "../../../i18n/translate";
 import { Flame, Medal, SquareActivity, Trophy } from "lucide-react";
 import { StatsAdvancedCards } from "./StatsAdvancedCards";
 import { StatsCharts } from "./StatsCharts";
 import { StatsProPreview } from "./StatsProPreview";
-import {
-  ComparisonMetricCard,
-  MetricCard,
-} from "./StatsScreenParts";
-import {
-  compareValues,
-  formatAveragePlacement,
-} from "../utils/statsUtils";
+import { ComparisonMetricCard, MetricCard } from "./StatsScreenParts";
+import { compareValues, formatAveragePlacement } from "../utils/statsUtils";
 import { useStatsScreenContext } from "../context/StatsScreenContext";
 
 import { StatsTeamFocusCard } from "./StatsTeamFocusCard";
@@ -59,14 +54,14 @@ export function StatsOverview() {
             report={selectedTeamReport}
             option={selectedTeamOption}
             memberProfiles={selectedMemberProfiles}
-            eyebrow="Primary team"
+            eyebrow={translate("copy.primaryTeam")}
           />
           {compareTeamReport ? (
             <StatsTeamFocusCard
               report={compareTeamReport}
               option={compareTeamOption}
               memberProfiles={compareMemberProfiles}
-              eyebrow="Compared team"
+              eyebrow={translate("copy.comparedTeam")}
             />
           ) : null}
         </div>
@@ -75,7 +70,7 @@ export function StatsOverview() {
       {primaryReport && compareEnabled && compareReport ? (
         <div className="statsCompareMetricGrid">
           <ComparisonMetricCard
-            label="Wins"
+            label={translate("copy.wins")}
             leftName={primaryName}
             rightName={compareName}
             leftValue={primaryReport.wins}
@@ -87,7 +82,7 @@ export function StatsOverview() {
             icon={<Trophy size={16} strokeWidth={2.2} aria-hidden="true" />}
           />
           <ComparisonMetricCard
-            label="Win rate"
+            label={translate("copy.winRate")}
             leftName={primaryName}
             rightName={compareName}
             leftValue={`${primaryReport.winRate}%`}
@@ -101,7 +96,7 @@ export function StatsOverview() {
             }
           />
           <ComparisonMetricCard
-            label="Current streak"
+            label={translate("copy.currentStreak")}
             leftName={primaryName}
             rightName={compareName}
             leftValue={
@@ -123,7 +118,7 @@ export function StatsOverview() {
             icon={<Flame size={16} strokeWidth={2.2} aria-hidden="true" />}
           />
           <ComparisonMetricCard
-            label="Avg placement"
+            label={translate("copy.avgPlacement")}
             leftName={primaryName}
             rightName={compareName}
             leftValue={formatAveragePlacement(primaryReport.averagePlacement)}
@@ -143,14 +138,14 @@ export function StatsOverview() {
       ) : (
         <div className="statsKpiGrid">
           <MetricCard
-            label="Wins"
+            label={translate("copy.wins")}
             value={primaryReport.wins}
             copy={`${primaryReport.losses} losses, ${primaryReport.draws} draws`}
             icon={<Trophy size={16} strokeWidth={2.2} aria-hidden="true" />}
             accent
           />
           <MetricCard
-            label="Win rate"
+            label={translate("copy.winRate")}
             value={`${primaryReport.winRate}%`}
             copy={`${primaryReport.completedGames} completed sessions`}
             icon={
@@ -158,7 +153,7 @@ export function StatsOverview() {
             }
           />
           <MetricCard
-            label="Current streak"
+            label={translate("copy.currentStreak")}
             value={
               primaryReport.currentWinStreak
                 ? `${primaryReport.currentWinStreak}x`
@@ -167,17 +162,17 @@ export function StatsOverview() {
             copy={
               primaryReport.currentWinStreak
                 ? "Consecutive wins right now"
-                : "No active win streak"
+                : translate("copy.noActiveWinStreak")
             }
             icon={<Flame size={16} strokeWidth={2.2} aria-hidden="true" />}
           />
           <MetricCard
-            label="Avg placement"
+            label={translate("copy.avgPlacement")}
             value={formatAveragePlacement(primaryReport.averagePlacement)}
             copy={
               typeof primaryReport.bestPlacement === "number"
-                ? `Best finish: #${primaryReport.bestPlacement}`
-                : "No completed placements yet"
+                ? translate("dynamic.bestFinish", [primaryReport.bestPlacement])
+                : translate("copy.noCompletedPlacementsYet")
             }
             icon={<Medal size={16} strokeWidth={2.2} aria-hidden="true" />}
           />

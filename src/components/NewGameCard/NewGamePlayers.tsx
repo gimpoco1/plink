@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { avatarStyleFor } from "../../utils/color";
 import {
   formatAccountPlayerName,
@@ -10,8 +11,10 @@ import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRost
 import { SwipeableCard } from "../SwipeableCard/SwipeableCard";
 import { useNewGameCardContext } from "./NewGameCardContext";
 import { SelectionStateIcon } from "./NewGameAtoms";
+import { useI18n } from "../../i18n/I18nContext";
 
 export function NewGamePlayers() {
+  const { t } = useI18n();
   const {
     filteredStagedPlayers,
     selectedStagedPlayerIds,
@@ -77,9 +80,9 @@ export function NewGamePlayers() {
             className="participantPicker__group"
             searchValue={participantSearch}
             onSearchChange={setParticipantSearch}
-            searchPlaceholder="Search players"
-            searchAriaLabel="Search saved players"
-            clearAriaLabel="Clear player search"
+            searchPlaceholder={t("new.searchPlayers")}
+            searchAriaLabel={translate("copy.searchSavedPlayers")}
+            clearAriaLabel={translate("copy.clearPlayerSearch")}
             showSearch={
               profiles.length > 0 ||
               filteredStagedPlayers.length > 0 ||
@@ -89,11 +92,11 @@ export function NewGamePlayers() {
             showListImmediately
             emptyState={
               participantSearch
-                ? "No players match that search."
+                ? translate("copy.noPlayersMatchThatSearch")
                 : filteredStagedPlayers.length === 0 &&
                     profiles.length === 0 &&
                     filteredPastInvitedPlayers.length === 0
-                  ? "No saved players yet. Create one below."
+                  ? translate("copy.noSavedPlayersYetCreateOneBelow")
                   : undefined
             }
             listFooterContent={
@@ -104,7 +107,10 @@ export function NewGamePlayers() {
                     <div className="participantPicker__selectionNotice">
                       <Link size={15} strokeWidth={2.4} aria-hidden="true" />
                       <span>
-                        <strong>Invited Before players:</strong> They’ll see this game in their accounts and can update the score.
+                        <strong>
+                          {translate("copy.invitedBeforePlayers")}
+                        </strong>{" "}
+                        {translate("copy.theyLlSeeThisGameInTheirAccountsAndCanUpdateThe")}
                       </span>
                     </div>
                   ) : null}
@@ -112,15 +118,15 @@ export function NewGamePlayers() {
                     <div className="participantPicker__selectionNotice">
                       <Info size={15} strokeWidth={2.4} aria-hidden="true" />
                       <span>
-                        <strong>Local players:</strong> results stay in this
-                        game only and won’t be added to Stats.
+                        <strong>{translate("copy.localPlayers")}</strong>{" "}
+                        {translate("copy.resultsStayInThisGameOnlyAndWonTBeAddedTo")}
                       </span>
                     </div>
                   ) : null}
                 </div>
               ) : null
             }
-            createButtonLabel="Add new player"
+            createButtonLabel={translate("copy.addNewPlayer")}
             onCreateButtonClick={() => setIsAddingPlayer(true)}
           >
             {filteredProfiles
@@ -153,8 +159,7 @@ export function NewGamePlayers() {
                       </span>
                       <span className="participantOption__badge">
                         <Link size={9} strokeWidth={2.7} aria-hidden="true" />
-                        Invited before
-                      </span>
+                        {translate("copy.invitedBefore")}</span>
                     </span>
                   </span>
                   {blocked ? (
@@ -183,9 +188,8 @@ export function NewGamePlayers() {
                       aria-hidden="true"
                     />
                     <span>
-                      <strong>Invite code required</strong>
-                      Player has automatic invites off. To add them, share the game code
-                      from the game menu and have them join the game.
+                      <strong>{translate("copy.inviteCodeRequired")}</strong>
+                      {translate("copy.playerHasAutomaticInvitesOffToAddThemShareTheGameCode")}
                     </span>
                   </div>
                 </div>
@@ -211,7 +215,7 @@ export function NewGamePlayers() {
                         closeSwipe();
                         deleteStagedPlayer(player.id);
                       }}
-                      aria-label={`Delete local player ${player.name}`}
+                      aria-label={translate("dynamic.deleteLocalPlayer", [player.name])}
                     >
                       <Trash2 size={18} strokeWidth={2.2} aria-hidden="true" />
                     </button>
@@ -235,7 +239,7 @@ export function NewGamePlayers() {
                             {formatPlayerName(player.name)}
                           </span>
                           <span className="participantOption__badge">
-                            Local
+                            {translate("copy.local")}
                           </span>
                         </span>
                       </span>

@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import {
   createElement,
   useEffect,
@@ -22,19 +23,18 @@ import { useEntitlements } from "../../../hooks/useEntitlements";
 import { useGameStartSplash } from "./useGameStartSplash";
 import { useToastStack } from "./useToastStack";
 import { supabase } from "../../../lib/supabase";
-import type {
-  Game,
-  GameTeam,
-  HomeTab,
-  PlayerProfile,
-} from "../../../types";
+import type { Game, GameTeam, HomeTab, PlayerProfile } from "../../../types";
 import { uid } from "../../../utils/id";
 import {
   capitalizeFirst,
   formatPlayerName,
   getGameDisplayName,
 } from "../../../utils/text";
-import { findWinner, isGameComplete, sortPlayers } from "../../../utils/ranking";
+import {
+  findWinner,
+  isGameComplete,
+  sortPlayers,
+} from "../../../utils/ranking";
 import { getGameParticipants } from "../../../utils/gameParticipants";
 import {
   computeProfileStats,
@@ -161,11 +161,8 @@ export function useAppModel() {
     pastInvitedPlayers,
   } = useGames(session, authLoading, showToast);
   const { pulseById, triggerPulse } = useScorePulse();
-  const {
-    cancelGameStartSplash,
-    gameStartSplashCue,
-    triggerGameStartSplash,
-  } = useGameStartSplash();
+  const { cancelGameStartSplash, gameStartSplashCue, triggerGameStartSplash } =
+    useGameStartSplash();
   const confirmRef = useRef<ConfirmDialogHandle>(null!);
   const managePlayersDialogRef = useRef<ManagePlayersDialogHandle>(null!);
   const handledManageTeamsDialogOpenTokenRef = useRef(0);
@@ -397,7 +394,7 @@ export function useAppModel() {
   }
 
   function showSessionsLoadingToast() {
-    showToast("Loading your saved sessions. Try again in a moment.");
+    showToast(translate("copy.loadingYourSavedSessionsTryAgainInAMoment"));
   }
 
   function showSessionLimitToast() {
@@ -444,8 +441,8 @@ export function useAppModel() {
     if (candidates.length === 0 && unsavedPlayers.length === 0) return [];
 
     const selectedUserIds = await confirmRef.current?.selectPlayers({
-      eyebrow: "New game",
-      title: "Play again",
+      eyebrow: translate("topbar.newGame"),
+      title: translate("copy.playAgain"),
       message: hasInvitablePlayers
         ? "You’ll own this new game. Select the accounts you want to invite again."
         : "",
@@ -461,8 +458,8 @@ export function useAppModel() {
           label: candidate.canInvite
             ? candidate.isPreviousOwner
               ? "Previous session owner"
-              : "Invited before"
-            : "Automatic invites off",
+              : translate("copy.invitedBefore")
+            : translate("copy.automaticInvitesOff"),
           description: candidate.canInvite
             ? undefined
             : "Can’t be invited. They’ll be added as a player not saved, and Stats won’t count.",
@@ -478,16 +475,16 @@ export function useAppModel() {
           id: `game-only:${player.id}`,
           name: player.name,
           avatarColor: player.avatarColor,
-          label: "Player not saved",
-          description: "Their results won’t count toward Stats.",
+          label: translate("copy.playerNotSaved"),
+          description: translate("copy.theirResultsWonTCountTowardStats"),
           disabled: true,
         })),
       ],
       initialSelectedPlayerIds: candidates
         .filter((candidate) => candidate.canInvite)
         .map((candidate) => candidate.userId),
-      confirmText: "Play again",
-      cancelText: "Cancel",
+      confirmText: translate("copy.playAgain"),
+      cancelText: translate("copy.cancel"),
       layout: "feature",
       tone: "default",
     });
@@ -613,7 +610,7 @@ export function useAppModel() {
       label: currentGame.manualEndOnly
         ? currentGame.targetScore > 0
           ? `Ref ${currentGame.targetScore}`
-          : "Manual"
+          : translate("copy.manual")
         : currentGame.winCondition === "reach_zero"
           ? `${currentGame.startingScore} to 0`
           : currentGame.winCondition === "lowest"
@@ -631,7 +628,7 @@ export function useAppModel() {
 
     if (currentGame.winByTwo) {
       items.push({
-        label: "Win by 2",
+        label: translate("copy.winBy2"),
         tone: "muted",
         icon: createElement(GitCompareArrows, { size: 14, strokeWidth: 2.35 }),
       });
@@ -709,18 +706,18 @@ export function useAppModel() {
     );
 
     const result = await confirmRef.current?.choose({
-      title: "End game",
+      title: translate("topbar.endGame"),
       message: isDraw
         ? "Current standings are tied. End this game as a draw or finish it without a winner?"
         : canDeclareWinner
-          ? "Finish this game using the current standings, or end it without a winner?"
-          : "Mark this game as finished without a winner?",
+          ? translate("copy.finishThisGameUsingTheCurrentStandingsOrEndItWithoutA")
+          : translate("copy.markThisGameAsFinishedWithoutAWinner"),
       confirmText: isDraw
-        ? "End as draw"
+        ? translate("copy.endAsDraw")
         : canDeclareWinner
-          ? "End with winner"
-          : "End game",
-      extraActionText: isDraw || canDeclareWinner ? "End without winner" : "",
+          ? translate("copy.endWithWinner")
+          : translate("topbar.endGame"),
+      extraActionText: isDraw || canDeclareWinner ? translate("copy.endWithoutWinner") : "",
       tone: "default",
     });
     if (!result || result === "cancel") return;
@@ -732,10 +729,7 @@ export function useAppModel() {
       await finishGame(currentGame.id, "draw");
       return;
     }
-    await finishGame(
-      currentGame.id,
-      canDeclareWinner ? "winner" : "no_winner",
-    );
+    await finishGame(currentGame.id, canDeclareWinner ? "winner" : "no_winner");
   }
 
   useEffect(() => {
@@ -834,7 +828,7 @@ export function useAppModel() {
       }
     });
 
-    showToast("Saved players from this game to your account.", "success");
+    showToast(translate("copy.savedPlayersFromThisGameToYourAccount"), "success");
     setShouldSaveGamePlayersOnSignIn(false);
   }, [
     currentGame,
@@ -964,11 +958,11 @@ export function useAppModel() {
 
     if (!session) {
       const ok = await confirmRef.current?.confirm({
-        title: "Not signed in",
+        title: translate("copy.notSignedIn"),
         message:
-          "Continue as guest? This game stays on this device and will not be saved to your account.",
-        confirmText: "Continue",
-        cancelText: "Cancel",
+          translate("copy.continueAsGuestThisGameStaysOnThisDeviceAndWillNot"),
+        confirmText: translate("copy.continue"),
+        cancelText: translate("copy.cancel"),
       });
       if (!ok) return false;
     }
@@ -1007,10 +1001,7 @@ export function useAppModel() {
       ) {
         return [];
       }
-      if (
-        invitedUserId &&
-        seenInvitedUserIds.has(invitedUserId)
-      ) {
+      if (invitedUserId && seenInvitedUserIds.has(invitedUserId)) {
         return [];
       }
 
@@ -1060,26 +1051,25 @@ export function useAppModel() {
         const blockedUserIds = new Set(permissionResult.blockedUserIds);
         const blockedPlayers = resolvedInput.initialPlayers.filter(
           (player) =>
-            !!player.invitedUserId &&
-            blockedUserIds.has(player.invitedUserId),
+            !!player.invitedUserId && blockedUserIds.has(player.invitedUserId),
         );
         const decision = await confirmRef.current?.choose({
-          eyebrow: "Invite code required",
-          title: "How should these players join?",
+          eyebrow: translate("copy.inviteCodeRequired"),
+          title: translate("copy.howShouldThesePlayersJoin"),
           message:
-            "Automatic invites are off for these accounts. Choose how to continue.",
+            translate("copy.automaticInvitesAreOffForTheseAccountsChooseHowToContinue"),
           messageCase: "normal",
           playersTitle: "Players needing an invite code",
           players: blockedPlayers.map((player) => ({
             name: player.name,
             avatarColor: player.avatarColor,
-            label: "Invited before",
-            description: "Automatic invites are off",
+            label: translate("copy.invitedBefore"),
+            description: translate("copy.automaticInvitesAreOff"),
           })),
-          confirmText: "Share invite code",
-          extraActionText: "Use game-only",
+          confirmText: translate("copy.shareInviteCode"),
+          extraActionText: translate("copy.useGameOnly"),
           extraActionDescription: "Only in this game — no account or Stats.",
-          cancelText: "Cancel",
+          cancelText: translate("copy.cancel"),
           layout: "feature",
         });
 
@@ -1120,16 +1110,12 @@ export function useAppModel() {
     };
 
     triggerGameStartSplash();
-    const created = createGame(
-      baseGameInput,
-      requestedInvitedPlayers.size,
-    );
+    const created = createGame(baseGameInput, requestedInvitedPlayers.size);
     if (created) {
       if (requestedInvitedPlayers.size > 0) {
-        const invitesAdded = await addPastLinkedPlayersToNewGame(
-          created,
-          [...requestedInvitedPlayers.values()],
-        );
+        const invitesAdded = await addPastLinkedPlayersToNewGame(created, [
+          ...requestedInvitedPlayers.values(),
+        ]);
         if (!invitesAdded) {
           cancelGameStartSplash();
           return false;
@@ -1165,25 +1151,25 @@ export function useAppModel() {
     },
   ) {
     const timerValue = !input.timerEnabled
-      ? "Off"
+      ? translate("copy.off")
       : input.timerMode === "stopwatch"
         ? "Stopwatch"
         : formatDialogTimer(input.timerSeconds);
     const result = await confirmRef.current?.choose({
-      title: "New game details",
+      title: translate("copy.newGameDetails"),
       details: [
         {
-          label: "Name",
+          label: translate("copy.name"),
           value: details.label,
           icon: createElement(Boxes, { size: 16, strokeWidth: 2.15 }),
         },
         {
           label:
             input.winCondition === "reach_zero"
-              ? "Starting score"
+              ? translate("copy.startingScore")
               : input.manualEndOnly
-                ? "Reference target"
-                : "Target",
+                ? translate("copy.referenceTarget")
+                : translate("new.target"),
           value: String(
             input.winCondition === "reach_zero"
               ? input.startingScore
@@ -1197,14 +1183,14 @@ export function useAppModel() {
           size: "compact",
         },
         {
-          label: "Timer",
-          value: input.timerEnabled ? timerValue : "No timer",
+          label: translate("copy.timer"),
+          value: input.timerEnabled ? timerValue : translate("copy.noTimer"),
           icon: createElement(Timer, { size: 16, strokeWidth: 2.2 }),
           size: "compact",
         },
         {
-          label: "Dice",
-          value: input.diceEnabled ? "Dice on" : "No dice",
+          label: translate("copy.dice"),
+          value: input.diceEnabled ? "Dice on" : translate("copy.noDice"),
           icon: createElement(Dices, { size: 16, strokeWidth: 2.2 }),
           size: "compact",
         },
@@ -1212,12 +1198,12 @@ export function useAppModel() {
       settingChips: [
         {
           label: input.manualEndOnly
-            ? "Manual finish"
+            ? translate("copy.manualFinish")
             : input.winCondition === "reach_zero"
               ? "Reach zero"
               : input.winCondition === "lowest"
-                ? "Lowest wins"
-                : "Highest wins",
+                ? translate("copy.lowestWins")
+                : translate("copy.highestWins"),
           icon: input.manualEndOnly
             ? createElement(Flag, { size: 14, strokeWidth: 2.2 })
             : input.winCondition === "reach_zero"
@@ -1230,7 +1216,7 @@ export function useAppModel() {
         ...(input.winByTwo
           ? [
               {
-                label: "Win by 2",
+                label: translate("copy.winBy2"),
                 icon: createElement(GitCompareArrows, {
                   size: 14,
                   strokeWidth: 2.2,
@@ -1254,13 +1240,13 @@ export function useAppModel() {
             })),
       playersTitle:
         input.participantMode !== "teams" && details.players.length
-          ? "Players"
+          ? translate("tabs.players")
           : "",
       teams: details.teams,
       message:
         input.participantMode === "teams"
           ? details.teams?.length
-            ? "Teams"
+            ? translate("home.teams")
             : ""
           : "",
       messageCase: "normal",
@@ -1271,13 +1257,13 @@ export function useAppModel() {
               strokeWidth: 2.4,
               "aria-hidden": true,
             }),
-            text: "This game will appear in the invited players’ accounts, and they can update the score.",
+            text: translate("copy.invitedPlayersAccountNotice"),
           }
         : undefined,
       hideCancelAction: true,
-      extraActionText: "Edit",
-      confirmText: "Start new game",
-      cancelText: "Cancel",
+      extraActionText: translate("copy.edit"),
+      confirmText: translate("copy.startNewGame"),
+      cancelText: translate("copy.cancel"),
       layout: "feature",
     });
     if (result === "extra") {
@@ -1461,8 +1447,8 @@ export function useAppModel() {
     if (importCapacityState === "blocked") {
       throw new Error(
         entitlements.hasSessionPass
-          ? `Your Session Pass keeps up to ${entitlements.maxSessions} sessions. Upgrade to Pro to import more history.`
-          : `The Free plan keeps up to ${entitlements.maxSessions} sessions. Add a Session Pass or Pro to import more history and keep player Stats accurate.`,
+          ? translate("dynamic.yourSessionPassKeepsUpToSessionsUpgradeToProToImport", [entitlements.maxSessions])
+          : translate("dynamic.theFreePlanKeepsUpToSessionsAddASessionPassOr", [entitlements.maxSessions]),
       );
     }
 
@@ -1551,8 +1537,8 @@ export function useAppModel() {
     if (restoreCapacityState === "blocked") {
       throw new Error(
         entitlements.hasSessionPass
-          ? `Your Session Pass keeps up to ${entitlements.maxSessions} sessions. Upgrade to Pro to restore more history.`
-          : `The Free plan keeps up to ${entitlements.maxSessions} sessions. Add a Session Pass or Pro to restore more history and keep player Stats accurate.`,
+          ? translate("dynamic.yourSessionPassKeepsUpToSessionsUpgradeToProToRestore", [entitlements.maxSessions])
+          : translate("dynamic.theFreePlanKeepsUpToSessionsAddASessionPassOr2", [entitlements.maxSessions]),
       );
     }
     const importedProfiles = await importProfiles(reconciled.profiles);

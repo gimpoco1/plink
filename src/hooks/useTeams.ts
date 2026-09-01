@@ -1,3 +1,4 @@
+import { translate } from "../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -34,7 +35,7 @@ function getSyncErrorMessage(error: unknown) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message) return message;
   }
-  return "Unknown sync error";
+  return translate("copy.unknownSyncError");
 }
 
 function dedupeTeamMembers(members: TeamMember[]) {
@@ -79,7 +80,9 @@ export function useTeams(session: Session | null) {
   const savedChangeVersionRef = useRef(0);
   const isSavingRemoteRef = useRef(false);
   const [saveRetryTick, setSaveRetryTick] = useState(0);
-  const canPersistTeams = Boolean(userId && remoteReady && remoteUserId === userId);
+  const canPersistTeams = Boolean(
+    userId && remoteReady && remoteUserId === userId,
+  );
 
   function markLocalChange() {
     localChangeVersionRef.current += 1;
@@ -133,7 +136,7 @@ export function useTeams(session: Session | null) {
         setRemoteReady(true);
         setRemoteUserId(null);
         setSyncNotice({
-          message: `Could not load teams: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotLoadTeams", [getSyncErrorMessage(error)]),
           tone: "error",
         });
       });
@@ -157,7 +160,10 @@ export function useTeams(session: Session | null) {
         if (!alive) return;
         const nextMembers = dedupeTeamMembers(remoteMembers);
 
-        const incomingSignature = getTeamSyncSignature(remoteTeams, nextMembers);
+        const incomingSignature = getTeamSyncSignature(
+          remoteTeams,
+          nextMembers,
+        );
         const currentSignature = getTeamSyncSignature(teams, teamMembers);
         if (
           remoteSignatureRef.current &&
@@ -182,11 +188,12 @@ export function useTeams(session: Session | null) {
       () => void refreshRemoteTeams(),
     );
 
-    let teamsChannel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
-      null;
-    let membersChannel:
-      | ReturnType<NonNullable<typeof supabase>["channel"]>
-      | null = null;
+    let teamsChannel: ReturnType<
+      NonNullable<typeof supabase>["channel"]
+    > | null = null;
+    let membersChannel: ReturnType<
+      NonNullable<typeof supabase>["channel"]
+    > | null = null;
     if (supabase) {
       teamsChannel = supabase.channel(`teams:${userId}`);
       teamsChannel.on(
@@ -253,7 +260,7 @@ export function useTeams(session: Session | null) {
       .catch((error) => {
         console.error("Failed to save teams to Supabase", error);
         setSyncNotice({
-          message: `Could not save teams: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotSaveTeams", [getSyncErrorMessage(error)]),
           tone: "error",
         });
       })
@@ -278,7 +285,7 @@ export function useTeams(session: Session | null) {
   function createTeam(rawName: string, icon = DEFAULT_TEAM_ICON) {
     if (!canPersistTeams) {
       setSyncNotice({
-        message: "Teams are still loading. Try again in a moment.",
+        message: translate("copy.teamsAreStillLoadingTryAgainInAMoment"),
         tone: "error",
       });
       return null;
@@ -305,7 +312,7 @@ export function useTeams(session: Session | null) {
   function deleteTeam(teamId: string) {
     if (!canPersistTeams) {
       setSyncNotice({
-        message: "Teams are still loading. Try again in a moment.",
+        message: translate("copy.teamsAreStillLoadingTryAgainInAMoment"),
         tone: "error",
       });
       return;
@@ -323,13 +330,15 @@ export function useTeams(session: Session | null) {
   ) {
     if (!canPersistTeams) {
       setSyncNotice({
-        message: "Teams are still loading. Try again in a moment.",
+        message: translate("copy.teamsAreStillLoadingTryAgainInAMoment"),
         tone: "error",
       });
       return;
     }
     const name =
-      typeof updates.name === "string" ? formatTeamName(updates.name) : undefined;
+      typeof updates.name === "string"
+        ? formatTeamName(updates.name)
+        : undefined;
     if (updates.name !== undefined && !name) return;
     markLocalChange();
     setTeams((current) =>
@@ -339,7 +348,8 @@ export function useTeams(session: Session | null) {
           name &&
           current.some(
             (item) =>
-              item.id !== teamId && item.name.toLowerCase() === name.toLowerCase(),
+              item.id !== teamId &&
+              item.name.toLowerCase() === name.toLowerCase(),
           )
         ) {
           return team;
@@ -357,21 +367,20 @@ export function useTeams(session: Session | null) {
   function toggleTeamMember(teamId: string, profileId: string) {
     if (!canPersistTeams) {
       setSyncNotice({
-        message: "Teams are still loading. Try again in a moment.",
+        message: translate("copy.teamsAreStillLoadingTryAgainInAMoment"),
         tone: "error",
       });
       return;
     }
     const existing = teamMembers.some(
-      (member) =>
-        member.teamId === teamId && member.profileId === profileId,
+      (member) => member.teamId === teamId && member.profileId === profileId,
     );
     const teamMemberCount = teamMembers.filter(
       (member) => member.teamId === teamId,
     ).length;
     if (existing && teamMemberCount <= 1) {
       setSyncNotice({
-        message: "A team needs at least one player.",
+        message: translate("copy.aTeamNeedsAtLeastOnePlayer"),
         tone: "error",
       });
       return;
@@ -402,7 +411,7 @@ export function useTeams(session: Session | null) {
   function removeProfileMemberships(profileId: string) {
     if (!canPersistTeams) {
       setSyncNotice({
-        message: "Teams are still loading. Try again in a moment.",
+        message: translate("copy.teamsAreStillLoadingTryAgainInAMoment"),
         tone: "error",
       });
       return;
@@ -419,7 +428,7 @@ export function useTeams(session: Session | null) {
   ) {
     if (!canPersistTeams) {
       setSyncNotice({
-        message: "Teams are still loading. Try again in a moment.",
+        message: translate("copy.teamsAreStillLoadingTryAgainInAMoment"),
         tone: "error",
       });
       return 0;
@@ -442,7 +451,8 @@ export function useTeams(session: Session | null) {
       }
       const existingUpdatedAt =
         existingTeam.updatedAt ?? existingTeam.createdAt;
-      const incomingUpdatedAt = incomingTeam.updatedAt ?? incomingTeam.createdAt;
+      const incomingUpdatedAt =
+        incomingTeam.updatedAt ?? incomingTeam.createdAt;
       if (
         incomingUpdatedAt > existingUpdatedAt ||
         incomingTeam.name !== existingTeam.name ||

@@ -1,3 +1,4 @@
+import { translate } from "../i18n/translate";
 import {
   useRef,
   useState,
@@ -84,11 +85,16 @@ export function GameHistoryScreen({ game }: Props) {
       }`}
     >
       {entries.length > 0 ? (
-        <section className="historyList" aria-label="Game history">
+        <section
+          className="historyList"
+          aria-label={translate("topbar.gameHistory")}
+        >
           {showPlayerFilter ? (
             <div
               className="historyFilter"
-              aria-label={`Filter history by ${isTeamsGame ? "team" : "player"}`}
+              aria-label={translate("dynamic.filterHistoryBy", [
+                translate(isTeamsGame ? "common.team" : "common.player"),
+              ])}
               onClickCapture={handleFilterClickCapture}
               onPointerDown={handleFilterPointerDown}
               onPointerMove={handleFilterPointerMove}
@@ -106,7 +112,7 @@ export function GameHistoryScreen({ game }: Props) {
                 type="button"
                 onClick={() => setSelectedPlayerId("all")}
               >
-                All
+                {translate("copy.all")}
               </button>
               {playerOptions.map((player) => (
                 <button
@@ -161,8 +167,12 @@ export function GameHistoryScreen({ game }: Props) {
         </section>
       ) : (
         <section className="empty historyEmpty">
-          <h1 className="empty__title">No score history yet.</h1>
-          <p className="empty__hint">Score changes will appear here.</p>
+          <h1 className="empty__title">
+            {translate("copy.noScoreHistoryYet")}
+          </h1>
+          <p className="empty__hint">
+            {translate("copy.scoreChangesWillAppearHere")}
+          </p>
         </section>
       )}
     </main>

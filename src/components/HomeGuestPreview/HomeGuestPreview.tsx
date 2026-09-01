@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import "./HomeGuestPreview.css";
 
 type GuestPreviewProps = {
@@ -6,15 +7,21 @@ type GuestPreviewProps = {
 
 export function HomeGuestPreview({ onOpenAuth }: GuestPreviewProps) {
   return (
-    <section className="guestBanner" aria-label="Guest mode notice">
+    <section
+      className="guestBanner"
+      aria-label={translate("copy.guestModeNotice")}
+    >
       <div className="guestBanner__content">
         <div className="guestBanner__eyebrow">
-          <span className="guestBanner__icon" aria-hidden="true">!</span>
-          <span>Guest mode</span>
+          <span className="guestBanner__icon" aria-hidden="true">
+            !
+          </span>
+          <span>{translate("copy.guestMode")}</span>
         </div>
         <p className="guestBanner__copy">
-          Your games are only available on this device right now. Sign in to keep
-          sessions, players, and stats in your account.
+          {translate(
+            "copy.yourGamesAreOnlyAvailableOnThisDeviceRightNowSignIn",
+          )}
         </p>
       </div>
       <div className="guestBanner__actions">
@@ -23,7 +30,7 @@ export function HomeGuestPreview({ onOpenAuth }: GuestPreviewProps) {
           type="button"
           onClick={onOpenAuth}
         >
-          Sign in to save
+          {translate("copy.signInToSave")}
         </button>
       </div>
     </section>

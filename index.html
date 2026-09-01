@@ -16,6 +16,9 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#0b1015" />
+    <script>
+      document.documentElement.classList.add("app-booting");
+    </script>
     <meta
       name="description"
       content="Plink helps you track game sessions, players, scores, and stats across casual rounds."
@@ -41,7 +44,11 @@
       body {
         margin: 0;
         background:
-          radial-gradient(circle at 15% -10%, rgba(216, 255, 79, 0.08), transparent 34%),
+          radial-gradient(
+            circle at 15% -10%,
+            rgba(216, 255, 79, 0.08),
+            transparent 34%
+          ),
           var(--fallback-bg);
         color: var(--fallback-text);
         font-family:
@@ -51,6 +58,10 @@
           -apple-system,
           system-ui,
           sans-serif;
+      }
+
+      html.app-booting #site-fallback {
+        display: none;
       }
 
       .bootSplash {
@@ -243,17 +254,21 @@
         </header>
 
         <section class="bootSplash__hero">
-          <div class="bootSplash__eyebrow">Score tracker for real game nights</div>
+          <div class="bootSplash__eyebrow">
+            Score tracker for real game nights
+          </div>
           <h1>Keep scores, sessions, players, and stats in one place.</h1>
           <p class="bootSplash__lead">
-            Plink is a scorekeeping app for board games, card games, party games,
-            team matches, and recurring casual sessions. Use it to start a
-            scoreboard quickly, track score changes, resume unfinished games, and
-            keep useful history after the winner is decided.
+            Plink is a scorekeeping app for board games, card games, party
+            games, team matches, and recurring casual sessions. Use it to start
+            a scoreboard quickly, track score changes, resume unfinished games,
+            and keep useful history after the winner is decided.
           </p>
           <div class="bootSplash__actions">
             <a class="bootSplash__button" href="/">Open score tracker</a>
-            <a class="bootSplash__button" href="/guides/index.html">Read scorekeeping guides</a>
+            <a class="bootSplash__button" href="/guides/index.html"
+              >Read scorekeeping guides</a
+            >
           </div>
         </section>
 
@@ -275,8 +290,8 @@
           <article class="bootSplash__card">
             <h2>Shared games</h2>
             <p>
-              Invite other players to the same scoreboard so several accounts can
-              update the game from their own devices.
+              Invite other players to the same scoreboard so several accounts
+              can update the game from their own devices.
             </p>
           </article>
         </section>
@@ -286,23 +301,24 @@
           <article class="bootSplash__card">
             <h3>How to keep score for almost any game</h3>
             <p>
-              Choose scoring direction, targets, ending rules, and corrections before
-              the first round.
+              Choose scoring direction, targets, ending rules, and corrections
+              before the first round.
             </p>
             <p><a href="/guides/scorekeeping-basics.html">Read the guide</a></p>
           </article>
           <article class="bootSplash__card">
             <h3>How to run a smoother game night</h3>
             <p>
-              Prepare players, teams, timers, and recurring setups so play keeps moving.
+              Prepare players, teams, timers, and recurring setups so play keeps
+              moving.
             </p>
             <p><a href="/guides/game-night.html">Read the guide</a></p>
           </article>
           <article class="bootSplash__card">
             <h3>How to share scorekeeping safely</h3>
             <p>
-              Decide who owns the game, who can update scores, and how shared changes
-              stay understandable.
+              Decide who owns the game, who can update scores, and how shared
+              changes stay understandable.
             </p>
             <p><a href="/guides/shared-scorekeeping.html">Read the guide</a></p>
           </article>
@@ -310,8 +326,8 @@
 
         <footer class="bootSplash__footer">
           <p>
-            Plink includes guest mode, account sync, privacy controls, subscriptions,
-            one-time session passes, and account data export.
+            Plink includes guest mode, account sync, privacy controls,
+            subscriptions, one-time session passes, and account data export.
           </p>
           <nav class="bootSplash__footerLinks" aria-label="Footer navigation">
             <a href="/privacy.html">Privacy Policy</a>

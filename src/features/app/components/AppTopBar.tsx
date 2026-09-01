@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CircleUser } from "lucide-react";
@@ -7,6 +8,7 @@ import { GameCommentsDialog } from "../../comments/GameCommentsDialog";
 import { useGameComments } from "../../comments/useGameComments";
 import { findWinner } from "../../../utils/ranking";
 import { useAppContext } from "../context/AppContext";
+import { useI18n } from "../../../i18n/I18nContext";
 
 const COMMENT_PREVIEW_TTL_MS = 2 * 60 * 60 * 1000;
 
@@ -52,6 +54,7 @@ function saveStoredPreview(gameId: string, key: string) {
 }
 
 export function AppTopBar() {
+  const { t } = useI18n();
   const {
     authDialogRef,
     authEnabled,
@@ -126,7 +129,7 @@ export function AppTopBar() {
     setCommentPreview({
       authorName:
         latestComment.authorUserId === comments.currentAuthorId
-          ? "You"
+          ? translate("copy.you")
           : latestComment.authorName,
       body: latestComment.body,
     });
@@ -178,23 +181,33 @@ export function AppTopBar() {
               ? `#${gameDisplayName.replayNumber}`
               : undefined
           }
-          backLabel={view === "history" ? "Back to game" : "Back to games"}
+          backLabel={
+            view === "history"
+              ? t("topbar.backToGame")
+              : t("topbar.backToGames")
+          }
           showBackButton={view !== "home" && !!currentGame}
           showActionMenu={view === "game" && !!currentGame}
           primaryActionLabel={
-            view === "home" && homeTab !== "home" && homeTab !== "players"
-              ? "New game"
+            view === "home" &&
+            !!session &&
+            homeTab !== "home" &&
+            homeTab !== "players"
+              ? t("topbar.newGame")
               : undefined
+          }
+          showLanguageSelector={
+            view === "home" && !authLoading && !session
           }
           authLabel={
             view === "home"
               ? authLoading
-                ? "Loading..."
+                ? t("topbar.loading")
                 : authEnabled
                   ? session
                     ? undefined
-                    : "Sign in"
-                  : "Local only"
+                    : t("topbar.signIn")
+                  : t("topbar.localOnly")
               : undefined
           }
           authIcon={
@@ -202,7 +215,7 @@ export function AppTopBar() {
               <CircleUser size={26} strokeWidth={2.3} aria-hidden="true" />
             ) : undefined
           }
-          authAriaLabel={session ? "Account" : "Sign in"}
+          authAriaLabel={session ? t("topbar.account") : t("topbar.signIn")}
           metaItems={
             view === "history" && currentGame
               ? [{ label: gameDisplayName.title, tone: "muted" }]
@@ -229,8 +242,8 @@ export function AppTopBar() {
           }}
           onAddPlayerLabel={
             view === "game" && currentGame?.participantMode === "teams"
-              ? "Manage teams"
-              : "Manage players"
+              ? t("topbar.manageTeams")
+              : t("topbar.managePlayers")
           }
           onAddPlayer={
             canManageGame
@@ -280,9 +293,9 @@ export function AppTopBar() {
               ? async () => {
                   if (!currentGame) return;
                   const ok = await confirmRef.current?.confirm({
-                    title: "Reset game",
-                    message: "Reset all scores to 0?",
-                    confirmText: "Reset",
+                    title: translate("copy.resetGame"),
+                    message: translate("copy.resetAllScoresTo0"),
+                    confirmText: translate("copy.reset"),
                     tone: "danger",
                   });
                   if (!ok) return;

@@ -19,9 +19,14 @@ export function loadPlayers(): Player[] {
         ) {
           return null;
         }
-        const reachedAt = typeof obj.reachedAt === "number" ? obj.reachedAt : (obj.createdAt as number);
-        const avatarColor = typeof obj.avatarColor === "string" ? obj.avatarColor : "#64748b";
-        const profileId = typeof obj.profileId === "string" ? obj.profileId : undefined;
+        const reachedAt =
+          typeof obj.reachedAt === "number"
+            ? obj.reachedAt
+            : (obj.createdAt as number);
+        const avatarColor =
+          typeof obj.avatarColor === "string" ? obj.avatarColor : "#64748b";
+        const profileId =
+          typeof obj.profileId === "string" ? obj.profileId : undefined;
         return {
           id: obj.id,
           name: obj.name,

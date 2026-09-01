@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { PanelHeader } from "./StatsScreenParts";
 import { formatPlacement, getStatusTone } from "../utils/statsUtils";
 import { STATUS_LABELS } from "../types/statsTypes";
@@ -10,7 +11,7 @@ export function StatsMetaPanels() {
     <div className="statsMetaGrid">
       <section className="statsPanel">
         <PanelHeader
-          title={`Recent sessions for ${primaryName}`}
+          title={translate("dynamic.recentSessionsFor", [primaryName])}
           count={primaryReport.sessions.length}
         />
         {primaryReport.sessions.length ? (
@@ -42,13 +43,15 @@ export function StatsMetaPanels() {
             ))}
           </div>
         ) : (
-          <div className="emptyMsg">No sessions tracked yet.</div>
+          <div className="emptyMsg">
+            {translate("copy.noSessionsTrackedYet")}
+          </div>
         )}
       </section>
 
       <section className="statsPanel">
         <PanelHeader
-          title={`Best games for ${primaryName}`}
+          title={translate("dynamic.bestGamesFor", [primaryName])}
           count={primaryReport.gameBreakdown.length}
         />
         {primaryReport.gameBreakdown.length ? (
@@ -58,7 +61,7 @@ export function StatsMetaPanels() {
                 <div className="statsBreakdownRow__left">
                   <strong>{game.name}</strong>
                   <span>
-                    {game.sessions} sessions · {game.wins} wins
+                    {game.sessions} {translate("copy.sessions2")} {game.wins} {translate("copy.wins2")}
                   </span>
                 </div>
                 <div className="statsBreakdownRow__right">
@@ -68,7 +71,9 @@ export function StatsMetaPanels() {
             ))}
           </div>
         ) : (
-          <div className="emptyMsg">No game breakdown yet.</div>
+          <div className="emptyMsg">
+            {translate("copy.noGameBreakdownYet")}
+          </div>
         )}
       </section>
     </div>

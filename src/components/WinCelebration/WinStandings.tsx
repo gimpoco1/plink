@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Crown } from "lucide-react";
 import type { Standing } from "./WinCelebration";
 import { FittedPodiumName } from "./WinCelebrationAtoms";
@@ -28,22 +29,27 @@ export function WinStandings({
 }: Props) {
   if (hidden) return null;
   return (
-    <section className="winFx__summary" aria-label="Final standings">
-      <div className="winFx__summaryTitle">Final standings</div>
+    <section
+      className="winFx__summary"
+      aria-label={translate("copy.finalStandings")}
+    >
+      <div className="winFx__summaryTitle">
+        {translate("copy.finalStandings")}
+      </div>
       {podiumStandings.length > 0 ? (
         <div
           className={`winFx__podium${
             listedStandings.length > 0 ? " winFx__podium--withList" : ""
           }`}
-          aria-label="Top three"
+          aria-label={translate("copy.topThree")}
         >
           {podiumStandings.map((entry, index) => (
             <div
               key={entry?.id ?? `empty-podium-${index + 1}`}
               aria-label={
                 entry
-                  ? `${entry.name}, rank ${entry.rank}, score ${entry.score}`
-                  : `No rank ${index + 1} player`
+                  ? translate("dynamic.rankScore", [entry.name, entry.rank, entry.score])
+                  : translate("dynamic.noRankPlayer", [index + 1])
               }
               className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
                 entry?.isWinner ? " winFx__podiumSlot--winner" : ""
@@ -98,8 +104,12 @@ export function WinStandings({
                 <StandingAvatar entry={entry} isTeamGame={isTeamGame} />
                 <div className="winFx__player">
                   <strong>{entry.name}</strong>
-                  {entry.isWinner ? <span>Champion</span> : null}
-                  {isDraw && entry.rank === 1 ? <span>Draw</span> : null}
+                  {entry.isWinner ? (
+                    <span>{translate("copy.champion")}</span>
+                  ) : null}
+                  {isDraw && entry.rank === 1 ? (
+                    <span>{translate("copy.draw")}</span>
+                  ) : null}
                   {isTiedRank(entry, rankCounts) ? (
                     <span>{formatTieScore(entry.score)}</span>
                   ) : null}

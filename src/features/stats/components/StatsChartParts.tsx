@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import type { CSSProperties } from "react";
 import { ChevronDown } from "lucide-react";
 import { ALL_CHART_GAMES, type CompareChartPoint } from "../types/statsTypes";
@@ -15,7 +16,7 @@ export function ChartGamePicker({
   onToggle: () => void;
   onSelect: (value: string) => void;
 }) {
-  const label = value === ALL_CHART_GAMES ? "All games" : value;
+  const label = value === ALL_CHART_GAMES ? translate("copy.allGames") : value;
   return (
     <div className="statsChartGamePicker">
       <button
@@ -26,7 +27,7 @@ export function ChartGamePicker({
         onClick={onToggle}
         aria-expanded={isOpen}
       >
-        <span>Game</span>
+        <span>{translate("copy.game")}</span>
         <strong>{label}</strong>
         <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" />
       </button>
@@ -43,7 +44,7 @@ export function ChartGamePicker({
               }`}
               onClick={() => onSelect(gameName)}
             >
-              {gameName === ALL_CHART_GAMES ? "All games" : gameName}
+              {gameName === ALL_CHART_GAMES ? translate("copy.allGames") : gameName}
             </button>
           ))}
         </div>
@@ -64,7 +65,10 @@ export function ChartLegend({
   secondaryColor: string;
 }) {
   return (
-    <div className="statsChartLegend" aria-label="Chart legend">
+    <div
+      className="statsChartLegend"
+      aria-label={translate("copy.chartLegend")}
+    >
       <span style={{ "--legend-color": primaryColor } as CSSProperties}>
         {primaryLabel}
       </span>

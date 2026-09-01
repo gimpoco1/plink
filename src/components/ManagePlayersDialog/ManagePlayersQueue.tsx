@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Link } from "lucide-react";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
 import { avatarStyleFor } from "../../utils/color";
@@ -21,7 +22,7 @@ export function ManagePlayersQueue() {
   if (stagedCount === 0) return null;
 
   return (
-    <QueueShell count={stagedCount} label="players">
+    <QueueShell count={stagedCount} label={translate("copy.players")}>
       {stagedProfiles.map((profile) => {
         const displayName = profile.isAccountPlayer
           ? formatAccountPlayerName(profile.name)
@@ -32,7 +33,7 @@ export function ManagePlayersQueue() {
             className="managePlayersDialog__queueChip"
             type="button"
             onClick={() => toggleProfile(profile.id)}
-            aria-label={`Remove ${displayName}`}
+            aria-label={translate("dynamic.remove", [displayName])}
           >
             <span
               className="managePlayersDialog__queueAvatar"
@@ -52,7 +53,7 @@ export function ManagePlayersQueue() {
           className="managePlayersDialog__queueChip"
           type="button"
           onClick={() => togglePastLinkedPlayer(player.userId)}
-          aria-label={`Remove ${capitalizeFirst(player.name)}`}
+          aria-label={translate("dynamic.remove", [capitalizeFirst(player.name)])}
         >
           <span
             className="managePlayersDialog__queueAvatar"
@@ -81,7 +82,7 @@ export function ManagePlayersQueue() {
               players.filter((_, playerIndex) => playerIndex !== index),
             )
           }
-          aria-label={`Remove ${capitalizeFirst(player.name)}`}
+          aria-label={translate("dynamic.remove", [capitalizeFirst(player.name)])}
         >
           <span
             className="managePlayersDialog__queueAvatar"
@@ -104,14 +105,14 @@ export function ManageTeamsQueue() {
   if (stagedTeamCount === 0) return null;
 
   return (
-    <QueueShell count={stagedTeamCount} label="teams" teams>
+    <QueueShell count={stagedTeamCount} label={translate("copy.teams")} teams>
       {stagedTeams.map((team) => (
         <button
           key={team.id}
           className="managePlayersDialog__queueChip"
           type="button"
           onClick={() => toggleTeam(team.id)}
-          aria-label={`Remove ${team.name}`}
+          aria-label={translate("dynamic.remove", [team.name])}
         >
           <span
             className="managePlayersDialog__queueTeamIcon"
@@ -141,10 +142,12 @@ function QueueShell({
   return (
     <section className="managePlayersDialog__queue">
       <div className="managePlayersDialog__titleRow">
-        <div className="managePlayersDialog__simpleTitle">Ready to add</div>
+        <div className="managePlayersDialog__simpleTitle">
+          {translate("copy.readyToAdd")}
+        </div>
         <span
           className={`managePlayersDialog__countChip${teams ? " managePlayersDialog__countChip--teams" : ""}`}
-          aria-label={`${count} ${label} ready to add`}
+          aria-label={translate("dynamic.readyToAdd", [count, label])}
         >
           {count}
         </span>

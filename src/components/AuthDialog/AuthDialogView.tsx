@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useEffect } from "react";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { AuthAccountPanel } from "./AuthAccountPanel";
@@ -50,9 +51,15 @@ export function AuthDialogView() {
       <div className="dialog__form authDialog__form">
         <div className="dialog__head">
           <div className="authDialog__headCopy dialog__titleWrap">
-            <div className="dialog__eyebrow">Profile and sync</div>
+            {session ? (
+              <div className="dialog__eyebrow">
+                {translate("copy.profileAndSettings")}
+              </div>
+            ) : null}
             <div className="dialog__title">
-              {recoveryMode ? "Reset password" : "Account"}
+              {recoveryMode
+                ? translate("copy.resetPassword")
+                : translate("topbar.account")}
             </div>
           </div>
           <button
@@ -62,7 +69,7 @@ export function AuthDialogView() {
               onOpenChange?.(false);
               dialogRef.current?.close();
             }}
-            aria-label="Close"
+            aria-label={translate("copy.close")}
           >
             ×
           </button>
@@ -88,9 +95,9 @@ export function AuthDialogView() {
         {!hasSupabaseConfig ? (
           <div className="authDialog__panel">
             <p className="authDialog__text">
-              Configure <code>VITE_SUPABASE_URL</code> and{" "}
-              <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to enable login and
-              cloud sync.
+              {translate("copy.configure")} <code>VITE_SUPABASE_URL</code>{" "}
+              {translate("copy.and")} <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>{" "}
+              {translate("copy.enableLoginAndCloudSync")}
             </p>
           </div>
         ) : recoveryMode ? (

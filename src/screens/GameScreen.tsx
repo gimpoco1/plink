@@ -1,3 +1,4 @@
+import { translate } from "../i18n/translate";
 import { capitalizeFirst, getInitials } from "../utils/text";
 import type { Player } from "../types";
 import { WinCelebration } from "../components/WinCelebration/WinCelebration";
@@ -112,10 +113,10 @@ export function GameScreen(props: GameScreenProps) {
           <section className="empty">
             <h1 className="empty__title">
               {!canManageGame
-                ? "Waiting for the session owner."
+                ? translate("copy.waitingForTheSessionOwner")
                 : isTeamsMode
-                  ? "Manage teams to start."
-                  : "Manage players to start."}
+                  ? translate("copy.manageTeamsToStart")
+                  : translate("copy.managePlayersToStart")}
             </h1>
             {canManageGame ? (
               <button
@@ -123,12 +124,14 @@ export function GameScreen(props: GameScreenProps) {
                 type="button"
                 onClick={() => managePlayersDialogRef.current?.open()}
               >
-                {isTeamsMode ? "Manage teams" : "Manage players"}
+                {isTeamsMode
+                  ? translate("topbar.manageTeams")
+                  : translate("topbar.managePlayers")}
               </button>
             ) : null}
           </section>
         ) : isTeamGame ? (
-          <section className="teamBoard" aria-label="Teams">
+          <section className="teamBoard" aria-label={translate("home.teams")}>
             <div className="teamBoard__group">
               <div className="grid">
                 {orderedParticipants.map((participant) => {
@@ -180,7 +183,10 @@ export function GameScreen(props: GameScreenProps) {
             </div>
           </section>
         ) : (
-          <section className="teamBoard" aria-label="Players">
+          <section
+            className="teamBoard"
+            aria-label={translate("tabs.players")}
+          >
             {teamSections.map((section) => (
               <div
                 key={section.id}
@@ -241,7 +247,7 @@ export function GameScreen(props: GameScreenProps) {
                   </div>
                 ) : (
                   <div className="teamBoard__empty">
-                    No players assigned yet.
+                    {translate("copy.noPlayersAssignedYet")}
                   </div>
                 )}
               </div>
@@ -261,7 +267,7 @@ export function GameScreen(props: GameScreenProps) {
               {lastScoreAction.delta > 0 ? "+" : ""}
               {lastScoreAction.delta}
             </strong>
-            {" to "}
+            {` ${translate("common.to")} `}
             {lastScoreAction.label}
           </span>
           <button
@@ -277,7 +283,7 @@ export function GameScreen(props: GameScreenProps) {
               setLastScoreAction(null);
             }}
           >
-            Undo
+            {translate("copy.undo")}
           </button>
         </div>
       ) : null}
@@ -288,9 +294,9 @@ export function GameScreen(props: GameScreenProps) {
           role="status"
           aria-live="polite"
         >
-          <span>Reference reached</span>
+          <span>{translate("copy.referenceReached")}</span>
           <button type="button" onClick={onEndGame}>
-            End game
+            {translate("topbar.endGame")}
           </button>
         </div>
       ) : null}

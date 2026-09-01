@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Pencil } from "lucide-react";
 import { AVATAR_COLORS } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
@@ -18,9 +19,7 @@ export function AuthAccountIdentity() {
     accountPlayerName,
     busy,
     editingAccountPlayer,
-    entitlementsLoading,
     handleAccountColorRadioKeyDown,
-    isPro,
     onUpdateProfile,
     saveAccountPlayerName,
     session,
@@ -34,16 +33,20 @@ export function AuthAccountIdentity() {
       {session.user.email ? (
         <div
           className="authDialog__accountIdentity"
-          aria-label="Signed in account"
+          aria-label={translate("copy.signedInAccount")}
         >
           <div className="authDialog__accountIdentityTop">
-            <span className="authDialog__accountPlayerTitle">Email</span>
+            <span className="authDialog__accountPlayerTitle">
+              {translate("copy.email")}
+            </span>
           </div>
           <span className="authDialog__accountEmail">{session.user.email}</span>
         </div>
       ) : null}
       <section className="authDialog__accountPlayerSection">
-        <span className="authDialog__accountPlayerTitle">Account Player</span>
+        <span className="authDialog__accountPlayerTitle">
+          {translate("copy.accountPlayer")}
+        </span>
         <article
           className={`authDialog__accountPlayerCard${
             editingAccountPlayer && accountPlayer
@@ -85,7 +88,7 @@ export function AuthAccountIdentity() {
                     }}
                     autoFocus
                     maxLength={28}
-                    placeholder="Player name"
+                    placeholder={translate("copy.playerName")}
                   />
                   <div className="authDialog__accountPlayerActions authDialog__accountPlayerActions--edit">
                     <button
@@ -93,8 +96,8 @@ export function AuthAccountIdentity() {
                       type="button"
                       onClick={() => void saveAccountPlayerName()}
                       disabled={busy || !formatPlayerName(accountDraftName)}
-                      aria-label="Save account player"
-                      title="Save"
+                      aria-label={translate("copy.saveAccountPlayer")}
+                      title={translate("copy.save")}
                     >
                       ✓
                     </button>
@@ -106,8 +109,8 @@ export function AuthAccountIdentity() {
                         setAccountDraftColor(accountPlayer.avatarColor);
                         setEditingAccountPlayer(false);
                       }}
-                      aria-label="Cancel editing account player"
-                      title="Cancel"
+                      aria-label={translate("copy.cancelEditingAccountPlayer")}
+                      title={translate("copy.cancel")}
                     >
                       ×
                     </button>
@@ -116,7 +119,7 @@ export function AuthAccountIdentity() {
                 <div
                   className="authDialog__accountPlayerSwatches"
                   role="radiogroup"
-                  aria-label="Choose account player color"
+                  aria-label={translate("copy.chooseAccountPlayerColor")}
                 >
                   {AVATAR_COLORS.map((color, index) => (
                     <button
@@ -135,7 +138,7 @@ export function AuthAccountIdentity() {
                       onKeyDown={(event) =>
                         handleAccountColorRadioKeyDown(event, index)
                       }
-                      aria-label={color.label}
+                      aria-label={translate(color.label)}
                       aria-checked={color.value === accountDraftColor}
                       role="radio"
                       tabIndex={color.value === accountDraftColor ? 0 : -1}
@@ -148,7 +151,7 @@ export function AuthAccountIdentity() {
                 <span className="authDialog__accountPlayerName">
                   {accountPlayerName
                     ? formatAccountPlayerName(accountPlayerName)
-                    : "Not created yet"}
+                    : translate("copy.notCreatedYet")}
                 </span>
                 {accountPlayer && onUpdateProfile ? (
                   <div className="authDialog__accountPlayerActions">
@@ -160,8 +163,8 @@ export function AuthAccountIdentity() {
                         setAccountDraftColor(accountPlayer.avatarColor);
                         setEditingAccountPlayer(true);
                       }}
-                      aria-label="Edit account player"
-                      title="Edit"
+                      aria-label={translate("copy.editAccountPlayer")}
+                      title={translate("copy.edit")}
                     >
                       <Pencil size={15} strokeWidth={2.2} aria-hidden="true" />
                     </button>

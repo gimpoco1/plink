@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Dices } from "lucide-react";
 import "./GameDiceTray.css";
@@ -204,12 +205,14 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
       <button
         className="gameDiceTray__tab"
         type="button"
-        aria-label={isOpen ? "Collapse dice roller" : "Open dice roller"}
+        aria-label={isOpen ? translate("copy.collapseDiceRoller") : translate("copy.openDiceRoller")}
         aria-expanded={isOpen}
         onClick={() => setIsOpen((value) => !value)}
       >
         <Dices size={18} strokeWidth={2.3} aria-hidden="true" />
-        <span className="gameDiceTray__tabLabel">Dice</span>
+        <span className="gameDiceTray__tabLabel">
+          {translate("copy.dice")}
+        </span>
         <ChevronLeft
           size={16}
           strokeWidth={2.5}
@@ -223,13 +226,17 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
       <div className="gameDiceTray__panel">
         <div className="gameDiceTray__header">
           <div>
-            <div className="gameDiceTray__eyebrow">Luck helper</div>
-            <div className="gameDiceTray__title">Throw the dice</div>
+            <div className="gameDiceTray__eyebrow">
+              {translate("copy.luckHelper")}
+            </div>
+            <div className="gameDiceTray__title">
+              {translate("copy.throwTheDice")}
+            </div>
           </div>
           <div
             className="gameDiceTray__countSwitch"
             role="group"
-            aria-label="Dice count"
+            aria-label={translate("copy.diceCount")}
           >
             <button
               className={`gameDiceTray__countBtn${
@@ -239,7 +246,7 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
               onClick={() => selectDiceCount(1)}
               disabled={isRolling || isResolvingResult}
             >
-              1 die
+              {translate("copy.1Die")}
             </button>
             <button
               className={`gameDiceTray__countBtn${
@@ -249,7 +256,7 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
               onClick={() => selectDiceCount(2)}
               disabled={isRolling || isResolvingResult}
             >
-              2 dice
+              {translate("copy.2Dice")}
             </button>
           </div>
         </div>
@@ -269,7 +276,7 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
               aria-live="polite"
             >
               {isRolling
-                ? "Rolling..."
+                ? translate("copy.rolling")
                 : resultVisible && lastRoll
                   ? formatRollSummary(lastRoll)
                   : null}
@@ -285,10 +292,10 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
             disabled={isRolling || isResolvingResult}
           >
             {isRolling || isResolvingResult
-              ? "Shaking..."
+              ? translate("copy.shaking")
               : lastRoll
-                ? "Roll again"
-                : "Roll now"}
+                ? translate("copy.rollAgain")
+                : translate("copy.rollNow")}
           </button>
         </div>
       </div>

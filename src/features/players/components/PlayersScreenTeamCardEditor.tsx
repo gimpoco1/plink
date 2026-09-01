@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Check, Pencil, Undo2 } from "lucide-react";
 import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 import { TeamIconPicker } from "./PlayersScreenParts";
@@ -18,7 +19,12 @@ export function TeamCardEditor({ data }: { data: TeamCardData }) {
             <button
               type="button"
               className={`teamBuilderIdentity__iconEdit${model.editingTeamIconPickerOpen ? " teamBuilderIdentity__iconEdit--active" : ""}`}
-              aria-label={`${model.editingTeamIconPickerOpen ? "Hide" : "Edit"} insignia options for ${data.team.name}`}
+              aria-label={translate("dynamic.insigniaOptionsFor", [
+                translate(
+                  model.editingTeamIconPickerOpen ? "copy.hide" : "copy.edit",
+                ),
+                data.team.name,
+              ])}
               onClick={() =>
                 model.setEditingTeamIconPickerOpen((open) => !open)
               }
@@ -31,7 +37,7 @@ export function TeamCardEditor({ data }: { data: TeamCardData }) {
               className="teamBuilder__sectionEyebrow"
               htmlFor={`team-edit-name-${data.team.id}`}
             >
-              Team name
+              {translate("copy.teamName")}
             </label>
             <div className="teamBuilderIdentity__nameRow">
               <input
@@ -46,7 +52,7 @@ export function TeamCardEditor({ data }: { data: TeamCardData }) {
                   if (event.key === "Enter") model.finishTeamEdit(data.team.id);
                   if (event.key === "Escape") model.closeTeamEditor();
                 }}
-                aria-label={`Team name for ${data.team.name}`}
+                aria-label={translate("dynamic.teamNameFor", [data.team.name])}
               />
             </div>
           </div>
@@ -55,7 +61,9 @@ export function TeamCardEditor({ data }: { data: TeamCardData }) {
       {model.editingTeamIconPickerOpen ? (
         <section className="teamCard__builderSection">
           <div className="teamBuilderCard__group">
-            <div className="teamBuilderCard__label">Choose your insignia</div>
+            <div className="teamBuilderCard__label">
+              {translate("copy.chooseYourInsignia")}
+            </div>
             <TeamIconPicker
               value={data.team.icon ?? data.icon}
               onChange={(icon) => model.onUpdateTeam(data.team.id, { icon })}
@@ -73,7 +81,7 @@ export function TeamCardEditor({ data }: { data: TeamCardData }) {
             <button
               className="btn btn--ghost teamCard__footerBtn"
               type="button"
-              aria-label={`Undo changes for ${data.team.name}`}
+              aria-label={translate("dynamic.undoChangesFor", [data.team.name])}
               onClick={() => {
                 if (model.editingTeamOriginalIcon) {
                   model.onUpdateTeam(data.team.id, {
@@ -87,27 +95,27 @@ export function TeamCardEditor({ data }: { data: TeamCardData }) {
               }}
             >
               <Undo2 size={18} strokeWidth={2.2} aria-hidden="true" />
-              Undo
+              {translate("copy.undo")}
             </button>
             <button
               className="btn btn--primary teamCard__footerBtn teamCard__footerBtn--primary"
               type="button"
-              aria-label={`Save changes for ${data.team.name}`}
+              aria-label={translate("dynamic.saveChangesFor", [data.team.name])}
               disabled={model.editingTeamMemberIds.size === 0}
               onClick={() => model.finishTeamEdit(data.team.id)}
             >
               <Check size={18} strokeWidth={2.3} aria-hidden="true" />
-              Save changes
+              {translate("copy.saveChanges")}
             </button>
           </>
         ) : (
           <button
             className="btn btn--ghost teamCard__footerBtn"
             type="button"
-            aria-label={`Cancel editing ${data.team.name}`}
+            aria-label={translate("dynamic.cancelEditing", [data.team.name])}
             onClick={model.closeTeamEditor}
           >
-            Cancel
+            {translate("copy.cancel")}
           </button>
         )}
       </div>

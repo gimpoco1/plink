@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 export type PulseKind = "pos" | "neg";
 
 export function useScorePulse() {
-  const [pulseById, setPulseById] = useState<Record<string, PulseKind | undefined>>({});
+  const [pulseById, setPulseById] = useState<
+    Record<string, PulseKind | undefined>
+  >({});
   const pulseTimersRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
@@ -15,7 +17,10 @@ export function useScorePulse() {
 
   function triggerPulse(playerId: string, delta: number) {
     if (!delta) return;
-    setPulseById((prev) => ({ ...prev, [playerId]: delta > 0 ? "pos" : "neg" }));
+    setPulseById((prev) => ({
+      ...prev,
+      [playerId]: delta > 0 ? "pos" : "neg",
+    }));
 
     const existing = pulseTimersRef.current.get(playerId);
     if (existing) window.clearTimeout(existing);
@@ -33,4 +38,3 @@ export function useScorePulse() {
 
   return { pulseById, triggerPulse };
 }
-

@@ -1,3 +1,4 @@
+import { getCurrentLanguage } from "../i18n/translate";
 import type { Game, GameTeam, PlayerProfile, TeamMember } from "../types";
 import { getGameParticipants } from "./gameParticipants";
 import {
@@ -265,12 +266,12 @@ export function buildPlayerReports(
   profiles: PlayerProfile[],
 ): Map<string, SubjectReport> {
   const reports = new Map<string, SubjectReport>();
-  const dateFormat = new Intl.DateTimeFormat(undefined, {
+  const dateFormat = new Intl.DateTimeFormat(getCurrentLanguage(), {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-  const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+  const dateTimeFormat = new Intl.DateTimeFormat(getCurrentLanguage(), {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -401,12 +402,12 @@ export function buildTeamReports(
   teamMembers: TeamMember[],
 ): Map<string, SubjectReport> {
   const reports = new Map<string, SubjectReport>();
-  const dateFormat = new Intl.DateTimeFormat(undefined, {
+  const dateFormat = new Intl.DateTimeFormat(getCurrentLanguage(), {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-  const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+  const dateTimeFormat = new Intl.DateTimeFormat(getCurrentLanguage(), {
     day: "2-digit",
     month: "short",
     year: "numeric",

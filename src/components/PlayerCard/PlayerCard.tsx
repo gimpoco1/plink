@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useMemo, useState } from "react";
 import { Link } from "lucide-react";
 import type { Player, QuickScoreValues, WinCondition } from "../../types";
@@ -109,7 +110,7 @@ export function PlayerCard({
               closeSwipe();
               onDelete(player.id);
             }}
-            aria-label={`Delete ${player.name}`}
+            aria-label={translate("dynamic.delete", [player.name])}
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
@@ -120,7 +121,7 @@ export function PlayerCard({
                 strokeLinejoin="round"
               />
             </svg>
-            Remove
+            {translate("copy.remove")}
           </button>
         ) : null
       }
@@ -130,7 +131,7 @@ export function PlayerCard({
           <div className="cardHeader">
             <div className="cardHeader__left">
               {showRank ? (
-                <div className="rank" aria-label={`Rank ${rank}`}>
+                <div className="rank" aria-label={translate("dynamic.rank", [rank])}>
                   #{rank}
                 </div>
               ) : null}
@@ -151,8 +152,8 @@ export function PlayerCard({
                           {linkedNameParts[2]}
                           <span
                             className="who__linkedPlayer"
-                            aria-label="Joined with an invitation code"
-                            title="Joined with an invitation code"
+                            aria-label={translate("copy.joinedWithAnInvitationCode")}
+                            title={translate("copy.joinedWithAnInvitationCode")}
                           >
                             <Link
                               size={17}
@@ -167,7 +168,10 @@ export function PlayerCard({
                     )}
                   </div>
                   {isWinner ? (
-                    <div className="winnerMark" aria-label="Winner">
+                    <div
+                      className="winnerMark"
+                      aria-label={translate("copy.winner")}
+                    >
                       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path
                           d="M8 4h8v4.5a4 4 0 0 1-8 0V4Zm0 2H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 12.5V17m-3 3h6m-5-3h4"
@@ -181,7 +185,9 @@ export function PlayerCard({
                   ) : null}
                 </div>
                 {isGameOwner ? (
-                  <span className="who__ownerTag">Session owner</span>
+                  <span className="who__ownerTag">
+                    {translate("copy.sessionOwner")}
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -189,7 +195,7 @@ export function PlayerCard({
             <div className="cardHeader__right">
               <div
                 className={`${scoreClass}${pulse ? ` score--pulse-${pulse}` : ""}`}
-                aria-label={`Score ${currentScore}`}
+                aria-label={translate("dynamic.score", [currentScore])}
               >
                 {currentScore}
               </div>
@@ -199,7 +205,7 @@ export function PlayerCard({
           <div
             className="progressContainer"
             role="progressbar"
-            aria-label={`${displayName} progress to target`}
+            aria-label={translate("dynamic.progressToTarget", [displayName])}
             aria-valuemin={0}
             aria-valuemax={
               winCondition === "reach_zero"
@@ -223,7 +229,10 @@ export function PlayerCard({
                     key={delta}
                     type="button"
                     className="dot dot--neg"
-                    aria-label={`Subtract ${Math.abs(delta)} points from ${displayName}`}
+                  aria-label={translate("dynamic.subtractPoints", [
+                    Math.abs(delta),
+                    displayName,
+                  ])}
                     onClick={(e) => {
                       if (isSwiping) return;
                       if (isOpen) {
@@ -246,7 +255,7 @@ export function PlayerCard({
                   inputMode="numeric"
                   placeholder="0"
                   value={customRaw}
-                  aria-label={`Custom point amount for ${displayName}`}
+                  aria-label={translate("dynamic.customPointAmountFor", [displayName])}
                   onChange={(e) => {
                     const digits = e.target.value.replace(/[^\d]/g, "");
                     if (!digits) {
@@ -270,7 +279,9 @@ export function PlayerCard({
                 <div className="podButtons">
                   <button
                     className="podBtn podBtn--neg"
-                    aria-label={`Subtract custom points from ${displayName}`}
+                  aria-label={translate("dynamic.subtractCustomPoints", [
+                    displayName,
+                  ])}
                     type="button"
                     disabled={!canApplyCustom}
                     onClick={(e) => {
@@ -288,7 +299,7 @@ export function PlayerCard({
                   </button>
                   <button
                     className="podBtn podBtn--pos"
-                    aria-label={`Add custom points to ${displayName}`}
+                    aria-label={translate("dynamic.addCustomPointsTo", [displayName])}
                     type="button"
                     disabled={!canApplyCustom}
                     onClick={(e) => {
@@ -313,7 +324,7 @@ export function PlayerCard({
                     key={delta}
                     type="button"
                     className="dot dot--pos"
-                    aria-label={`Add ${delta} points to ${displayName}`}
+                    aria-label={translate("dynamic.addPointsTo", [delta, displayName])}
                     onClick={(e) => {
                       if (isSwiping) return;
                       if (isOpen) {

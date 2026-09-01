@@ -1,8 +1,12 @@
+import { translate } from "../../i18n/translate";
 import { useManagePlayersDialogContext } from "./ManagePlayersDialogContext";
 import { ManagePlayerCard } from "./ManagePlayerCard";
 
 function getMergeName(name: string) {
-  return name.trim().replace(/\s+#\d+$/i, "").toLowerCase();
+  return name
+    .trim()
+    .replace(/\s+#\d+$/i, "")
+    .toLowerCase();
 }
 
 export function ManagePlayersCurrentSection() {
@@ -11,7 +15,7 @@ export function ManagePlayersCurrentSection() {
   if (currentGamePlayers.length === 0) {
     return (
       <div className="managePlayersDialog__empty">
-        No players in this game yet.
+        {translate("copy.noPlayersInThisGameYet")}
       </div>
     );
   }
@@ -20,11 +24,11 @@ export function ManagePlayersCurrentSection() {
     <section className="managePlayersDialog__section">
       <div className="managePlayersDialog__titleRow">
         <div className="managePlayersDialog__simpleTitle">
-          Players in this game
+          {translate("copy.playersInThisGame")}
         </div>
         <span
           className="managePlayersDialog__countChip"
-          aria-label={`${currentGamePlayers.length} players in this game`}
+          aria-label={translate("dynamic.playersInThisGame", [currentGamePlayers.length])}
         >
           {currentGamePlayers.length}
         </span>
@@ -33,19 +37,17 @@ export function ManagePlayersCurrentSection() {
         {currentGamePlayers.map((player) => {
           const isLinkedAccountPlayer = linkedPlayerIds.has(player.id);
           const mergeCandidate = isLinkedAccountPlayer
-            ? currentGamePlayers.find(
-                (candidate) => {
-                  const candidateProfile = profiles.find(
-                    (profile) => profile.id === candidate.profileId,
-                  );
-                  return (
-                    candidate.id !== player.id &&
-                    !linkedPlayerIds.has(candidate.id) &&
-                    candidateProfile !== undefined &&
-                    getMergeName(candidate.name) === getMergeName(player.name)
-                  );
-                },
-              )
+            ? currentGamePlayers.find((candidate) => {
+                const candidateProfile = profiles.find(
+                  (profile) => profile.id === candidate.profileId,
+                );
+                return (
+                  candidate.id !== player.id &&
+                  !linkedPlayerIds.has(candidate.id) &&
+                  candidateProfile !== undefined &&
+                  getMergeName(candidate.name) === getMergeName(player.name)
+                );
+              })
             : undefined;
           return (
             <ManagePlayerCard

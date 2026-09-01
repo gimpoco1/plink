@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { AVATAR_COLORS, TEAM_ICONS } from "../../../constants";
 import type { SessionResultSummary } from "../../../utils/profileStats";
 import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
@@ -25,7 +26,9 @@ export function GamesDropdown({
             <span className="profileCard__gameResultMain">
               <span className="profileCard__gameResultName">{result.name}</span>
               {result.isTeamGame ? (
-                <span className="profileCard__gameResultBadge">Teams</span>
+                <span className="profileCard__gameResultBadge">
+                  {translate("home.teams")}
+                </span>
               ) : null}
             </span>
             <span className="profileCard__gameResultStatus">
@@ -63,10 +66,10 @@ export function GamesDropdown({
 
 function statusLabel(status: SessionResultSummary["statusKind"]) {
   if (status === "won") return "Won";
-  if (status === "lost") return "Lost";
-  if (status === "draw") return "Draw";
-  if (status === "in_progress") return "In Progress";
-  return "Completed";
+  if (status === "lost") return translate("copy.lost");
+  if (status === "draw") return translate("copy.draw");
+  if (status === "in_progress") return translate("copy.inProgress");
+  return translate("copy.completed");
 }
 
 export function TeamIconPicker({
@@ -86,14 +89,17 @@ export function TeamIconPicker({
   return (
     <div
       className={`teamIconPicker${layout === "grid" ? " teamIconPicker--grid" : ""}${compactGrid ? " teamIconPicker--compactGrid" : ""}`}
-      aria-label={`Icon for ${label}`}
+      aria-label={translate("dynamic.iconFor", [label])}
     >
       {TEAM_ICONS.map((icon) => (
         <button
           key={icon.id}
           type="button"
           className={`teamIconPicker__option${layout === "grid" ? " teamIconPicker__option--grid" : ""}${compactGrid ? " teamIconPicker__option--compactGrid" : ""}${value === icon.id ? " teamIconPicker__option--active" : ""}`}
-          aria-label={`Use ${icon.label} icon for ${label}`}
+          aria-label={translate("dynamic.useIconFor", [
+            translate(icon.label),
+            label,
+          ])}
           aria-pressed={value === icon.id}
           onClick={() => onChange(icon.id)}
         >
@@ -127,7 +133,10 @@ export function ColorPicker({
           className={`colorDot ${value === color.value ? "active" : ""}`}
           style={{ backgroundColor: color.value }}
           onClick={() => !disabled && onChange(color.value)}
-          aria-label={`Use ${color.id} color for ${label}`}
+          aria-label={translate("dynamic.useColorFor", [
+            translate(color.label),
+            label,
+          ])}
           aria-pressed={value === color.value}
           aria-disabled={disabled}
           disabled={disabled}

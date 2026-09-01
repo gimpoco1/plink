@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
@@ -23,10 +24,12 @@ export function NewGameTeams() {
       <div className="teamPicker">
         {!isAuthenticated ? (
           <div className="teamPicker__empty">
-            Sign in to build games from saved teams.
+            {translate("copy.signInToBuildGamesFromSavedTeams")}
           </div>
         ) : !canUseTeams ? (
-          <div className="teamPicker__empty">Team games are a Pro feature.</div>
+          <div className="teamPicker__empty">
+            {translate("copy.teamGamesAreAProFeature")}
+          </div>
         ) : availableTeams.length > 0 ? (
           <>
             <label className="participantPicker__search participantPicker__search--teams">
@@ -35,14 +38,14 @@ export function NewGameTeams() {
                 type="text"
                 value={participantSearch}
                 onChange={(event) => setParticipantSearch(event.target.value)}
-                placeholder="Search teams"
-                aria-label="Search saved teams"
+                placeholder={translate("copy.searchTeams")}
+                aria-label={translate("copy.searchSavedTeams")}
               />
               {participantSearch ? (
                 <button
                   type="button"
                   className="participantPicker__clear"
-                  aria-label="Clear team search"
+                  aria-label={translate("copy.clearTeamSearch")}
                   onClick={() => setParticipantSearch("")}
                 >
                   <X size={15} strokeWidth={2.6} aria-hidden="true" />
@@ -84,7 +87,9 @@ export function NewGameTeams() {
                           </span>
                           <span className="teamPicker__optionCopy">
                             <strong>{team.name}</strong>
-                            <span>{team.members.length} players</span>
+                            <span>
+                              {team.members.length} {translate("copy.players")}
+                            </span>
                           </span>
                         </span>
                       </span>
@@ -114,8 +119,7 @@ export function NewGameTeams() {
             </div>
             {filteredTeams.length === 0 ? (
               <div className="teamPicker__empty">
-                No saved teams match that search.
-              </div>
+                {translate("copy.noSavedTeamsMatchThatSearch")}</div>
             ) : null}
             <button
               type="button"
@@ -123,13 +127,13 @@ export function NewGameTeams() {
               onClick={openTeamsWorkspace}
             >
               <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
-              Add new team
+              {translate("copy.addNewTeam")}
             </button>
           </>
         ) : (
           <>
             <div className="teamPicker__empty">
-              No saved teams yet. Create your first roster from the Teams tab.
+              {translate("copy.noSavedTeamsYetCreateYourFirstRosterFromTheTeamsTab")}
             </div>
             <button
               type="button"
@@ -137,7 +141,7 @@ export function NewGameTeams() {
               onClick={openTeamsWorkspace}
             >
               <Plus size={17} strokeWidth={2.7} aria-hidden="true" />
-              Add new team
+              {translate("copy.addNewTeam")}
             </button>
           </>
         )}

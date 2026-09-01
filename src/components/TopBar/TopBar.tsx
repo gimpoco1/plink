@@ -12,6 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import "./TopBar.css";
+import { useI18n } from "../../i18n/I18nContext";
+import { LanguageSelector } from "../LanguageSelector/LanguageSelector";
 
 type MetaItem = {
   label: string;
@@ -34,6 +36,7 @@ type Props = {
   showBackButton?: boolean;
   showActionMenu?: boolean;
   primaryActionLabel?: string;
+  showLanguageSelector?: boolean;
   authLabel?: string;
   authIcon?: React.ReactNode;
   authAriaLabel?: string;
@@ -65,6 +68,7 @@ export function TopBar({
   showBackButton = false,
   showActionMenu = false,
   primaryActionLabel,
+  showLanguageSelector = false,
   authLabel,
   authIcon,
   authAriaLabel,
@@ -85,6 +89,7 @@ export function TopBar({
   onResetGame,
   onRename,
 }: Props) {
+  const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -137,7 +142,7 @@ export function TopBar({
             className="logo"
             type="button"
             onClick={onLogoClick}
-            aria-label="Go to games"
+            aria-label={t("topbar.backToGames")}
           >
             <span className="logo__mark" aria-hidden="true">
               <img src="/favicon.png" alt="" className="logo__img" />
@@ -190,11 +195,16 @@ export function TopBar({
               className="iconbtn topbarCommentsButton"
               type="button"
               onClick={onOpenComments}
-              aria-label={`Comments${commentCount ? ` (${commentCount})` : ""}`}
+                  aria-label={t("dynamic.commentsCount", [
+                    commentCount ? ` (${commentCount})` : "",
+                  ])}
             >
               <MessageCircle size={20} strokeWidth={2.3} aria-hidden="true" />
               {commentCount > 0 ? (
-                <span className="topbarCommentsButton__count" aria-hidden="true">
+                <span
+                  className="topbarCommentsButton__count"
+                  aria-hidden="true"
+                >
                   {commentCount > 99 ? "99+" : commentCount}
                 </span>
               ) : null}
@@ -204,7 +214,9 @@ export function TopBar({
                 className="topbarCommentsPreview"
                 type="button"
                 onClick={onOpenComments}
-                aria-label={`Latest comment from ${commentPreview.authorName}`}
+                      aria-label={t("dynamic.latestCommentFrom", [
+                        commentPreview.authorName,
+                      ])}
               >
                 <strong>{commentPreview.authorName}</strong>
                 <span>{commentPreview.body}</span>
@@ -218,7 +230,7 @@ export function TopBar({
               className="iconbtn"
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Game actions"
+              aria-label={t("topbar.gameActions")}
               aria-expanded={menuOpen}
               aria-haspopup="menu"
             >
@@ -237,7 +249,7 @@ export function TopBar({
                     }}
                   >
                     <Settings size={16} strokeWidth={2.3} aria-hidden="true" />
-                    <span>Game settings</span>
+                    <span>{t("topbar.gameSettings")}</span>
                   </button>
                 ) : null}
                 {onOpenHistory ? (
@@ -251,7 +263,7 @@ export function TopBar({
                     }}
                   >
                     <History size={16} strokeWidth={2.3} aria-hidden="true" />
-                    <span>Game history</span>
+                    <span>{t("topbar.gameHistory")}</span>
                   </button>
                 ) : null}
                 {onShareGame ? (
@@ -265,7 +277,7 @@ export function TopBar({
                     }}
                   >
                     <Link size={16} strokeWidth={2.3} aria-hidden="true" />
-                    <span>Invite players</span>
+                    <span>{t("topbar.invitePlayers")}</span>
                   </button>
                 ) : null}
                 {onAddPlayer ? (
@@ -293,12 +305,8 @@ export function TopBar({
                       onResetGame();
                     }}
                   >
-                    <RotateCcw
-                      size={16}
-                      strokeWidth={2.3}
-                      aria-hidden="true"
-                    />
-                    <span>Reset scores</span>
+                    <RotateCcw size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span>{t("topbar.resetScores")}</span>
                   </button>
                 ) : null}
                 {onEndGame ? (
@@ -312,12 +320,14 @@ export function TopBar({
                     }}
                   >
                     <Flag size={16} strokeWidth={2.3} aria-hidden="true" />
-                    <span>End game</span>
+                    <span>{t("topbar.endGame")}</span>
                   </button>
                 ) : null}
               </div>
             ) : null}
           </div>
+        ) : showLanguageSelector ? (
+          <LanguageSelector variant="topbar" />
         ) : primaryActionLabel && onPrimaryAction ? (
           <button
             className="topbarPrimaryAction"

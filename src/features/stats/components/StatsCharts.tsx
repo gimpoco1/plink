@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import {
   Bar,
   BarChart,
@@ -15,11 +16,11 @@ import {
   chartInteractionProps,
   releaseChartFocus,
 } from "./StatsChartPrimitives";
-import {
-  ChartLegend,
-  PanelHeader,
-} from "./StatsScreenParts";
-import type { CompareChartPoint, OpenChartGamePicker } from "../types/statsTypes";
+import { ChartLegend, PanelHeader } from "./StatsScreenParts";
+import type {
+  CompareChartPoint,
+  OpenChartGamePicker,
+} from "../types/statsTypes";
 import type { ChartAxis } from "../utils/statsUtils";
 
 type OutcomeBreakdownPoint = {
@@ -101,7 +102,7 @@ export function StatsCharts({
 
       <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader
-          title="Outcomes by result"
+          title={translate("copy.outcomesByResult")}
           count={outcomeBreakdown.length}
         />
         {outcomeBreakdown.length ? (
@@ -174,13 +175,15 @@ export function StatsCharts({
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="emptyMsg">No completed results yet.</div>
+          <div className="emptyMsg">
+            {translate("copy.noCompletedResultsYet")}
+          </div>
         )}
       </LockedChartCard>
 
       <LockedChartCard isLocked={isLocked} onUnlock={onUnlock}>
         <PanelHeader
-          title="Win rate by game"
+          title={translate("copy.winRateByGame")}
           count={gameWinRateBreakdown.length}
         />
         {gameWinRateBreakdown.length ? (
@@ -245,7 +248,9 @@ export function StatsCharts({
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="emptyMsg">No game rates yet.</div>
+          <div className="emptyMsg">
+            {translate("copy.noGameRatesYet")}
+          </div>
         )}
       </LockedChartCard>
     </div>

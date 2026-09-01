@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import {
   useEffect,
   useMemo,
@@ -37,9 +38,7 @@ import {
 } from "../../../screens/StatsScreen";
 
 function buildStatsProfiles(games: Game[], profiles: PlayerProfile[]) {
-  const profileById = new Map(
-    profiles.map((profile) => [profile.id, profile]),
-  );
+  const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
   const localProfileIds = new Set(profileById.keys());
   const invitedProfileIds = new Set<string>();
   const gameOwnerProfileIds = new Set<string>();
@@ -83,12 +82,7 @@ function buildStatsProfiles(games: Game[], profiles: PlayerProfile[]) {
 }
 
 export function useStatsScreenModel(props: StatsScreenProps) {
-  const {
-    games,
-    profiles,
-    teams,
-    teamMembers,
-  } = props;
+  const { games, profiles, teams, teamMembers } = props;
 
   const { canSeeAdvancedStats, canUseTeams } = useEntitlementsContext();
   const initialViewState = useMemo(() => readStatsViewState(), []);
@@ -181,9 +175,9 @@ export function useStatsScreenModel(props: StatsScreenProps) {
               ? formatAccountPlayerName(profile.name)
               : profile.name,
             subtitle: gameOwnerProfileIds.has(profile.id)
-              ? `Session owner · ${sessionCount}`
+              ? translate("dynamic.sessionOwner", [sessionCount])
               : invitedProfileIds.has(profile.id)
-                ? `Invited player · ${sessionCount}`
+                ? translate("dynamic.invitedPlayer", [sessionCount])
                 : sessionCount,
             avatarColor: profile.avatarColor,
             isAccountPlayer: profile.isAccountPlayer,
@@ -200,12 +194,7 @@ export function useStatsScreenModel(props: StatsScreenProps) {
           if (priorityDifference !== 0) return priorityDifference;
           return a.name.localeCompare(b.name);
         }),
-    [
-      gameOwnerProfileIds,
-      invitedProfileIds,
-      playerReports,
-      statsProfiles,
-    ],
+    [gameOwnerProfileIds, invitedProfileIds, playerReports, statsProfiles],
   );
 
   const teamOptions = useMemo<SelectableEntity[]>(
@@ -219,9 +208,10 @@ export function useStatsScreenModel(props: StatsScreenProps) {
           return {
             id: team.id,
             name: team.name,
-            subtitle: `${memberCount} member${
-              memberCount === 1 ? "" : "s"
-            } · ${formatSessionCount(report?.gamesPlayed ?? 0)}`,
+            subtitle: translate("dynamic.memberSessions", [
+              memberCount,
+              formatSessionCount(report?.gamesPlayed ?? 0),
+            ]),
             icon: team.icon,
           };
         })
@@ -595,7 +585,7 @@ export function useStatsScreenModel(props: StatsScreenProps) {
   const primaryName = primaryReport ? getDisplayName(primaryReport) : "—";
   const compareName = compareReport
     ? getDisplayName(compareReport)
-    : "No comparison";
+    : translate("copy.noComparison");
   const winsChartAxis = useMemo(
     () => buildChartAxis(winsComparisonTrend),
     [winsComparisonTrend],
@@ -609,25 +599,25 @@ export function useStatsScreenModel(props: StatsScreenProps) {
       primaryReport
         ? [
             {
-              label: "Wins",
+              label: translate("copy.wins"),
               primaryValue: primaryReport.wins,
               secondaryValue: compareReport?.wins,
               outcomeFill: "#d9ff4f",
             },
             {
-              label: "Losses",
+              label: translate("copy.losses"),
               primaryValue: primaryReport.losses,
               secondaryValue: compareReport?.losses,
               outcomeFill: "#ff8ea2",
             },
             {
-              label: "Draws",
+              label: translate("copy.draws"),
               primaryValue: primaryReport.draws,
               secondaryValue: compareReport?.draws,
               outcomeFill: "#c3b1ff",
             },
             {
-              label: "Done",
+              label: translate("copy.done"),
               primaryValue: primaryReport.completedWithoutWinner,
               secondaryValue: compareReport?.completedWithoutWinner,
               outcomeFill: "#d9e4eb",

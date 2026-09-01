@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { AuthDialog } from "../../../components/AuthDialog/AuthDialog";
 import { ConfirmDialog } from "../../../components/ConfirmDialog/ConfirmDialog";
 import { GameSettingsDialog } from "../../../components/GameSettingsDialog/GameSettingsDialog";
@@ -55,22 +56,21 @@ export function AppDialogs() {
         onOpenChange={setAuthDialogOpen}
         onConfirmSignOut={() =>
           confirmRef.current.confirm({
-            eyebrow: "Account",
-            title: "Sign out?",
-            message: "Are you sure you want to sign out?",
-            confirmText: "Sign out",
-            cancelText: "Cancel",
+            eyebrow: translate("topbar.account"),
+            title: translate("copy.signOut2"),
+            message: translate("copy.areYouSureYouWantToSignOut"),
+            confirmText: translate("copy.signOut"),
+            cancelText: translate("copy.cancel"),
             tone: "danger",
           })
         }
         onConfirmAccountDeletion={() =>
           confirmRef.current.confirm({
-            eyebrow: "Final warning",
-            title: "This cannot be undone",
-            message:
-              "Your Plink account and cloud sessions, players, teams, and account access will be permanently removed.",
-            confirmText: "Delete my account",
-            cancelText: "Go back",
+            eyebrow: translate("copy.finalWarning"),
+            title: translate("copy.thisCannotBeUndone"),
+            message: translate("copy.deleteAccountPermanentNotice"),
+            confirmText: translate("copy.deleteMyAccount"),
+            cancelText: translate("copy.goBack"),
             tone: "danger",
           })
         }

@@ -1,7 +1,5 @@
-import {
-  PickerButton,
-  PickerPopover,
-} from "./StatsScreenParts";
+import { translate } from "../../../i18n/translate";
+import { PickerButton, PickerPopover } from "./StatsScreenParts";
 import { useStatsScreenContext } from "../context/StatsScreenContext";
 
 export function StatsSelector() {
@@ -37,14 +35,14 @@ export function StatsSelector() {
     <section className="statsSelectorPanel" ref={pickerPanelRef}>
       <div className="statsSelectorPanel__head">
         <div className="statsSelectorPanel__copy">
-          <span className="statsEyebrow">Reporting</span>
-          <h3>Choose who to analyze</h3>
+          <span className="statsEyebrow">{translate("copy.reporting")}</span>
+          <h3>{translate("copy.chooseWhoToAnalyze")}</h3>
         </div>
         <div className="statsSelectorControls">
           <div
             className={`statsScopeSwitch statsScopeSwitch--${activeKind}`}
             role="tablist"
-            aria-label="Stats view"
+            aria-label={translate("copy.statsView")}
           >
             <button
               type="button"
@@ -57,7 +55,7 @@ export function StatsSelector() {
               }`}
               onClick={() => setActiveKind("players")}
             >
-              Individuals
+              {translate("new.individuals")}
             </button>
             <button
               type="button"
@@ -77,7 +75,7 @@ export function StatsSelector() {
               }}
               aria-disabled={areTeamReportsLocked}
             >
-              <span>Teams</span>
+              <span>{translate("home.teams")}</span>
               {!canSeeAdvancedStats ? (
                 <span className="statsControlProBadge">PRO</span>
               ) : null}
@@ -99,7 +97,7 @@ export function StatsSelector() {
                 : selectedTeamOption
             }
             placeholder={
-              activeKind === "players" ? "Choose player" : "Choose team"
+              activeKind === "players" ? translate("copy.choosePlayer") : translate("copy.chooseTeam")
             }
             isOpen={
               openPicker === (activeKind === "players" ? "primary" : "team")
@@ -154,7 +152,7 @@ export function StatsSelector() {
                     : compareTeamOption
                 }
                 placeholder={
-                  activeKind === "players" ? "Choose player" : "Choose team"
+                  activeKind === "players" ? translate("copy.choosePlayer") : translate("copy.chooseTeam")
                 }
                 isOpen={
                   openPicker ===
@@ -228,7 +226,9 @@ export function StatsSelector() {
           />
           <span className="statsCompareToggle__box" aria-hidden="true" />
           <span>
-            Compare with another {activeKind === "players" ? "player" : "team"}
+            {translate("copy.compareWithAnother")} {translate(
+              activeKind === "players" ? "common.player" : "common.team",
+            )}
           </span>
           {isCompareLocked ? (
             <span className="statsControlProBadge">PRO</span>

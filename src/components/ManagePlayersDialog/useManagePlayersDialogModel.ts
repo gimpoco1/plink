@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import {
   useEffect,
   useImperativeHandle,
@@ -180,7 +181,7 @@ export function useManagePlayersDialogModel(
     );
 
     return conflictingNames.has(normalizedName)
-      ? "A player with this name is already in the game."
+      ? translate("copy.aPlayerWithThisNameIsAlreadyInTheGame")
       : undefined;
   }, [currentGamePlayers, editingName, editingPlayerId]);
 
@@ -195,7 +196,7 @@ export function useManagePlayersDialogModel(
     );
 
     return conflictingNames.has(normalizedName)
-      ? "A saved player with this name already exists."
+      ? translate("copy.aSavedPlayerWithThisNameAlreadyExists")
       : undefined;
   }, [editingName, editingProfileId, profiles]);
 
@@ -215,7 +216,7 @@ export function useManagePlayersDialogModel(
     ]);
 
     return conflictingNames.has(normalizedName)
-      ? "A player with this name is already in the game."
+      ? translate("copy.aPlayerWithThisNameIsAlreadyInTheGame")
       : undefined;
   }, [
     currentGamePlayers,
@@ -236,8 +237,9 @@ export function useManagePlayersDialogModel(
   );
   const stagedPastLinkedPlayers = useMemo(
     () =>
-      pastLinkedPlayers.filter((player) =>
-        player.canInvite && stagedPastLinkedUserIds.has(player.userId),
+      pastLinkedPlayers.filter(
+        (player) =>
+          player.canInvite && stagedPastLinkedUserIds.has(player.userId),
       ),
     [pastLinkedPlayers, stagedPastLinkedUserIds],
   );
@@ -323,12 +325,12 @@ export function useManagePlayersDialogModel(
   }, [currentTeams, savedTeams, search]);
   const submitLabel =
     stagedCount === 0
-      ? "Add to game"
-      : `Add ${stagedCount} player${stagedCount === 1 ? "" : "s"} to game`;
+      ? translate("copy.addToGame")
+      : translate("dynamic.addPlayerToGame", [stagedCount]);
   const teamSubmitLabel =
     stagedTeamCount === 0
-      ? "Add teams to game"
-      : `Add ${stagedTeamCount} team${stagedTeamCount === 1 ? "" : "s"} to game`;
+      ? translate("copy.addTeamsToGame")
+      : translate("dynamic.addTeamToGame", [stagedTeamCount]);
 
   function addSavedTeamToCurrentGame(team: GameTeam) {
     const members = savedTeamProfilesByTeamId.get(team.id) ?? [];

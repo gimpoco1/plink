@@ -7,14 +7,14 @@ export function sanitizeQuickScoreValues(input: unknown): QuickScoreValues {
     return [...DEFAULT_QUICK_SCORE_VALUES];
   }
 
-  const values = input.slice(0, 2).map((value) =>
-    typeof value === "number" && Number.isFinite(value)
-      ? Math.trunc(value)
-      : Number.NaN,
-  );
-  const valid = values.every(
-    (value) => value > 0 && value <= MAX_ABS_SCORE,
-  );
+  const values = input
+    .slice(0, 2)
+    .map((value) =>
+      typeof value === "number" && Number.isFinite(value)
+        ? Math.trunc(value)
+        : Number.NaN,
+    );
+  const valid = values.every((value) => value > 0 && value <= MAX_ABS_SCORE);
 
   if (!valid || values[0] === values[1]) {
     return [...DEFAULT_QUICK_SCORE_VALUES];
@@ -25,7 +25,9 @@ export function sanitizeQuickScoreValues(input: unknown): QuickScoreValues {
     : [values[1], values[0]];
 }
 
-export function shouldSortLowToHigh(game: Pick<Game, "scoreDirection" | "winCondition">) {
+export function shouldSortLowToHigh(
+  game: Pick<Game, "scoreDirection" | "winCondition">,
+) {
   return game.scoreDirection === "down" || game.winCondition === "lowest";
 }
 
@@ -72,8 +74,7 @@ export function hasGameEnded(
     const leader = sorted[0];
     const runnerUp = sorted[1];
     return (
-      leader.score >= game.targetScore &&
-      leader.score - runnerUp.score >= 2
+      leader.score >= game.targetScore && leader.score - runnerUp.score >= 2
     );
   }
 

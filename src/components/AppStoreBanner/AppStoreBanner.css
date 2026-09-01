@@ -1,0 +1,117 @@
+.appStoreBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2vw, 18px);
+  min-height: clamp(64px, 8vw, 82px);
+  padding: clamp(9px, 1.7vw, 13px) clamp(18px, 3vw, 26px);
+  margin: 26px 0 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  background: #fff;
+  color: #000;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+.appStoreBanner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 15px 36px rgba(0, 0, 0, 0.2);
+  filter: brightness(0.97);
+}
+
+.appStoreBanner:active {
+  transform: translateY(0);
+  opacity: 0.95;
+}
+
+.appStoreBanner__apple {
+  width: clamp(34px, 5vw, 48px);
+  height: auto;
+  flex: 0 0 auto;
+  color: #000;
+}
+
+.appStoreBanner__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  text-align: left;
+}
+
+.appStoreBanner__label {
+  color: #000;
+  font-size: clamp(11px, 1.7vw, 16px);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.appStoreBanner__store {
+  color: #000;
+  font-size: clamp(24px, 3.8vw, 34px);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .appStoreBanner {
+    gap: 11px;
+    width: 100%;
+    min-height: 58px;
+    padding: 7px 15px;
+    border-radius: 14px;
+  }
+
+  .appStoreBanner__apple {
+    width: 30px;
+  }
+
+  .appStoreBanner__label {
+    font-size: 10px;
+  }
+
+  .appStoreBanner__store {
+    font-size: 22px;
+  }
+}
+
+/* Dark variant for account dialog context */
+.appStoreBanner--dark {
+  background: #000;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+}
+
+.appStoreBanner--dark:hover {
+  background: rgba(0, 0, 0, 0.9);
+  box-shadow: 0 15px 36px rgba(0, 0, 0, 0.4);
+  filter: none;
+}
+
+.appStoreBanner--dark .appStoreBanner__apple {
+  color: #fff;
+}
+
+.appStoreBanner--dark .appStoreBanner__label {
+  color: #fff;
+}
+
+.appStoreBanner--dark .appStoreBanner__store {
+  color: #fff;
+}

@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import "./CollaboratorManagementControl.css";
 
 type Props = {
@@ -5,10 +6,7 @@ type Props = {
   onChange: (enabled: boolean) => void;
 };
 
-export function CollaboratorManagementControl({
-  enabled,
-  onChange,
-}: Props) {
+export function CollaboratorManagementControl({ enabled, onChange }: Props) {
   return (
     <label className="collaboratorManagementControl">
       <input
@@ -17,10 +15,11 @@ export function CollaboratorManagementControl({
         onChange={(event) => onChange(event.target.checked)}
       />
       <span className="collaboratorManagementControl__copy">
-        <strong>Allow invited players to change settings</strong>
+        <strong>
+          {translate("copy.allowInvitedPlayersToChangeSettings")}
+        </strong>
         <span>
-          They can always update scores. This also lets them reset or end the
-          game.
+          {translate("copy.theyCanAlwaysUpdateScoresThisAlsoLetsThemResetOrEnd")}
         </span>
       </span>
     </label>

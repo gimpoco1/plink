@@ -1,3 +1,4 @@
+import type { TranslationKey } from "./i18n/translate";
 export const STORAGE_KEY = "plink:v1";
 export const PROFILES_STORAGE_KEY = "plink:profiles:v1";
 export const GAMES_STORAGE_KEY = "plink:games:v1";
@@ -8,6 +9,8 @@ export const APP_VIEW_STORAGE_KEY = "plink:view:v1";
 export const HOME_TAB_STORAGE_KEY = "plink:homeTab:v1";
 export const PLAYERS_VIEW_STORAGE_KEY = "plink:playersView:v1";
 export const HOME_NEW_GAME_OPEN_KEY = "plink:homeNewGameOpen:v1";
+export const APP_STORE_URL =
+  "https://apps.apple.com/us/app/plink-scorekeeper/id6791116577";
 export const REFRESH_PAST_LINKED_PLAYERS_EVENT =
   "plink:refreshPastLinkedPlayers";
 export const REFRESH_PAST_INVITED_PLAYERS_EVENT =
@@ -19,23 +22,27 @@ export const MAX_ABS_SCORE = 999999;
 export const DEFAULT_QUICK_SCORE_VALUES = [1, 2] as const;
 export const DEFAULT_TEAM_ICON = "dumbbell";
 export const TEAM_ICONS = [
-  { id: "dumbbell", label: "Training" },
-  { id: "trophy", label: "Champions" },
-  { id: "shield", label: "Defense" },
-  { id: "flag", label: "Flag" },
-  { id: "target", label: "Target" },
-  { id: "zap", label: "Fast" },
-  { id: "flame", label: "Fire" },
-  { id: "star", label: "All stars" },
+  { id: "dumbbell", label: "copy.training" as TranslationKey },
+  { id: "trophy", label: "copy.champions" as TranslationKey },
+  { id: "shield", label: "copy.defense" as TranslationKey },
+  { id: "flag", label: "copy.flag" as TranslationKey },
+  { id: "target", label: "new.target" as TranslationKey },
+  { id: "zap", label: "copy.fast" as TranslationKey },
+  { id: "flame", label: "copy.fire" as TranslationKey },
+  { id: "star", label: "copy.allStars" as TranslationKey },
 ] as const;
 
 export const AVATAR_COLORS = [
-  { id: "graphite", label: "Graphite", value: "#6b7890" },
-  { id: "sky", label: "Sky", value: "#36aeea" },
-  { id: "aqua", label: "Aqua", value: "#31cfc3" },
-  { id: "mint", label: "Mint", value: "#47d97d" },
-  { id: "lime", label: "Lime", value: "#9fbe38" },
-  { id: "coral", label: "Coral", value: "#f36f85" },
-  { id: "violet", label: "Violet", value: "#9276e8" },
-  { id: "stone", label: "Stone", value: "#aba39b" },
+  {
+    id: "graphite",
+    label: "copy.graphite" as TranslationKey,
+    value: "#6b7890",
+  },
+  { id: "sky", label: "copy.sky" as TranslationKey, value: "#36aeea" },
+  { id: "aqua", label: "copy.aqua" as TranslationKey, value: "#31cfc3" },
+  { id: "mint", label: "copy.mint" as TranslationKey, value: "#47d97d" },
+  { id: "lime", label: "copy.lime" as TranslationKey, value: "#9fbe38" },
+  { id: "coral", label: "copy.coral" as TranslationKey, value: "#f36f85" },
+  { id: "violet", label: "copy.violet" as TranslationKey, value: "#9276e8" },
+  { id: "stone", label: "copy.stone" as TranslationKey, value: "#aba39b" },
 ] as const;

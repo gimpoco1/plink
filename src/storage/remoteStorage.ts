@@ -15,8 +15,7 @@ const GAME_COLLABORATORS_TABLE = "game_collaborators";
 const PROFILES_TABLE = "player_profiles";
 const TEAMS_TABLE = "teams";
 const TEAM_MEMBERS_TABLE = "team_members";
-export const GAME_REMOVAL_NOTIFICATIONS_TABLE =
-  "game_removal_notifications";
+export const GAME_REMOVAL_NOTIFICATIONS_TABLE = "game_removal_notifications";
 export const GAME_JOIN_NOTIFICATIONS_TABLE = "game_join_notifications";
 export const SHARING_PREFERENCE_NOTIFICATIONS_TABLE =
   "sharing_preference_notifications";
@@ -489,10 +488,7 @@ function isMissingTeamIconColumn(error: unknown) {
   return getErrorMessage(error).includes("icon");
 }
 
-async function attachCollaborationMetadata(
-  userId: string,
-  games: Game[],
-) {
+async function attachCollaborationMetadata(userId: string, games: Game[]) {
   if (!supabase || !games.some((game) => game.isShared)) {
     return games;
   }
@@ -713,10 +709,7 @@ export async function applyRemoteSharedScoreDelta(
   return rowToGame(result.data as GameRow, userId);
 }
 
-export async function resetRemoteSharedGame(
-  userId: string,
-  gameId: string,
-) {
+export async function resetRemoteSharedGame(userId: string, gameId: string) {
   if (!supabase) throw new Error("Cloud games are not configured.");
   const result = await supabase
     .rpc("reset_shared_game_scores", { p_game_id: gameId })
@@ -919,12 +912,9 @@ export async function loadRemoteReplayInviteCandidates(
   gameId: string,
 ): Promise<ReplayInviteCandidate[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase.rpc(
-    "list_replay_invite_candidates",
-    {
-      p_game_id: gameId,
-    },
-  );
+  const { data, error } = await supabase.rpc("list_replay_invite_candidates", {
+    p_game_id: gameId,
+  });
   if (error) throw error;
   return ((data ?? []) as ReplayInviteCandidateRow[]).map((row) => ({
     userId: row.candidate_user_id,
@@ -995,10 +985,7 @@ export async function setRemoteSharedCollaboratorManagement(
   return rowToGame(result.data as GameRow, userId);
 }
 
-export async function deleteRemoteSharedGame(
-  userId: string,
-  gameId: string,
-) {
+export async function deleteRemoteSharedGame(userId: string, gameId: string) {
   if (!supabase) throw new Error("Cloud games are not configured.");
   const { error } = await supabase
     .from(GAMES_TABLE)
@@ -1065,8 +1052,7 @@ export async function saveRemoteGames(
 ) {
   if (!supabase) return;
   const ownedGames = games.filter(
-    (game) =>
-      !game.isShared && (!game.ownerId || game.ownerId === userId),
+    (game) => !game.isShared && (!game.ownerId || game.ownerId === userId),
   );
   const gamesToUpsert = changedGameIds
     ? ownedGames.filter((game) => changedGameIds.has(game.id))

@@ -1,3 +1,4 @@
+import { translate } from "../i18n/translate";
 import { Fragment } from "react";
 import { NewGameCard } from "../components/NewGameCard/NewGameCard";
 import { HomeGuestPreview } from "../components/HomeGuestPreview/HomeGuestPreview";
@@ -13,8 +14,10 @@ import { getSuggestionFacts } from "../features/home/utils/quickSetupFacts";
 import { useHomeScreenModel } from "../features/home/hooks/useHomeScreenModel";
 import { HomeGuestInfo } from "../features/home/components/HomeGuestInfo";
 import { JoinGameDialog } from "../components/GameSharing/JoinGameDialog";
+import { useI18n } from "../i18n/I18nContext";
 
 export function HomeScreen(props: HomeScreenProps) {
+  const { t } = useI18n();
   const {
     persistedNewGameOpen,
     setPersistedNewGameOpen,
@@ -72,15 +75,13 @@ export function HomeScreen(props: HomeScreenProps) {
       >
         <div className="homeHero__intro">
           <div>
-            <div className="homeHero__eyebrow">Your scoreboard</div>
+            <div className="homeHero__eyebrow">{t("home.eyebrow")}</div>
             <h1 className="homeHero__title">
-              Keep the score.
+              {t("home.titleLineOne")}
               <br />
-              Enjoy the game.
+              {t("home.titleLineTwo")}
             </h1>
-            <p className="homeHero__copy">
-              Jump into a new match or keep your next round moving fast.
-            </p>
+            <p className="homeHero__copy">{t("home.copy")}</p>
           </div>
         </div>
         {resumableGame ? (
@@ -100,7 +101,7 @@ export function HomeScreen(props: HomeScreenProps) {
                 type="button"
                 onClick={() => onEnter(resumableGame.id)}
               >
-                <span aria-hidden="true">↺</span> Resume last game
+                <span aria-hidden="true">↺</span> {t("home.resume")}
               </button>
             </div>
           </div>
@@ -129,13 +130,13 @@ export function HomeScreen(props: HomeScreenProps) {
       </section>
 
       {quickSetups.length > 0 ? (
-        <section className="quickSetups" aria-label="Games you play often">
+        <section className="quickSetups" aria-label={t("home.frequentGames")}>
           <div className="quickSetups__head">
             <div>
-              <div className="quickSetups__title">Games you play often</div>
-              <p className="quickSetups__copy">
-                Start a new game from your usual setups.
-              </p>
+              <div className="quickSetups__title">
+                {t("home.frequentGames")}
+              </div>
+              <p className="quickSetups__copy">{t("home.frequentGamesCopy")}</p>
             </div>
           </div>
           <div className="quickSetups__grid">
@@ -152,7 +153,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     {setup.participantMode === "teams" ? (
                       <span className="quickSetupCard__teamsChip">
                         <Users size={10} strokeWidth={2.5} aria-hidden="true" />
-                        Teams
+                        {t("home.teams")}
                       </span>
                     ) : null}
                   </div>
@@ -182,7 +183,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     setup.suggestedTeams.length > 0 ? (
                       <div
                         className="quickSetupCard__teams"
-                        aria-label="Preset teams"
+                        aria-label={translate("copy.presetTeams")}
                       >
                         {setup.suggestedTeams.slice(0, 4).map((team, index) => (
                           <Fragment
@@ -204,7 +205,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     ) : setup.suggestedPlayers.length > 0 ? (
                       <div
                         className="quickSetupCard__players"
-                        aria-label="Preset players"
+                        aria-label={translate("copy.presetPlayers")}
                       >
                         {setup.suggestedPlayers
                           .slice(0, 4)
@@ -227,8 +228,11 @@ export function HomeScreen(props: HomeScreenProps) {
                     ) : null}
                   </div>
                 </div>
+
                 <div className="quickSetupCard__action">
-                  <span className="quickSetupCard__actionLabel">Start</span>
+                  <span className="quickSetupCard__actionLabel">
+                    {t("home.start")}
+                  </span>
                   <span
                     className="quickSetupCard__actionIcon"
                     aria-hidden="true"

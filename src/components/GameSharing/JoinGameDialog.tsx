@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { useRef, useState } from "react";
 import { AlertTriangle, Link } from "lucide-react";
 import "./GameSharing.css";
@@ -11,7 +12,7 @@ function errorMessage(error: unknown) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message) return message;
   }
-  return "Could not join that game. Check the code and try again.";
+  return translate("copy.couldNotJoinThatGameCheckTheCodeAndTryAgain");
 }
 
 export function JoinGameDialog({ onJoin }: Props) {
@@ -48,11 +49,11 @@ export function JoinGameDialog({ onJoin }: Props) {
         onClick={() => dialogRef.current?.showModal()}
       >
         <span className="homeJoinGameButton__prompt">
-          Have an invitation code?
+          {translate("copy.haveAnInvitationCode")}
         </span>
         <span className="homeJoinGameButton__action">
           <Link size={16} strokeWidth={2.3} aria-hidden="true" />
-          Join a game
+          {translate("copy.joinAGame")}
         </span>
       </button>
       <dialog
@@ -69,14 +70,18 @@ export function JoinGameDialog({ onJoin }: Props) {
         >
           <div className="dialog__head">
             <div className="dialog__titleWrap">
-              <div className="dialog__eyebrow">Shared game</div>
-              <div className="dialog__title">Join a game</div>
+              <div className="dialog__eyebrow">
+                {translate("copy.sharedGame")}
+              </div>
+              <div className="dialog__title">
+                {translate("copy.joinAGame")}
+              </div>
             </div>
             <button
               className="iconbtn"
               type="button"
               onClick={close}
-              aria-label="Close"
+              aria-label={translate("copy.close")}
             >
               ×
             </button>
@@ -87,7 +92,7 @@ export function JoinGameDialog({ onJoin }: Props) {
               className="gameSharingDialog__label"
               htmlFor="join-game-code"
             >
-              Invitation code
+              {translate("copy.invitationCode")}
             </label>
             <div className="gameSharingDialog__inputWrap">
               <Link size={20} strokeWidth={2.2} aria-hidden="true" />
@@ -112,7 +117,7 @@ export function JoinGameDialog({ onJoin }: Props) {
               />
             </div>
             <p className="gameSharingDialog__hint">
-              Your account player will be added to the game automatically.
+              {translate("copy.yourAccountPlayerWillBeAddedToTheGameAutomatically")}
             </p>
             {error ? (
               <div
@@ -133,14 +138,14 @@ export function JoinGameDialog({ onJoin }: Props) {
 
           <div className="dialog__actions">
             <button className="btn btn--ghost" type="button" onClick={close}>
-              Cancel
+              {translate("copy.cancel")}
             </button>
             <button
               className="btn btn--primary"
               type="submit"
               disabled={code.length !== 8 || loading}
             >
-              {loading ? "Joining…" : "Join game"}
+              {loading ? translate("copy.joining") : translate("copy.joinGame")}
             </button>
           </div>
         </form>

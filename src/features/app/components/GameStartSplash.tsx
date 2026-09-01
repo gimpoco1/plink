@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Play } from "lucide-react";
 import "./GameStartSplash.css";
 
@@ -8,8 +9,10 @@ export function GameStartSplash() {
         <span className="gameStartSplash__icon" aria-hidden="true">
           <Play size={30} strokeWidth={2.8} fill="currentColor" />
         </span>
-        <span className="gameStartSplash__eyebrow">Ready</span>
-        <strong>Game on!</strong>
+        <span className="gameStartSplash__eyebrow">
+          {translate("copy.ready")}
+        </span>
+        <strong>{translate("copy.gameOn")}</strong>
       </div>
     </div>
   );

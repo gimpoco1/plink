@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import type { ReactNode } from "react";
 
 export function QuickScoreSettings({
@@ -18,16 +19,13 @@ export function QuickScoreSettings({
       className="quickScoreSettings"
       aria-labelledby="quick-score-settings-title"
     >
-      <h3
-        className="quickScoreSettings__title"
-        id="quick-score-settings-title"
-      >
-        Quick score buttons
+      <h3 className="quickScoreSettings__title" id="quick-score-settings-title">
+        {translate("copy.quickScoreButtons")}
       </h3>
-      <p>Choose the two point amounts shown on every player card.</p>
+      <p>{translate("copy.chooseTheTwoPointAmountsShownOnEveryPlayerCard")}</p>
       <div className="quickScoreSettings__fields">
         <label className="field">
-          <span className="field__label">Small step</span>
+          <span className="field__label">{translate("copy.smallStep")}</span>
           <input
             className="input"
             value={smallValue}
@@ -37,7 +35,7 @@ export function QuickScoreSettings({
           />
         </label>
         <label className="field">
-          <span className="field__label">Large step</span>
+          <span className="field__label">{translate("copy.largeStep")}</span>
           <input
             className="input"
             value={largeValue}
@@ -49,7 +47,7 @@ export function QuickScoreSettings({
       </div>
       {!isValid ? (
         <span className="quickScoreSettings__error" role="status">
-          Use two different positive values, smallest first.
+          {translate("copy.useTwoDifferentPositiveValuesSmallestFirst")}
         </span>
       ) : null}
     </fieldset>
@@ -60,13 +58,13 @@ export function SettingsAuthCard({ onSignIn }: { onSignIn: () => void }) {
   return (
     <div className="settingsAuthCard">
       <div className="settingsAuthCard__copy">
-        <strong>Sign in to save this game</strong>
+        <strong>{translate("copy.signInToSaveThisGame")}</strong>
         <span>
-          Keep this session on your account and sync it across devices.
+          {translate("copy.keepThisSessionOnYourAccountAndSyncItAcrossDevices")}
         </span>
       </div>
       <button className="btn btn--primary" type="button" onClick={onSignIn}>
-        Sign in
+        {translate("topbar.signIn")}
       </button>
     </div>
   );
@@ -82,17 +80,17 @@ export function SettingsRequirement({
   return (
     <div className="settingsRequirement" role="status">
       <div className="settingsRequirement__copy">
-        <strong>Add one more player</strong>
+        <strong>{translate("copy.addOneMorePlayer")}</strong>
         <span>
           {lowestNeedsMorePlayers
             ? "Lowest score mode needs at least 2 players to compare scores."
             : "Win by 2 needs at least 2 players to compare the lead."}{" "}
-          Add another player, then return here to turn it on.
+          {translate("copy.addAnotherPlayerThenReturnHereToTurnItOn")}
         </span>
       </div>
       {onAddPlayer ? (
         <button className="btn btn--ghost" type="button" onClick={onAddPlayer}>
-          Add player
+          {translate("copy.addPlayer")}
         </button>
       ) : null}
     </div>
@@ -158,7 +156,7 @@ export function TimerSettings({
       }`}
     >
       <label className="field">
-        <span className="field__label">Timer mode</span>
+        <span className="field__label">{translate("copy.timerMode")}</span>
         <div className="settingsTimerToggle">
           {(["countdown", "stopwatch"] as const).map((option) => (
             <button
@@ -169,7 +167,9 @@ export function TimerSettings({
               }`}
               onClick={() => onModeChange(option)}
             >
-              {option === "countdown" ? "Countdown" : "Stopwatch"}
+              {option === "countdown"
+                ? translate("copy.countdown")
+                : translate("copy.stopwatch")}{" "}
             </button>
           ))}
         </div>
@@ -177,12 +177,12 @@ export function TimerSettings({
       {mode === "countdown" ? (
         <>
           <TimerNumberField
-            label="Minutes"
+            label={translate("copy.minutes")}
             value={minutes}
             onChange={(value) => onMinutesChange(numeric(value))}
           />
           <TimerNumberField
-            label="Seconds"
+            label={translate("copy.seconds")}
             value={seconds}
             onChange={(value) => onSecondsChange(numeric(value))}
           />

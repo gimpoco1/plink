@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import {
   ArrowDownUp,
   Dices,
@@ -18,7 +19,7 @@ export function getSuggestionFacts(setup: QuickSetup) {
           ? `${setup.targetScore} ref`
           : "manual"
         : setup.winCondition === "reach_zero"
-          ? `${setup.startingScore} start`
+          ? translate("dynamic.start", [setup.startingScore])
           : `${setup.targetScore} pts`,
       icon: setup.manualEndOnly ? (
         <Flag size={11} strokeWidth={2.35} aria-hidden="true" />
@@ -34,13 +35,13 @@ export function getSuggestionFacts(setup: QuickSetup) {
   if (setup.winCondition === "lowest") {
     parts.push({
       key: "lowest",
-      label: "lowest wins",
+      label: translate("copy.lowestWins"),
       icon: <ArrowDownUp size={11} strokeWidth={2.35} aria-hidden="true" />,
     });
   } else if (setup.winCondition === "reach_zero") {
     parts.push({
       key: "reach-zero",
-      label: "reach zero",
+      label: translate("copy.reachZero"),
       icon: <RotateCcw size={11} strokeWidth={2.35} aria-hidden="true" />,
     });
   }
@@ -48,7 +49,7 @@ export function getSuggestionFacts(setup: QuickSetup) {
   if (setup.winByTwo) {
     parts.push({
       key: "win-by-two",
-      label: "win by 2",
+      label: translate("copy.winBy2"),
       icon: (
         <GitCompareArrows size={11} strokeWidth={2.35} aria-hidden="true" />
       ),
@@ -58,7 +59,7 @@ export function getSuggestionFacts(setup: QuickSetup) {
   if (setup.manualEndOnly && setup.targetScore > 0) {
     parts.push({
       key: "manual-end",
-      label: "manual end",
+      label: translate("copy.manualEnd"),
       icon: <Flag size={11} strokeWidth={2.35} aria-hidden="true" />,
     });
   }
@@ -68,7 +69,7 @@ export function getSuggestionFacts(setup: QuickSetup) {
       key: "timer",
       label:
         setup.timerMode === "stopwatch"
-          ? "stopwatch"
+          ? translate("copy.stopwatch")
           : formatTimerText(setup.timerSeconds, "long"),
       icon: <Timer size={11} strokeWidth={2.35} aria-hidden="true" />,
     });
@@ -77,7 +78,7 @@ export function getSuggestionFacts(setup: QuickSetup) {
   if (setup.diceEnabled) {
     parts.push({
       key: "dice",
-      label: "dice",
+      label: translate("copy.dice"),
       icon: <Dices size={11} strokeWidth={2.35} aria-hidden="true" />,
     });
   }

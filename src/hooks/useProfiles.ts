@@ -1,9 +1,13 @@
+import { translate } from "../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { PlayerProfile, ToastState } from "../types";
 import { supabase } from "../lib/supabase";
 import { loadProfiles, saveProfiles } from "../storage/profilesStorage";
-import { loadRemoteProfiles, saveRemoteProfiles } from "../storage/remoteStorage";
+import {
+  loadRemoteProfiles,
+  saveRemoteProfiles,
+} from "../storage/remoteStorage";
 import {
   createRealtimeReconnectHandler,
   subscribeToForegroundRefresh,
@@ -24,14 +28,15 @@ function getSyncErrorMessage(error: unknown) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message) return message;
   }
-  return "Unknown sync error";
+  return translate("copy.unknownSyncError");
 }
 
 function compareProfiles(left: PlayerProfile, right: PlayerProfile) {
   if (Boolean(left.isAccountPlayer) !== Boolean(right.isAccountPlayer)) {
     return left.isAccountPlayer ? -1 : 1;
   }
-  if (left.createdAt !== right.createdAt) return left.createdAt - right.createdAt;
+  if (left.createdAt !== right.createdAt)
+    return left.createdAt - right.createdAt;
   return left.name.localeCompare(right.name);
 }
 
@@ -130,7 +135,8 @@ export function useProfiles(session: Session | null) {
         if (!alive) return;
         const normalizedProfiles = normalizeAccountPlayers(remoteProfiles);
         setProfiles(normalizedProfiles);
-        remoteSignatureRef.current = getProfileSyncSignature(normalizedProfiles);
+        remoteSignatureRef.current =
+          getProfileSyncSignature(normalizedProfiles);
         setRemoteUserId(userId);
         setRemoteReady(true);
       })
@@ -140,7 +146,7 @@ export function useProfiles(session: Session | null) {
         setProfiles([]);
         setRemoteUserId(null);
         setSyncNotice({
-          message: `Could not load saved players: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotLoadSavedPlayers", [getSyncErrorMessage(error)]),
           tone: "error",
         });
         setRemoteReady(true);
@@ -196,23 +202,22 @@ export function useProfiles(session: Session | null) {
             return remote && remote.updatedAt !== profile.updatedAt;
           });
           if (removed.length > 0) {
-            setSyncNotice(
-              {
-                message:
-                  removed.length === 1
-                    ? `"${removed[0].name}" was removed from your saved players.`
-                    : `${removed.length} saved players were removed from your account.`,
-                tone: "default",
-              },
-            );
+            setSyncNotice({
+              message:
+                removed.length === 1
+                  ? translate("dynamic.wasRemovedFromYourSavedPlayers", [removed[0].name])
+                  : translate("dynamic.savedPlayersWereRemovedFromYourAccount", [removed.length]),
+              tone: "default",
+            });
           } else if (changed.length > 0) {
             setSyncNotice({
-              message: "Your saved players were updated.",
+              message: translate("copy.yourSavedPlayersWereUpdated"),
               tone: "default",
             });
           }
-          remoteSignatureRef.current =
-            getProfileSyncSignature(normalizedRemoteProfiles);
+          remoteSignatureRef.current = getProfileSyncSignature(
+            normalizedRemoteProfiles,
+          );
           return normalizedRemoteProfiles;
         });
       } catch {
@@ -224,7 +229,8 @@ export function useProfiles(session: Session | null) {
       () => void refreshRemoteProfiles(),
     );
 
-    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
+      null;
     if (supabase) {
       channel = supabase.channel(`profiles:${activeUserId}`);
       channel.on(
@@ -272,7 +278,7 @@ export function useProfiles(session: Session | null) {
       .catch((error) => {
         console.error("Failed to save profiles to Supabase", error);
         setSyncNotice({
-          message: `Could not save players: ${getSyncErrorMessage(error)}`,
+          message: translate("dynamic.couldNotSavePlayers", [getSyncErrorMessage(error)]),
           tone: "error",
         });
       });
@@ -388,18 +394,24 @@ export function useProfiles(session: Session | null) {
     const existingProfilesById = new Map(
       profiles.map((profile) => [profile.id, profile]),
     );
-    const sanitizedIncomingProfiles = incomingProfiles.map((incomingProfile) => ({
-      ...incomingProfile,
-      isAccountPlayer:
-        existingProfilesById.get(incomingProfile.id)?.isAccountPlayer === true,
-    }));
-    const changedCount = sanitizedIncomingProfiles.reduce((count, incomingProfile) => {
-      const existingProfile = existingProfilesById.get(incomingProfile.id);
-      if (!existingProfile) return count + 1;
-      return incomingProfile.updatedAt > existingProfile.updatedAt
-        ? count + 1
-        : count;
-    }, 0);
+    const sanitizedIncomingProfiles = incomingProfiles.map(
+      (incomingProfile) => ({
+        ...incomingProfile,
+        isAccountPlayer:
+          existingProfilesById.get(incomingProfile.id)?.isAccountPlayer ===
+          true,
+      }),
+    );
+    const changedCount = sanitizedIncomingProfiles.reduce(
+      (count, incomingProfile) => {
+        const existingProfile = existingProfilesById.get(incomingProfile.id);
+        if (!existingProfile) return count + 1;
+        return incomingProfile.updatedAt > existingProfile.updatedAt
+          ? count + 1
+          : count;
+      },
+      0,
+    );
     if (changedCount === 0) return 0;
 
     const mergedProfiles = normalizeAccountPlayers(
@@ -418,7 +430,6 @@ export function useProfiles(session: Session | null) {
     setProfiles(mergedProfiles);
     return changedCount;
   }
-
 
   return {
     profiles: sortedProfiles,

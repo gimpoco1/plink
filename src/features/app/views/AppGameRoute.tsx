@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { motion } from "framer-motion";
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
@@ -79,14 +80,16 @@ export function AppGameRoute() {
         onDeleteProfile={async (profileId) => {
           const profile = profiles.find((p) => p.id === profileId);
           if (profile?.isAccountPlayer) {
-            showToast("Your account player cannot be deleted.");
+            showToast(translate("copy.yourAccountPlayerCannotBeDeleted"));
             return;
           }
-          const label = profile ? profile.name : "this player";
+          const label = profile
+            ? profile.name
+            : translate("common.thisPlayer");
           const ok = await confirmRef.current?.confirm({
-            title: "Delete saved player",
-            message: `Delete "${label}" from your saved players?`,
-            confirmText: "Delete",
+            title: translate("copy.deleteSavedPlayer"),
+            message: translate("dynamic.deleteFromYourSavedPlayers", [label]),
+            confirmText: translate("copy.delete"),
             tone: "danger",
           });
           if (!ok) return;
@@ -150,12 +153,12 @@ export function AppGameRoute() {
         onUpdateScore={async (playerId, delta) => {
           if (isGameComplete(currentGame)) {
             const confirmed = await confirmRef.current?.confirm({
-              eyebrow: "Game finished",
-              title: "Change this score?",
+              eyebrow: translate("copy.gameFinished"),
+              title: translate("copy.changeThisScore"),
               message:
-                "Changing the score will also update this game's result and stats.",
-              confirmText: "Update score",
-              cancelText: "Cancel",
+                translate("copy.changingTheScoreWillAlsoUpdateThisGameSResultAndStats"),
+              confirmText: translate("copy.updateScore"),
+              cancelText: translate("copy.cancel"),
             });
             if (!confirmed) return false;
           }
@@ -166,11 +169,13 @@ export function AppGameRoute() {
           const player = currentGame.players.find(
             (item) => item.id === playerId,
           );
-          const label = player ? capitalizeFirst(player.name) : "this player";
+          const label = player
+            ? capitalizeFirst(player.name)
+            : translate("common.thisPlayer");
           const ok = await confirmRef.current?.confirm({
-            title: "Remove player",
-            message: `Do you want to remove ${label} from this game?`,
-            confirmText: "Remove",
+            title: translate("copy.removePlayer"),
+            message: translate("dynamic.doYouWantToRemoveFromThisGame", [label]),
+            confirmText: translate("copy.remove"),
             tone: "danger",
           });
           if (!ok) return;
@@ -192,10 +197,9 @@ export function AppGameRoute() {
           );
           if (!linkedPlayer || !rosterPlayer || !rosterProfile) return;
           const keepPlayer = await confirmRef.current?.selectPlayer({
-            eyebrow: "Merge duplicate",
-            title: "Which player should stay?",
-            message:
-              "Scores will be combined. Stats count for the player you keep.",
+            eyebrow: translate("copy.mergeDuplicate"),
+            title: translate("copy.whichPlayerShouldStay"),
+            message: translate("copy.scoresWillBeCombined"),
             messageCase: "normal",
             layout: "feature",
             players: [
@@ -206,20 +210,20 @@ export function AppGameRoute() {
                   : capitalizeFirst(rosterPlayer.name),
                 avatarColor: rosterPlayer.avatarColor,
                 label: rosterProfile.isAccountPlayer
-                  ? "Account player"
-                  : "Saved player",
-                description: "Invited player will be removed",
+                  ? translate("copy.accountPlayer2")
+                  : translate("copy.savedPlayer"),
+                description: translate("copy.invitedPlayerWillBeRemoved"),
               },
               {
                 id: "linked",
                 name: capitalizeFirst(linkedPlayer.name),
                 avatarColor: linkedPlayer.avatarColor,
-                label: "Invited player",
-                description: "Stays connected to their account",
+                label: translate("copy.invitedPlayer"),
+                description: translate("copy.staysConnectedToTheirAccount"),
               },
             ],
-            confirmText: "Merge",
-            cancelText: "Cancel",
+            confirmText: translate("copy.merge"),
+            cancelText: translate("copy.cancel"),
             tone: "default",
           });
           if (keepPlayer !== "local" && keepPlayer !== "linked") return;
@@ -251,9 +255,7 @@ export function AppGameRoute() {
             }
           }
           const needsDirectGameUpdate =
-            !profileId ||
-            "profileId" in updates ||
-            "teamId" in updates;
+            !profileId || "profileId" in updates || "teamId" in updates;
           if (needsDirectGameUpdate) {
             void updatePlayer(currentGame.id, playerId, updates);
           }
@@ -272,12 +274,12 @@ export function AppGameRoute() {
         }}
         onDeleteTeam={async (teamId, teamName) => {
           const ok = await confirmRef.current?.confirm({
-            title: "Remove team",
+            title: translate("copy.removeTeam"),
             message:
               currentGame.participantMode === "teams"
-                ? `Remove "${teamName}" from this game? Players in this team will also be removed from this game.`
-                : `Remove "${teamName}" from this game? Players will stay in the game but be unassigned from that team.`,
-            confirmText: "Remove",
+                ? translate("dynamic.removeFromThisGamePlayersInThisTeamWillAlsoBeRemoved", [teamName])
+                : translate("dynamic.removeFromThisGamePlayersWillStayInTheGameButBe", [teamName]),
+            confirmText: translate("copy.remove"),
             tone: "danger",
           });
           if (!ok) return;
@@ -285,9 +287,9 @@ export function AppGameRoute() {
         }}
         onDeleteSavedTeam={async (teamId, teamName) => {
           const ok = await confirmRef.current?.confirm({
-            title: "Delete team",
-            message: `Delete "${teamName}"? This removes the team only. Saved players will stay in your roster.`,
-            confirmText: "Delete",
+            title: translate("copy.deleteTeam"),
+            message: translate("dynamic.deleteThisRemovesTheTeamOnlySavedPlayersWillStayInYour", [teamName]),
+            confirmText: translate("copy.delete"),
             tone: "danger",
           });
           if (ok) deleteSavedTeam(teamId);
@@ -302,8 +304,7 @@ export function AppGameRoute() {
           if (!guardSessionCreation()) {
             return;
           }
-          const invitedUserIds =
-            await chooseReplayInvitedUserIds(currentGame);
+          const invitedUserIds = await chooseReplayInvitedUserIds(currentGame);
           if (invitedUserIds === null) return;
           triggerGameStartSplash();
           const duplicated = await duplicateGame(

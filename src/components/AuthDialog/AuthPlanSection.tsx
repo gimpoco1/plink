@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { ChevronDown, Crown } from "lucide-react";
 import { AuthPlanDetails } from "./AuthPlanDetails";
 import { useAuthDialogContext } from "./AuthDialogContext";
@@ -25,7 +26,9 @@ export function AuthPlanSection() {
               <div className="authDialog__planTop">
                 <div className="authDialog__planTitleWrap">
                   <div className="authDialog__accountIdentityTop">
-                    <span className="authDialog__accountPlayerTitle">Plan</span>
+                    <span className="authDialog__accountPlayerTitle">
+                      {translate("copy.plan")}
+                    </span>
                     {!entitlementsLoading ? (
                       <span
                         className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
@@ -38,13 +41,13 @@ export function AuthPlanSection() {
                   </div>{" "}
                   <strong className="authDialog__planName">
                     <span>
-                      {hasSessionPass ? "Free + Session Pass" : "Free plan"}
+                      {hasSessionPass ? translate("copy.freeSessionPass") : translate("copy.freePlan")}
                     </span>
                   </strong>
                   <span className="authDialog__planMeta">
                     {hasSessionPass
-                      ? "Keep up to 100 owned games, or choose Pro for unlimited history and every premium feature"
-                      : "Includes up to 12 owned sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
+                      ? translate("copy.sessionPassPlanDescription")
+                      : translate("copy.freePlanDescription")}
                   </span>
                 </div>
               </div>
@@ -55,12 +58,14 @@ export function AuthPlanSection() {
             <div className="authDialog__planToggleHeader authDialog__planToggleHeader--static">
               <div className="authDialog__planTop">
                 <div className="authDialog__planTitleWrap">
-                  <span className="authDialog__accountPlayerTitle">Plan</span>
+                  <span className="authDialog__accountPlayerTitle">
+                    {translate("copy.plan")}
+                  </span>
                   <strong className="authDialog__planName">
-                    <span>Loading plan…</span>
+                    <span>{translate("copy.loadingPlan")}</span>
                   </strong>
                   <span className="authDialog__planMeta">
-                    Checking your subscription details.
+                    {translate("copy.checkingYourSubscriptionDetails")}
                   </span>
                 </div>
               </div>
@@ -78,7 +83,9 @@ export function AuthPlanSection() {
               <div className="authDialog__planTop">
                 <div className="authDialog__planTitleWrap">
                   <div className="authDialog__accountIdentityTop">
-                    <span className="authDialog__accountPlayerTitle">Plan</span>
+                    <span className="authDialog__accountPlayerTitle">
+                      {translate("copy.plan")}
+                    </span>
                     {!entitlementsLoading ? (
                       <span
                         className={`authDialog__accountPlanBadge authDialog__accountPlanBadge--${
@@ -109,7 +116,7 @@ export function AuthPlanSection() {
                       </span>
                     ) : (
                       <span>
-                        {hasSessionPass ? "Free + Session Pass" : "Free plan"}
+                        {hasSessionPass ? translate("copy.freeSessionPass") : translate("copy.freePlan")}
                       </span>
                     )}
                   </strong>
@@ -117,10 +124,10 @@ export function AuthPlanSection() {
                     {isPro
                       ? source === "subscription" && renewalLabel
                         ? renewalLabel
-                        : "Premium play, built for regular game nights."
+                        : translate("copy.proPlanDescription")
                       : hasSessionPass
-                        ? "Keep up to 100 owned games, or choose Pro for unlimited history and every premium feature"
-                        : "Includes up to 12 owned sessions. Choose unlimited Pro or get up to 100 with a Session Pass"}
+                        ? translate("copy.sessionPassPlanDescription")
+                        : translate("copy.freePlanDescription")}
                   </span>
                 </div>
                 <div className="authDialog__planHeaderRight">
@@ -142,7 +149,7 @@ export function AuthPlanSection() {
             onClick={() => setShowPlanDetails(true)}
           >
             <Crown size={16} strokeWidth={2.3} aria-hidden="true" />
-            {hasSessionPass ? "View Pro" : "View options"}
+            {hasSessionPass ? translate("copy.viewPro") : translate("copy.viewOptions")}
           </button>
         ) : null}
         {showPlanDetails ? <AuthPlanDetails /> : null}

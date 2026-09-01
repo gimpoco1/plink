@@ -1,3 +1,4 @@
+import { translate } from "../../i18n/translate";
 import { Check, GitMerge, Link, Pencil, Plus, Trash2, X } from "lucide-react";
 import { AVATAR_COLORS } from "../../constants";
 import type { Player, PlayerProfile } from "../../types";
@@ -95,7 +96,7 @@ export function ManagePlayerCard(props: Props) {
       }}
       aria-label={
         props.kind === "saved" && !savedProfileIsTaken
-          ? `${savedProfileIsStaged ? "Remove" : "Add"} ${displayName}`
+          ? `${savedProfileIsStaged ? translate("copy.remove") : translate("copy.add")} ${displayName}`
           : undefined
       }
     >
@@ -130,7 +131,7 @@ export function ManagePlayerCard(props: Props) {
         <div className="managePlayersDialog__mergeFooter">
           <span className="managePlayersDialog__mergeFooterCopy">
             <GitMerge size={15} strokeWidth={2.4} aria-hidden="true" />
-            <span>Another player found with same name</span>
+            <span>{translate("copy.anotherPlayerFoundWithSameName")}</span>
           </span>
           <button
             className="managePlayersDialog__mergeBtn"
@@ -138,10 +139,13 @@ export function ManagePlayerCard(props: Props) {
             onClick={() =>
               void model.onMergePlayers?.(player.id, mergeCandidate.id)
             }
-            aria-label={`Merge ${mergeCandidate.name} into ${displayName}`}
-            title={`Merge with ${mergeCandidate.name}`}
+            aria-label={translate("dynamic.mergeInto", [
+              mergeCandidate.name,
+              displayName,
+            ])}
+            title={translate("dynamic.mergeWith", [mergeCandidate.name])}
           >
-            Merge
+            {translate("copy.merge")}
           </button>
         </div>
       ) : null}
@@ -171,7 +175,7 @@ function PlayerEditor({
           onChange={(event) => setEditingName(event.target.value)}
           autoFocus
           maxLength={28}
-          placeholder="Player name"
+          placeholder={translate("copy.playerName")}
           aria-invalid={!!validationMessage}
         />
         <div className="managePlayersDialog__actionsRow managePlayersDialog__actionsRow--edit">
@@ -180,8 +184,8 @@ function PlayerEditor({
             type="button"
             onClick={onSave}
             disabled={!clampName(editingName) || !!validationMessage}
-            aria-label={`Save ${name}`}
-            title="Save"
+            aria-label={translate("dynamic.save", [name])}
+            title={translate("copy.save")}
           >
             <Check size={15} strokeWidth={3} aria-hidden="true" />
           </button>
@@ -189,8 +193,8 @@ function PlayerEditor({
             className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--cancel"
             type="button"
             onClick={onCancel}
-            aria-label={`Cancel editing ${name}`}
-            title="Cancel"
+            aria-label={translate("dynamic.cancelEditing", [name])}
+            title={translate("copy.cancel")}
           >
             <X size={15} strokeWidth={2.6} aria-hidden="true" />
           </button>
@@ -199,7 +203,7 @@ function PlayerEditor({
       <div
         className="managePlayersDialog__swatches"
         role="radiogroup"
-        aria-label="Choose color for player"
+        aria-label={translate("copy.chooseColorForPlayer")}
       >
         {AVATAR_COLORS.map((color) => (
           <button
@@ -212,7 +216,7 @@ function PlayerEditor({
             }
             style={{ backgroundColor: color.value }}
             onClick={() => setEditingColor(color.value)}
-            aria-label={color.label}
+            aria-label={translate(color.label)}
             aria-checked={color.value === editingColor}
             role="radio"
           />
@@ -252,8 +256,8 @@ function PlayerIdentity({
             {isLinkedAccountPlayer ? (
               <span
                 className="managePlayersDialog__linkedIcon"
-                aria-label="Joined with an invitation code"
-                title="Joined with an invitation code"
+                aria-label={translate("copy.joinedWithAnInvitationCode")}
+                title={translate("copy.joinedWithAnInvitationCode")}
               >
                 <Link size={14} strokeWidth={2.5} aria-hidden="true" />
               </span>
@@ -268,28 +272,35 @@ function PlayerIdentity({
               }`}
             >
               {isLinkedAccountPlayer
-                ? "Invited player"
+                ? translate("copy.invitedPlayer")
                 : profile?.isAccountPlayer
-                  ? "Account player"
+                  ? translate("copy.accountPlayer2")
                   : profile
-                    ? "Saved player"
-                    : "Game-only player"}
+                    ? translate("copy.savedPlayer")
+                    : translate("copy.gameOnlyPlayer")}
             </span>
           ) : isTaken ? (
-            <span className="managePlayersDialog__meta">In game</span>
+            <span className="managePlayersDialog__meta">
+              {translate("copy.inGame")}
+            </span>
           ) : null}
         </div>
         <div className="managePlayersDialog__actionsRow">
           {profile && !player ? (
             isTaken ? (
-              <span className="pill pill--winner">In</span>
+              <span className="pill pill--winner">{translate("copy.in")}</span>
             ) : (
               <button
                 className={`iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--add${isStaged ? " managePlayersDialog__actionBtn--queued" : ""}`}
                 type="button"
                 onClick={() => model.toggleProfile(profile.id)}
-                aria-label={`${isStaged ? "Remove" : "Add"} ${displayName}`}
-                title={isStaged ? "Queued" : "Add"}
+                aria-label={translate(
+                  isStaged ? "dynamic.remove" : "dynamic.add",
+                  [displayName],
+                )}
+                title={
+                  isStaged ? translate("copy.queued") : translate("copy.add")
+                }
               >
                 {isStaged ? (
                   <Check size={15} strokeWidth={3} aria-hidden="true" />
@@ -304,8 +315,8 @@ function PlayerIdentity({
               className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--edit"
               type="button"
               onClick={onEdit}
-              aria-label={`Edit ${displayName}`}
-              title="Edit"
+              aria-label={translate("dynamic.edit", [displayName])}
+              title={translate("copy.edit")}
             >
               <Pencil size={14} strokeWidth={2.5} aria-hidden="true" />
             </button>
@@ -315,8 +326,8 @@ function PlayerIdentity({
               className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
               type="button"
               onClick={() => void model.onDeletePlayer(player.id)}
-              aria-label={`Remove ${displayName}`}
-              title="Remove"
+              aria-label={translate("dynamic.remove", [displayName])}
+              title={translate("copy.remove")}
             >
               <X size={15} strokeWidth={2.7} aria-hidden="true" />
             </button>
@@ -325,8 +336,8 @@ function PlayerIdentity({
               className="iconbtn iconbtn--sm managePlayersDialog__actionBtn managePlayersDialog__actionBtn--danger"
               type="button"
               onClick={() => model.onDeleteProfile(profile.id)}
-              aria-label={`Delete saved player ${displayName}`}
-              title="Delete saved player"
+              aria-label={translate("dynamic.deleteSavedPlayer", [displayName])}
+              title={translate("copy.deleteSavedPlayer")}
             >
               <Trash2 size={14} strokeWidth={2.4} aria-hidden="true" />
             </button>

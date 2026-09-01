@@ -1,3 +1,4 @@
+import { translate } from "../../../i18n/translate";
 import { Check, Plus } from "lucide-react";
 import { NewPlayerComposer } from "../../../components/NewPlayerComposer/NewPlayerComposer";
 import { SearchableRosterPicker } from "../../../components/SearchableRosterPicker/SearchableRosterPicker";
@@ -11,16 +12,18 @@ export function TeamBuilderMembersStep() {
     <>
       <div className="teamBuilder__intro">
         <p className="teamBuilder__lede">
-          Assemble your team from saved profiles or create new recruits on the
-          fly.
+          {translate(
+            "copy.assembleYourTeamFromSavedProfilesOrCreateNewRecruitsOnThe",
+          )}
         </p>
       </div>
       <section className="teamBuilderCard">
         <div className="teamBuilderCard__head">
-          <div className="teamBuilderCard__label">Choose players</div>
+          <div className="teamBuilderCard__label">
+            {translate("copy.choosePlayers")}
+          </div>
           <div className="teamBuilderCard__badge">
-            {model.newTeamSelectedProfiles.length} member
-            {model.newTeamSelectedProfiles.length === 1 ? "" : "s"}
+            {translate("copy.member", [model.newTeamSelectedProfiles.length])}
           </div>
         </div>
         <SearchableRosterPicker
@@ -30,19 +33,19 @@ export function TeamBuilderMembersStep() {
           listMaxHeight="184px"
           searchValue={model.newTeamSearch}
           onSearchChange={model.setNewTeamSearch}
-          searchPlaceholder="Search players..."
-          searchAriaLabel="Search saved players"
-          clearAriaLabel="Clear player search"
+          searchPlaceholder={translate("copy.searchPlayers")}
+          searchAriaLabel={translate("copy.searchSavedPlayers")}
+          clearAriaLabel={translate("copy.clearPlayerSearch")}
           emptyState={
             model.profiles.length > 0
-              ? "No matching saved players."
-              : "No saved players yet."
+              ? translate("copy.noMatchingSavedPlayers")
+              : translate("copy.noSavedPlayersYet")
           }
           createButtonLabel={
             model.creatingTeamPlayer &&
             model.creatingTeamPlayerForTeamId === null
               ? undefined
-              : "Add new player"
+              : translate("copy.addNewPlayer")
           }
           onCreateButtonClick={
             model.creatingTeamPlayer &&
@@ -125,7 +128,7 @@ export function TeamBuilderMembersStep() {
       <section className="teamBuilderCard teamBuilderCard--summary">
         <div className="teamBuilderSummary">
           <div className="teamBuilderSummary__copy">
-            <h4>Tactical Summary</h4>
+            <h4>{translate("copy.tacticalSummary")}</h4>
             <p>{model.newTeamSummary}</p>
           </div>
           <div

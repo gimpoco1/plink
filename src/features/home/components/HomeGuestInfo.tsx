@@ -1,3 +1,5 @@
+import { AppStoreBanner } from "../../../components/AppStoreBanner/AppStoreBanner";
+import { translate } from "../../../i18n/translate";
 import {
   BarChart3,
   BookOpen,
@@ -9,97 +11,114 @@ import {
 
 export function HomeGuestInfo() {
   return (
-    <section className="homeInfo" aria-label="About Plink">
+    <section className="homeInfo" aria-label={translate("copy.aboutPlink")}>
       <div className="homeInfo__panel">
         <div className="homeInfo__panelGlow" aria-hidden="true" />
         <div className="homeInfo__hero">
           <div className="homeInfo__intro">
-            <div className="homeInfo__eyebrow">How Plink helps</div>
+            <div className="homeInfo__eyebrow">
+              {translate("copy.howPlinkHelps")}
+            </div>
             <h2 className="homeInfo__title">
-              Built for real game nights, not disposable counters.
+              {translate("copy.builtForRealGameNightsNotDisposableCounters")}
             </h2>
             <p className="homeInfo__copy">
-              Reuse sessions, track teams, save progress, and check history
-              without starting from scratch every round.
+              {translate(
+                "copy.reuseSessionsTrackTeamsSaveProgressAndCheckHistoryWithoutStartingFrom",
+              )}
             </p>
           </div>
-          <aside className="homeInfo__spotlight" aria-label="Why Plink">
+          <aside
+            className="homeInfo__spotlight"
+            aria-label={translate("copy.whyPlink")}
+          >
             <div className="homeInfo__spotlightBadge">
               <Sparkles size={14} strokeWidth={2.4} aria-hidden="true" />
-              <span>Made for repeat play</span>
+              <span>{translate("copy.madeForRepeatPlay")}</span>
             </div>
             <div className="homeInfo__spotlightValue">
-              Set up once.
+              {translate("copy.setUpOnce")}
               <br />
-              Keep the good parts.
+              {translate("copy.keepTheGoodParts")}
             </div>
             <p className="homeInfo__spotlightCopy">
-              Reuse lineups and pick up where you left off.
+              {translate("copy.reuseLineupsAndPickUpWhereYouLeftOff")}
             </p>
           </aside>
         </div>
         <div className="homeInfo__features">
           <InfoFeature
             icon={<History size={18} strokeWidth={2.35} />}
-            title="Recurring sessions"
+            title={translate("copy.recurringSessions")}
           >
-            Reuse common setups and continue unfinished games.
+            {translate("copy.reuseCommonSetupsAndContinueUnfinishedGames")}
           </InfoFeature>
           <InfoFeature
             icon={<Cloud size={18} strokeWidth={2.35} />}
-            title="Guest mode or sync"
+            title={translate("copy.guestModeOrSync")}
           >
-            Start locally, or sign in later to sync across devices.
+            {translate("copy.startLocallyOrSignInLaterToSyncAcrossDevices")}
           </InfoFeature>
           <InfoFeature
             icon={<BarChart3 size={18} strokeWidth={2.35} />}
-            title="History that matters"
+            title={translate("copy.historyThatMatters")}
           >
-            Review wins, streaks, and past results after each match.
+            {translate("copy.reviewWinsStreaksAndPastResultsAfterEachMatch")}
           </InfoFeature>
         </div>
+        <AppStoreBanner />
+
         <div className="homeInfoGuides">
           <div className="homeInfoGuides__heading">
             <div>
-              <div className="homeInfo__eyebrow">Practical guides</div>
-              <h3>Make every game easier to run.</h3>
+              <div className="homeInfo__eyebrow">
+                {translate("copy.practicalGuides")}
+              </div>
+              <h3>{translate("copy.makeEveryGameEasierToRun")}</h3>
             </div>
-            <a href="/guides/index.html">View all guides</a>
+            <a href="/guides/index.html">{translate("copy.viewAllGuides")}</a>
           </div>
+
           <div className="homeInfoGuides__grid">
             <GuideLink
               href="/guides/scorekeeping-basics.html"
               icon={<BookOpen size={17} strokeWidth={2.3} />}
-              title="Scorekeeping basics"
+              title={translate("copy.scorekeepingBasics")}
             >
-              Pick clear rules, handle corrections, and finish with a result
-              everyone understands.
+              {translate(
+                "copy.pickClearRulesHandleCorrectionsAndFinishWithAResultEveryoneUnderstands",
+              )}
             </GuideLink>
             <GuideLink
               href="/guides/game-night.html"
               icon={<Sparkles size={17} strokeWidth={2.3} />}
-              title="Run a smoother game night"
+              title={translate("copy.runASmootherGameNight")}
             >
-              Prepare players, teams, timers, and repeat sessions without
-              slowing down play.
+              {translate(
+                "copy.preparePlayersTeamsTimersAndRepeatSessionsWithoutSlowingDownPlay",
+              )}
             </GuideLink>
             <GuideLink
               href="/guides/shared-scorekeeping.html"
               icon={<Users size={17} strokeWidth={2.3} />}
-              title="Share scorekeeping safely"
+              title={translate("copy.shareScorekeepingSafely")}
             >
-              Let several people update one game while keeping ownership and
-              changes clear.
+              {translate(
+                "copy.letSeveralPeopleUpdateOneGameWhileKeepingOwnershipAndChangesClear",
+              )}
             </GuideLink>
           </div>
         </div>
-        <div className="homeInfoLinks" aria-label="Helpful site links">
-          <a href="/guides/index.html">Guides</a>
-          <a href="/about.html">About</a>
-          <a href="/faq.html">FAQ</a>
-          <a href="/privacy.html">Privacy Policy</a>
-          <a href="/support.html">Support</a>
-          <a href="/terms.html">Terms of Use</a>
+        <div
+          className="homeInfoLinks"
+          aria-label={translate("copy.helpfulSiteLinks")}
+        >
+          <a href="/guides/index.html">{translate("copy.guides")}</a>
+          <a href="/about.html">{translate("copy.about")}</a>
+          <a href="/faq.html">{translate("copy.faq")}</a>
+          <a href="/privacy.html">{translate("copy.privacyPolicy")}</a>
+          <a href="/support.html">{translate("copy.support")}</a>
+          <a href="/terms.html">{translate("copy.termsOfUse")}</a>
         </div>
       </div>
     </section>
