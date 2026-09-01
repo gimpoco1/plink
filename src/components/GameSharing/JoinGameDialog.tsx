@@ -2,6 +2,7 @@ import { translate } from "../../i18n/translate";
 import { useRef, useState } from "react";
 import { AlertTriangle, Link } from "lucide-react";
 import "./GameSharing.css";
+import { INVITE_CODE_PATTERN } from "../../storage/gameInviteStorage";
 
 type Props = {
   onJoin: (code: string) => Promise<void>;
@@ -27,7 +28,7 @@ export function JoinGameDialog({ onJoin }: Props) {
   }
 
   async function submit() {
-    if (code.length !== 8 || loading) return;
+    if (!INVITE_CODE_PATTERN.test(code) || loading) return;
     setLoading(true);
     setError("");
     try {
@@ -73,9 +74,7 @@ export function JoinGameDialog({ onJoin }: Props) {
               <div className="dialog__eyebrow">
                 {translate("copy.sharedGame")}
               </div>
-              <div className="dialog__title">
-                {translate("copy.joinAGame")}
-              </div>
+              <div className="dialog__title">{translate("copy.joinAGame")}</div>
             </div>
             <button
               className="iconbtn"
@@ -104,7 +103,7 @@ export function JoinGameDialog({ onJoin }: Props) {
                 autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="AB12CD34"
+                placeholder="ABC12"
                 onChange={(event) => {
                   setCode(
                     event.target.value
@@ -117,7 +116,9 @@ export function JoinGameDialog({ onJoin }: Props) {
               />
             </div>
             <p className="gameSharingDialog__hint">
-              {translate("copy.yourAccountPlayerWillBeAddedToTheGameAutomatically")}
+              {translate(
+                "copy.yourAccountPlayerWillBeAddedToTheGameAutomatically",
+              )}
             </p>
             {error ? (
               <div
@@ -143,7 +144,7 @@ export function JoinGameDialog({ onJoin }: Props) {
             <button
               className="btn btn--primary"
               type="submit"
-              disabled={code.length !== 8 || loading}
+              disabled={!INVITE_CODE_PATTERN.test(code) || loading}
             >
               {loading ? translate("copy.joining") : translate("copy.joinGame")}
             </button>

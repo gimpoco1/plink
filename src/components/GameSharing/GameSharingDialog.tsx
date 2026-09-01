@@ -5,6 +5,7 @@ import { CollaboratorManagementControl } from "../CollaboratorManagementControl/
 import type { Game } from "../../types";
 import { supabase } from "../../lib/supabase";
 import {
+  INVITE_CODE_PATTERN,
   loadGameInviteCode,
   saveGameInviteCode,
 } from "../../storage/gameInviteStorage";
@@ -111,7 +112,10 @@ export function GameSharingDialog({
       },
       (payload) => {
         const nextCode = (payload.new as { code?: unknown }).code;
-        if (typeof nextCode !== "string" || !/^[A-F0-9]{8}$/.test(nextCode)) {
+        if (
+          typeof nextCode !== "string" ||
+          !INVITE_CODE_PATTERN.test(nextCode)
+        ) {
           return;
         }
         saveGameInviteCode(game.id, nextCode);
@@ -194,7 +198,9 @@ export function GameSharingDialog({
               <Link size={22} strokeWidth={2.3} />
             </span>
             <p>
-              {translate("copy.shareThisCodeWhenSomeoneJoinsTheirAccountPlayerIsAddedAnd")}
+              {translate(
+                "copy.shareThisCodeWhenSomeoneJoinsTheirAccountPlayerIsAddedAnd",
+              )}
             </p>
           </div>
 
@@ -255,7 +261,8 @@ export function GameSharingDialog({
 
         <div className="dialog__actions">
           <button className="btn btn--ghost" type="button" onClick={onClose}>
-            {translate("copy.done")}</button>
+            {translate("copy.done")}
+          </button>
           <button
             className="btn btn--primary"
             type="button"

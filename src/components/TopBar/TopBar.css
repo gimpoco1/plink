@@ -41,7 +41,7 @@
   justify-content: center;
   justify-self: center;
   min-width: 0;
-  max-width: min(42vw, 320px);
+  max-width: min(54vw, 420px);
   text-align: center;
 }
 
@@ -270,10 +270,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
 
+  width: 100%;
   max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.brand__meta::-webkit-scrollbar {
+  display: none;
 }
 
 .metaChip {
@@ -658,7 +665,7 @@
   }
 
   .topbar__center {
-    max-width: 40vw;
+    max-width: 50vw;
   }
 
   .topbar__actions {
@@ -670,7 +677,7 @@
   }
 
   .brand__title {
-    max-width: 40vw;
+    max-width: 50vw;
     font-size: 16px;
   }
 

@@ -1,4 +1,6 @@
 const GAME_INVITE_CODES_STORAGE_KEY = "plink.gameInviteCodes.v1";
+export const INVITE_CODE_PATTERN =
+  /^(?:[A-Z]{3}\d{2}|[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
 
 function loadInviteCodes(): Record<string, string> {
   try {
@@ -13,7 +15,7 @@ function loadInviteCodes(): Record<string, string> {
         ([gameId, code]) =>
           gameId.length > 0 &&
           typeof code === "string" &&
-          /^[A-F0-9]{8}$/.test(code),
+          INVITE_CODE_PATTERN.test(code),
       ),
     );
   } catch {
@@ -27,7 +29,7 @@ export function loadGameInviteCode(gameId: string) {
 
 export function saveGameInviteCode(gameId: string, code: string) {
   const normalizedCode = code.trim().toUpperCase();
-  if (!gameId || !/^[A-F0-9]{8}$/.test(normalizedCode)) return;
+  if (!gameId || !INVITE_CODE_PATTERN.test(normalizedCode)) return;
   try {
     window.localStorage.setItem(
       GAME_INVITE_CODES_STORAGE_KEY,
