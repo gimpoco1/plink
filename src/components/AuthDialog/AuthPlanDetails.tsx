@@ -202,8 +202,8 @@ export function AuthPlanDetails() {
         <>
           <div className="authDialog__planSupport">
             {isNativeIOS && subscriptionProvider === "stripe"
-              ? "Your Plink Pro plan is billed through the web."
-              : "Thanks for supporting Plink."}
+              ? translate("copy.yourPlinkProPlanIsBilledThroughTheWeb")
+              : translate("copy.thanksForSupportingPlink")}
           </div>
           {source === "subscription" ? (
             <div className="authDialog__planActions">

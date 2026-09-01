@@ -526,12 +526,17 @@ export function useAuthDialogModel(
     }
 
     function handleNativeAuthError(event: Event) {
-      const message =
+      const nativeMessage =
         event instanceof CustomEvent && typeof event.detail === "string"
           ? event.detail
-          : translate("copy.authenticationFailed");
+          : "";
       resetNativeOAuth();
-      setError(message);
+      setError(
+        getAuthErrorMessage(
+          nativeMessage,
+          translate("copy.authenticationFailed"),
+        ),
+      );
       setNotice(null);
       showDialog();
     }
@@ -711,17 +716,57 @@ export function useAuthDialogModel(
   }
 
   function getAuthErrorMessage(err: unknown, fallback: string) {
-    const message = err instanceof Error ? err.message : "";
+    const message =
+      err instanceof Error ? err.message : typeof err === "string" ? err : "";
+    const normalizedMessage = message.toLowerCase();
+    const code =
+      typeof err === "object" && err !== null && "code" in err
+        ? String((err as { code?: unknown }).code ?? "").toLowerCase()
+        : "";
     const status =
       typeof err === "object" && err !== null && "status" in err
         ? Number((err as { status?: unknown }).status)
         : null;
 
-    if (status === 429 || message.toLowerCase().includes("rate limit")) {
-      return "Too many auth emails were requested. Wait before trying again, or configure custom SMTP in Supabase for higher email limits.";
+    if (
+      status === 429 ||
+      code.includes("rate_limit") ||
+      normalizedMessage.includes("rate limit")
+    ) {
+      return translate("copy.tooManyAuthEmailsWereRequested");
     }
 
-    return message || fallback;
+    if (
+      code === "invalid_credentials" ||
+      normalizedMessage.includes("invalid login credentials")
+    ) {
+      return translate("copy.invalidEmailOrPassword");
+    }
+
+    if (
+      code === "email_not_confirmed" ||
+      normalizedMessage.includes("email not confirmed")
+    ) {
+      return translate("copy.confirmYourEmailBeforeSigningIn");
+    }
+
+    if (
+      code === "user_already_exists" ||
+      code === "user_already_registered" ||
+      normalizedMessage.includes("user already registered")
+    ) {
+      return translate("copy.anAccountWithThisEmailAlreadyExistsSignInInstead");
+    }
+
+    if (code === "weak_password") {
+      return translate("copy.enterAPasswordWithAtLeast6Characters");
+    }
+
+    if (code === "email_address_invalid") {
+      return translate("copy.enterAValidEmailAddress");
+    }
+
+    return fallback;
   }
 
   function openEmailApp() {
@@ -910,9 +955,8 @@ export function useAuthDialogModel(
       setRecoveryMode(false);
       setNotice(translate("copy.passwordUpdated"));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : translate("copy.couldNotUpdatePassword"),
-      );
+      console.error("Failed to update password", err);
+      setError(translate("copy.couldNotUpdatePassword"));
     } finally {
       setBusy(false);
     }
@@ -943,9 +987,8 @@ export function useAuthDialogModel(
       setEditingAccountPlayer(false);
       setNotice(translate("copy.accountPlayerUpdated"));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : translate("copy.couldNotUpdatePlayerName"),
-      );
+      console.error("Failed to update account player", err);
+      setError(translate("copy.couldNotUpdatePlayerName"));
     } finally {
       setBusy(false);
     }
@@ -965,7 +1008,8 @@ export function useAuthDialogModel(
         dialogRef.current.close();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : translate("copy.signOutFailed"));
+      console.error("Failed to sign out", err);
+      setError(translate("copy.signOutFailed"));
     } finally {
       setBusy(false);
     }
@@ -999,8 +1043,18 @@ export function useAuthDialogModel(
   }
 
   function getBillingErrorMessage(err: unknown, fallback: string) {
-    if (err instanceof Error && err.message) {
-      return err.message;
+    const message = err instanceof Error ? err.message.toLowerCase() : "";
+
+    if (message.includes("no stripe billing profile was found")) {
+      return translate("copy.noStripeBillingProfileWasFound");
+    }
+
+    if (message.includes("already has a session pass")) {
+      return translate("copy.thisAccountAlreadyHasASessionPass");
+    }
+
+    if (message.includes("supabase is not configured")) {
+      return translate("copy.supabaseIsNotConfiguredYet");
     }
 
     return fallback;
@@ -1117,11 +1171,16 @@ export function useAuthDialogModel(
           billingPeriod: selectedBillingPeriod,
           origin: window.location.origin,
         },
-        "Checkout is not available yet.",
+        translate("copy.checkoutIsNotAvailableYet"),
       );
       await openUrl(url);
     } catch (err) {
-      setError(getBillingErrorMessage(err, "Checkout is not available yet."));
+      setError(
+        getBillingErrorMessage(
+          err,
+          translate("copy.checkoutIsNotAvailableYet"),
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -1190,14 +1249,14 @@ export function useAuthDialogModel(
       const url = await requestBillingUrl(
         "create-session-pass-checkout",
         { origin: window.location.origin },
-        "Session Pass checkout is not available yet.",
+        translate("copy.sessionPassCheckoutIsNotAvailableYet"),
       );
       await openUrl(url);
     } catch (err) {
       setError(
         getBillingErrorMessage(
           err,
-          "Session Pass checkout is not available yet.",
+          translate("copy.sessionPassCheckoutIsNotAvailableYet"),
         ),
       );
     } finally {
@@ -1220,17 +1279,20 @@ export function useAuthDialogModel(
         const restoredBoth = result.active && result.sessionPassActive;
         showTransferToast(
           restoredBoth
-            ? "Your Plink Pro subscription and Session Pass were restored."
+            ? translate("copy.plinkProAndSessionPassWereRestored")
             : result.active
-              ? "Your Plink Pro purchase has been restored."
+              ? translate("copy.plinkProPurchaseWasRestored")
               : result.sessionPassActive
-                ? "Your Session Pass has been restored."
-                : "No restorable Plink purchases were found for this Apple Account.",
+                ? translate("copy.sessionPassWasRestored")
+                : translate("copy.noRestorablePlinkPurchasesWereFound"),
           result.active || result.sessionPassActive ? "success" : "default",
         );
       } catch (err) {
         showTransferToast(
-          getBillingErrorMessage(err, "Purchases could not be restored."),
+          getBillingErrorMessage(
+            err,
+            translate("copy.purchasesCouldNotBeRestored"),
+          ),
           "error",
         );
       } finally {
@@ -1282,7 +1344,7 @@ export function useAuthDialogModel(
       showTransferToast(
         getBillingErrorMessage(
           err,
-          "Subscription settings could not be opened.",
+          translate("copy.subscriptionSettingsCouldNotBeOpened"),
         ),
         "error",
       );
@@ -1313,7 +1375,7 @@ export function useAuthDialogModel(
         throw new Error(
           await getInvokeErrorMessage(
             invokeError,
-            "Your account could not be deleted.",
+            translate("copy.yourAccountCouldNotBeDeleted"),
           ),
         );
       }
@@ -1325,11 +1387,7 @@ export function useAuthDialogModel(
         dialogRef.current.close();
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Your account could not be deleted.",
-      );
+      setError(translate("copy.yourAccountCouldNotBeDeleted"));
     } finally {
       setBusy(false);
     }
@@ -1380,8 +1438,9 @@ export function useAuthDialogModel(
         "success",
       );
     } catch (err) {
+      console.error("Failed to import device data", err);
       showTransferToast(
-        err instanceof Error ? err.message : translate("copy.importFailed"),
+        translate("copy.importFailed"),
         "error",
       );
     } finally {
@@ -1422,8 +1481,9 @@ export function useAuthDialogModel(
         "success",
       );
     } catch (err) {
+      console.error("Failed to import backup file", err);
       showTransferToast(
-        err instanceof Error ? err.message : translate("copy.importFromFileFailed"),
+        translate("copy.importFromFileFailed"),
         "error",
       );
     } finally {
@@ -1447,8 +1507,9 @@ export function useAuthDialogModel(
     try {
       await onDownloadBackupFile(transferSelection);
     } catch (err) {
+      console.error("Failed to download backup file", err);
       showTransferToast(
-        err instanceof Error ? err.message : translate("copy.backupDownloadFailed"),
+        translate("copy.backupDownloadFailed"),
         "error",
       );
     } finally {
