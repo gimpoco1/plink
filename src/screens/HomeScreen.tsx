@@ -228,6 +228,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     ) : null}
                   </div>
                 </div>
+
                 <div className="quickSetupCard__action">
                   <span className="quickSetupCard__actionLabel">
                     {t("home.start")}

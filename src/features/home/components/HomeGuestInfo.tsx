@@ -1,3 +1,4 @@
+import { AppStoreBanner } from "../../../components/AppStoreBanner/AppStoreBanner";
 import { translate } from "../../../i18n/translate";
 import {
   BarChart3,
@@ -22,7 +23,9 @@ export function HomeGuestInfo() {
               {translate("copy.builtForRealGameNightsNotDisposableCounters")}
             </h2>
             <p className="homeInfo__copy">
-              {translate("copy.reuseSessionsTrackTeamsSaveProgressAndCheckHistoryWithoutStartingFrom")}
+              {translate(
+                "copy.reuseSessionsTrackTeamsSaveProgressAndCheckHistoryWithoutStartingFrom",
+              )}
             </p>
           </div>
           <aside
@@ -63,6 +66,8 @@ export function HomeGuestInfo() {
             {translate("copy.reviewWinsStreaksAndPastResultsAfterEachMatch")}
           </InfoFeature>
         </div>
+        <AppStoreBanner />
+
         <div className="homeInfoGuides">
           <div className="homeInfoGuides__heading">
             <div>
@@ -71,31 +76,36 @@ export function HomeGuestInfo() {
               </div>
               <h3>{translate("copy.makeEveryGameEasierToRun")}</h3>
             </div>
-            <a href="/guides/index.html">
-              {translate("copy.viewAllGuides")}
-            </a>
+            <a href="/guides/index.html">{translate("copy.viewAllGuides")}</a>
           </div>
+
           <div className="homeInfoGuides__grid">
             <GuideLink
               href="/guides/scorekeeping-basics.html"
               icon={<BookOpen size={17} strokeWidth={2.3} />}
               title={translate("copy.scorekeepingBasics")}
             >
-              {translate("copy.pickClearRulesHandleCorrectionsAndFinishWithAResultEveryoneUnderstands")}
+              {translate(
+                "copy.pickClearRulesHandleCorrectionsAndFinishWithAResultEveryoneUnderstands",
+              )}
             </GuideLink>
             <GuideLink
               href="/guides/game-night.html"
               icon={<Sparkles size={17} strokeWidth={2.3} />}
               title={translate("copy.runASmootherGameNight")}
             >
-              {translate("copy.preparePlayersTeamsTimersAndRepeatSessionsWithoutSlowingDownPlay")}
+              {translate(
+                "copy.preparePlayersTeamsTimersAndRepeatSessionsWithoutSlowingDownPlay",
+              )}
             </GuideLink>
             <GuideLink
               href="/guides/shared-scorekeeping.html"
               icon={<Users size={17} strokeWidth={2.3} />}
               title={translate("copy.shareScorekeepingSafely")}
             >
-              {translate("copy.letSeveralPeopleUpdateOneGameWhileKeepingOwnershipAndChangesClear")}
+              {translate(
+                "copy.letSeveralPeopleUpdateOneGameWhileKeepingOwnershipAndChangesClear",
+              )}
             </GuideLink>
           </div>
         </div>

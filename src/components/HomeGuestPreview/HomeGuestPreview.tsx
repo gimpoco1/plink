@@ -19,7 +19,9 @@ export function HomeGuestPreview({ onOpenAuth }: GuestPreviewProps) {
           <span>{translate("copy.guestMode")}</span>
         </div>
         <p className="guestBanner__copy">
-          {translate("copy.yourGamesAreOnlyAvailableOnThisDeviceRightNowSignIn")}
+          {translate(
+            "copy.yourGamesAreOnlyAvailableOnThisDeviceRightNowSignIn",
+          )}
         </p>
       </div>
       <div className="guestBanner__actions">

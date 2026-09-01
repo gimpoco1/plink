@@ -6,6 +6,7 @@ import { useAuthDialogContext } from "./AuthDialogContext";
 import { AuthPlanSection } from "./AuthPlanSection";
 import { AuthTransferSection } from "./AuthTransferSection";
 import { AuthAppSettings } from "./AuthAppSettings";
+import { AppStoreBanner } from "../AppStoreBanner/AppStoreBanner";
 
 export function AuthAccountPanel() {
   const {
@@ -29,6 +30,7 @@ export function AuthAccountPanel() {
         <AuthPlanSection />
       </div>
       <AuthAppSettings />
+      <AppStoreBanner className="appStoreBanner--dark" />
       <AuthTransferSection />
       <button
         className="btn btn--wide btn--dangerSolid authDialog__signOutBtn"
@@ -37,18 +39,20 @@ export function AuthAccountPanel() {
         disabled={busy}
       >
         <LogOut size={17} strokeWidth={2.3} aria-hidden="true" />
-        <span>{busy ? translate("copy.signingOut") : translate("copy.signOut")}</span>
+        <span>
+          {busy ? translate("copy.signingOut") : translate("copy.signOut")}
+        </span>
       </button>
       {confirmingAccountDeletion ? (
         <section className="authDialog__deleteAccount" role="alert">
           <div className="authDialog__deleteAccountCopy">
             <AlertTriangle size={18} strokeWidth={2.4} aria-hidden="true" />
             <div>
-              <strong>
-                {translate("copy.permanentlyDeleteThisAccount")}
-              </strong>
+              <strong>{translate("copy.permanentlyDeleteThisAccount")}</strong>
               <p>
-                {translate("copy.cloudSessionsPlayersTeamsAndAccountAccessWillBeRemovedWebSubscriptions")}
+                {translate(
+                  "copy.cloudSessionsPlayersTeamsAndAccountAccessWillBeRemovedWebSubscriptions",
+                )}
               </p>
             </div>
           </div>
@@ -67,7 +71,9 @@ export function AuthAccountPanel() {
               disabled={busy}
               onClick={() => void deleteAccount()}
             >
-              {busy ? translate("copy.deleting") : translate("copy.deletePermanently")}
+              {busy
+                ? translate("copy.deleting")
+                : translate("copy.deletePermanently")}
             </button>
           </div>
         </section>
