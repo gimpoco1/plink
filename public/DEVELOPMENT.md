@@ -476,6 +476,7 @@ Set Stripe secrets in Supabase:
 supabase secrets set STRIPE_SECRET_KEY=sk_...
 supabase secrets set STRIPE_PRICE_PRO_MONTHLY=price_...
 supabase secrets set STRIPE_PRICE_PRO_YEARLY=price_...
+supabase secrets set REFERRAL_COMMISSION_BPS=4000
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
@@ -677,12 +678,67 @@ Subscribe to:
 - `customer.subscription.created`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
+- `invoice.paid`
+- `charge.refunded`
+- `promotion_code.created`
+- `promotion_code.updated`
 
 After creating or recreating the webhook:
 
 1. copy the `whsec_...` signing secret
 2. run `supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...`
 3. redeploy `stripe-webhook`
+
+## Subscription referrals
+
+Stripe Checkout owns the referral-code entry field. Plink creates Checkout
+Sessions with `allow_promotion_codes=true` for every customer. Only Stripe
+Promotion Codes explicitly connected to a Plink account are treated as
+referrals; other promotion codes remain ordinary discounts.
+
+One-time setup:
+
+1. Set the default commission percentage in basis points:
+
+```bash
+supabase secrets set REFERRAL_COMMISSION_BPS=4000
+```
+
+2. Apply `20260901130000_subscription_referrals.sql`.
+3. Deploy `get-or-create-referral-code`, `create-checkout-session`, and
+   `stripe-webhook`.
+4. Add `promotion_code.created` and `promotion_code.updated` to the Stripe
+   webhook endpoint's selected events.
+5. Deploy the web client.
+
+To add a referrer:
+
+1. Create the percentage coupon and customer-facing Promotion Code in Stripe.
+2. On the Promotion Code, add this metadata entry:
+
+```text
+plink_referrer_user_id = <the referrer's Plink user UUID>
+```
+
+Stripe sends the created or updated Promotion Code to the webhook, which
+validates the Plink user, reads the percentage from the coupon, and creates the
+mapping automatically. The paid-invoice handler performs the same registration
+as a fallback before recording revenue, so a missed creation event cannot lose
+a valid referral.
+
+`REFERRAL_COMMISSION_BPS` is the default referrer revenue-share rate in basis
+points; `4000` means 40%. Plink never creates promotion codes for regular users;
+only configured collaborators receive a referral code. A new subscriber enters
+that code in Stripe Checkout. Successful subscription invoices create one
+idempotent row in `public.referral_commissions`, using invoice revenue after
+discounts and before tax. Commission entries are held for 30 days, and Stripe
+refunds reduce or reverse them. Non-referral Stripe promotion codes can still
+discount Checkout, but they do not create referral attribution or commission
+records.
+
+The ledger tracks what is owed but does not send payouts. Marking commissions
+as paid and transferring funds requires a separate reviewed payout workflow
+(for example, Stripe Connect after onboarding and tax/KYC checks).
 
 ## Billing Debugging
 

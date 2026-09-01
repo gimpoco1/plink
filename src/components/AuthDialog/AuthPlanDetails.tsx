@@ -171,7 +171,9 @@ export function AuthPlanDetails() {
                 disabled={busy}
                 onClick={restoreSubscription}
               >
-                {busy ? translate("copy.working") : translate("copy.restorePurchases")}
+                {busy
+                  ? translate("copy.working")
+                  : translate("copy.restorePurchases")}
               </button>
             ) : hasStripeBillingProfile ? (
               <button
@@ -191,7 +193,9 @@ export function AuthPlanDetails() {
           ) : null}
           {isNativeIOS ? (
             <p className="authDialog__planLegal">
-              {translate("copy.paymentIsChargedToYourAppleAccountTheSubscriptionRenewsAutomaticallyUnless")}{" "}
+              {translate(
+                "copy.paymentIsChargedToYourAppleAccountTheSubscriptionRenewsAutomaticallyUnless",
+              )}{" "}
               <a href="/terms.html">{translate("copy.terms")}</a> ·{" "}
               <a href="/privacy.html">{translate("copy.privacy")}</a>
             </p>

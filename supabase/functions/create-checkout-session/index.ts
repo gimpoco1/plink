@@ -56,11 +56,15 @@ Deno.serve(async (request) => {
         ? getRequiredEnv("STRIPE_PRICE_PRO_MONTHLY")
         : getRequiredEnv("STRIPE_PRICE_PRO_YEARLY");
     const admin = createAdminClient();
-    const { data: existingSubscription } = await admin
+    const { data: existingSubscription, error: existingSubscriptionError } =
+      await admin
       .from("subscriptions")
-      .select("customer_id,provider,plan,status")
+      .select(
+        "customer_id,provider,plan,status,subscription_id,apple_original_transaction_id",
+      )
       .eq("user_id", user.id)
       .maybeSingle();
+    if (existingSubscriptionError) throw existingSubscriptionError;
 
     if (
       existingSubscription?.plan === "pro" &&
