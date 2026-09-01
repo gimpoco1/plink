@@ -2,13 +2,11 @@ import { translate } from "../../i18n/translate";
 import { useRef, useState } from "react";
 import { AlertTriangle, Link } from "lucide-react";
 import "./GameSharing.css";
+import { INVITE_CODE_PATTERN } from "../../storage/gameInviteStorage";
 
 type Props = {
   onJoin: (code: string) => Promise<void>;
 };
-
-const INVITE_CODE_PATTERN =
-  /^(?:[A-Z]{3}\d{2}|[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
 
 function errorMessage(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
@@ -76,9 +74,7 @@ export function JoinGameDialog({ onJoin }: Props) {
               <div className="dialog__eyebrow">
                 {translate("copy.sharedGame")}
               </div>
-              <div className="dialog__title">
-                {translate("copy.joinAGame")}
-              </div>
+              <div className="dialog__title">{translate("copy.joinAGame")}</div>
             </div>
             <button
               className="iconbtn"
@@ -120,7 +116,9 @@ export function JoinGameDialog({ onJoin }: Props) {
               />
             </div>
             <p className="gameSharingDialog__hint">
-              {translate("copy.yourAccountPlayerWillBeAddedToTheGameAutomatically")}
+              {translate(
+                "copy.yourAccountPlayerWillBeAddedToTheGameAutomatically",
+              )}
             </p>
             {error ? (
               <div

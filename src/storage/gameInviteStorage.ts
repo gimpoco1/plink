@@ -1,5 +1,5 @@
 const GAME_INVITE_CODES_STORAGE_KEY = "plink.gameInviteCodes.v1";
-const INVITE_CODE_PATTERN =
+export const INVITE_CODE_PATTERN =
   /^(?:[A-Z]{3}\d{2}|[A-Z]{2}\d{2}|[A-F0-9]{8})$/;
 
 function loadInviteCodes(): Record<string, string> {
