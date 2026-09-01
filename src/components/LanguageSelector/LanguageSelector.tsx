@@ -111,6 +111,7 @@ export function LanguageSelector({
                     setOpen(false);
                     return;
                   }
+
                   if (variant === "settings") {
                     try {
                       window.sessionStorage.setItem(
@@ -121,8 +122,13 @@ export function LanguageSelector({
                       // Reload still applies the persisted language preference.
                     }
                   }
-                  setLanguage(option);
-                  window.location.reload();
+
+                  const didPersistPreference = setLanguage(option);
+                  setOpen(false);
+
+                  if (didPersistPreference) {
+                    window.location.reload();
+                  }
                 }}
               >
                 <span className="languageSelector__flag" aria-hidden="true">

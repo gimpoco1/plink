@@ -278,6 +278,7 @@
     "copy.proFeatures": "Pro features",
     "copy.proRequired": "Pro required",
     "copy.profileAndSettings": "Profile and settings",
+    "copy.resetPassword": "Reset password",
     "copy.appSettings": "App settings",
     "copy.profileAndAccount": "Profile and account",
     "copy.freePlanDescription": "Includes up to 12 owned sessions. Get up to 100 with a Session Pass or subscribe to Pro for unlimited sessions and more.",
@@ -922,7 +923,10 @@
     "copy.trendCharts": "Trend charts",
     "copy.gameFilters": "Game filters",
     "copy.unlockReports": "Unlock reports",
-    "copy.member": "member",
+    "copy.member": {
+      "one": "{0} member",
+      "other": "{0} members"
+    },
     "copy.trackedAcross": "tracked across",
     "copy.teamSessions": "team sessions.",
     "copy.sessions2": "sessions ·",
@@ -1230,6 +1234,7 @@
     "copy.proFeatures": "Funciones Pro",
     "copy.proRequired": "Requiere Pro",
     "copy.profileAndSettings": "Perfil y ajustes",
+    "copy.resetPassword": "Restablecer contraseña",
     "copy.appSettings": "Ajustes de la app",
     "copy.profileAndAccount": "Perfil y cuenta",
     "copy.freePlanDescription": "Incluye hasta 12 partidas propias. Obtén hasta 100 partidas con Session Pass o elige Pro para historial ilimitado y mucho más.",
@@ -1874,7 +1879,10 @@
     "copy.trendCharts": "Gráficos de tendencia",
     "copy.gameFilters": "Filtros de juego",
     "copy.unlockReports": "Desbloquear informes",
-    "copy.member": "miembro",
+    "copy.member": {
+      "one": "{0} miembro",
+      "other": "{0} miembros"
+    },
     "copy.trackedAcross": "seguido en",
     "copy.teamSessions": "partidas de equipo.",
     "copy.sessions2": "partidas ·",
@@ -2182,6 +2190,7 @@
     "copy.proFeatures": "Funzioni Pro",
     "copy.proRequired": "Serve Pro",
     "copy.profileAndSettings": "Profilo e impostazioni",
+    "copy.resetPassword": "Reimposta password",
     "copy.appSettings": "Impostazioni app",
     "copy.profileAndAccount": "Profilo e account",
     "copy.freePlanDescription": "Include 12 sessioni proprie. Ottieni fino a 100 sessioni con Session Pass o passa a Pro per sessioni illimitate e molto altro.",
@@ -2826,7 +2835,10 @@
     "copy.trendCharts": "Grafici tendenza",
     "copy.gameFilters": "Filtri partita",
     "copy.unlockReports": "Sblocca report",
-    "copy.member": "membro",
+    "copy.member": {
+      "one": "{0} membro",
+      "other": "{0} membri"
+    },
     "copy.trackedAcross": "monitorato in",
     "copy.teamSessions": "partite di squadra.",
     "copy.sessions2": "partite ·",

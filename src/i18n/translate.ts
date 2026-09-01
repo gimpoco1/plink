@@ -25,6 +25,11 @@ function getSupportedLanguage(locale: string | null): Language | null {
 export function getCurrentLanguage(): Language {
   if (typeof window === "undefined") return "en";
 
+  const activeDocumentLanguage = getSupportedLanguage(
+    document.documentElement.lang || null,
+  );
+  if (activeDocumentLanguage) return activeDocumentLanguage;
+
   try {
     const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
     const supportedStoredLanguage = getSupportedLanguage(storedLanguage);

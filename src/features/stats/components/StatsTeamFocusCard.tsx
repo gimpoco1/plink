@@ -27,9 +27,9 @@ export function StatsTeamFocusCard({
           <span className="statsEyebrow">{eyebrow}</span>
           <h3>{getDisplayName(report)}</h3>
           <p>
-            {memberProfiles.length} {translate("copy.member")}
-            {memberProfiles.length === 1 ? "" : "s"} {translate("copy.trackedAcross")}{" "}
-            {report.gamesPlayed} {translate("copy.teamSessions")}
+            {translate("copy.member", [memberProfiles.length])}{" "}
+            {translate("copy.trackedAcross")} {report.gamesPlayed}{" "}
+            {translate("copy.teamSessions")}
           </p>
         </div>
       </div>

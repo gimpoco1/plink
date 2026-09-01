@@ -57,7 +57,9 @@ export function AuthDialogView() {
               </div>
             ) : null}
             <div className="dialog__title">
-              {recoveryMode ? "Reset password" : translate("topbar.account")}
+              {recoveryMode
+                ? translate("copy.resetPassword")
+                : translate("topbar.account")}
             </div>
           </div>
           <button
@@ -94,8 +96,7 @@ export function AuthDialogView() {
           <div className="authDialog__panel">
             <p className="authDialog__text">
               {translate("copy.configure")} <code>VITE_SUPABASE_URL</code>{" "}
-              {translate("copy.and")}{" "}
-              <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>{" "}
+              {translate("copy.and")} <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>{" "}
               {translate("copy.enableLoginAndCloudSync")}
             </p>
           </div>

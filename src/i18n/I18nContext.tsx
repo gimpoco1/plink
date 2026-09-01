@@ -29,7 +29,7 @@ export const LANGUAGE_DIALOG_REOPEN_KEY = "plink:reopen-language-dialog";
 
 type I18nValue = {
   language: Language;
-  setLanguage: (language: Language) => void;
+  setLanguage: (language: Language) => boolean;
   t: (key: TranslationKey, values?: TranslationValues) => string;
 };
 
@@ -39,12 +39,17 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setActiveLanguage] = useState<Language>(getCurrentLanguage);
 
   const setLanguage = useCallback((nextLanguage: Language) => {
+    let persisted = false;
+
     try {
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+      persisted = true;
     } catch {
       // The selected language remains active for this session.
     }
+
     setActiveLanguage(nextLanguage);
+    return persisted;
   }, []);
 
   useEffect(() => {
