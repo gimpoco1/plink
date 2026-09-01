@@ -22,9 +22,7 @@ export function QuickScoreSettings({
       <h3 className="quickScoreSettings__title" id="quick-score-settings-title">
         {translate("copy.quickScoreButtons")}
       </h3>
-      <p>
-        {translate("copy.chooseTheTwoPointAmountsShownOnEveryPlayerCard")}
-      </p>
+      <p>{translate("copy.chooseTheTwoPointAmountsShownOnEveryPlayerCard")}</p>
       <div className="quickScoreSettings__fields">
         <label className="field">
           <span className="field__label">{translate("copy.smallStep")}</span>
@@ -169,7 +167,9 @@ export function TimerSettings({
               }`}
               onClick={() => onModeChange(option)}
             >
-              {option === "countdown" ? translate("copy.countdown") : "Stopwatch"}
+              {option === "countdown"
+                ? translate("copy.countdown")
+                : translate("copy.stopwatch")}{" "}
             </button>
           ))}
         </div>

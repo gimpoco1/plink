@@ -191,7 +191,9 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
       {isOpen ? (
         <div className="gameTimer__panel">
           <div className="gameTimer__mode">
-            {mode === "countdown" ? translate("copy.countdown") : "Stopwatch"}
+            {mode === "countdown"
+              ? translate("copy.countdown")
+              : translate("copy.stopwatch")}{" "}
           </div>
           <div className="gameTimer__quickAdjust">
             <button
@@ -223,7 +225,8 @@ export function GameTimer({ gameId, mode, durationSeconds }: Props) {
               type="button"
               onClick={reset}
             >
-              {translate("copy.reset")}</button>
+              {translate("copy.reset")}
+            </button>
           </div>
         </div>
       ) : null}

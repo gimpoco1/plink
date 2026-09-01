@@ -315,7 +315,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                         : closeWith("cancel")
                 }
               >
-                {options.cancelText ?? "Cancel"}
+                {options.cancelText ?? translate("copy.cancel")}{" "}
               </button>
             ) : null}
             {options.extraActionText ? (
@@ -350,7 +350,7 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 (isPlayerSelection && !selectedPlayerId)
               }
             >
-              {options.confirmText ?? "Confirm"}
+              {options.confirmText ?? translate("copy.confirm")}
             </button>
           </div>
         </form>
