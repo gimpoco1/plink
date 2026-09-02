@@ -40,7 +40,11 @@
 :root[data-theme="light"] .authDialog__settingsCard {
   border-color: var(--border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 252, 0.88)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.92),
+      rgba(247, 251, 252, 0.88)
+    ),
     var(--surface);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.82),
@@ -50,7 +54,11 @@
 :root[data-theme="light"] .authDialog__accountOverview {
   border-color: var(--border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(240, 246, 247, 0.9)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.94),
+      rgba(240, 246, 247, 0.9)
+    ),
     var(--surface);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.84),
@@ -117,7 +125,7 @@
 .authDialog__settingsRows > .authDialog__sharingPreference {
   margin-top: 8px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.065);
+  border-top: 1px solid var(--border);
 }
 
 .authDialog__settingsRows > .themeSelector {
@@ -174,7 +182,9 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: border-color 0.18s ease, background 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease;
 }
 
 .themeSelector__toggle::after {
@@ -185,7 +195,9 @@
   background: color-mix(in srgb, var(--text) 60%, var(--surface));
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
   transform: translateX(0);
-  transition: transform 0.18s ease, background 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease;
 }
 
 .themeSelector__toggle:checked {
@@ -649,7 +661,11 @@
   border-radius: 9999px;
   color: var(--accent);
   background:
-    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.24), rgb(var(--accent-rgb) / 0.08)),
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.24),
+      rgb(var(--accent-rgb) / 0.08)
+    ),
     rgba(255, 255, 255, 0.03);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
@@ -753,11 +769,46 @@
 }
 
 .authDialog__planOption--active {
-  border-color: rgb(var(--accent-rgb) / 0.34);
-  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.12) inset;
+  border-color: rgb(var(--accent-rgb) / 0.42);
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.18) inset,
+    0 10px 24px rgb(var(--accent-rgb) / 0.12);
   background:
-    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.1), transparent 110%),
-    rgba(255, 255, 255, 0.035);
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.12),
+      rgba(255, 255, 255, 0.04) 100%
+    ),
+    rgba(255, 255, 255, 0.045);
+}
+
+:root[data-theme="light"] .authDialog__planOption--active {
+  border-color: rgb(var(--accent-rgb) / 0.52);
+  background:
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.1),
+      rgba(255, 255, 255, 0.96) 100%
+    ),
+    rgba(20, 36, 40, 0.02);
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.22) inset,
+    0 12px 24px rgba(20, 36, 40, 0.08);
+}
+
+:root[data-theme="light"]
+  .authDialog__planOption--active
+  .authDialog__planOptionTop
+  strong,
+:root[data-theme="light"]
+  .authDialog__planOption--active
+  .authDialog__planOptionTop
+  span,
+:root[data-theme="light"]
+  .authDialog__planOption--active
+  .authDialog__planEquivalentValue
+  svg {
+  color: var(--accent-strong);
 }
 
 .authDialog__planOptionTop {
@@ -937,6 +988,7 @@
   justify-content: center;
   margin: 0;
   padding: 6px 0;
+  gap: 6px;
   color: var(--text-dim);
   font-size: 11px;
   font-weight: 700;
@@ -1638,7 +1690,11 @@
 :root[data-theme="light"] .authDialog__transfer {
   border-color: var(--border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 252, 0.88)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.92),
+      rgba(247, 251, 252, 0.88)
+    ),
     var(--surface);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.82),
@@ -1701,7 +1757,7 @@
 .authDialog__transferBlock {
   display: grid;
   gap: 10px;
-  padding: 16px 0;
+  padding: 6px 0;
 }
 
 .authDialog__transferBlock + .authDialog__transferBlock {
@@ -1727,6 +1783,35 @@
   display: grid;
   gap: 14px;
   padding-top: 2px;
+}
+
+.authDialog__deviceHelpText {
+  margin: 0 0 10px;
+  padding: 10px 12px 10px 12px;
+  border-left: 3px solid rgb(var(--accent-rgb) / 0.9);
+  border-radius: 5px 8px 8px 5px;
+  background: rgb(var(--accent-rgb) / 0.07);
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb) / 0.08);
+}
+
+.authDialog__deviceHelpTextIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgb(var(--accent-rgb) / 0.12);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
 }
 
 .authDialog__deviceGroup {
@@ -2345,7 +2430,11 @@
   border-radius: 16px;
   border: 1px solid rgb(var(--accent-rgb) / 0.22);
   background:
-    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.14), rgb(var(--accent-rgb) / 0.06)),
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.14),
+      rgb(var(--accent-rgb) / 0.06)
+    ),
     rgba(255, 255, 255, 0.04);
   color: var(--text);
   display: flex;
