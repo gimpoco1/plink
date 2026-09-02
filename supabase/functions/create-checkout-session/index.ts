@@ -56,11 +56,13 @@ Deno.serve(async (request) => {
         ? getRequiredEnv("STRIPE_PRICE_PRO_MONTHLY")
         : getRequiredEnv("STRIPE_PRICE_PRO_YEARLY");
     const admin = createAdminClient();
-    const { data: existingSubscription } = await admin
-      .from("subscriptions")
-      .select("customer_id,provider,plan,status")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { data: existingSubscription, error: existingSubscriptionError } =
+      await admin
+        .from("subscriptions")
+        .select("customer_id,provider,plan,status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+    if (existingSubscriptionError) throw existingSubscriptionError;
 
     if (
       existingSubscription?.plan === "pro" &&
@@ -110,7 +112,7 @@ Deno.serve(async (request) => {
       client_reference_id: user.id,
       customer:
         existingSubscription?.provider === "stripe"
-          ? existingSubscription.customer_id ?? undefined
+          ? (existingSubscription.customer_id ?? undefined)
           : undefined,
       customer_email:
         existingSubscription?.provider === "stripe" &&
@@ -137,7 +139,9 @@ Deno.serve(async (request) => {
     return jsonResponse({ url: session.url });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Failed to create checkout session.";
+      error instanceof Error
+        ? error.message
+        : "Failed to create checkout session.";
     return jsonResponse({ error: message }, { status: 400 });
   }
 });

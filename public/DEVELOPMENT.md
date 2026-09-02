@@ -476,6 +476,7 @@ Set Stripe secrets in Supabase:
 supabase secrets set STRIPE_SECRET_KEY=sk_...
 supabase secrets set STRIPE_PRICE_PRO_MONTHLY=price_...
 supabase secrets set STRIPE_PRICE_PRO_YEARLY=price_...
+supabase secrets set REFERRAL_COMMISSION_BPS=4000
 supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
@@ -630,6 +631,73 @@ configuration files create a local StoreKit environment that is useful for UI
 testing, but those local transactions are not available to the App Store
 Server API and therefore cannot unlock server-backed Pro access.
 
+### Apple referral offer codes
+
+Users enter the same public referral code in Plink on every platform. On iOS,
+Plink resolves that code and the selected billing period to a plan-specific
+Apple custom offer code, then opens Apple's redemption flow. The internal
+monthly and yearly Apple codes do not need to be shared with users.
+
+For each public referral code:
+
+1. Create one offer under the monthly subscription and one under the yearly
+   subscription in App Store Connect.
+2. Use stable, unique reference names. Apple returns the reference name as the
+   StoreKit `offerIdentifier`, which Plink uses for attribution.
+3. Select all intended customer eligibility groups before confirming the offer.
+   Apple offers cannot be edited after creation.
+4. Create a unique custom code under each offer and copy each production
+   redemption URL.
+5. Apply `20260902120000_apple_subscription_referrals.sql` and deploy
+   `get-apple-referral-offer`, `sync-apple-subscription`, and
+   `apple-subscription-webhook`.
+6. Register the plan mappings as an explicit maintenance operation. Do not put
+   collaborator-specific UUIDs, codes, or URLs in schema migrations:
+
+```sql
+insert into public.apple_referral_offers (
+  referral_code_id,
+  apple_product_id,
+  billing_period,
+  apple_offer_reference_name,
+  apple_custom_code,
+  redemption_url
+)
+select
+  referral_codes.id,
+  values_to_insert.apple_product_id,
+  values_to_insert.billing_period,
+  values_to_insert.offer_name,
+  values_to_insert.custom_code,
+  values_to_insert.redemption_url
+from public.referral_codes
+cross join (values
+  ('com.plinkscore.app.pro.monthly', 'monthly', '<MONTHLY_REFERENCE_NAME>', '<MONTHLY_CUSTOM_CODE>', '<MONTHLY_REDEMPTION_URL>'),
+  ('com.plinkscore.app.pro.yearly', 'yearly', '<YEARLY_REFERENCE_NAME>', '<YEARLY_CUSTOM_CODE>', '<YEARLY_REDEMPTION_URL>')
+) as values_to_insert(
+  apple_product_id,
+  billing_period,
+  offer_name,
+  custom_code,
+  redemption_url
+)
+where referral_codes.code = '<PUBLIC_REFERRAL_CODE>'
+on conflict (referral_code_id, apple_product_id) do update
+set billing_period = excluded.billing_period,
+    apple_offer_reference_name = excluded.apple_offer_reference_name,
+    apple_custom_code = excluded.apple_custom_code,
+    redemption_url = excluded.redemption_url,
+    active = true,
+    updated_at = timezone('utc', now());
+```
+
+Opening an Apple offer creates a one-hour redemption intent for the signed-in
+Plink account. After Apple verifies the transaction, Plink stores one unified
+referral attribution and an idempotent row in
+`public.apple_referral_transactions`. Customer price and the 40% commission are
+stored in Apple's milliunits. Reconcile month-end payouts with App Store Connect
+financial/subscriber reports before marking ledger rows as paid.
+
 ### Apple purchase troubleshooting
 
 - **Connecting to App Store never changes:** verify product IDs, agreements,
@@ -677,12 +745,67 @@ Subscribe to:
 - `customer.subscription.created`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
+- `invoice.paid`
+- `charge.refunded`
+- `promotion_code.created`
+- `promotion_code.updated`
 
 After creating or recreating the webhook:
 
 1. copy the `whsec_...` signing secret
 2. run `supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...`
 3. redeploy `stripe-webhook`
+
+## Subscription referrals
+
+Stripe Checkout owns the referral-code entry field. Plink creates Checkout
+Sessions with `allow_promotion_codes=true` for every customer. Only Stripe
+Promotion Codes explicitly connected to a Plink account are treated as
+referrals; other promotion codes remain ordinary discounts.
+
+One-time setup:
+
+1. Set the default commission percentage in basis points:
+
+```bash
+supabase secrets set REFERRAL_COMMISSION_BPS=4000
+```
+
+2. Apply `20260901130000_subscription_referrals.sql`.
+3. Deploy `get-or-create-referral-code`, `create-checkout-session`, and
+   `stripe-webhook`.
+4. Add `promotion_code.created` and `promotion_code.updated` to the Stripe
+   webhook endpoint's selected events.
+5. Deploy the web client.
+
+To add a referrer:
+
+1. Create the percentage coupon and customer-facing Promotion Code in Stripe.
+2. On the Promotion Code, add this metadata entry:
+
+```text
+plink_referrer_user_id = <the referrer's Plink user UUID>
+```
+
+Stripe sends the created or updated Promotion Code to the webhook, which
+validates the Plink user, reads the percentage from the coupon, and creates the
+mapping automatically. The paid-invoice handler performs the same registration
+as a fallback before recording revenue, so a missed creation event cannot lose
+a valid referral.
+
+`REFERRAL_COMMISSION_BPS` is the default referrer revenue-share rate in basis
+points; `4000` means 40%. Plink never creates promotion codes for regular users;
+only configured collaborators receive a referral code. A new subscriber enters
+that code in Stripe Checkout. Successful subscription invoices create one
+idempotent row in `public.referral_commissions`, using invoice revenue after
+discounts and before tax. Commission entries are held for 30 days, and Stripe
+refunds reduce or reverse them. Non-referral Stripe promotion codes can still
+discount Checkout, but they do not create referral attribution or commission
+records.
+
+The ledger tracks what is owed but does not send payouts. Marking commissions
+as paid and transferring funds requires a separate reviewed payout workflow
+(for example, Stripe Connect after onboarding and tax/KYC checks).
 
 ## Billing Debugging
 
