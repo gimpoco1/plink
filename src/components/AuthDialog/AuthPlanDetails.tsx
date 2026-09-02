@@ -232,7 +232,12 @@ export function AuthPlanDetails() {
                 </form>
               ) : null}
             </div>
-          ) : null}
+          ) : (
+            <p className="authDialog__webPromoNotice">
+              <Tag size={14} strokeWidth={2.2} aria-hidden="true" />
+              <span>{translate("copy.promoCodesCanBeEnteredAtCheckout")}</span>
+            </p>
+          )}
           <div className="authDialog__planActions">
             <button
               className="btn btn--primary btn--wide"
