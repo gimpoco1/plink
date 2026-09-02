@@ -16,10 +16,13 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#0b1015" />
-    <script>
+    <script type="module">
+      // This must match the key exported by src/theme/ThemeContext.tsx.
+      import { THEME_STORAGE_KEY } from "/src/theme/ThemeContext.tsx";
+
       const getStoredTheme = () => {
         try {
-          return window.localStorage.getItem("plink:theme:v1") === "light"
+          return window.localStorage.getItem(THEME_STORAGE_KEY) === "light"
             ? "light"
             : "dark";
         } catch {
