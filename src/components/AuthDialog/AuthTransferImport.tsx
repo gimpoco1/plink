@@ -1,5 +1,5 @@
 import { translate } from "../../i18n/translate";
-import { ChevronDown, FileUp, Plus } from "lucide-react";
+import { ChevronDown, FileUp, Info, Plus } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { formatPlayerName, getInitials } from "../../utils/text";
 import { useAuthDialogContext } from "./AuthDialogContext";
@@ -29,6 +29,16 @@ export function AuthTransferImport() {
   } = useAuthDialogContext();
   return (
     <div className="authDialog__transferBlock">
+      <div className="authDialog__deviceHelpText">
+        <span className="authDialog__deviceHelpTextIcon" aria-hidden="true">
+          <Info size={15} strokeWidth={2.5} />
+        </span>
+        <span>
+          {translate(
+            "copy.deviceSessionsAreSavedOnThisPhoneUntilYouAddThemToYourAccount",
+          )}
+        </span>
+      </div>
       <div className="authDialog__transferTitle">
         {translate("copy.addToAccount")}
       </div>
@@ -70,7 +80,9 @@ export function AuthTransferImport() {
                       setLocalSessionSearch(event.target.value)
                     }
                     placeholder={translate("copy.searchSessionsOrPlayers")}
-                    aria-label={translate("copy.searchSessionsSavedOnThisDevice")}
+                    aria-label={translate(
+                      "copy.searchSessionsSavedOnThisDevice",
+                    )}
                   />
 
                   {filteredLocalGames.length >= 2 ? (
@@ -155,10 +167,16 @@ export function AuthTransferImport() {
                   <span className="authDialog__actionIcon" aria-hidden="true">
                     <Plus size={16} strokeWidth={2.4} />
                   </span>
-                  <span>{busy ? translate("copy.working") : translate("copy.addSelectedToAccount")}</span>
+                  <span>
+                    {busy
+                      ? translate("copy.working")
+                      : translate("copy.addSelectedToAccount")}
+                  </span>
                 </button>
                 <p className="authDialog__deviceActionNote">
-                  {translate("copy.addedSessionsMoveToYourAccountAndAreRemovedFromThisDevice")}
+                  {translate(
+                    "copy.addedSessionsMoveToYourAccountAndAreRemovedFromThisDevice",
+                  )}
                 </p>
               </div>
             </div>
@@ -233,10 +251,16 @@ export function AuthTransferImport() {
                   <span className="authDialog__actionIcon" aria-hidden="true">
                     <Plus size={16} strokeWidth={2.4} />
                   </span>
-                  <span>{busy ? translate("copy.working") : translate("copy.addSelectedToAccount")}</span>
+                  <span>
+                    {busy
+                      ? translate("copy.working")
+                      : translate("copy.addSelectedToAccount")}
+                  </span>
                 </button>
                 <p className="authDialog__deviceActionNote">
-                  {translate("copy.addedPlayersMoveToYourAccountAndAreRemovedFromThisDevice")}
+                  {translate(
+                    "copy.addedPlayersMoveToYourAccountAndAreRemovedFromThisDevice",
+                  )}
                 </p>
               </div>
             </div>
