@@ -11,6 +11,7 @@ import {
   isNativeApp,
 } from "../../../lib/nativePlatform";
 import { supabase } from "../../../lib/supabase";
+import { useTheme, type Theme } from "../../../theme/ThemeContext";
 
 const handledAuthCallbackUrls = new Set<string>();
 
@@ -102,9 +103,15 @@ async function handleAuthCallback(event: URLOpenListenerEvent) {
   await closeAuthBrowser();
 }
 
-async function configureNativeStatusBar(forceWebViewResize = false) {
-  await StatusBar.setStyle({ style: Style.Dark });
-  await StatusBar.setBackgroundColor({ color: "#0b1015" });
+async function configureNativeStatusBar(
+  theme: Theme,
+  forceWebViewResize = false,
+) {
+  const statusBarStyle = theme === "light" ? Style.Light : Style.Dark;
+  const statusBarBackground = theme === "light" ? "#f3f5f1" : "#0b1015";
+
+  await StatusBar.setStyle({ style: statusBarStyle });
+  await StatusBar.setBackgroundColor({ color: statusBarBackground });
 
   // A full-screen SFSafariViewController can reset the WKWebView frame when it
   // is dismissed while the StatusBar plugin still believes overlay is off.
@@ -117,11 +124,13 @@ async function configureNativeStatusBar(forceWebViewResize = false) {
 }
 
 export function useNativeAppLifecycle() {
+  const { theme } = useTheme();
+
   useEffect(() => {
     if (!isNativeApp()) return;
 
     document.documentElement.classList.add("is-native-app");
-    void configureNativeStatusBar();
+    void configureNativeStatusBar(theme);
 
     let disposed = false;
     let statusBarRestoreTimeout: number | undefined;
@@ -132,9 +141,9 @@ export function useNativeAppLifecycle() {
     function repairLayoutAfterBrowserDismissal() {
       if (disposed) return;
       window.clearTimeout(statusBarRestoreTimeout);
-      void configureNativeStatusBar(true);
+      void configureNativeStatusBar(theme, true);
       statusBarRestoreTimeout = window.setTimeout(() => {
-        if (!disposed) void configureNativeStatusBar(true);
+        if (!disposed) void configureNativeStatusBar(theme, true);
       }, 150);
     }
 
@@ -180,5 +189,5 @@ export function useNativeAppLifecycle() {
         handles.forEach((handle) => void handle.remove());
       });
     };
-  }, []);
+  }, [theme]);
 }

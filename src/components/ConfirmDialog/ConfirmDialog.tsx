@@ -101,8 +101,10 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
         cancelText: next.cancelText ?? "Cancel",
         hideCancelAction: next.hideCancelAction ?? false,
         extraActionText: next.extraActionText ?? "",
+        extraActionIcon: next.extraActionIcon,
         extraActionDescription: next.extraActionDescription ?? "",
         tone: next.tone ?? "default",
+        confirmIcon: next.confirmIcon,
         eyebrow: resolveConfirmEyebrow(next),
         highlights: next.highlights ?? [],
         details: next.details ?? [],
@@ -325,7 +327,14 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 onClick={() => closeWith("extra")}
               >
                 <span className="dialog__actionCopy">
-                  <span>{options.extraActionText}</span>
+                  <span className="dialog__actionLabelWrap">
+                    {options.extraActionIcon ? (
+                      <span className="dialog__actionIcon" aria-hidden="true">
+                        {options.extraActionIcon}
+                      </span>
+                    ) : null}
+                    <span>{options.extraActionText}</span>
+                  </span>
                   {options.extraActionDescription ? (
                     <span className="dialog__actionDescription">
                       {options.extraActionDescription}
@@ -350,7 +359,14 @@ export const ConfirmDialog = forwardRef<ConfirmDialogHandle>(
                 (isPlayerSelection && !selectedPlayerId)
               }
             >
-              {options.confirmText ?? translate("copy.confirm")}
+              <span className="dialog__actionLabelWrap">
+                {options.confirmIcon ? (
+                  <span className="dialog__actionIcon" aria-hidden="true">
+                    {options.confirmIcon}
+                  </span>
+                ) : null}
+                <span>{options.confirmText ?? translate("copy.confirm")}</span>
+              </span>
             </button>
           </div>
         </form>
