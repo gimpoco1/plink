@@ -602,7 +602,7 @@ export function useStatsScreenModel(props: StatsScreenProps) {
               label: translate("copy.wins"),
               primaryValue: primaryReport.wins,
               secondaryValue: compareReport?.wins,
-              outcomeFill: "#d9ff4f",
+              outcomeFill: "var(--accent)",
             },
             {
               label: translate("copy.losses"),

@@ -31,15 +31,15 @@
   display: grid;
   gap: 10px;
   padding: 14px;
-  border: 1px solid rgba(216, 255, 79, 0.18);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   border-radius: 20px;
   background:
     radial-gradient(
       circle at top right,
-      rgba(216, 255, 79, 0.16),
+      rgb(var(--accent-rgb) / 0.16),
       transparent 34%
     ),
-    linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent 120%),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.08), transparent 120%),
     rgba(255, 255, 255, 0.03);
 }
 
@@ -61,10 +61,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(216, 255, 79, 0.14);
+  background: rgb(var(--accent-rgb) / 0.14);
   color: var(--accent);
   font-size: 14px;
-  box-shadow: inset 0 0 0 1px rgba(216, 255, 79, 0.18);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.18);
 }
 
 .managePlayersDialog__heroCopy {
@@ -346,7 +346,7 @@
   border-color: var(--accent);
   box-shadow:
     inset 0 0 0 1px rgba(17, 24, 10, 0.12),
-    0 0 0 2px rgba(216, 255, 79, 0.2);
+    0 0 0 2px rgb(var(--accent-rgb) / 0.2);
 }
 
 .managePlayersDialog__invitedState--blocked {
@@ -372,9 +372,9 @@
   gap: 8px;
   margin-top: 8px;
   padding: 10px 11px;
-  border: 1px solid rgba(216, 255, 79, 0.18);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   border-radius: 12px;
-  background: rgba(216, 255, 79, 0.07);
+  background: rgb(var(--accent-rgb) / 0.07);
   color: rgba(217, 228, 235, 0.82);
   font-size: 12px;
   font-weight: 650;
@@ -431,9 +431,9 @@
   min-width: 26px;
   height: 26px;
   padding: 0 9px;
-  border: 1px solid rgba(216, 255, 79, 0.18);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   border-radius: 999px;
-  background: rgba(216, 255, 79, 0.1);
+  background: rgb(var(--accent-rgb) / 0.1);
   color: var(--accent);
   display: inline-flex;
   align-items: center;
@@ -851,8 +851,8 @@
 }
 
 .managePlayersDialog__teamChip--active {
-  border-color: rgba(216, 255, 79, 0.28);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.28);
+  background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent);
 }
 
@@ -913,9 +913,9 @@
   justify-content: center;
   gap: 4px;
   padding: 0 7px;
-  border: 1px solid rgba(216, 255, 79, 0.22);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
   border-radius: 8px;
-  background: rgba(216, 255, 79, 0.08);
+  background: rgb(var(--accent-rgb) / 0.08);
   color: var(--accent);
   font: inherit;
   font-size: 9px;
@@ -927,8 +927,8 @@
 .managePlayersDialog__mergeFooter {
   min-width: 0;
   padding: 7px 9px 8px;
-  border-top: 1px solid rgba(216, 255, 79, 0.14);
-  background: rgba(216, 255, 79, 0.045);
+  border-top: 1px solid rgb(var(--accent-rgb) / 0.14);
+  background: rgb(var(--accent-rgb) / 0.045);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -958,19 +958,19 @@
 }
 
 .managePlayersDialog__mergeBtn:hover {
-  border-color: rgba(216, 255, 79, 0.38);
-  background: rgba(216, 255, 79, 0.13);
+  border-color: rgb(var(--accent-rgb) / 0.38);
+  background: rgb(var(--accent-rgb) / 0.13);
 }
 
 .managePlayersDialog__actionBtn--save {
-  border-color: rgba(216, 255, 79, 0.46);
+  border-color: rgb(var(--accent-rgb) / 0.46);
   background: var(--accent);
   color: var(--accent-ink);
 }
 
 .managePlayersDialog__actionBtn--save:hover:not(:disabled) {
-  border-color: rgba(216, 255, 79, 0.72);
-  background: #e2ff78;
+  border-color: rgb(var(--accent-rgb) / 0.72);
+  background: var(--accent-strong);
 }
 
 .managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued {
@@ -979,14 +979,14 @@
   color: var(--accent-ink);
   box-shadow:
     inset 0 0 0 1px rgba(17, 24, 10, 0.12),
-    0 0 0 2px rgba(216, 255, 79, 0.2);
+    0 0 0 2px rgb(var(--accent-rgb) / 0.2);
 }
 
 .managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued:hover:not(
     :disabled
   ),
 .managePlayersDialog__actionBtn.managePlayersDialog__actionBtn--queued:active {
-  border-color: rgba(216, 255, 79, 0.86);
+  border-color: rgb(var(--accent-rgb) / 0.86);
   background: var(--accent);
   color: var(--accent-ink);
 }
@@ -1195,6 +1195,147 @@
     var(--ds-color-secondary);
   color: var(--ds-color-on-secondary);
   box-shadow: 0 14px 30px rgba(122, 208, 255, 0.18);
+}
+
+:root[data-theme="light"] .managePlayersDialog__card,
+:root[data-theme="light"] .managePlayersDialog__teamCard {
+  border-color: rgba(20, 36, 40, 0.18);
+  background: var(--ds-color-surface-container-low);
+  box-shadow: 0 8px 20px rgba(28, 49, 56, 0.08);
+}
+
+:root[data-theme="light"] .managePlayersDialog__card--selectable:hover {
+  border-color: rgba(20, 36, 40, 0.3);
+  background: var(--ds-color-surface-container);
+}
+
+:root[data-theme="light"] .managePlayersDialog__name,
+:root[data-theme="light"] .managePlayersDialog__teamName {
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .managePlayersDialog__meta,
+:root[data-theme="light"] .managePlayersDialog__teamMeta {
+  color: var(--ds-color-on-surface-variant);
+}
+
+:root[data-theme="light"] .managePlayersDialog__meta--linked {
+  color: var(--ds-color-primary);
+}
+
+:root[data-theme="light"] .managePlayersDialog__countChip {
+  border-color: rgb(var(--accent-rgb) / 0.34);
+  background: rgb(var(--accent-rgb) / 0.14);
+  color: var(--ds-color-primary);
+}
+
+:root[data-theme="light"] .managePlayersDialog__actionBtn--edit,
+:root[data-theme="light"] .managePlayersDialog__actionBtn--cancel {
+  border-color: rgba(20, 36, 40, 0.24);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .managePlayersDialog__actionBtn--danger {
+  border-color: rgba(179, 38, 30, 0.32);
+  background: var(--ds-color-error-container);
+  color: var(--ds-color-error);
+}
+
+:root[data-theme="light"] .managePlayersDialog__actionBtn--add {
+  border-color: rgba(0, 105, 135, 0.32);
+  background: var(--ds-color-secondary-container);
+  color: var(--ds-color-on-secondary-container);
+}
+
+:root[data-theme="light"] .managePlayersDialog__queueChip,
+:root[data-theme="light"] .managePlayersDialog__teamMemberOverflow,
+:root[data-theme="light"] .managePlayersDialog__inlineAction {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .managePlayersDialog__avatar {
+  box-shadow: 0 8px 16px rgba(28, 49, 56, 0.16);
+}
+
+:root[data-theme="light"] .managePlayersDialog__savedPicker.rosterPicker--dark {
+  --roster-picker-ink: var(--ds-color-on-surface);
+  --roster-picker-placeholder: var(--ds-color-on-surface-variant);
+  --roster-picker-surface: var(--ds-color-surface-container-low);
+  --roster-picker-surface-strong: var(--ds-color-surface-container-low);
+  --roster-picker-border: rgba(20, 36, 40, 0.2);
+  --roster-picker-clear-bg: var(--ds-color-surface-container-high);
+  --roster-picker-clear-ink: var(--ds-color-on-surface-variant);
+  --roster-picker-scrollbar: rgba(20, 36, 40, 0.3);
+  --roster-picker-empty: var(--ds-color-on-surface-variant);
+  --roster-picker-create-bg: var(--ds-color-surface-bright);
+  --roster-picker-create-border: rgba(20, 36, 40, 0.22);
+  --roster-picker-create-ink: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .managePlayersDialog__savedPicker .rosterPicker__createBtn--dark {
+  border-color: rgba(20, 36, 40, 0.22);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .managePlayersDialog__invitedOption {
+  border-color: rgba(20, 36, 40, 0.18);
+  background: var(--ds-color-surface-container-low);
+}
+
+:root[data-theme="light"] .managePlayersDialog__invitedBadge {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: var(--ds-color-surface-container-high);
+  color: var(--ds-color-on-surface-variant);
+}
+
+:root[data-theme="light"] .managePlayersDialog__invitedState {
+  border-color: rgba(20, 36, 40, 0.22);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .managePlayersDialog__invitedState--selected {
+  border-color: var(--ds-color-primary);
+  background: var(--ds-color-primary);
+  color: var(--ds-color-on-primary);
+}
+
+:root[data-theme="light"] .managePlayersDialog__invitedState--blocked {
+  background: var(--ds-color-surface-container-high);
+  color: var(--ds-color-on-surface-variant);
+}
+
+:root[data-theme="light"] .managePlayersDialog__selectionNotice {
+  border-color: rgb(var(--accent-rgb) / 0.28);
+  background: rgb(var(--accent-rgb) / 0.1);
+  color: var(--ds-color-on-surface-variant);
+}
+
+:root[data-theme="light"] .managePlayersDialog__selectionNotice--blocked {
+  border-color: rgba(20, 36, 40, 0.18);
+  background: var(--ds-color-surface-container-low);
+}
+
+:root[data-theme="light"] .managePlayersDialog .newPlayerComposer__inputShell {
+  border-color: rgba(20, 36, 40, 0.22);
+  background: var(--ds-color-surface-bright);
+}
+
+:root[data-theme="light"] .managePlayersDialog .newPlayerComposer__input.input {
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .managePlayersDialog .newPlayerComposer__input.input::placeholder {
+  color: var(--ds-color-on-surface-variant);
+  opacity: 0.72;
+}
+
+:root[data-theme="light"] .managePlayersDialog .newPlayerComposer__footer::before {
+  background: rgba(20, 36, 40, 0.14);
 }
 
 @media (max-width: 640px) {

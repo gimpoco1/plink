@@ -33,7 +33,10 @@ export function NewGamePanel() {
         whileHover={
           reduceMotion || open
             ? undefined
-            : { y: -1, boxShadow: "0 14px 32px rgba(216, 255, 79, 0.18)" }
+            : {
+                y: -1,
+                boxShadow: "0 14px 32px rgb(var(--accent-rgb) / 0.18)",
+              }
         }
       >
         <motion.span

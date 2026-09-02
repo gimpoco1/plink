@@ -85,7 +85,7 @@ export function CompareBarTooltip({
         className="statsTooltip__metric"
         style={
           {
-            "--metric-color": suffix === "%" ? "#7ad0ff" : "#d9ff4f",
+            "--metric-color": suffix === "%" ? "#7ad0ff" : "var(--accent)",
           } as CSSProperties
         }
       >

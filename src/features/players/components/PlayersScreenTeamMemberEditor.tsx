@@ -10,7 +10,11 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
   const model = usePlayersScreenContext();
   const isAddingPlayers = model.expandedTeamAddPlayers.has(team.id);
   return (
-    <section className="teamBuilderCard teamCard__builderSection teamCard__builderSection--flat">
+    <section
+      className={`teamBuilderCard teamCard__builderSection teamCard__builderSection--flat${
+        isAddingPlayers ? " teamCard__builderSection--expanded" : ""
+      }`}
+    >
       <div className="teamBuilderCard__head">
         <div className="teamBuilderCard__label">
           {translate("copy.teamPlayers")}

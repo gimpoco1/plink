@@ -128,8 +128,8 @@
 }
 
 .sessionsFilterChip--active {
-  border-color: rgba(216, 255, 79, 0.28);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.28);
+  background: rgb(var(--accent-rgb) / 0.12);
   color: var(--text);
 }
 
@@ -152,8 +152,8 @@
 }
 
 .sessionsSortControl--active {
-  border-color: rgba(216, 255, 79, 0.28);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.28);
+  background: rgb(var(--accent-rgb) / 0.12);
   color: var(--text);
 }
 

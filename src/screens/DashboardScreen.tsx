@@ -181,7 +181,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
             onOpenAuth={props.onOpenLocalImport}
             onOpenProPlan={props.onOpenProPlan}
-            onEnter={props.onEnter}
+            onEnter={(gameId) => props.onEnter(gameId, "sessions")}
             onDuplicate={props.onDuplicate}
             onRename={props.onRename}
             onDelete={props.onDelete}
@@ -266,7 +266,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onStartQuickSetup={props.onStartQuickSetup}
             onUpsertProfile={props.onUpsertProfile}
             onJoinGame={props.onJoinGame}
-            onEnter={props.onEnter}
+            onEnter={(gameId) => props.onEnter(gameId, "home")}
           />
         );
     }

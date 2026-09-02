@@ -1,5 +1,10 @@
 import { translate } from "../../../i18n/translate";
+import { useTheme } from "../../../theme/ThemeContext";
+
 export function AppLoadingScreen() {
+  const { theme } = useTheme();
+  const iconSrc = theme === "light" ? "/favicon-light.png" : "/favicon.png";
+
   return (
     <div
       className="appLoading"
@@ -9,7 +14,7 @@ export function AppLoadingScreen() {
     >
       <div className="appLoading__inner">
         <div className="appLoading__mark" aria-hidden="true">
-          <img src="/favicon.png" alt="" className="appLoading__img" />
+          <img src={iconSrc} alt="" className="appLoading__img" />
         </div>
       </div>
     </div>

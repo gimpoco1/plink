@@ -3,6 +3,12 @@
   gap: 10px;
 }
 
+/* Fields carry a default bottom margin for standalone forms. Keep the core
+ * game details comfortably grouped without tightening the later sections. */
+.settingsDialogBody > .field + .field {
+  margin-top: -14px;
+}
+
 .quickScoreSettings {
   display: grid;
   gap: 8px;
@@ -64,7 +70,7 @@
   border: 1px solid var(--accent-border);
   border-radius: 16px;
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent 120%),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.08), transparent 120%),
     rgba(255, 255, 255, 0.03);
 }
 
@@ -91,9 +97,9 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px;
-  border: 1px solid rgba(216, 255, 79, 0.24);
+  border: 1px solid rgb(var(--accent-rgb) / 0.24);
   border-radius: 16px;
-  background: rgba(216, 255, 79, 0.08);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .settingsRequirement__copy {
@@ -123,10 +129,10 @@
 .settingsModeCard {
   min-height: 46px;
   padding: 7px 10px;
-  border: 1px solid rgba(216, 255, 79, 0.1);
+  border: 1px solid rgb(var(--accent-rgb) / 0.1);
   border-radius: 14px;
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.06), transparent 120%),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.06), transparent 120%),
     rgba(255, 255, 255, 0.03);
   color: var(--text);
   display: flex;
@@ -143,15 +149,15 @@
 
 .settingsModeCard:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(216, 255, 79, 0.2);
+  border-color: rgb(var(--accent-rgb) / 0.2);
 }
 
 .settingsModeCard--active {
-  border-color: rgba(216, 255, 79, 0.24);
+  border-color: rgb(var(--accent-rgb) / 0.24);
   background: var(--accent);
   color: #11180f;
   box-shadow:
-    0 8px 18px rgba(216, 255, 79, 0.1),
+    0 8px 18px rgb(var(--accent-rgb) / 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
@@ -246,6 +252,38 @@
   padding: 8px 10px;
   width: 100%;
   min-width: 0;
+}
+
+:root[data-theme="light"] .settingsTimerRow {
+  padding: 12px;
+  border: 1px solid rgba(20, 36, 40, 0.18);
+  border-radius: 16px;
+  background: var(--ds-color-surface-container-low);
+}
+
+:root[data-theme="light"] .settingsTimerToggle {
+  border-color: rgba(20, 36, 40, 0.24);
+  background: var(--ds-color-surface-bright);
+}
+
+:root[data-theme="light"] .settingsTimerToggle__btn {
+  color: var(--ds-color-on-surface-variant);
+}
+
+:root[data-theme="light"] .settingsTimerToggle__btn--active {
+  background: var(--ds-color-primary);
+  color: var(--ds-color-on-primary);
+  box-shadow: inset 0 0 0 1px rgba(20, 36, 40, 0.12);
+}
+
+:root[data-theme="light"] .settingsTimerRow .field__label {
+  color: var(--ds-color-on-surface-variant);
+}
+
+:root[data-theme="light"] .settingsTimerRow .input {
+  border-color: rgba(20, 36, 40, 0.22);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
 }
 
 @media (max-width: 420px) {

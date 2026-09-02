@@ -7,6 +7,13 @@
   box-sizing: border-box;
 }
 
+:root[data-theme="light"] .gameCommentsDialog,
+:root[data-theme="light"] .gameCommentsDialog__header,
+:root[data-theme="light"] .gameCommentsDialog__composer,
+:root[data-theme="light"] .gameCommentsDialog__comment {
+  background: #ffffff;
+}
+
 .gameCommentsDialog__layout {
   position: relative;
   display: grid;
@@ -247,6 +254,32 @@
 .gameCommentsDialog__inputRow button:disabled {
   cursor: default;
   opacity: 0.38;
+}
+
+:root[data-theme="light"] .gameCommentsDialog__composer::before {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--ds-color-surface-bright)
+  );
+  box-shadow: 0 -10px 22px rgba(28, 49, 56, 0.1);
+}
+
+:root[data-theme="light"] .gameCommentsDialog__inputRow textarea {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: var(--ds-color-surface-container-low);
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .gameCommentsDialog__inputRow textarea::placeholder {
+  color: var(--ds-color-on-surface-variant);
+  opacity: 0.86;
+}
+
+:root[data-theme="light"] .gameCommentsDialog__inputRow textarea:focus {
+  border-color: var(--ds-color-primary);
+  background: var(--ds-color-surface-bright);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.14);
 }
 
 

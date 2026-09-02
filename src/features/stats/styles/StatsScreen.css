@@ -1,6 +1,15 @@
 .statsExperience {
+  --stats-chart-grid: rgba(255, 255, 255, 0.05);
+  --stats-chart-axis: rgba(217, 228, 235, 0.58);
+  --stats-chart-hover: rgba(255, 255, 255, 0.035);
   display: grid;
   gap: 8px;
+}
+
+:root[data-theme="light"] .statsExperience {
+  --stats-chart-grid: rgba(20, 36, 40, 0.14);
+  --stats-chart-axis: #596b70;
+  --stats-chart-hover: rgba(20, 36, 40, 0.07);
 }
 
 .statsSelectorPanel,
@@ -14,7 +23,7 @@
   background:
     radial-gradient(
       circle at top left,
-      rgba(216, 255, 79, 0.08),
+      rgb(var(--accent-rgb) / 0.08),
       transparent 34%
     ),
     rgba(10, 20, 24, 0.9);
@@ -72,7 +81,7 @@
 }
 
 .statsScopeSwitch {
-  --stats-switch-active-bg: rgba(216, 255, 79, 0.12);
+  --stats-switch-active-bg: rgb(var(--accent-rgb) / 0.12);
   --stats-switch-active-color: var(--accent);
   display: inline-grid;
   grid-auto-flow: column;
@@ -573,9 +582,9 @@
 }
 
 .statsMetricCard--accent {
-  border-color: rgba(216, 255, 79, 0.18);
+  border-color: rgb(var(--accent-rgb) / 0.18);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.12), rgba(216, 255, 79, 0.02)),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.12), rgb(var(--accent-rgb) / 0.02)),
     rgba(10, 20, 24, 0.88);
 }
 
@@ -632,8 +641,8 @@
 }
 
 .statsComparisonCard__row--winner {
-  border-color: rgba(216, 255, 79, 0.2);
-  background: rgba(216, 255, 79, 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.2);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .statsComparisonCard__row span {
@@ -787,8 +796,8 @@
 }
 
 .statsChartGamePicker__option--active {
-  border-color: rgba(216, 255, 79, 0.22);
-  background: rgba(216, 255, 79, 0.11);
+  border-color: rgb(var(--accent-rgb) / 0.22);
+  background: rgb(var(--accent-rgb) / 0.11);
   color: var(--accent);
 }
 
@@ -972,9 +981,9 @@
 }
 
 .statsStatus--won {
-  border-color: rgba(216, 255, 79, 0.24);
-  background: rgba(216, 255, 79, 0.12);
-  color: #d9ff4f;
+  border-color: rgb(var(--accent-rgb) / 0.24);
+  background: rgb(var(--accent-rgb) / 0.12);
+  color: var(--accent);
 }
 
 .statsStatus--lost {
@@ -1159,7 +1168,7 @@
 }
 
 .statsProPreview__area {
-  fill: rgba(216, 255, 79, 0.1);
+  fill: rgb(var(--accent-rgb) / 0.1);
 }
 
 .statsProPreview__path {
@@ -1170,8 +1179,8 @@
 }
 
 .statsProPreview__path--primary {
-  stroke: rgba(216, 255, 79, 0.86);
-  filter: drop-shadow(0 0 8px rgba(216, 255, 79, 0.18));
+  stroke: rgb(var(--accent-rgb) / 0.86);
+  filter: drop-shadow(0 0 8px rgb(var(--accent-rgb) / 0.18));
 }
 
 .statsProPreview__path--secondary {
@@ -1179,7 +1188,7 @@
 }
 
 .statsProPreview__dot {
-  fill: #d9ff4f;
+  fill: var(--accent);
   stroke: rgba(7, 11, 14, 0.92);
   stroke-width: 3;
 }
@@ -1349,8 +1358,8 @@
 }
 
 .statsStreakForm__chip--won {
-  background: rgba(216, 255, 79, 0.16);
-  color: #d9ff4f;
+  background: rgb(var(--accent-rgb) / 0.16);
+  color: var(--accent);
 }
 
 .statsStreakForm__chip--lost {
@@ -1433,7 +1442,7 @@
   inset: 0;
   padding: 12px;
   background:
-    radial-gradient(circle at center, rgba(216, 255, 79, 0.1), transparent 46%),
+    radial-gradient(circle at center, rgb(var(--accent-rgb) / 0.1), transparent 46%),
     rgba(7, 11, 14, 0.28);
   display: grid;
   place-content: center;
@@ -1477,6 +1486,85 @@
   color: var(--text-dim);
   font-size: 13px;
   line-height: 1.5;
+}
+
+:root[data-theme="light"] .statsSelectorPanel,
+:root[data-theme="light"] .statsFocusCard,
+:root[data-theme="light"] .statsMetricCard,
+:root[data-theme="light"] .statsComparisonCard,
+:root[data-theme="light"] .statsPanel,
+:root[data-theme="light"] .statsEmptyPanel {
+  border-color: rgba(20, 36, 40, 0.18);
+  background:
+    radial-gradient(circle at top left, rgb(var(--accent-rgb) / 0.1), transparent 34%),
+    rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 28px rgba(28, 49, 56, 0.1);
+}
+
+:root[data-theme="light"] .statsMetricCard--accent {
+  border-color: rgb(var(--accent-rgb) / 0.42);
+  background:
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.17), rgb(var(--accent-rgb) / 0.04)),
+    #f8fbef;
+}
+
+:root[data-theme="light"] .statsScopeSwitch,
+:root[data-theme="light"] .statsPickerButton,
+:root[data-theme="light"] .statsPickerPopover__search,
+:root[data-theme="light"] .statsPickerPopover__option,
+:root[data-theme="light"] .statsFocusMember,
+:root[data-theme="light"] .statsSessionPlacement,
+:root[data-theme="light"] .statsStatus,
+:root[data-theme="light"] .statsComparisonCard__row,
+:root[data-theme="light"] .statsChartGamePicker__button,
+:root[data-theme="light"] .statsSessionRow,
+:root[data-theme="light"] .statsBreakdownRow,
+:root[data-theme="light"] .statsStreakRow,
+:root[data-theme="light"] .statsHeadToHead__score {
+  border-color: rgba(20, 36, 40, 0.16);
+  background: #f1f5e8;
+}
+
+:root[data-theme="light"] .statsPickerPopover,
+:root[data-theme="light"] .statsChartGamePicker__menu,
+:root[data-theme="light"] .statsTooltip {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: #ffffff;
+  box-shadow: 0 18px 34px rgba(28, 49, 56, 0.16);
+}
+
+:root[data-theme="light"] .statsPickerButton:hover,
+:root[data-theme="light"] .statsPickerButton--open,
+:root[data-theme="light"] .statsPickerPopover__option--active,
+:root[data-theme="light"] .statsChartGamePicker__button--open {
+  border-color: rgba(0, 105, 135, 0.38);
+  background: rgba(188, 233, 255, 0.5);
+}
+
+:root[data-theme="light"] .statsChartGamePicker__button svg,
+:root[data-theme="light"] .statsPickerButton__chevron {
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .statsControlProBadge,
+:root[data-theme="light"] .statsPanel__head span,
+:root[data-theme="light"] .statsComparisonCard__row,
+:root[data-theme="light"] .statsStatus--completed {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .statsControlProBadge,
+:root[data-theme="light"] .statsPanel__head span,
+:root[data-theme="light"] .statsStatus--completed,
+:root[data-theme="light"] .statsStreakForm__chip--completed,
+:root[data-theme="light"] .statsHeadToHead__chips span {
+  background: #e7ecec;
+}
+
+:root[data-theme="light"] .statsAdvancedLock {
+  background:
+    radial-gradient(circle at center, rgb(var(--accent-rgb) / 0.16), transparent 46%),
+    rgba(248, 251, 252, 0.66);
 }
 
 @media (max-width: 720px) {

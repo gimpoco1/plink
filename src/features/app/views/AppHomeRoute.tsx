@@ -189,9 +189,9 @@ export function AppHomeRoute() {
             await renameGame(gameId, nextName);
           }
         }}
-        onEnter={(gameId) => {
+        onEnter={(gameId, sourceTab = homeTab) => {
           selectGame(gameId);
-          setGameReturnTab(homeTab);
+          setGameReturnTab(sourceTab);
           setView("game");
         }}
         onDelete={async (gameId) => {

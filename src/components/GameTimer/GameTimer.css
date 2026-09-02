@@ -7,6 +7,12 @@
   gap: 8px;
 }
 
+:root[data-theme="light"] .gameTimer__panel {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(28, 49, 56, 0.16);
+}
+
 @keyframes timerAlarmShake {
   0%,
   100% {
@@ -254,6 +260,38 @@
 }
 
 .gameTimer__start:hover {
-  background: #e2ff78;
-  border-color: #e2ff78;
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+:root[data-theme="light"] .gameTimer__fab {
+  border-color: rgba(20, 36, 40, 0.22);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+  box-shadow: 0 10px 24px rgba(28, 49, 56, 0.16);
+}
+
+:root[data-theme="light"] .gameTimer__fabToggle {
+  color: var(--ds-color-on-surface);
+}
+
+:root[data-theme="light"] .gameTimer__fabToggle--running {
+  color: var(--ds-color-primary);
+}
+
+:root[data-theme="light"] .gameTimer__panel {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+  box-shadow: 0 18px 34px rgba(28, 49, 56, 0.18);
+}
+
+:root[data-theme="light"] .gameTimer__mode {
+  color: var(--ds-color-on-surface-variant);
+}
+
+:root[data-theme="light"] .gameTimer__start {
+  border-color: var(--ds-color-primary);
+  background: var(--ds-color-primary);
+  color: var(--ds-color-on-primary);
 }

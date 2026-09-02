@@ -37,9 +37,9 @@
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid rgba(216, 255, 79, 0.2);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
   border-radius: 12px;
-  background: rgba(216, 255, 79, 0.08);
+  background: rgb(var(--accent-rgb) / 0.08);
   color: var(--accent);
 }
 
@@ -48,9 +48,9 @@
   min-height: 92px;
   place-items: center;
   padding: 20px 16px;
-  border: 1px solid rgba(216, 255, 79, 0.26);
+  border: 1px solid rgb(var(--accent-rgb) / 0.26);
   border-radius: 14px;
-  background: rgba(216, 255, 79, 0.07);
+  background: rgb(var(--accent-rgb) / 0.07);
   color: var(--accent);
   font-size: clamp(28px, 8vw, 40px);
   font-weight: 900;

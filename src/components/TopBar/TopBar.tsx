@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import "./TopBar.css";
 import { useI18n } from "../../i18n/I18nContext";
+import { useTheme } from "../../theme/ThemeContext";
 import { LanguageSelector } from "../LanguageSelector/LanguageSelector";
 
 type MetaItem = {
@@ -90,6 +91,7 @@ export function TopBar({
   onRename,
 }: Props) {
   const { t } = useI18n();
+  const { theme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -121,6 +123,8 @@ export function TopBar({
   }, [menuOpen]);
 
   const displayTitle = title.trim() ? title.trim().toUpperCase() : "";
+  const iconSrc = theme === "light" ? "/favicon-light.png" : "/favicon.png";
+
   return (
     <header
       className={`topbar${
@@ -145,7 +149,7 @@ export function TopBar({
             aria-label={t("topbar.backToGames")}
           >
             <span className="logo__mark" aria-hidden="true">
-              <img src="/favicon.png" alt="" className="logo__img" />
+              <img src={iconSrc} alt="" className="logo__img" />
             </span>
             <span className="logo__text">Plink</span>
           </button>
@@ -195,9 +199,9 @@ export function TopBar({
               className="iconbtn topbarCommentsButton"
               type="button"
               onClick={onOpenComments}
-                  aria-label={t("dynamic.commentsCount", [
-                    commentCount ? ` (${commentCount})` : "",
-                  ])}
+              aria-label={t("dynamic.commentsCount", [
+                commentCount ? ` (${commentCount})` : "",
+              ])}
             >
               <MessageCircle size={20} strokeWidth={2.3} aria-hidden="true" />
               {commentCount > 0 ? (
@@ -214,9 +218,9 @@ export function TopBar({
                 className="topbarCommentsPreview"
                 type="button"
                 onClick={onOpenComments}
-                      aria-label={t("dynamic.latestCommentFrom", [
-                        commentPreview.authorName,
-                      ])}
+                aria-label={t("dynamic.latestCommentFrom", [
+                  commentPreview.authorName,
+                ])}
               >
                 <strong>{commentPreview.authorName}</strong>
                 <span>{commentPreview.body}</span>

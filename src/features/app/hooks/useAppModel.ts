@@ -197,7 +197,10 @@ export function useAppModel() {
       return "home";
     }
   });
-  const [gameReturnTab, setGameReturnTab] = useState<HomeTab>(homeTab);
+  const gameReturnTabRef = useRef<HomeTab>(homeTab);
+  function setGameReturnTab(tab: HomeTab) {
+    gameReturnTabRef.current = tab;
+  }
   const appTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [localDataVersion, setLocalDataVersion] = useState(0);
   const [localStoredPlayers, setLocalStoredPlayers] = useState<LocalPlayer[]>(
@@ -493,7 +496,7 @@ export function useAppModel() {
   }
 
   function returnToGameSource() {
-    setHomeTab(gameReturnTab);
+    setHomeTab(gameReturnTabRef.current);
     setView("home");
   }
 

@@ -122,12 +122,82 @@
   --primary: var(--ds-color-primary-container);
   --primaryInk: var(--ds-color-on-primary);
   --accent: var(--ds-color-primary);
+  --accent-rgb: 216 255 79;
+  --accent-strong: #e2ff78;
+  --accent-strong-rgb: 226 255 120;
   --accent-ink: var(--ds-color-on-primary);
   --brand: var(--ds-color-primary);
   --accent-soft: rgba(191, 222, 97, 0.12);
   --accent-border: rgba(191, 222, 97, 0.32);
   --accent-glow: rgba(191, 222, 97, 0.26);
   --glow: 0 16px 44px rgba(0, 0, 0, 0.26);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --ds-color-surface: #f8fbfc;
+  --ds-color-surface-dim: #eaf0f2;
+  --ds-color-surface-bright: #ffffff;
+  --ds-color-surface-container-lowest: #ffffff;
+  --ds-color-surface-container-low: #f2f6f7;
+  --ds-color-surface-container: #eaf0f2;
+  --ds-color-surface-container-high: #e2e9eb;
+  --ds-color-surface-container-highest: #d7e1e4;
+  --ds-color-on-surface: #142428;
+  --ds-color-on-surface-variant: #48575b;
+  --ds-color-inverse-surface: #263539;
+  --ds-color-inverse-on-surface: #edf4f5;
+  --ds-color-outline: #708084;
+  --ds-color-outline-variant: #becace;
+  --ds-color-surface-tint: #718900;
+  --ds-color-primary: #718900;
+  --ds-color-on-primary: #ffffff;
+  --ds-color-primary-container: #c5e84c;
+  --ds-color-on-primary-container: #182000;
+  --ds-color-inverse-primary: #c4ec38;
+  --ds-color-primary-fixed: #718900;
+  --ds-color-primary-fixed-dim: #718900;
+  --ds-color-on-primary-fixed: #ffffff;
+  --ds-color-on-primary-fixed-variant: #ffffff;
+  --ds-color-secondary: #006987;
+  --ds-color-on-secondary: #ffffff;
+  --ds-color-secondary-container: #bce9ff;
+  --ds-color-on-secondary-container: #001f2a;
+  --ds-color-tertiary: #4b5b60;
+  --ds-color-on-tertiary: #ffffff;
+  --ds-color-tertiary-container: #d3e0e4;
+  --ds-color-on-tertiary-container: #0d1e23;
+  --ds-color-error: #b3261e;
+  --ds-color-on-error: #ffffff;
+  --ds-color-error-container: #ffdad6;
+  --ds-color-on-error-container: #410002;
+  --ds-color-background: #f8fbfc;
+  --ds-color-app-bar: #ffffff;
+  --ds-color-on-background: #142428;
+  --ds-color-surface-variant: #d7e1e4;
+
+  --surface: rgba(255, 255, 255, 0.94);
+  --surface2: rgba(234, 240, 242, 0.96);
+  --muted: #4b5d62;
+  --text-dim: #596b70;
+  --border: rgba(20, 36, 40, 0.14);
+  --shadow: 0 20px 56px rgba(28, 49, 56, 0.14);
+  --focus: 0 0 0 4px rgba(98, 125, 0, 0.22);
+  --pos: #4f7600;
+  --neg: #ba1a1a;
+  --primary: #718900;
+  --primaryInk: #ffffff;
+  --accent: #718900;
+  --accent-rgb: 113 137 0;
+  --accent-strong: #627700;
+  --accent-strong-rgb: 98 119 0;
+  --accent-ink: #ffffff;
+  --brand: #506800;
+  --accent-soft: rgba(113, 137, 0, 0.12);
+  --accent-border: rgba(113, 137, 0, 0.36);
+  --accent-glow: rgba(113, 137, 0, 0.2);
+  --glow: 0 14px 40px rgba(28, 49, 56, 0.12);
 }
 
 .ds-headline-lg {
