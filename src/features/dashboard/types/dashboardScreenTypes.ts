@@ -58,6 +58,6 @@ export type DashboardScreenProps = {
   onJoinGame: (code: string) => Promise<void>;
   onDuplicate: (gameId: string) => void;
   onRename: (gameId: string) => void;
-  onEnter: (gameId: string) => void;
+  onEnter: (gameId: string, sourceTab?: HomeTab) => void;
   onDelete: (gameId: string) => void;
 };

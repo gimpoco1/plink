@@ -2,6 +2,8 @@
   "en": {
     "language.label": "Language",
     "language.description": "Choose the language used in Plink.",
+    "theme.label": "Light mode",
+    "theme.description": "Use a bright color theme.",
     "topbar.backToGame": "Back to game",
     "topbar.backToGames": "Back to games",
     "topbar.newGame": "New game",
@@ -975,6 +977,8 @@
   "es": {
     "language.label": "Idioma",
     "language.description": "Elige el idioma que se usa en Plink.",
+    "theme.label": "Modo claro",
+    "theme.description": "Usa un tema de colores claros.",
     "topbar.backToGame": "Volver al juego",
     "topbar.backToGames": "Volver a las partidas",
     "topbar.newGame": "Nueva partida",
@@ -1948,6 +1952,8 @@
   "it": {
     "language.label": "Lingua",
     "language.description": "Scegli la lingua da usare in Plink.",
+    "theme.label": "Modalità chiara",
+    "theme.description": "Usa un tema dai colori chiari.",
     "topbar.backToGame": "Torna alla partita",
     "topbar.backToGames": "Torna alle partite",
     "topbar.newGame": "Nuova partita",

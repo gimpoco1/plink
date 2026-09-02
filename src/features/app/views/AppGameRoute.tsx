@@ -1,11 +1,13 @@
 import { translate } from "../../../i18n/translate";
 import { motion } from "framer-motion";
+import { useRef } from "react";
 import { GameScreen } from "../../../screens/GameScreen";
 import { capitalizeFirst } from "../../../utils/text";
 import { isGameComplete } from "../../../utils/ranking";
 import { useAppContext } from "../context/AppContext";
 
 export function AppGameRoute() {
+  const confirmedCompletedScoreEditsRef = useRef(new Set<string>());
   const {
     addPlayer,
     addPastLinkedPlayer,
@@ -151,7 +153,10 @@ export function AppGameRoute() {
           });
         }}
         onUpdateScore={async (playerId, delta) => {
-          if (isGameComplete(currentGame)) {
+          if (
+            isGameComplete(currentGame) &&
+            !confirmedCompletedScoreEditsRef.current.has(currentGame.id)
+          ) {
             const confirmed = await confirmRef.current?.confirm({
               eyebrow: translate("copy.gameFinished"),
               title: translate("copy.changeThisScore"),
@@ -161,6 +166,7 @@ export function AppGameRoute() {
               cancelText: translate("copy.cancel"),
             });
             if (!confirmed) return false;
+            confirmedCompletedScoreEditsRef.current.add(currentGame.id);
           }
 
           return updateScore(currentGame.id, playerId, delta);

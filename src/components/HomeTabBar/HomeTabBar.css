@@ -1,6 +1,6 @@
 .tabBar {
   --tabBar-accent: var(--accent);
-  --tabBar-accent-bg: rgba(216, 255, 79, 0.12);
+  --tabBar-accent-bg: rgb(var(--accent-rgb) / 0.12);
   position: fixed;
   bottom: max(10px, calc(env(safe-area-inset-bottom) - 8px));
   left: 50%;
@@ -21,6 +21,18 @@
   transition:
     transform 180ms ease,
     opacity 120ms ease;
+}
+
+:root[data-theme="light"] .tabBar,
+:root[data-theme="light"] .tabSwitcher {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 24px rgba(28, 49, 56, 0.16);
+}
+
+:root[data-theme="light"] .tabSwitcher__badge {
+  background: rgba(20, 36, 40, 0.08);
+  color: var(--text);
 }
 
 html.is-native-app.native-keyboard-open .tabBar {

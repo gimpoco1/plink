@@ -1,6 +1,7 @@
 import { Settings2 } from "lucide-react";
 import { translate } from "../../i18n/translate";
 import { LanguageSelector } from "../LanguageSelector/LanguageSelector";
+import { ThemeSelector } from "../ThemeSelector/ThemeSelector";
 import { AuthSharingPreferences } from "./AuthSharingPreferences";
 import { useAuthDialogContext } from "./AuthDialogContext";
 
@@ -22,6 +23,7 @@ export function AuthAppSettings() {
       </div>
       <div className="authDialog__settingsRows">
         <LanguageSelector />
+        <ThemeSelector />
         {session ? <AuthSharingPreferences /> : null}
       </div>
     </section>

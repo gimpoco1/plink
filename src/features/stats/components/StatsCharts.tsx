@@ -111,7 +111,7 @@ export function StatsCharts({
               <ChartLegend
                 primaryLabel={primaryName}
                 secondaryLabel={secondaryName}
-                primaryColor="#d9ff4f"
+                primaryColor="var(--accent)"
                 secondaryColor="#8f7cf6"
               />
             ) : null}
@@ -123,21 +123,21 @@ export function StatsCharts({
                 onTouchEnd={releaseChartFocus}
               >
                 <CartesianGrid
-                  stroke="rgba(255,255,255,0.05)"
+                  stroke="var(--stats-chart-grid)"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="label"
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "rgba(217, 228, 235, 0.62)", fontSize: 10 }}
+                  tick={{ fill: "var(--stats-chart-axis)", fontSize: 10 }}
                 />
                 <YAxis
                   allowDecimals={false}
                   width={34}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 10 }}
+                  tick={{ fill: "var(--stats-chart-axis)", fontSize: 10 }}
                 />
                 <Tooltip
                   content={
@@ -158,7 +158,7 @@ export function StatsCharts({
                   {outcomeBreakdown.map((entry) => (
                     <Cell
                       key={entry.label}
-                      fill={secondaryName ? "#d9ff4f" : entry.outcomeFill}
+                      fill={secondaryName ? "var(--accent)" : entry.outcomeFill}
                     />
                   ))}
                 </Bar>
@@ -205,7 +205,7 @@ export function StatsCharts({
                 onTouchEnd={releaseChartFocus}
               >
                 <CartesianGrid
-                  stroke="rgba(255,255,255,0.05)"
+                  stroke="var(--stats-chart-grid)"
                   horizontal={false}
                 />
                 <XAxis type="number" domain={[0, 100]} hide />
@@ -215,7 +215,7 @@ export function StatsCharts({
                   width={86}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "rgba(217, 228, 235, 0.62)", fontSize: 10 }}
+                  tick={{ fill: "var(--stats-chart-axis)", fontSize: 10 }}
                 />
                 <Tooltip
                   content={
@@ -233,7 +233,7 @@ export function StatsCharts({
                   fill="#7ad0ff"
                   radius={[0, 10, 10, 0]}
                   barSize={secondaryName ? 10 : 18}
-                  background={{ fill: "rgba(255,255,255,0.035)", radius: 10 }}
+                  background={{ fill: "var(--stats-chart-hover)", radius: 10 }}
                 />
                 {secondaryName ? (
                   <Bar

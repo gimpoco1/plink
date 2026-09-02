@@ -99,6 +99,87 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
+:root[data-theme="light"] .newGamePanel,
+:root[data-theme="light"] .newGamePanel--open {
+  --new-game-panel-accent: #d9e6ba;
+  background: var(--new-game-panel-accent);
+}
+
+:root[data-theme="light"] .newGamePanel--open .targetControl__stepBtn,
+:root[data-theme="light"] .newGamePanel--open .modeCard--active,
+:root[data-theme="light"] .newGamePanel--open .timerPanel__modeBtn--active,
+:root[data-theme="light"] .newGamePanel--open .timerPanel__preset--active,
+:root[data-theme="light"] .newGamePanel--open .newPlayerComposer__submit {
+  border-color: var(--new-game-panel-accent);
+  background: var(--new-game-panel-accent);
+  color: var(--ds-color-on-primary-container);
+  box-shadow: 0 10px 24px rgb(var(--accent-rgb) / 0.16);
+}
+
+:root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled),
+:root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled):hover {
+  border-color: var(--accent);
+  background: #ffffff;
+  color: var(--accent);
+  box-shadow: 0 10px 24px rgb(var(--accent-rgb) / 0.18);
+}
+
+:root[data-theme="light"] .newGamePanel--open .modeCard--active .modeCard__icon,
+:root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled):hover {
+  color: var(--accent);
+}
+
+:root[data-theme="light"] .newGamePanel--open .participantModeSwitch__option--active {
+  color: var(--new-game-panel-accent);
+}
+
+:root[data-theme="light"]
+  .newGamePanel--open
+  .participantModeSwitch__option--teamsActive {
+  color: var(--ds-color-on-secondary-container);
+}
+
+:root[data-theme="light"]
+  .newGamePanel--open
+  .participantOption--active
+  .participantOption__name {
+  color: var(--new-game-panel-accent);
+}
+
+:root[data-theme="light"]
+  .newGamePanel--open
+  .participantOption--active
+  .participantOption__badge {
+  border-color: rgba(217, 230, 186, 0.74);
+  background: rgba(217, 230, 186, 0.12);
+  color: var(--new-game-panel-accent);
+}
+
+:root[data-theme="light"]
+  .newGamePanel--open
+  .participantOptionSwipe
+  .card.participantOption--swipe:not(.participantOption--active) {
+  border-color: rgba(17, 24, 10, 0.12);
+  background: rgba(17, 24, 10, 0.06);
+}
+
+:root[data-theme="light"] .newGamePanel--open .modeCard--active {
+  border-color: rgba(17, 24, 10, 0.88);
+  background: rgba(17, 24, 10, 0.92);
+  color: var(--new-game-panel-accent);
+}
+
+:root[data-theme="light"]
+  .newGamePanel--open
+  .modeCard--active
+  .modeCard__icon {
+  color: var(--new-game-panel-accent);
+}
+
+:root[data-theme="light"] .newGamePanel--open .newSessionStart:disabled {
+  color: #ffffff;
+}
+
 .newGamePanel__trigger {
   width: 100%;
   min-height: 56px;
@@ -107,7 +188,7 @@
   border-radius: 30px;
   color: #11180f;
   box-shadow:
-    0 12px 28px rgba(216, 255, 79, 0.14),
+    0 12px 28px rgb(var(--accent-rgb) / 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition:
     max-height 360ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -296,6 +377,68 @@
 .newSessionHeader__dismiss svg {
   width: 18px;
   height: 18px;
+}
+
+:root[data-theme="light"] .newSessionPrimary > .field,
+:root[data-theme="light"] .targetControl,
+:root[data-theme="light"] .timerPanel,
+:root[data-theme="light"] .newSessionPlayers,
+:root[data-theme="light"] .modeCard {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="light"] .homeForm--newSession .input,
+:root[data-theme="light"] .gamePresetBrowser__search,
+:root[data-theme="light"] .gamePresetBrowser__search input {
+  border-color: var(--border);
+  background: #ffffff;
+  color: var(--text);
+}
+
+:root[data-theme="light"] .homeForm--newSession .input::placeholder,
+:root[data-theme="light"] .gamePresetBrowser__search input::placeholder {
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .targetControl__stepBtn,
+:root[data-theme="light"] .gamePresetBrowser__trigger[aria-expanded="true"],
+:root[data-theme="light"] .modeCard--active,
+:root[data-theme="light"] .timerPanel__modeBtn--active,
+:root[data-theme="light"] .timerPanel__preset--active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+:root[data-theme="light"] .modeCard--active .modeCard__icon {
+  color: var(--accent-ink);
+}
+
+:root[data-theme="light"] .gamePresetBrowser__trigger,
+:root[data-theme="light"] .timerPanel__modes,
+:root[data-theme="light"] .timerPanel__preset {
+  border-color: var(--border);
+  background: rgba(20, 36, 40, 0.055);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .gamePresetBrowser,
+:root[data-theme="light"] .gamePresetInfo {
+  border-color: var(--border);
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 0 26px 54px rgba(28, 49, 56, 0.18);
+}
+
+:root[data-theme="light"] .gamePresetInfo p,
+:root[data-theme="light"] .gamePresetInfo ul,
+:root[data-theme="light"] .gamePresetInfo__head button {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .gamePresetInfo__head button {
+  background: rgba(20, 36, 40, 0.06);
 }
 
 .homeForm--newSession .field__label,
@@ -980,7 +1123,7 @@
   opacity: 0.72;
   border-color: rgba(17, 24, 10, 0.42);
   background: rgba(17, 24, 10, 0.58);
-  color: rgba(216, 255, 79, 0.86);
+  color: rgb(var(--accent-rgb) / 0.86);
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -1060,7 +1203,7 @@
   color: white;
   font-size: 10px;
   font-weight: 900;
-  border: 2px solid rgba(216, 255, 79, 0.34);
+  border: 2px solid rgb(var(--accent-rgb) / 0.34);
 }
 
 .selectedPlayerChip__avatar--teamStack > span {

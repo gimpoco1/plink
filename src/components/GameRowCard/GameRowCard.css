@@ -18,6 +18,22 @@
   --gameRow-accent-rgb: 122, 208, 255;
 }
 
+:root[data-theme="light"] .gameRowCard:not(.gameRowCard--teams) {
+  --gameRow-accent: #d9e6ba;
+  --gameRow-accent-ink: var(--ds-color-on-primary-container);
+  --gameRow-accent-rgb: 217, 230, 186;
+}
+
+:root[data-theme="light"] .gameRowCard,
+:root[data-theme="light"] .swipeRow .card.gameRowCard {
+  border-color: rgba(20, 36, 40, 0.22);
+}
+
+:root[data-theme="light"] .gameRowCard:hover,
+:root[data-theme="light"] .swipeRow .card.gameRowCard:hover {
+  border-color: rgb(var(--gameRow-accent-rgb) / 0.72);
+}
+
 .gameRowCard:hover {
   background: var(--surface2);
   border-color: var(--border);
@@ -238,7 +254,7 @@
 }
 
 .gameRow__modeBadge--shared {
-  background: rgba(216, 255, 79, 0.1);
+  background: rgb(var(--accent-rgb) / 0.1);
   color: var(--accent);
 }
 

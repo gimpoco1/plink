@@ -160,7 +160,7 @@
 }
 
 .playersHeaderSwitch__option--active {
-  background: rgba(216, 255, 79, 0.14);
+  background: rgb(var(--accent-rgb) / 0.14);
   color: var(--accent);
 }
 
@@ -228,9 +228,9 @@
   min-height: 44px;
   padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid rgba(216, 255, 79, 0.24);
+  border: 1px solid rgb(var(--accent-rgb) / 0.24);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.14), rgba(216, 255, 79, 0.08)),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.14), rgb(var(--accent-rgb) / 0.08)),
     rgba(255, 255, 255, 0.03);
   color: var(--accent);
   display: inline-flex;
@@ -245,7 +245,7 @@
   flex: 0 0 auto;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 10px 28px rgba(216, 255, 79, 0.08);
+    0 10px 28px rgb(var(--accent-rgb) / 0.08);
 }
 
 .playersScreenHeader__action[disabled] {
@@ -276,7 +276,7 @@
   background:
     radial-gradient(
       circle at top left,
-      rgba(216, 255, 79, 0.08),
+      rgb(var(--accent-rgb) / 0.08),
       transparent 36%
     ),
     var(--surface);
@@ -290,18 +290,18 @@
 
 .createCard {
   padding: 18px;
-  border-color: rgba(216, 255, 79, 0.2);
+  border-color: rgb(var(--accent-rgb) / 0.2);
   background:
     radial-gradient(
       circle at top left,
-      rgba(216, 255, 79, 0.09),
+      rgb(var(--accent-rgb) / 0.09),
       transparent 34%
     ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 70%),
     var(--surface);
   box-shadow:
     0 18px 42px rgba(0, 0, 0, 0.22),
-    0 0 0 1px rgba(216, 255, 79, 0.05) inset;
+    0 0 0 1px rgb(var(--accent-rgb) / 0.05) inset;
   gap: 14px;
 }
 
@@ -329,9 +329,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(216, 255, 79, 0.22);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.14), rgba(216, 255, 79, 0.06)),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.14), rgb(var(--accent-rgb) / 0.06)),
     rgba(255, 255, 255, 0.03);
   color: var(--accent);
   font-size: 24px;
@@ -380,8 +380,8 @@
 }
 
 .profileCard--editing {
-  border-color: rgba(216, 255, 79, 0.2);
-  box-shadow: 0 0 0 1px rgba(216, 255, 79, 0.08) inset;
+  border-color: rgb(var(--accent-rgb) / 0.2);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.08) inset;
 }
 
 .profileCard__topRow {
@@ -466,8 +466,8 @@
   gap: 8px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(216, 255, 79, 0.1);
-  border: 1px solid rgba(216, 255, 79, 0.22);
+  background: rgb(var(--accent-rgb) / 0.1);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
   color: var(--accent);
   font-size: 10px;
   font-weight: 700;
@@ -491,6 +491,24 @@
   margin-top: 10px;
   display: grid;
   gap: 4px;
+  max-height: min(360px, 45dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
+}
+
+.profileCard__gameResults::-webkit-scrollbar {
+  width: 6px;
+}
+
+.profileCard__gameResults::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.profileCard__gameResults::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
 }
 
 .profileCard__gameResult {
@@ -554,8 +572,8 @@
 }
 
 .profileCard__statusBadge--won {
-  border-color: rgba(216, 255, 79, 0.24);
-  background: rgba(216, 255, 79, 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.24);
+  background: rgb(var(--accent-rgb) / 0.08);
   color: var(--accent);
 }
 
@@ -692,8 +710,8 @@
   gap: 6px;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(216, 255, 79, 0.1);
-  border: 1px solid rgba(216, 255, 79, 0.22);
+  background: rgb(var(--accent-rgb) / 0.1);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
   color: var(--accent);
   font-size: 9px;
   font-weight: 800;
@@ -1896,6 +1914,200 @@
   color: var(--ds-color-on-secondary-fixed);
 }
 
+:root[data-theme="light"] .teamBuilder {
+  border-color: rgba(20, 36, 40, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(188, 233, 255, 0.56), transparent 30%),
+    #ffffff;
+  box-shadow: 0 20px 48px rgba(28, 49, 56, 0.16);
+}
+
+:root[data-theme="light"] .teamBuilder__title {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilder__close {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilder__close:hover {
+  background: rgba(20, 36, 40, 0.07);
+}
+
+:root[data-theme="light"] .teamBuilder__lede,
+:root[data-theme="light"] .teamBuilder__emptyState {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .teamBuilder__progressSegment {
+  background: rgba(20, 36, 40, 0.16);
+}
+
+:root[data-theme="light"] .teamBuilderCard {
+  border-color: rgba(20, 36, 40, 0.18);
+  background: #eef3f4;
+}
+
+:root[data-theme="light"] .teamBuilderCard--dashed,
+:root[data-theme="light"] .teamBuilderCard--summary {
+  background: #f4f7f8;
+}
+
+:root[data-theme="light"] .teamBuilderCard__label,
+:root[data-theme="light"] .teamBuilder__sectionEyebrow,
+:root[data-theme="light"] .teamBuilderPlayerOption__copy strong,
+:root[data-theme="light"] .teamBuilderPlayerRow__copy strong {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilderIdentity__badge,
+:root[data-theme="light"] .teamIconPicker__option.teamIconPicker__option--grid.teamIconPicker__option--active {
+  border: 1px solid var(--ds-color-secondary);
+  background: var(--ds-color-secondary-container);
+  color: var(--ds-color-on-secondary-container);
+  box-shadow: 0 8px 18px rgba(0, 105, 135, 0.16);
+}
+
+:root[data-theme="light"] .teamBuilder__input,
+:root[data-theme="light"] .teamBuilderSearch {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: #ffffff;
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilder__input::placeholder,
+:root[data-theme="light"] .teamBuilderSearch__input::placeholder {
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .teamBuilderSearch__input {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamIconPicker__option.teamIconPicker__option--grid,
+:root[data-theme="light"] .teamBuilderRosterChip,
+:root[data-theme="light"] .teamBuilderPlayerOption,
+:root[data-theme="light"] .teamBuilderPlayerRow__action {
+  border-color: rgba(20, 36, 40, 0.16);
+  background: #ffffff;
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilderPlayerOption--selected {
+  border-color: rgba(0, 105, 135, 0.48);
+  background: rgba(188, 233, 255, 0.54);
+}
+
+:root[data-theme="light"] .teamBuilderPlayerOption--selected .teamBuilderPlayerOption__copy strong {
+  color: var(--ds-color-on-secondary-container);
+}
+
+:root[data-theme="light"] .teamBuilderPlayerRow__copy span,
+:root[data-theme="light"] .teamBuilderRosterChip__action {
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .teamBuilderPlayerOption__state,
+:root[data-theme="light"] .teamBuilderIdentity__status {
+  border-color: rgba(20, 36, 40, 0.18);
+  background: #e6ecee;
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .teamBuilderIdentity__iconEdit {
+  box-shadow:
+    0 10px 24px rgba(0, 105, 135, 0.18),
+    0 0 0 4px #eef3f4;
+}
+
+:root[data-theme="light"] .teamBuilderSummary__copy h4 {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilderSummary__copy p {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .teamBuilderSummary__token {
+  border-color: #f4f7f8;
+  color: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilderSummary__token--ghost {
+  border-color: rgba(20, 36, 40, 0.22);
+  background: #e4eaec;
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .teamBuilderRosterPicker.rosterPicker--dark {
+  --roster-picker-ink: var(--text);
+  --roster-picker-placeholder: var(--text-dim);
+  --roster-picker-surface: #ffffff;
+  --roster-picker-surface-strong: #f4f7f8;
+  --roster-picker-border: rgba(20, 36, 40, 0.18);
+  --roster-picker-clear-bg: #e4eaec;
+  --roster-picker-clear-ink: var(--text-dim);
+  --roster-picker-scrollbar: rgba(20, 36, 40, 0.28);
+  --roster-picker-empty: var(--muted);
+  --roster-picker-create-bg: #f4f7f8;
+  --roster-picker-create-border: rgba(20, 36, 40, 0.18);
+  --roster-picker-create-ink: var(--text);
+}
+
+:root[data-theme="light"] .teamBuilderRosterPicker .rosterPicker__collapseBtn {
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .teamBuilderRosterPicker .rosterPicker__createBtn--dark {
+  border-color: rgba(20, 36, 40, 0.18);
+  background: #f4f7f8;
+  color: var(--text);
+}
+
+:root[data-theme="light"] .tabContent--teamsTheme .teamCard__icon {
+  border-color: var(--ds-color-secondary);
+  background: var(--ds-color-secondary-container);
+  color: var(--ds-color-on-secondary-container);
+  box-shadow:
+    0 8px 18px rgba(0, 105, 135, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+:root[data-theme="light"] .tabContent--teamsTheme .teamMemberChip {
+  border-color: rgba(20, 36, 40, 0.14);
+  background: #eef3f4;
+}
+
+:root[data-theme="light"] .teamBuilderCreatePlayer__trigger {
+  border-color: var(--ds-color-secondary);
+  background: #ffffff;
+  color: var(--ds-color-on-secondary-container);
+  box-shadow: 0 8px 18px rgba(0, 105, 135, 0.12);
+}
+
+:root[data-theme="light"] .teamBuilderCreatePlayer__trigger:hover {
+  border-color: var(--ds-color-secondary);
+  background: var(--ds-color-secondary-container);
+  color: var(--ds-color-on-secondary-container);
+}
+
+:root[data-theme="light"]
+  .teamCard__builderSection--flat
+  .rosterPicker__createBtn--dark {
+  border-color: var(--ds-color-secondary);
+  background: var(--ds-color-secondary-container);
+  color: var(--ds-color-on-secondary-container);
+  box-shadow: 0 8px 18px rgba(0, 105, 135, 0.12);
+}
+
+:root[data-theme="light"]
+  .teamCard__builderSection--flat
+  .rosterPicker__createBtn--dark:hover {
+  border-color: var(--ds-color-secondary);
+  background: #a8def6;
+  color: var(--ds-color-on-secondary-container);
+}
+
 .teamCard__builderHeader {
   display: flex;
   align-items: flex-start;
@@ -1911,12 +2123,16 @@
 }
 
 .teamCard__builderSection--flat {
-  gap: 10px;
-  padding: 0;
+  gap: 12px;
+  padding: 16px;
   border: 0;
-  border-radius: 0;
-  background: transparent;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
   box-shadow: none;
+}
+
+.teamCard__builderSection--flat.teamCard__builderSection--expanded {
+  padding: 12px;
 }
 
 .teamCard__builderSection--flat .teamBuilderCard__head {
@@ -2058,11 +2274,11 @@
 
 .teamCreateCard {
   border-radius: var(--radius);
-  border: 1px solid rgba(216, 255, 79, 0.18);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   background:
     radial-gradient(
       circle at top left,
-      rgba(216, 255, 79, 0.1),
+      rgb(var(--accent-rgb) / 0.1),
       transparent 34%
     ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
@@ -2118,8 +2334,8 @@
 }
 
 .teamIconPicker__option--active {
-  border-color: rgba(216, 255, 79, 0.32);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.32);
+  background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent);
 }
 
@@ -2174,8 +2390,8 @@
 .teamCreateCard__count {
   padding: 7px 11px;
   border-radius: 999px;
-  border: 1px solid rgba(216, 255, 79, 0.22);
-  background: rgba(216, 255, 79, 0.08);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
+  background: rgb(var(--accent-rgb) / 0.08);
   color: var(--accent);
   font-size: 11px;
   font-weight: 850;
@@ -2219,8 +2435,8 @@
   min-height: 48px;
   padding: 0 14px;
   border-radius: 16px;
-  border: 1px dashed rgba(216, 255, 79, 0.24);
-  background: rgba(216, 255, 79, 0.05);
+  border: 1px dashed rgb(var(--accent-rgb) / 0.24);
+  background: rgb(var(--accent-rgb) / 0.05);
   color: var(--accent);
   font-size: 13px;
   font-weight: 850;
@@ -2319,9 +2535,9 @@
 .teamEditor__toggle {
   width: fit-content;
   min-height: 34px;
-  border: 1px solid rgba(216, 255, 79, 0.18);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   border-radius: 999px;
-  background: rgba(216, 255, 79, 0.06);
+  background: rgb(var(--accent-rgb) / 0.06);
   color: var(--accent);
   padding: 0 12px;
   font: inherit;
@@ -2333,8 +2549,8 @@
 
 .teamEditor__toggle--active,
 .teamEditor__toggle:hover {
-  border-color: rgba(216, 255, 79, 0.34);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.34);
+  background: rgb(var(--accent-rgb) / 0.12);
 }
 
 .teamEditor__addPanel,
@@ -2345,7 +2561,7 @@
 
 .teamEditor__addPanel {
   gap: 14px;
-  padding: 14px;
+  padding-bottom: 4px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background:
@@ -2423,7 +2639,7 @@
   background:
     radial-gradient(
       circle at top left,
-      rgba(216, 255, 79, 0.08),
+      rgb(var(--accent-rgb) / 0.08),
       transparent 36%
     ),
     var(--surface);
@@ -2432,8 +2648,10 @@
 }
 
 .teamCard--editing {
-  border-color: rgba(216, 255, 79, 0.2);
-  box-shadow: 0 0 0 1px rgba(216, 255, 79, 0.08) inset;
+  border-color: rgb(var(--accent-rgb) / 0.2);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.08) inset;
+  padding: 16px;
+  gap: 16px;
 }
 
 .teamCard__head {
@@ -2464,9 +2682,9 @@
   width: 46px;
   height: 46px;
   border-radius: 11px;
-  border: 1px solid rgba(216, 255, 79, 0.18);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.12), rgba(216, 255, 79, 0.05)),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.12), rgb(var(--accent-rgb) / 0.05)),
     rgba(255, 255, 255, 0.03);
   color: var(--accent);
   display: inline-grid;
@@ -2551,14 +2769,14 @@
 }
 
 .teamAssignChip--active {
-  border-color: rgba(216, 255, 79, 0.28);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.28);
+  background: rgb(var(--accent-rgb) / 0.12);
 }
 
 .teamAssignChip:hover,
 .teamMemberChip--removable:hover {
   transform: translateY(-1px);
-  border-color: rgba(216, 255, 79, 0.18);
+  border-color: rgb(var(--accent-rgb) / 0.18);
 }
 
 .teamAssignChip[disabled] {
@@ -2968,7 +3186,7 @@
   flex: 1;
   min-width: 0;
   background: var(--bg);
-  border: 1px solid rgba(216, 255, 79, 0.22);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
   color: var(--text);
   padding: 10px 12px;
   border-radius: 12px;
@@ -3029,13 +3247,13 @@
 
 .profileEditBtn:hover {
   transform: translateY(-1px);
-  border-color: rgba(216, 255, 79, 0.18);
-  background: rgba(216, 255, 79, 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.18);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .profileEditBtn--active {
-  border-color: rgba(216, 255, 79, 0.22);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.22);
+  background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent);
 }
 

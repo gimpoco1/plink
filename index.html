@@ -16,8 +16,70 @@
     <link rel="apple-touch-icon" href="/favicon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#0b1015" />
-    <script>
+    <script type="module">
+      // This must match the key exported by src/theme/ThemeContext.tsx.
+      import { THEME_STORAGE_KEY } from "/src/theme/ThemeContext.tsx";
+
+      const getStoredTheme = () => {
+        try {
+          return window.localStorage.getItem(THEME_STORAGE_KEY) === "light"
+            ? "light"
+            : "dark";
+        } catch {
+          return "dark";
+        }
+      };
+
+      const currentTheme = getStoredTheme();
+      document.documentElement.dataset.theme = currentTheme;
+      document.documentElement.style.colorScheme = currentTheme;
       document.documentElement.classList.add("app-booting");
+
+      const updateFaviconTheme = () => {
+        const theme =
+          document.documentElement.dataset.theme === "light" ? "light" : "dark";
+        const iconPath =
+          theme === "light" ? "/favicon-light.png" : "/favicon.png";
+        const themeColor = theme === "light" ? "#f8fbfc" : "#0b1015";
+
+        document
+          .querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')
+          .forEach((link) => {
+            link.href = iconPath;
+          });
+
+        document
+          .querySelectorAll(
+            'img[src="/favicon.png"], img[src="/favicon-light.png"]',
+          )
+          .forEach((img) => {
+            img.src = iconPath;
+          });
+
+        const themeColorMeta = document.querySelector(
+          'meta[name="theme-color"]',
+        );
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute("content", themeColor);
+        }
+      };
+
+      updateFaviconTheme();
+
+      const themeObserver = new MutationObserver((mutations) => {
+        if (
+          mutations.some((mutation) => mutation.attributeName === "data-theme")
+        ) {
+          updateFaviconTheme();
+        }
+      });
+
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
+
+      document.addEventListener("DOMContentLoaded", updateFaviconTheme);
     </script>
     <meta
       name="description"

@@ -85,7 +85,7 @@ export function StatsTrendCharts(props: Props) {
             <ChartLegend
               primaryLabel={primaryName}
               secondaryLabel={secondaryName}
-              primaryColor="#d9ff4f"
+              primaryColor="var(--accent)"
               secondaryColor="#8f7cf6"
             />
             <ResponsiveContainer width="100%" height={190}>
@@ -103,16 +103,16 @@ export function StatsTrendCharts(props: Props) {
                     y1="0"
                     y2="1"
                   >
-                    <stop offset="0%" stopColor="#d9ff4f" stopOpacity={0.34} />
+                    <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.34} />
                     <stop
                       offset="100%"
-                      stopColor="#d9ff4f"
+                      stopColor="var(--accent)"
                       stopOpacity={0.02}
                     />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
-                  stroke="rgba(255,255,255,0.05)"
+                  stroke="var(--stats-chart-grid)"
                   vertical={false}
                 />
                 <XAxis
@@ -125,7 +125,7 @@ export function StatsTrendCharts(props: Props) {
                   }
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 11 }}
+                  tick={{ fill: "var(--stats-chart-axis)", fontSize: 11 }}
                   minTickGap={22}
                 />
                 <YAxis
@@ -133,7 +133,7 @@ export function StatsTrendCharts(props: Props) {
                   width={30}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 11 }}
+                  tick={{ fill: "var(--stats-chart-axis)", fontSize: 11 }}
                 />
                 <Tooltip
                   cursor={false}
@@ -142,7 +142,7 @@ export function StatsTrendCharts(props: Props) {
                       primaryLabel={primaryName}
                       secondaryLabel={secondaryName}
                       valueType="wins"
-                      primaryColor="#d9ff4f"
+                      primaryColor="var(--accent)"
                       secondaryColor="#8f7cf6"
                     />
                   }
@@ -150,7 +150,7 @@ export function StatsTrendCharts(props: Props) {
                 <Area
                   type="monotone"
                   dataKey="primaryWins"
-                  stroke="#d9ff4f"
+                  stroke="var(--accent)"
                   fill="url(#statsPrimaryFill)"
                   strokeWidth={2.6}
                 />
@@ -201,7 +201,7 @@ export function StatsTrendCharts(props: Props) {
                 onTouchEnd={releaseChartFocus}
               >
                 <CartesianGrid
-                  stroke="rgba(255,255,255,0.05)"
+                  stroke="var(--stats-chart-grid)"
                   vertical={false}
                 />
                 <XAxis
@@ -214,7 +214,7 @@ export function StatsTrendCharts(props: Props) {
                   }
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 11 }}
+                  tick={{ fill: "var(--stats-chart-axis)", fontSize: 11 }}
                   minTickGap={22}
                 />
                 <YAxis
@@ -223,7 +223,7 @@ export function StatsTrendCharts(props: Props) {
                   tickFormatter={(value) => `${value}%`}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "rgba(217, 228, 235, 0.54)", fontSize: 11 }}
+                  tick={{ fill: "var(--stats-chart-axis)", fontSize: 11 }}
                 />
                 <Tooltip
                   cursor={false}

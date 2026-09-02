@@ -56,12 +56,12 @@
 }
 
 .swipeDuplicate {
-  background: rgba(216, 255, 79, 0.18);
+  background: rgb(var(--accent-rgb) / 0.18);
   color: var(--accent);
 }
 
 .swipeDuplicate:active {
-  background: rgba(216, 255, 79, 0.3);
+  background: rgb(var(--accent-rgb) / 0.3);
 }
 
 .swipeDelete {
@@ -70,6 +70,33 @@
 
 .swipeDelete:active {
   background: rgba(251, 113, 133, 0.35);
+}
+
+:root[data-theme="light"] .swipeRename {
+  background: #dce9ed;
+  color: #244a55;
+}
+
+:root[data-theme="light"] .swipeRename:active {
+  background: #c8dce2;
+}
+
+:root[data-theme="light"] .swipeDuplicate {
+  background: #e4f59d;
+  color: #4d6400;
+}
+
+:root[data-theme="light"] .swipeDuplicate:active {
+  background: #d5eb79;
+}
+
+:root[data-theme="light"] .swipeDelete {
+  background: #ffe0e0;
+  color: #a51616;
+}
+
+:root[data-theme="light"] .swipeDelete:active {
+  background: #ffcaca;
 }
 
 .swipeRename svg,

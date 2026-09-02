@@ -68,6 +68,8 @@ import {
   GitCompareArrows,
   Link,
   RotateCcw,
+  Scale,
+  Slash,
   Target,
   Timer,
   Trophy,
@@ -197,7 +199,10 @@ export function useAppModel() {
       return "home";
     }
   });
-  const [gameReturnTab, setGameReturnTab] = useState<HomeTab>(homeTab);
+  const gameReturnTabRef = useRef<HomeTab>(homeTab);
+  function setGameReturnTab(tab: HomeTab) {
+    gameReturnTabRef.current = tab;
+  }
   const appTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [localDataVersion, setLocalDataVersion] = useState(0);
   const [localStoredPlayers, setLocalStoredPlayers] = useState<LocalPlayer[]>(
@@ -493,7 +498,7 @@ export function useAppModel() {
   }
 
   function returnToGameSource() {
-    setHomeTab(gameReturnTab);
+    setHomeTab(gameReturnTabRef.current);
     setView("home");
   }
 
@@ -691,6 +696,13 @@ export function useAppModel() {
     );
   }, [currentGame, games]);
 
+  const noWinnerTrophyIcon = createElement(
+    "span",
+    { className: "dialog__noWinnerIcon", "aria-hidden": "true" },
+    createElement(Trophy, { size: 18, strokeWidth: 2.5 }),
+    createElement(Slash, { size: 18, strokeWidth: 2.7 }),
+  );
+
   async function handleEndCurrentGame() {
     if (!currentGame) return;
     const participants = [...getGameParticipants(currentGame)].sort((a, b) =>
@@ -710,14 +722,23 @@ export function useAppModel() {
       message: isDraw
         ? "Current standings are tied. End this game as a draw or finish it without a winner?"
         : canDeclareWinner
-          ? translate("copy.finishThisGameUsingTheCurrentStandingsOrEndItWithoutA")
+          ? translate(
+              "copy.finishThisGameUsingTheCurrentStandingsOrEndItWithoutA",
+            )
           : translate("copy.markThisGameAsFinishedWithoutAWinner"),
       confirmText: isDraw
         ? translate("copy.endAsDraw")
         : canDeclareWinner
           ? translate("copy.endWithWinner")
           : translate("topbar.endGame"),
-      extraActionText: isDraw || canDeclareWinner ? translate("copy.endWithoutWinner") : "",
+      confirmIcon: isDraw
+        ? createElement(Scale, { size: 18, strokeWidth: 2.5 })
+        : canDeclareWinner
+          ? createElement(Trophy, { size: 18, strokeWidth: 2.5 })
+          : undefined,
+      extraActionText:
+        isDraw || canDeclareWinner ? translate("copy.endWithoutWinner") : "",
+      extraActionIcon: noWinnerTrophyIcon,
       tone: "default",
     });
     if (!result || result === "cancel") return;
@@ -828,7 +849,10 @@ export function useAppModel() {
       }
     });
 
-    showToast(translate("copy.savedPlayersFromThisGameToYourAccount"), "success");
+    showToast(
+      translate("copy.savedPlayersFromThisGameToYourAccount"),
+      "success",
+    );
     setShouldSaveGamePlayersOnSignIn(false);
   }, [
     currentGame,
@@ -959,8 +983,9 @@ export function useAppModel() {
     if (!session) {
       const ok = await confirmRef.current?.confirm({
         title: translate("copy.notSignedIn"),
-        message:
-          translate("copy.continueAsGuestThisGameStaysOnThisDeviceAndWillNot"),
+        message: translate(
+          "copy.continueAsGuestThisGameStaysOnThisDeviceAndWillNot",
+        ),
         confirmText: translate("copy.continue"),
         cancelText: translate("copy.cancel"),
       });
@@ -1056,8 +1081,9 @@ export function useAppModel() {
         const decision = await confirmRef.current?.choose({
           eyebrow: translate("copy.inviteCodeRequired"),
           title: translate("copy.howShouldThesePlayersJoin"),
-          message:
-            translate("copy.automaticInvitesAreOffForTheseAccountsChooseHowToContinue"),
+          message: translate(
+            "copy.automaticInvitesAreOffForTheseAccountsChooseHowToContinue",
+          ),
           messageCase: "normal",
           playersTitle: "Players needing an invite code",
           players: blockedPlayers.map((player) => ({
@@ -1447,8 +1473,13 @@ export function useAppModel() {
     if (importCapacityState === "blocked") {
       throw new Error(
         entitlements.hasSessionPass
-          ? translate("dynamic.yourSessionPassKeepsUpToSessionsUpgradeToProToImport", [entitlements.maxSessions])
-          : translate("dynamic.theFreePlanKeepsUpToSessionsAddASessionPassOr", [entitlements.maxSessions]),
+          ? translate(
+              "dynamic.yourSessionPassKeepsUpToSessionsUpgradeToProToImport",
+              [entitlements.maxSessions],
+            )
+          : translate("dynamic.theFreePlanKeepsUpToSessionsAddASessionPassOr", [
+              entitlements.maxSessions,
+            ]),
       );
     }
 
@@ -1537,8 +1568,14 @@ export function useAppModel() {
     if (restoreCapacityState === "blocked") {
       throw new Error(
         entitlements.hasSessionPass
-          ? translate("dynamic.yourSessionPassKeepsUpToSessionsUpgradeToProToRestore", [entitlements.maxSessions])
-          : translate("dynamic.theFreePlanKeepsUpToSessionsAddASessionPassOr2", [entitlements.maxSessions]),
+          ? translate(
+              "dynamic.yourSessionPassKeepsUpToSessionsUpgradeToProToRestore",
+              [entitlements.maxSessions],
+            )
+          : translate(
+              "dynamic.theFreePlanKeepsUpToSessionsAddASessionPassOr2",
+              [entitlements.maxSessions],
+            ),
       );
     }
     const importedProfiles = await importProfiles(reconciled.profiles);

@@ -53,9 +53,11 @@ export type ConfirmOptions = {
   message: string;
   messageCase?: "default" | "normal";
   confirmText?: string;
+  confirmIcon?: ReactNode;
   cancelText?: string;
   hideCancelAction?: boolean;
   extraActionText?: string;
+  extraActionIcon?: ReactNode;
   extraActionDescription?: string;
   tone?: "default" | "danger";
   eyebrow?: string;

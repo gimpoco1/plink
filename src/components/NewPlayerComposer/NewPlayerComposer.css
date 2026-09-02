@@ -6,7 +6,7 @@
   background:
     radial-gradient(
       circle at top left,
-      rgba(216, 255, 79, 0.08),
+      rgb(var(--accent-rgb) / 0.08),
       transparent 34%
     ),
     rgba(255, 255, 255, 0.04);
@@ -37,7 +37,7 @@
   background:
     radial-gradient(
       circle at top left,
-      rgba(216, 255, 79, 0.1),
+      rgb(var(--accent-rgb) / 0.1),
       transparent 34%
     ),
     rgba(255, 255, 255, 0.045);
@@ -165,6 +165,27 @@
     box-shadow 160ms ease;
 }
 
+:root[data-theme="light"] .newPlayerComposer__inputShell {
+  border-color: var(--border);
+  background: #ffffff;
+}
+
+:root[data-theme="light"] .newGamePanel .newPlayerComposer__input,
+:root[data-theme="light"] .homeForm--newSession .newPlayerComposer__input.input {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .homeForm--newSession .newPlayerComposer__input.input::placeholder {
+  color: var(--text-dim);
+}
+
+:root[data-theme="light"] .newGamePanel .newPlayerComposer__submit {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 10px 20px rgb(var(--accent-rgb) / 0.16);
+}
+
 .newPlayerComposer__inputShell:focus-within {
   border-color: rgba(17, 24, 10, 0.16);
   box-shadow: none;
@@ -228,8 +249,8 @@
 }
 
 .managePlayersDialog .newPlayerComposer__inputShell:focus-within {
-  border-color: rgba(216, 255, 79, 0.38);
-  box-shadow: 0 0 0 3px rgba(216, 255, 79, 0.1);
+  border-color: rgb(var(--accent-rgb) / 0.38);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.1);
 }
 
 .managePlayersDialog .newPlayerComposer__input.input {
@@ -460,7 +481,7 @@
   border-color: rgba(246, 248, 235, 0.98);
 
   box-shadow:
-    0 0 0 2px #d9ff4f,
+    0 0 0 2px var(--accent),
     0 0 0 1px rgba(255, 255, 255, 0.14) inset;
 }
 

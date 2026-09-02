@@ -1892,3 +1892,103 @@ body.winFx-scrollLock .content {
     display: none;
   }
 }
+
+:root[data-theme="light"] .winFx {
+  --win-accent-rgb: 113, 137, 0;
+}
+
+:root[data-theme="light"] .winFx--teams {
+  --win-accent-rgb: 0, 105, 135;
+}
+
+:root[data-theme="light"] .winFx__veil {
+  background:
+    radial-gradient(1200px 700px at 50% 12%, rgba(var(--win-accent-rgb), 0.2), transparent 60%),
+    radial-gradient(900px 560px at 50% 82%, rgba(var(--win-accent-rgb), 0.07), transparent 72%),
+    rgba(238, 245, 246, 0.78);
+  backdrop-filter: blur(12px) saturate(1.02);
+}
+
+:root[data-theme="light"] .winFx__content {
+  border-color: rgba(var(--win-accent-rgb), 0.36);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 247, 0.98)),
+    radial-gradient(900px 280px at 50% 0%, rgba(var(--win-accent-rgb), 0.12), transparent 68%);
+  box-shadow:
+    0 0 0 1px rgba(var(--win-accent-rgb), 0.12),
+    0 30px 90px rgba(28, 49, 56, 0.2),
+    0 0 90px rgba(var(--win-accent-rgb), 0.1);
+}
+
+:root[data-theme="light"] .winFx__name,
+:root[data-theme="light"] .winFx__streakHeroLabel,
+:root[data-theme="light"] .winFx__playerStat strong,
+:root[data-theme="light"] .winFx__player strong,
+:root[data-theme="light"] .winFx__score {
+  color: var(--text);
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .winFx__sessionMeta,
+:root[data-theme="light"] .winFx__sessionGame,
+:root[data-theme="light"] .winFx__hint,
+:root[data-theme="light"] .winFx__playerStatsBadge,
+:root[data-theme="light"] .winFx__podiumName {
+  color: var(--muted);
+  text-shadow: none;
+  filter: none;
+}
+
+:root[data-theme="light"] .winFx__sessionDivider,
+:root[data-theme="light"] .winFx__hint,
+:root[data-theme="light"] .winFx__summary,
+:root[data-theme="light"] .winFx__row,
+:root[data-theme="light"] .winFx__playerStatsBadge {
+  border-color: var(--border);
+  background: rgba(20, 36, 40, 0.04);
+}
+
+:root[data-theme="light"] .winFx__playerStats,
+:root[data-theme="light"] .winFx__row--winner {
+  border-color: rgba(var(--win-accent-rgb), 0.26);
+  background:
+    linear-gradient(180deg, rgba(var(--win-accent-rgb), 0.09), transparent 55%),
+    rgba(255, 255, 255, 0.62);
+}
+
+:root[data-theme="light"] .winFx__playerStat {
+  border-color: var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), transparent),
+    rgba(20, 36, 40, 0.04);
+}
+
+:root[data-theme="light"] .winFx__rank {
+  color: var(--muted);
+  background: rgba(20, 36, 40, 0.08);
+}
+
+:root[data-theme="light"] .winFx__podiumSlot--winner .winFx__podiumName {
+  color: var(--text);
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .winFx__btn--ghost {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .winFx__btn--share {
+  color: var(--text);
+  border-color: rgba(var(--win-accent-rgb), 0.36);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.82), transparent 34%),
+    linear-gradient(135deg, rgba(var(--win-accent-rgb), 0.2), rgba(var(--win-accent-rgb), 0.08)),
+    rgba(255, 255, 255, 0.84);
+  box-shadow: 0 14px 34px rgba(var(--win-accent-rgb), 0.14);
+}
+
+:root[data-theme="light"] .winFx__btn--share::after {
+  border-color: rgba(20, 36, 40, 0.08);
+}

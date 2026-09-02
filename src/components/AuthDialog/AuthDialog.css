@@ -37,6 +37,54 @@
     0 16px 36px rgba(0, 0, 0, 0.16);
 }
 
+:root[data-theme="light"] .authDialog__settingsCard {
+  border-color: var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 252, 0.88)),
+    var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 16px 36px rgba(28, 49, 56, 0.12);
+}
+
+:root[data-theme="light"] .authDialog__accountOverview {
+  border-color: var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(240, 246, 247, 0.9)),
+    var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    0 18px 40px rgba(28, 49, 56, 0.12);
+}
+
+:root[data-theme="light"] .authDialog__accountOverview > * + * {
+  border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .authDialog__accountPlanBadge--free,
+:root[data-theme="light"] .authDialog__planFeature,
+:root[data-theme="light"] .authDialog__planOption {
+  color: var(--text);
+  border-color: var(--border);
+  background: rgba(20, 36, 40, 0.035);
+}
+
+:root[data-theme="light"] .languageSelector__trigger,
+:root[data-theme="light"] .authDialog__sharingPreferenceCheckbox {
+  border-color: var(--border);
+  background: rgba(20, 36, 40, 0.045);
+}
+
+:root[data-theme="light"] .languageSelector__menu {
+  border-color: var(--border);
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(28, 49, 56, 0.18);
+}
+
+:root[data-theme="light"] .languageSelector__option {
+  color: var(--text);
+}
+
 .authDialog__sectionHeading {
   display: flex;
   align-items: center;
@@ -53,7 +101,7 @@
   height: 24px;
   display: inline-grid;
   place-items: center;
-  color: rgba(216, 255, 79, 0.8);
+  color: rgb(var(--accent-rgb) / 0.8);
   flex: 0 0 auto;
 }
 
@@ -70,6 +118,89 @@
   margin-top: 8px;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.authDialog__settingsRows > .themeSelector {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.themeSelector {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 2px 0;
+}
+
+.themeSelector__icon {
+  width: 24px;
+  height: 24px;
+  color: color-mix(in srgb, var(--accent) 76%, var(--text));
+  display: inline-grid;
+  place-items: center;
+}
+
+.themeSelector__copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.themeSelector__title {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.themeSelector__description {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.themeSelector__toggle {
+  appearance: none;
+  width: 44px;
+  height: 25px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface2) 74%, transparent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.themeSelector__toggle::after {
+  content: "";
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 60%, var(--surface));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  transform: translateX(0);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.themeSelector__toggle:checked {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.themeSelector__toggle:checked::after {
+  background: var(--accent);
+  transform: translateX(19px);
+}
+
+.themeSelector__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .authDialog__sharingPreference {
@@ -91,7 +222,7 @@
 .languageSelector__icon {
   width: 24px;
   height: 24px;
-  color: rgba(216, 255, 79, 0.76);
+  color: rgb(var(--accent-rgb) / 0.76);
   display: inline-grid;
   place-items: center;
 }
@@ -142,8 +273,8 @@
 
 .languageSelector__trigger:hover,
 .languageSelector__trigger[aria-expanded="true"] {
-  border-color: rgba(216, 255, 79, 0.38);
-  background: rgba(216, 255, 79, 0.07);
+  border-color: rgb(var(--accent-rgb) / 0.38);
+  background: rgb(var(--accent-rgb) / 0.07);
 }
 
 .languageSelector__trigger:focus-visible,
@@ -204,14 +335,14 @@
 }
 
 .languageSelector__option--active {
-  background: rgba(216, 255, 79, 0.1);
+  background: rgb(var(--accent-rgb) / 0.1);
   color: var(--accent);
 }
 
 .authDialog__sharingPreferenceIcon {
   width: 24px;
   height: 24px;
-  color: rgba(216, 255, 79, 0.76);
+  color: rgb(var(--accent-rgb) / 0.76);
   display: inline-grid;
   place-items: center;
 }
@@ -272,8 +403,8 @@
 }
 
 .authDialog__sharingPreferenceCheckbox:checked {
-  border-color: rgba(216, 255, 79, 0.5);
-  background: rgba(216, 255, 79, 0.22);
+  border-color: rgb(var(--accent-rgb) / 0.5);
+  background: rgb(var(--accent-rgb) / 0.22);
 }
 
 .authDialog__sharingPreferenceCheckbox:checked::after {
@@ -337,15 +468,15 @@
 
 .authDialog__accountPlanBadge--pro {
   color: var(--accent-ink);
-  border-color: rgba(216, 255, 79, 0.22);
+  border-color: rgb(var(--accent-rgb) / 0.22);
   background: linear-gradient(
     180deg,
-    rgba(232, 255, 126, 1),
-    rgba(216, 255, 79, 0.95)
+    rgb(var(--accent-strong-rgb) / 1),
+    rgb(var(--accent-rgb) / 0.95)
   );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 10px 24px rgba(216, 255, 79, 0.16);
+    0 10px 24px rgb(var(--accent-rgb) / 0.16);
 }
 
 .authDialog__accountPlayerSection {
@@ -455,7 +586,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(216, 255, 79, 0.14);
+  background: rgb(var(--accent-rgb) / 0.14);
   color: var(--accent);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 }
@@ -518,7 +649,7 @@
   border-radius: 9999px;
   color: var(--accent);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.24), rgba(216, 255, 79, 0.08)),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.24), rgb(var(--accent-rgb) / 0.08)),
     rgba(255, 255, 255, 0.03);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
@@ -543,7 +674,7 @@
   min-height: 21px;
   padding: 0 8px;
   border-radius: 999px;
-  border: 1px solid rgba(216, 255, 79, 0.16);
+  border: 1px solid rgb(var(--accent-rgb) / 0.16);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-dim);
   font-size: 9px;
@@ -599,8 +730,8 @@
 }
 
 .authDialog__planFeature--enabled {
-  border-color: rgba(216, 255, 79, 0.2);
-  background: rgba(216, 255, 79, 0.1);
+  border-color: rgb(var(--accent-rgb) / 0.2);
+  background: rgb(var(--accent-rgb) / 0.1);
   color: var(--text);
 }
 
@@ -622,10 +753,10 @@
 }
 
 .authDialog__planOption--active {
-  border-color: rgba(216, 255, 79, 0.34);
-  box-shadow: 0 0 0 1px rgba(216, 255, 79, 0.12) inset;
+  border-color: rgb(var(--accent-rgb) / 0.34);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.12) inset;
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.1), transparent 110%),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.1), transparent 110%),
     rgba(255, 255, 255, 0.035);
 }
 
@@ -749,7 +880,7 @@
 }
 
 .authDialog__promoInputWrap input:focus {
-  outline: 2px solid rgba(216, 255, 79, 0.36);
+  outline: 2px solid rgb(var(--accent-rgb) / 0.36);
   outline-offset: 1px;
 }
 
@@ -765,10 +896,10 @@
 .authDialog__promoApply {
   flex: 0 0 auto;
   height: 38px;
-  border: 1px solid rgba(216, 255, 79, 0.3);
+  border: 1px solid rgb(var(--accent-rgb) / 0.3);
   border-radius: 11px;
   padding: 0 11px;
-  background: rgba(216, 255, 79, 0.1);
+  background: rgb(var(--accent-rgb) / 0.1);
   color: var(--accent);
   font: inherit;
   font-size: 12px;
@@ -1175,7 +1306,7 @@
 .authDialog__accountPlayerSwatch--selected {
   border-color: rgba(255, 255, 255, 0.9);
   box-shadow:
-    0 0 0 2px rgba(216, 255, 79, 0.28),
+    0 0 0 2px rgb(var(--accent-rgb) / 0.28),
     0 8px 20px rgba(0, 0, 0, 0.25);
   transform: scale(1.04);
 }
@@ -1199,8 +1330,8 @@
 
 .authDialog__switchBtn--active {
   color: var(--accent);
-  border-color: rgba(216, 255, 79, 0.24);
-  background: rgba(216, 255, 79, 0.1);
+  border-color: rgb(var(--accent-rgb) / 0.24);
+  background: rgb(var(--accent-rgb) / 0.1);
 }
 
 .authDialog__panel {
@@ -1237,9 +1368,9 @@
 
 .authDialog__providerBtn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(216, 255, 79, 0.18);
+  border-color: rgb(var(--accent-rgb) / 0.18);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.08), transparent),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.08), transparent),
     rgba(255, 255, 255, 0.035);
 }
 
@@ -1488,10 +1619,30 @@
   display: grid;
   gap: 0;
   padding: 0;
-  border: 1px solid rgba(126, 211, 255, 0.14);
-  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.018),
+      rgba(255, 255, 255, 0.01)
+    ),
+    rgba(11, 15, 24, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 16px 36px rgba(0, 0, 0, 0.16);
   overflow: hidden;
   margin-bottom: 20px;
+}
+
+:root[data-theme="light"] .authDialog__transfer {
+  border-color: var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 252, 0.88)),
+    var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 16px 36px rgba(28, 49, 56, 0.12);
 }
 
 .authDialog__transferToggle {
@@ -1517,9 +1668,9 @@
 .authDialog__transferChevron {
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(216, 255, 79, 0.2);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
   border-radius: 999px;
-  background: rgba(216, 255, 79, 0.075);
+  background: rgb(var(--accent-rgb) / 0.075);
   color: var(--accent);
   display: inline-flex;
   align-items: center;
@@ -1537,8 +1688,8 @@
 
 .authDialog__transferChevron--open {
   transform: rotate(180deg);
-  border-color: rgba(216, 255, 79, 0.24);
-  background: rgba(216, 255, 79, 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.24);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .authDialog__transferBody {
@@ -1842,7 +1993,7 @@
   width: 26px;
   height: 26px;
   border-radius: 999px;
-  background: rgba(216, 255, 79, 0.09);
+  background: rgb(var(--accent-rgb) / 0.09);
   color: var(--accent);
   display: inline-flex;
   align-items: center;
@@ -1880,22 +2031,22 @@
 
 .authDialog__actionBtn--add {
   width: 100%;
-  border-color: rgba(216, 255, 79, 0.32);
-  background: rgba(216, 255, 79, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.32);
+  background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent);
   box-shadow: none;
 }
 
 .authDialog__actionBtn--add:not(:disabled):hover {
-  border-color: rgba(216, 255, 79, 0.48);
-  background: rgba(216, 255, 79, 0.2);
+  border-color: rgb(var(--accent-rgb) / 0.48);
+  background: rgb(var(--accent-rgb) / 0.2);
   color: var(--accent);
 }
 
 .btn.authDialog__actionBtn--deviceImport {
   border-width: 1px;
   border-style: solid;
-  border-color: rgba(216, 255, 79, 0.72);
+  border-color: rgb(var(--accent-rgb) / 0.72);
   background: var(--accent);
   color: #151a08;
   box-shadow:
@@ -1904,14 +2055,14 @@
 }
 
 .btn.authDialog__actionBtn--deviceImport:not(:disabled):hover {
-  border-color: rgba(232, 255, 126, 0.86);
-  background: #ecff82;
+  border-color: rgb(var(--accent-strong-rgb) / 0.86);
+  background: var(--accent-strong);
   color: #111505;
 }
 
 .btn.authDialog__actionBtn--deviceImport:not(:disabled):active {
-  border-color: #ddff67;
-  background: #ddff67;
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
   color: #0f1304;
 }
 
@@ -2052,7 +2203,7 @@
 }
 
 .authDialog__passwordToggle:focus-visible {
-  outline: 2px solid rgba(216, 255, 79, 0.45);
+  outline: 2px solid rgb(var(--accent-rgb) / 0.45);
   outline-offset: 2px;
 }
 
@@ -2192,9 +2343,9 @@
   width: min(420px, calc(100vw - 72px));
   padding: 12px 14px;
   border-radius: 16px;
-  border: 1px solid rgba(216, 255, 79, 0.22);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
   background:
-    linear-gradient(180deg, rgba(216, 255, 79, 0.14), rgba(216, 255, 79, 0.06)),
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.14), rgb(var(--accent-rgb) / 0.06)),
     rgba(255, 255, 255, 0.04);
   color: var(--text);
   display: flex;
@@ -2205,7 +2356,7 @@
   line-height: 1.45;
   box-shadow:
     0 10px 24px rgba(0, 0, 0, 0.24),
-    0 0 0 1px rgba(216, 255, 79, 0.08) inset;
+    0 0 0 1px rgb(var(--accent-rgb) / 0.08) inset;
   backdrop-filter: blur(14px);
 }
 
