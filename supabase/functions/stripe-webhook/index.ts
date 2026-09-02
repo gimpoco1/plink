@@ -39,28 +39,28 @@ function normalizeBillingPeriod(value: unknown): "monthly" | "yearly" | null {
   return value === "monthly" || value === "yearly" ? value : null;
 }
 
+function mapReferralAttributionStatus(
+  status: Stripe.Subscription.Status,
+): "active" | "canceled" {
+  return ACTIVE_SUBSCRIPTION_STATUSES.has(status) ? "active" : "canceled";
+}
+
 function getStripeCustomerId(
   value: string | Stripe.Customer | Stripe.DeletedCustomer | null,
 ) {
-  return typeof value === "string" ? value : value?.id ?? null;
+  return typeof value === "string" ? value : (value?.id ?? null);
 }
 
-function getStripeSubscriptionId(
-  value: string | Stripe.Subscription | null,
-) {
-  return typeof value === "string" ? value : value?.id ?? null;
+function getStripeSubscriptionId(value: string | Stripe.Subscription | null) {
+  return typeof value === "string" ? value : (value?.id ?? null);
 }
 
-function getStripePaymentIntentId(
-  value: string | Stripe.PaymentIntent | null,
-) {
-  return typeof value === "string" ? value : value?.id ?? null;
+function getStripePaymentIntentId(value: string | Stripe.PaymentIntent | null) {
+  return typeof value === "string" ? value : (value?.id ?? null);
 }
 
-function getStripeChargeId(
-  value: string | Stripe.Charge | null,
-) {
-  return typeof value === "string" ? value : value?.id ?? null;
+function getStripeChargeId(value: string | Stripe.Charge | null) {
+  return typeof value === "string" ? value : (value?.id ?? null);
 }
 
 function parsePositiveInteger(value: unknown, maximum: number) {
@@ -82,9 +82,7 @@ function parsePositivePercentage(value: unknown) {
       : typeof value === "string"
         ? Number(value)
         : NaN;
-  return Number.isFinite(parsed) && parsed > 0 && parsed <= 100
-    ? parsed
-    : null;
+  return Number.isFinite(parsed) && parsed > 0 && parsed <= 100 ? parsed : null;
 }
 
 function getStripePromotionCodeId(
@@ -94,7 +92,7 @@ function getStripePromotionCodeId(
   const promotionCode = discount.promotion_code;
   return typeof promotionCode === "string"
     ? promotionCode
-    : promotionCode?.id ?? null;
+    : (promotionCode?.id ?? null);
 }
 
 async function syncReferralPromotionCode(
@@ -111,9 +109,10 @@ async function syncReferralPromotionCode(
   const { data: referrer, error: referrerError } =
     await admin.auth.admin.getUserById(referrerUserId);
   if (referrerError || !referrer.user) {
-    throw new Error(
-      `Promotion Code ${promotionCode.id} references an unknown Plink user.`,
+    console.warn(
+      `Promotion Code ${promotionCode.id} references an unknown Plink user; skipping referral sync.`,
     );
+    return null;
   }
 
   const code = promotionCode.code.trim().toUpperCase();
@@ -211,9 +210,7 @@ function calculateRefundedRevenue(
   if (chargeAmount <= 0 || chargeAmountRefunded <= 0) return 0;
   return Math.min(
     eligibleRevenueAmount,
-    Math.round(
-      eligibleRevenueAmount * (chargeAmountRefunded / chargeAmount),
-    ),
+    Math.round(eligibleRevenueAmount * (chargeAmountRefunded / chargeAmount)),
   );
 }
 
@@ -292,7 +289,9 @@ async function upsertStripeSubscription(
     ? new Date(subscription.canceled_at * 1000).toISOString()
     : null;
   const nextStatus = mapStripeSubscriptionStatus(subscription.status);
-  const nextPlan = ACTIVE_SUBSCRIPTION_STATUSES.has(nextStatus) ? "pro" : "free";
+  const nextPlan = ACTIVE_SUBSCRIPTION_STATUSES.has(nextStatus)
+    ? "pro"
+    : "free";
   const { data: existingSubscription } = await admin
     .from("subscriptions")
     .select(
@@ -334,7 +333,7 @@ async function upsertStripeSubscription(
       customer_id: customerId,
       subscription_id: subscription.id,
       price_id: shouldPreserveExistingStatus
-        ? existingSubscription?.price_id ?? priceId
+        ? (existingSubscription?.price_id ?? priceId)
         : priceId,
       billing_period: existingSubscription?.billing_period ?? billingPeriod,
       plan: shouldPreserveExistingStatus ? "pro" : nextPlan,
@@ -342,16 +341,16 @@ async function upsertStripeSubscription(
         ? existingSubscription.status
         : nextStatus,
       current_period_end: shouldPreserveExistingStatus
-        ? existingSubscription?.current_period_end ?? currentPeriodEnd
+        ? (existingSubscription?.current_period_end ?? currentPeriodEnd)
         : currentPeriodEnd,
       cancel_at_period_end: shouldPreserveExistingStatus
-        ? existingSubscription?.cancel_at_period_end ?? false
+        ? (existingSubscription?.cancel_at_period_end ?? false)
         : subscription.cancel_at_period_end,
       cancel_at: shouldPreserveExistingStatus
-        ? existingSubscription?.cancel_at ?? cancelAt
+        ? (existingSubscription?.cancel_at ?? cancelAt)
         : cancelAt,
       canceled_at: shouldPreserveExistingStatus
-        ? existingSubscription?.canceled_at ?? canceledAt
+        ? (existingSubscription?.canceled_at ?? canceledAt)
         : canceledAt,
       apple_original_transaction_id: null,
       apple_latest_transaction_id: null,
@@ -367,7 +366,7 @@ async function upsertStripeSubscription(
   const { error: attributionStatusError } = await admin
     .from("referral_attributions")
     .update({
-      status: subscription.status === "canceled" ? "canceled" : "active",
+      status: mapReferralAttributionStatus(subscription.status),
       updated_at: new Date().toISOString(),
     })
     .eq("stripe_subscription_id", subscription.id);
@@ -481,7 +480,7 @@ async function syncReferralCommission(
             stripe_subscription_id: subscriptionId,
             discount_percent: discountPercent,
             commission_rate_bps: commissionRateBps,
-            status: subscription.status === "canceled" ? "canceled" : "active",
+            status: mapReferralAttributionStatus(subscription.status),
           })
           .select("id")
           .single();
@@ -529,12 +528,11 @@ async function syncReferralCommission(
     availableAt.getUTCDate() + REFERRAL_COMMISSION_HOLD_DAYS,
   );
 
-  const { data: existingCommission, error: commissionLookupError } =
-    await admin
-      .from("referral_commissions")
-      .select("status,refunded_revenue_amount,commission_amount")
-      .eq("stripe_invoice_id", invoice.id)
-      .maybeSingle();
+  const { data: existingCommission, error: commissionLookupError } = await admin
+    .from("referral_commissions")
+    .select("status,refunded_revenue_amount,commission_amount")
+    .eq("stripe_invoice_id", invoice.id)
+    .maybeSingle();
   if (commissionLookupError) throw commissionLookupError;
 
   const { error: commissionError } = await admin
@@ -651,9 +649,7 @@ async function syncCheckoutSessionSubscription(
   );
 }
 
-async function syncCheckoutSessionPass(
-  session: Stripe.Checkout.Session,
-) {
+async function syncCheckoutSessionPass(session: Stripe.Checkout.Session) {
   if (session.metadata?.product !== STRIPE_SESSION_PASS_PRODUCT_KEY) {
     return false;
   }
@@ -670,9 +666,7 @@ async function syncCheckoutSessionPass(
       : null);
   const transactionId = getStripePaymentIntentId(session.payment_intent);
   if (!userId || !transactionId) {
-    throw new Error(
-      `Unable to resolve Session Pass checkout ${session.id}.`,
-    );
+    throw new Error(`Unable to resolve Session Pass checkout ${session.id}.`);
   }
 
   await persistSessionPassPurchase({
@@ -705,7 +699,10 @@ Deno.serve(async (request) => {
 
   const signature = request.headers.get("Stripe-Signature");
   if (!signature) {
-    return jsonResponse({ error: "Missing Stripe signature." }, { status: 400 });
+    return jsonResponse(
+      { error: "Missing Stripe signature." },
+      { status: 400 },
+    );
   }
 
   try {
@@ -734,10 +731,7 @@ Deno.serve(async (request) => {
           const charge = event.data.object as Stripe.Charge;
           await syncReferralRefund(admin, charge);
           const transactionId = getStripePaymentIntentId(charge.payment_intent);
-          if (
-            transactionId &&
-            charge.amount_refunded >= charge.amount
-          ) {
+          if (transactionId && charge.amount_refunded >= charge.amount) {
             await revokeStripeSessionPass(
               transactionId,
               new Date(event.created * 1000).toISOString(),

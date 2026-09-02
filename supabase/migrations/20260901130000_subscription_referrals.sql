@@ -131,37 +131,3 @@ create policy "Referrers can read their commissions"
   for select
   to authenticated
   using (auth.uid() = referrer_user_id);
-
-do $$
-begin
-  if exists (
-    select 1
-    from auth.users
-    where id = 'a5b19570-7ae6-4950-b7a5-f225d5ff0776'::uuid
-  ) then
-    insert into public.referral_codes (
-      owner_user_id,
-      code,
-      stripe_promotion_code_id,
-      discount_percent,
-      commission_rate_bps
-    ) values (
-      'a5b19570-7ae6-4950-b7a5-f225d5ff0776'::uuid,
-      'BGB15',
-      'promo_1UAyhPBapWQljjgvw5z6G9zu',
-      15,
-      4000
-    )
-    on conflict (owner_user_id) do update
-    set code = excluded.code,
-        stripe_promotion_code_id = excluded.stripe_promotion_code_id,
-        discount_percent = excluded.discount_percent,
-        commission_rate_bps = excluded.commission_rate_bps,
-        active = true;
-
-    raise notice 'Mapped referral promotion BGB15 to its Plink account.';
-  else
-    raise notice 'Skipped BGB15 mapping because its Plink account is absent.';
-  end if;
-end;
-$$;
