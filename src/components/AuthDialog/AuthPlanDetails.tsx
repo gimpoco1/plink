@@ -171,6 +171,9 @@ export function AuthPlanDetails() {
                   className="authDialog__promoPanel"
                   onSubmit={(event) => {
                     event.preventDefault();
+                    if (!appleReferralCode.trim() || busy || appleReferralChecking) {
+                      return;
+                    }
                     void validateAppleReferralCode();
                   }}
                 >
