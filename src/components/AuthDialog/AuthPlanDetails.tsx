@@ -1,15 +1,21 @@
 import { translate } from "../../i18n/translate";
-import { Check, Coffee, Croissant } from "lucide-react";
+import { useState } from "react";
+import { Check, CheckCircle2, Coffee, Croissant, Tag } from "lucide-react";
 import { useAuthDialogContext } from "./AuthDialogContext";
 import { SessionPassOffer } from "./SessionPassOffer";
 
 export function AuthPlanDetails() {
+  const [showPromoCode, setShowPromoCode] = useState(false);
   const {
     billingPeriodOptionRefs,
     busy,
     appleProductsByPeriod,
     appleProductsError,
     appleProductsLoading,
+    appleReferralCode,
+    appleReferralChecking,
+    appleReferralError,
+    appleReferralOffer,
     handleBillingPeriodRadioKeyDown,
     hasStripeBillingProfile,
     isNativeIOS,
@@ -19,9 +25,11 @@ export function AuthPlanDetails() {
     restoreSubscription,
     selectedBillingPeriod,
     setSelectedBillingPeriod,
+    setAppleReferralCode,
     source,
     startUpgradeFlow,
     subscriptionProvider,
+    validateAppleReferralCode,
   } = useAuthDialogContext();
   const monthlyPrice = isNativeIOS
     ? appleProductsByPeriod.monthly?.displayPrice
@@ -145,11 +153,91 @@ export function AuthPlanDetails() {
               </small>
             </button>
           </div>
+          {isNativeIOS ? (
+            <div className="authDialog__promoDisclosure">
+              <button
+                type="button"
+                className="authDialog__promoToggle"
+                aria-expanded={showPromoCode}
+                aria-controls="auth-promo-code-panel"
+                onClick={() => setShowPromoCode((visible) => !visible)}
+              >
+                <Tag size={15} strokeWidth={2.2} aria-hidden="true" />
+                <span>{translate("copy.doYouHaveAPromoCode")}</span>
+              </button>
+              {showPromoCode ? (
+                <form
+                  id="auth-promo-code-panel"
+                  className="authDialog__promoPanel"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void validateAppleReferralCode();
+                  }}
+                >
+                  <div className="authDialog__promoInputRow">
+                    <div className="authDialog__promoInputWrap">
+                      <input
+                        type="text"
+                        value={appleReferralCode}
+                        aria-label={translate("copy.promoCode")}
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        maxLength={64}
+                        placeholder={translate("copy.promoCode")}
+                        disabled={busy || appleReferralChecking}
+                        onChange={(event) =>
+                          setAppleReferralCode(event.target.value.toUpperCase())
+                        }
+                      />
+                      {appleReferralOffer ? (
+                        <CheckCircle2
+                          className="authDialog__promoValidIcon"
+                          size={17}
+                          strokeWidth={2.6}
+                          aria-label={translate("copy.promoCodeIsValid")}
+                        />
+                      ) : null}
+                    </div>
+                    <button
+                      type="submit"
+                      className="authDialog__promoApply"
+                      disabled={
+                        busy ||
+                        appleReferralChecking ||
+                        !appleReferralCode.trim()
+                      }
+                    >
+                      {appleReferralChecking
+                        ? translate("copy.checking")
+                        : translate("copy.apply")}
+                    </button>
+                  </div>
+                  {appleReferralOffer ? (
+                    <p className="authDialog__promoFeedback authDialog__promoFeedback--success">
+                      <span>
+                        {translate("dynamic.discountWillBeAppliedAtCheckout", [
+                          appleReferralOffer.discountPercent,
+                        ])}
+                      </span>
+                    </p>
+                  ) : appleReferralError ? (
+                    <p
+                      className="authDialog__promoFeedback authDialog__promoFeedback--error"
+                      role="alert"
+                    >
+                      {appleReferralError}
+                    </p>
+                  ) : null}
+                </form>
+              ) : null}
+            </div>
+          ) : null}
           <div className="authDialog__planActions">
             <button
               className="btn btn--primary btn--wide"
               type="button"
-              disabled={busy || purchaseUnavailable}
+              disabled={busy || appleReferralChecking || purchaseUnavailable}
               onClick={
                 appleProductsError ? reloadAppleProducts : startUpgradeFlow
               }

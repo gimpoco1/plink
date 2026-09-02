@@ -166,6 +166,18 @@ export function useAuthDialogModel(
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<
     "monthly" | "yearly"
   >("monthly");
+  const [appleReferralCode, setAppleReferralCode] = useState("");
+  const [appleReferralChecking, setAppleReferralChecking] = useState(false);
+  const [appleReferralError, setAppleReferralError] = useState<string | null>(
+    null,
+  );
+  const [appleReferralOffer, setAppleReferralOffer] = useState<{
+    billingPeriod: "monthly" | "yearly";
+    code: string;
+    discountPercent: number;
+    url: string;
+    validatedAt: number;
+  } | null>(null);
   const [localSessionSearch, setLocalSessionSearch] = useState("");
   const [includeGames, setIncludeGames] = useState(true);
   const [includeProfiles, setIncludeProfiles] = useState(true);
@@ -217,6 +229,11 @@ export function useAuthDialogModel(
     games: includeGames,
     profiles: includeProfiles,
   };
+
+  useEffect(() => {
+    setAppleReferralError(null);
+    setAppleReferralOffer(null);
+  }, [appleReferralCode, selectedBillingPeriod]);
   const accountPlayer =
     accountProfiles.find((profile) => profile.isAccountPlayer) ?? null;
   const accountPlayerName = accountPlayer?.name ?? "";
@@ -291,10 +308,12 @@ export function useAuthDialogModel(
     const date = new Date(subscriptionStartedAt);
     if (Number.isNaN(date.getTime())) return null;
 
-    return translate("dynamic.since", [new Intl.DateTimeFormat(getCurrentLanguage(), {
+    return translate("dynamic.since", [
+      new Intl.DateTimeFormat(getCurrentLanguage(), {
         month: "short",
         year: "numeric",
-      }).format(date)]);
+      }).format(date),
+    ]);
   }, [source, subscriptionStartedAt]);
   const billingPeriodOptions = ["monthly", "yearly"] as const;
 
@@ -884,7 +903,9 @@ export function useAuthDialogModel(
         }
       }
     } catch (err) {
-      setError(getAuthErrorMessage(err, translate("copy.authenticationFailed")));
+      setError(
+        getAuthErrorMessage(err, translate("copy.authenticationFailed")),
+      );
     } finally {
       setBusy(false);
     }
@@ -918,7 +939,9 @@ export function useAuthDialogModel(
       if (resetError) throw resetError;
       setNotice(translate("copy.checkYourEmailForAPasswordResetLink"));
     } catch (err) {
-      setError(getAuthErrorMessage(err, translate("copy.couldNotSendResetLink")));
+      setError(
+        getAuthErrorMessage(err, translate("copy.couldNotSendResetLink")),
+      );
     } finally {
       setBusy(false);
     }
@@ -1017,15 +1040,9 @@ export function useAuthDialogModel(
 
   function formatTransferParts(result: DataTransferResult) {
     return [
-      result.games
-        ? translate("dynamic.session", [result.games])
-        : "",
-      result.profiles
-        ? translate("dynamic.player", [result.profiles])
-        : "",
-      result.teams
-        ? translate("dynamic.team", [result.teams])
-        : "",
+      result.games ? translate("dynamic.session", [result.games]) : "",
+      result.profiles ? translate("dynamic.player", [result.profiles]) : "",
+      result.teams ? translate("dynamic.team", [result.teams]) : "",
     ].filter(Boolean);
   }
 
@@ -1051,6 +1068,18 @@ export function useAuthDialogModel(
 
     if (message.includes("already has a session pass")) {
       return translate("copy.thisAccountAlreadyHasASessionPass");
+    }
+
+    if (message.includes("referral code is not valid")) {
+      return translate("copy.thisReferralCodeIsNotValid");
+    }
+
+    if (message.includes("cannot use your own referral code")) {
+      return translate("copy.youCannotUseYourOwnReferralCode");
+    }
+
+    if (message.includes("not available for that apple plan")) {
+      return translate("copy.thisReferralCodeIsNotAvailableForThatPlan");
     }
 
     if (message.includes("supabase is not configured")) {
@@ -1080,6 +1109,67 @@ export function useAuthDialogModel(
     }
 
     return getBillingErrorMessage(err, fallback);
+  }
+
+  async function requestAppleReferralOffer() {
+    const normalizedCode = appleReferralCode.trim().toUpperCase();
+    if (!normalizedCode) {
+      throw new Error(translate("copy.enterReferralCode"));
+    }
+    if (!supabase || !hasSupabaseConfig) {
+      throw new Error("Supabase is not configured yet.");
+    }
+
+    const { data, error: invokeError } = await supabase.functions.invoke<{
+      url?: string;
+      discountPercent?: number;
+      error?: string;
+    }>("get-apple-referral-offer", {
+      body: {
+        code: normalizedCode,
+        billingPeriod: selectedBillingPeriod,
+      },
+    });
+    if (invokeError) {
+      throw new Error(
+        await getInvokeErrorMessage(
+          invokeError,
+          translate("copy.theReferralOfferCouldNotBeOpened"),
+        ),
+      );
+    }
+    if (!data?.url || typeof data.discountPercent !== "number") {
+      throw new Error(
+        data?.error || translate("copy.theReferralOfferCouldNotBeOpened"),
+      );
+    }
+
+    return {
+      billingPeriod: selectedBillingPeriod,
+      code: normalizedCode,
+      discountPercent: data.discountPercent,
+      url: data.url,
+      validatedAt: Date.now(),
+    };
+  }
+
+  async function validateAppleReferralCode() {
+    setAppleReferralChecking(true);
+    setAppleReferralError(null);
+    try {
+      const offer = await requestAppleReferralOffer();
+      setAppleReferralOffer(offer);
+    } catch (err) {
+      setAppleReferralOffer(null);
+      setAppleReferralError(
+        getBillingErrorMessage(
+          err,
+          translate("copy.theReferralOfferCouldNotBeOpened"),
+        ),
+      );
+    } finally {
+      setAppleReferralChecking(false);
+    }
   }
 
   async function requestBillingUrl(
@@ -1127,6 +1217,23 @@ export function useAuthDialogModel(
       setNotice(null);
       setTransferToast(null);
       try {
+        const normalizedReferralCode = appleReferralCode.trim().toUpperCase();
+        if (normalizedReferralCode) {
+          const hasFreshValidation =
+            appleReferralOffer?.code === normalizedReferralCode &&
+            appleReferralOffer.billingPeriod === selectedBillingPeriod &&
+            Date.now() - appleReferralOffer.validatedAt < 55 * 60 * 1000;
+          const offer = hasFreshValidation
+            ? appleReferralOffer
+            : await requestAppleReferralOffer();
+          await openExternalUrl(offer.url);
+          purchaseResult = {
+            message: translate("copy.continueInTheAppStoreToRedeemYourOffer"),
+            tone: "default",
+          };
+          return;
+        }
+
         const result = await appleSubscription.purchase(selectedBillingPeriod);
         if (result.status === "cancelled") {
           purchaseResult = {
@@ -1193,7 +1300,9 @@ export function useAuthDialogModel(
     }
     if (hasSessionPass) {
       showTransferToast(
-        translate("dynamic.yourAccountCanAlreadyKeepUpToSessions", [maxSessions ?? 100]),
+        translate("dynamic.yourAccountCanAlreadyKeepUpToSessions", [
+          maxSessions ?? 100,
+        ]),
         "default",
       );
       return;
@@ -1222,7 +1331,9 @@ export function useAuthDialogModel(
           };
         } else {
           purchaseResult = {
-            message: translate("copy.sessionPassAddedYouCanNowKeepUpTo100Sessions"),
+            message: translate(
+              "copy.sessionPassAddedYouCanNowKeepUpTo100Sessions",
+            ),
             tone: "success",
           };
         }
@@ -1315,7 +1426,10 @@ export function useAuthDialogModel(
       await openUrl(url);
     } catch (err) {
       setError(
-        getBillingErrorMessage(err, translate("copy.billingPortalIsNotAvailableYet")),
+        getBillingErrorMessage(
+          err,
+          translate("copy.billingPortalIsNotAvailableYet"),
+        ),
       );
     } finally {
       setBusy(false);
@@ -1434,15 +1548,15 @@ export function useAuthDialogModel(
         ? " Team-based sessions were skipped because this account is on Free plan."
         : "";
       showTransferToast(
-        translate("dynamic.importedToYourAccount", [parts.join(" , "), skippedTeamContentLabel]),
+        translate("dynamic.importedToYourAccount", [
+          parts.join(" , "),
+          skippedTeamContentLabel,
+        ]),
         "success",
       );
     } catch (err) {
       console.error("Failed to import device data", err);
-      showTransferToast(
-        translate("copy.importFailed"),
-        "error",
-      );
+      showTransferToast(translate("copy.importFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -1482,10 +1596,7 @@ export function useAuthDialogModel(
       );
     } catch (err) {
       console.error("Failed to import backup file", err);
-      showTransferToast(
-        translate("copy.importFromFileFailed"),
-        "error",
-      );
+      showTransferToast(translate("copy.importFromFileFailed"), "error");
     } finally {
       setBusy(false);
       if (backupInputRef.current) backupInputRef.current.value = "";
@@ -1508,10 +1619,7 @@ export function useAuthDialogModel(
       await onDownloadBackupFile(transferSelection);
     } catch (err) {
       console.error("Failed to download backup file", err);
-      showTransferToast(
-        translate("copy.backupDownloadFailed"),
-        "error",
-      );
+      showTransferToast(translate("copy.backupDownloadFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -1519,6 +1627,10 @@ export function useAuthDialogModel(
 
   return {
     allowPreviousPlayersToInvite,
+    appleReferralCode,
+    appleReferralChecking,
+    appleReferralError,
+    appleReferralOffer,
     hasSupabaseConfig,
     accountColorOptionRefs,
     accountDraftColor,
@@ -1591,6 +1703,7 @@ export function useAuthDialogModel(
     setAccountDraftColor,
     setAccountDraftName,
     setAccountName,
+    setAppleReferralCode,
     setConfirmNewPassword,
     setConfirmingAccountDeletion,
     setEditingAccountPlayer,
@@ -1635,5 +1748,6 @@ export function useAuthDialogModel(
     toggleLocalProfile,
     transferToast,
     updateSharingPreference,
+    validateAppleReferralCode,
   };
 }

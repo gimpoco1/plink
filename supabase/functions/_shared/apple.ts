@@ -26,8 +26,12 @@ enum AutoRenewStatus {
 type JWSTransactionDecodedPayload = {
   appAccountToken?: string;
   bundleId?: string;
+  currency?: string;
   expiresDate?: number;
+  offerIdentifier?: string;
+  offerType?: number;
   originalTransactionId?: string;
+  price?: number;
   purchaseDate?: number;
   productId?: string;
   revocationDate?: number;
@@ -59,19 +63,13 @@ type TransactionInfoResponse = {
 
 const APPLE_BUNDLE_ID =
   Deno.env.get("APPLE_APP_BUNDLE_ID")?.trim() || "com.plinkscore.app";
-const APPLE_PRODUCT_PERIOD: Readonly<
-  Record<string, "monthly" | "yearly">
-> = {
+const APPLE_PRODUCT_PERIOD: Readonly<Record<string, "monthly" | "yearly">> = {
   "com.plinkscore.app.pro.monthly": "monthly",
   "com.plinkscore.app.pro.yearly": "yearly",
 };
 const ACTIVE_DATABASE_STATUSES = new Set(["active", "trialing"]);
 
-type AppleSubscriptionStatus =
-  | "active"
-  | "inactive"
-  | "past_due"
-  | "canceled";
+type AppleSubscriptionStatus = "active" | "inactive" | "past_due" | "canceled";
 
 type AppleSubscriptionSnapshot = {
   appAccountToken: string | null;
@@ -86,6 +84,17 @@ type AppleSubscriptionSnapshot = {
   cancelAt: string | null;
   canceledAt: string | null;
   environment: Environment;
+  offerIdentifier: string | null;
+  offerType: number | null;
+  currency: string | null;
+  priceMilliunits: number | null;
+  purchasedAt: string | null;
+  revokedAt: string | null;
+};
+
+type AppleReferralOffer = {
+  id: string;
+  referral_code_id: string;
 };
 
 const APPLE_API_BASE_URL: Readonly<Record<Environment, string>> = {
@@ -139,9 +148,9 @@ async function getAllSubscriptionStatuses(
   environment: Environment,
 ) {
   const response = await fetch(
-    `${APPLE_API_BASE_URL[environment]}/inApps/v1/subscriptions/${
-      encodeURIComponent(transactionId)
-    }`,
+    `${APPLE_API_BASE_URL[environment]}/inApps/v1/subscriptions/${encodeURIComponent(
+      transactionId,
+    )}`,
     {
       headers: {
         Accept: "application/json",
@@ -167,9 +176,9 @@ async function getTransactionInfo(
   environment: Environment,
 ) {
   const response = await fetch(
-    `${APPLE_API_BASE_URL[environment]}/inApps/v1/transactions/${
-      encodeURIComponent(transactionId)
-    }`,
+    `${APPLE_API_BASE_URL[environment]}/inApps/v1/transactions/${encodeURIComponent(
+      transactionId,
+    )}`,
     {
       headers: {
         Accept: "application/json",
@@ -262,7 +271,7 @@ function createSnapshot(
     mappedStatus.active && renewal?.autoRenewStatus === AutoRenewStatus.OFF;
   const currentPeriodTimestamp =
     item.status === Status.BILLING_GRACE_PERIOD
-      ? renewal?.gracePeriodExpiresDate ?? transaction.expiresDate
+      ? (renewal?.gracePeriodExpiresDate ?? transaction.expiresDate)
       : transaction.expiresDate;
 
   return {
@@ -276,11 +285,20 @@ function createSnapshot(
     active: mappedStatus.active,
     currentPeriodEnd: toIsoDate(currentPeriodTimestamp),
     cancelAtPeriodEnd,
-    cancelAt: cancelAtPeriodEnd
-      ? toIsoDate(transaction.expiresDate)
-      : null,
+    cancelAt: cancelAtPeriodEnd ? toIsoDate(transaction.expiresDate) : null,
     canceledAt: toIsoDate(transaction.revocationDate),
     environment,
+    offerIdentifier: transaction.offerIdentifier ?? null,
+    offerType: transaction.offerType ?? null,
+    currency: transaction.currency?.trim().toLowerCase() ?? null,
+    priceMilliunits:
+      typeof transaction.price === "number" &&
+      Number.isSafeInteger(transaction.price) &&
+      transaction.price >= 0
+        ? transaction.price
+        : null,
+    purchasedAt: toIsoDate(transaction.purchaseDate),
+    revokedAt: toIsoDate(transaction.revocationDate),
   };
 }
 
@@ -330,10 +348,7 @@ export async function loadAppleSubscriptionSnapshot(transactionId: string) {
   }
 
   let lastError: unknown;
-  for (const environment of [
-    Environment.PRODUCTION,
-    Environment.SANDBOX,
-  ]) {
+  for (const environment of [Environment.PRODUCTION, Environment.SANDBOX]) {
     try {
       const snapshot = await loadSnapshotFromEnvironment(
         trimmedId,
@@ -349,17 +364,179 @@ export async function loadAppleSubscriptionSnapshot(transactionId: string) {
   throw new Error("Apple could not verify this subscription.");
 }
 
+async function loadAppleReferralOffer(
+  admin: ReturnType<typeof createAdminClient>,
+  snapshot: AppleSubscriptionSnapshot,
+) {
+  if (snapshot.offerType !== 3 || !snapshot.offerIdentifier) return null;
+
+  const { data, error } = await admin
+    .from("apple_referral_offers")
+    .select("id,referral_code_id")
+    .eq("apple_offer_reference_name", snapshot.offerIdentifier)
+    .eq("apple_product_id", snapshot.productId)
+    .eq("active", true)
+    .maybeSingle();
+  if (error) throw error;
+  return data as AppleReferralOffer | null;
+}
+
+async function findPendingRedemptionIntent(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  offerId: string,
+) {
+  const { data, error } = await admin
+    .from("apple_referral_redemption_intents")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("apple_referral_offer_id", offerId)
+    .is("consumed_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}
+
+async function persistAppleReferral(
+  admin: ReturnType<typeof createAdminClient>,
+  snapshot: AppleSubscriptionSnapshot,
+  userId: string,
+  offer: AppleReferralOffer | null,
+) {
+  const attributionStatus = snapshot.active ? "active" : "canceled";
+  const { data: existingAttribution, error: existingAttributionError } =
+    await admin
+      .from("referral_attributions")
+      .select("id,referrer_user_id,referred_user_id,commission_rate_bps")
+      .eq("apple_original_transaction_id", snapshot.originalTransactionId)
+      .maybeSingle();
+  if (existingAttributionError) throw existingAttributionError;
+
+  let attribution = existingAttribution;
+  if (attribution) {
+    const { error } = await admin
+      .from("referral_attributions")
+      .update({
+        status: attributionStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", attribution.id);
+    if (error) throw error;
+  } else if (offer) {
+    const { data: referralCode, error: referralCodeError } = await admin
+      .from("referral_codes")
+      .select("id,owner_user_id,discount_percent,commission_rate_bps,active")
+      .eq("id", offer.referral_code_id)
+      .maybeSingle();
+    if (referralCodeError) throw referralCodeError;
+    if (!referralCode?.active || referralCode.owner_user_id === userId) return;
+
+    const { data: priorAttribution, error: priorAttributionError } = await admin
+      .from("referral_attributions")
+      .select("id")
+      .eq("referred_user_id", userId)
+      .maybeSingle();
+    if (priorAttributionError) throw priorAttributionError;
+    if (priorAttribution) return;
+
+    const { data: insertedAttribution, error: insertError } = await admin
+      .from("referral_attributions")
+      .insert({
+        referral_code_id: referralCode.id,
+        referrer_user_id: referralCode.owner_user_id,
+        referred_user_id: userId,
+        provider: "apple",
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        apple_original_transaction_id: snapshot.originalTransactionId,
+        apple_offer_reference_name: snapshot.offerIdentifier,
+        discount_percent: referralCode.discount_percent,
+        commission_rate_bps: referralCode.commission_rate_bps,
+        status: attributionStatus,
+      })
+      .select("id,referrer_user_id,referred_user_id,commission_rate_bps")
+      .single();
+    if (insertError) throw insertError;
+    attribution = insertedAttribution;
+  }
+
+  if (!attribution || !snapshot.purchasedAt) return;
+
+  const { data: existingTransaction, error: existingTransactionError } =
+    await admin
+      .from("apple_referral_transactions")
+      .select("status")
+      .eq("apple_transaction_id", snapshot.latestTransactionId)
+      .maybeSingle();
+  if (existingTransactionError) throw existingTransactionError;
+
+  const transactionStatus = snapshot.revokedAt
+    ? "reversed"
+    : (existingTransaction?.status ?? "pending");
+  const commissionMilliunits =
+    snapshot.priceMilliunits === null
+      ? null
+      : Math.floor(
+          (snapshot.priceMilliunits * attribution.commission_rate_bps) / 10000,
+        );
+  const { error: transactionError } = await admin
+    .from("apple_referral_transactions")
+    .upsert(
+      {
+        referral_attribution_id: attribution.id,
+        referrer_user_id: attribution.referrer_user_id,
+        referred_user_id: attribution.referred_user_id,
+        apple_transaction_id: snapshot.latestTransactionId,
+        apple_original_transaction_id: snapshot.originalTransactionId,
+        apple_product_id: snapshot.productId,
+        apple_offer_reference_name: snapshot.offerIdentifier,
+        currency: snapshot.currency,
+        customer_price_milliunits: snapshot.priceMilliunits,
+        commission_rate_bps: attribution.commission_rate_bps,
+        commission_milliunits: commissionMilliunits,
+        status: transactionStatus,
+        purchased_at: snapshot.purchasedAt,
+        revoked_at: snapshot.revokedAt,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "apple_transaction_id" },
+    );
+  if (transactionError) throw transactionError;
+}
+
 export async function persistAppleSubscription(
   snapshot: AppleSubscriptionSnapshot,
   expectedUserId?: string,
 ) {
   const admin = createAdminClient();
   let userId = expectedUserId ?? snapshot.appAccountToken;
+  const referralOffer = await loadAppleReferralOffer(admin, snapshot);
+  let redemptionIntentId: string | null = null;
 
   if (expectedUserId && !snapshot.appAccountToken) {
-    throw new Error(
-      "This purchase is not linked to a Plink account and cannot be restored here.",
-    );
+    const { data: existingPurchase, error: existingPurchaseError } = await admin
+      .from("subscriptions")
+      .select("user_id")
+      .eq("user_id", expectedUserId)
+      .eq("apple_original_transaction_id", snapshot.originalTransactionId)
+      .maybeSingle();
+    if (existingPurchaseError) throw existingPurchaseError;
+
+    if (!existingPurchase && referralOffer) {
+      redemptionIntentId = await findPendingRedemptionIntent(
+        admin,
+        expectedUserId,
+        referralOffer.id,
+      );
+    }
+    if (!existingPurchase && !redemptionIntentId) {
+      throw new Error(
+        "This purchase is not linked to a Plink account and cannot be restored here.",
+      );
+    }
   }
 
   if (
@@ -427,6 +604,16 @@ export async function persistAppleSubscription(
   );
   if (error) throw error;
 
+  await persistAppleReferral(admin, snapshot, userId, referralOffer);
+
+  if (redemptionIntentId) {
+    const { error: consumeError } = await admin
+      .from("apple_referral_redemption_intents")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", redemptionIntentId);
+    if (consumeError) throw consumeError;
+  }
+
   return {
     active: snapshot.active,
     billingPeriod: snapshot.billingPeriod,
@@ -476,10 +663,7 @@ export async function syncAppleSessionPassByTransaction(
 
   let transaction: JWSTransactionDecodedPayload | null = null;
   let lastError: unknown;
-  for (const environment of [
-    Environment.PRODUCTION,
-    Environment.SANDBOX,
-  ]) {
+  for (const environment of [Environment.PRODUCTION, Environment.SANDBOX]) {
     try {
       transaction = await loadAppleSessionPassTransaction(
         trimmedId,
