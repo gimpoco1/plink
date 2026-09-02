@@ -96,8 +96,7 @@ input {
   width: 92px;
   height: 92px;
   display: block;
-  filter:
-    drop-shadow(0 0 22px rgb(var(--accent-rgb) / 0.12))
+  filter: drop-shadow(0 0 22px rgb(var(--accent-rgb) / 0.12))
     drop-shadow(0 14px 30px rgba(0, 0, 0, 0.24));
 }
 
@@ -272,7 +271,11 @@ input {
 
 :root[data-theme="light"] body {
   background:
-    radial-gradient(circle at 8% -10%, rgb(var(--accent-rgb) / 0.46), transparent 38%),
+    radial-gradient(
+      circle at 8% -10%,
+      rgb(var(--accent-rgb) / 0.46),
+      transparent 38%
+    ),
     var(--bg);
 }
 
