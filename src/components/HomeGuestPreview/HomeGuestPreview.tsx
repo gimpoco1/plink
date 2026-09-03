@@ -26,7 +26,7 @@ export function HomeGuestPreview({ onOpenAuth }: GuestPreviewProps) {
       </div>
       <div className="guestBanner__actions">
         <button
-          className="btn btn--sm guestBanner__action"
+          className="btn btn--ghost btn--sm guestBanner__action"
           type="button"
           onClick={onOpenAuth}
         >

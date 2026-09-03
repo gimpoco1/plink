@@ -1,6 +1,5 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { SplashScreen } from "@capacitor/splash-screen";
-import DotGrid from "../../../components/DotGrid/DotGrid";
 import { isNativeApp } from "../../../lib/nativePlatform";
 import { useAppContext } from "../context/AppContext";
 import { AppDialogs } from "../components/AppDialogs";
@@ -9,6 +8,16 @@ import { AppRoutes } from "./AppRoutes";
 import { AppToast } from "../components/AppToast";
 import { AppTopBar } from "../components/AppTopBar";
 import { GameStartSplash } from "../components/GameStartSplash";
+
+const DotGrid = lazy(() => import("../../../components/DotGrid/DotGrid"));
+
+type IdleWindow = Window & {
+  cancelIdleCallback?: (handle: number) => void;
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions,
+  ) => number;
+};
 
 export function AppView() {
   const {
@@ -20,11 +29,26 @@ export function AppView() {
     isResumingActiveGameView,
   } = useAppContext();
   const isLoading = isAppBootLoading || isResumingActiveGameView;
+  const [showBackdrop, setShowBackdrop] = useState(false);
 
   useEffect(() => {
     if (!isNativeApp() || isLoading) return;
     void SplashScreen.hide({ fadeOutDuration: 0 });
   }, [isLoading]);
+
+  useEffect(() => {
+    const idleWindow = window as IdleWindow;
+    if (!idleWindow.requestIdleCallback) {
+      const timeoutId = window.setTimeout(() => setShowBackdrop(true), 0);
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    const idleCallbackId = idleWindow.requestIdleCallback(
+      () => setShowBackdrop(true),
+      { timeout: 2000 },
+    );
+    return () => idleWindow.cancelIdleCallback?.(idleCallbackId);
+  }, []);
 
   if (isLoading) {
     return <AppLoadingScreen />;
@@ -40,19 +64,23 @@ export function AppView() {
         className={`appBackdrop${authDialogOpen ? " appBackdrop--hidden" : ""}`}
         aria-hidden="true"
       >
-        <DotGrid
-          dotSize={3}
-          gap={23}
-          baseColor="#202b34"
-          activeColor="#d8ff4f"
-          proximity={140}
-          shockRadius={250}
-          shockStrength={5}
-          resistance={750}
-          returnDuration={1.5}
-          idleSpeed={1.75}
-          idleStrength={4.5}
-        />
+        {showBackdrop ? (
+          <Suspense fallback={null}>
+            <DotGrid
+              dotSize={3}
+              gap={23}
+              baseColor="#202b34"
+              activeColor="#d8ff4f"
+              proximity={140}
+              shockRadius={250}
+              shockStrength={5}
+              resistance={750}
+              returnDuration={1.5}
+              idleSpeed={1.75}
+              idleStrength={4.5}
+            />
+          </Suspense>
+        ) : null}
       </div>
       <AppTopBar />
       <AppRoutes />

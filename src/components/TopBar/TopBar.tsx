@@ -149,7 +149,13 @@ export function TopBar({
             aria-label={t("topbar.backToGames")}
           >
             <span className="logo__mark" aria-hidden="true">
-              <img src={iconSrc} alt="" className="logo__img" />
+              <img
+                src={iconSrc}
+                alt=""
+                className="logo__img"
+                width={512}
+                height={512}
+              />
             </span>
             <span className="logo__text">Plink</span>
           </button>

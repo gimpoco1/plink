@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -10,11 +12,15 @@ import type { HomeTab } from "../types";
 import { HomeTabBar } from "../components/HomeTabBar/HomeTabBar";
 import { HomeScreen } from "./HomeScreen";
 import { SessionsScreen } from "./SessionsScreen";
-import { StatsScreen } from "./StatsScreen";
 import { PlayersScreen } from "./PlayersScreen";
 import { PLAYERS_VIEW_STORAGE_KEY } from "../constants";
 import type { DashboardScreenProps } from "../features/dashboard/types/dashboardScreenTypes";
 import "../features/dashboard/styles/DashboardScreen.css";
+
+const StatsScreen = lazy(async () => {
+  const { StatsScreen: StatsScreenComponent } = await import("./StatsScreen");
+  return { default: StatsScreenComponent };
+});
 
 const tabs: HomeTab[] = [
   "home",
@@ -189,15 +195,17 @@ export function DashboardScreen(props: DashboardScreenProps) {
         );
       case "stats":
         return (
-          <StatsScreen
-            games={props.games}
-            profiles={props.profiles}
-            teams={props.teams}
-            teamMembers={props.teamMembers}
-            isAuthenticated={props.isAuthenticated}
-            onOpenAuth={props.onOpenAuth}
-            onOpenProPlan={props.onOpenProPlan}
-          />
+          <Suspense fallback={null}>
+            <StatsScreen
+              games={props.games}
+              profiles={props.profiles}
+              teams={props.teams}
+              teamMembers={props.teamMembers}
+              isAuthenticated={props.isAuthenticated}
+              onOpenAuth={props.onOpenAuth}
+              onOpenProPlan={props.onOpenProPlan}
+            />
+          </Suspense>
         );
       case "players":
         return (

@@ -14,7 +14,13 @@ export function AppLoadingScreen() {
     >
       <div className="appLoading__inner">
         <div className="appLoading__mark" aria-hidden="true">
-          <img src={iconSrc} alt="" className="appLoading__img" />
+          <img
+            src={iconSrc}
+            alt=""
+            className="appLoading__img"
+            width={512}
+            height={512}
+          />
         </div>
       </div>
     </div>
