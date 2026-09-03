@@ -131,7 +131,11 @@
   border: 1px solid rgba(217, 228, 235, 0.1);
   border-radius: 30px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.008)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.028),
+      rgba(255, 255, 255, 0.008)
+    ),
     rgba(9, 18, 22, 0.82);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.035),
@@ -143,8 +147,16 @@
   position: absolute;
   inset: -1px;
   background:
-    radial-gradient(circle at 0% 0%, rgb(var(--accent-rgb) / 0.12), transparent 32%),
-    radial-gradient(circle at 100% 0%, rgba(122, 208, 255, 0.11), transparent 28%);
+    radial-gradient(
+      circle at 0% 0%,
+      rgb(var(--accent-rgb) / 0.12),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(122, 208, 255, 0.11),
+      transparent 28%
+    );
   pointer-events: none;
 }
 
@@ -198,7 +210,12 @@
   border: 1px solid rgba(217, 228, 235, 0.1);
   border-radius: 24px;
   background:
-    linear-gradient(160deg, rgb(var(--accent-rgb) / 0.1), rgba(122, 208, 255, 0.06) 58%, transparent 100%),
+    linear-gradient(
+      160deg,
+      rgb(var(--accent-rgb) / 0.1),
+      rgba(122, 208, 255, 0.06) 58%,
+      transparent 100%
+    ),
     rgba(255, 255, 255, 0.03);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
@@ -274,7 +291,11 @@
   place-items: center;
   border-radius: 14px;
   background:
-    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.18), rgb(var(--accent-rgb) / 0.08)),
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.18),
+      rgb(var(--accent-rgb) / 0.08)
+    ),
     rgba(255, 255, 255, 0.05);
   color: var(--accent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -423,6 +444,135 @@
   transform: translateY(-1px);
   border-color: rgb(var(--accent-rgb) / 0.26);
   background: rgb(var(--accent-rgb) / 0.12);
+}
+
+:root[data-theme="light"] .homeInfo__panel {
+  border-color: var(--border);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.94),
+      rgba(245, 249, 250, 0.92)
+    ),
+    var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 20px 48px rgba(28, 49, 56, 0.12);
+}
+
+:root[data-theme="light"] .homeInfo__panelGlow {
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgb(var(--accent-rgb) / 0.12),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(122, 208, 255, 0.12),
+      transparent 28%
+    );
+}
+
+:root[data-theme="light"] .homeInfo__eyebrow {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+:root[data-theme="light"] .homeInfo__copy {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .homeInfo__spotlight {
+  border-color: var(--border);
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.92),
+      rgba(232, 240, 242, 0.9) 58%,
+      transparent 100%
+    ),
+    var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+:root[data-theme="light"] .homeInfo__spotlightBadge {
+  background: rgba(20, 36, 40, 0.04);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .homeInfo__spotlightValue {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .homeInfo__spotlightCopy {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .homeInfoFeature {
+  border-color: var(--border);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.82),
+      rgba(236, 243, 245, 0.8)
+    ),
+    var(--surface);
+}
+
+:root[data-theme="light"] .homeInfoFeature:hover {
+  border-color: rgba(var(--accent-rgb), 0.24);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(var(--accent-rgb), 0.06),
+      rgba(255, 255, 255, 0.8)
+    ),
+    var(--surface);
+}
+
+:root[data-theme="light"] .homeInfoFeature__icon {
+  background: var(--accent-soft);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .homeInfoFeature__body h3 {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .homeInfoFeature__body p {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .homeInfoGuides {
+  border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .homeInfoGuide {
+  border-color: var(--border);
+  background: rgba(20, 36, 40, 0.02);
+}
+
+:root[data-theme="light"] .homeInfoGuide:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+:root[data-theme="light"] .homeInfoGuide__icon {
+  background: var(--accent-soft);
+}
+
+:root[data-theme="light"] .homeInfoGuide strong {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .homeInfoGuide small {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .homeInfoLinks a {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
 }
 
 @media (max-width: 560px) {
