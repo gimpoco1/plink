@@ -423,19 +423,11 @@
         const container = document.querySelector(
           `[data-roadmap-items="${lane}"]`,
         );
-        const count = document.querySelector(`[data-roadmap-count="${lane}"]`);
         if (!container) return;
 
         const validItems = Array.isArray(items)
           ? items.filter(isRoadmapItem)
           : [];
-        if (count) {
-          count.textContent = String(validItems.length);
-          count.setAttribute(
-            "aria-label",
-            `${validItems.length} ${validItems.length === 1 ? "item" : "items"}`,
-          );
-        }
 
         for (const item of validItems) {
           const card = document.createElement("article");

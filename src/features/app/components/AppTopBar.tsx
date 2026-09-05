@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CircleUser } from "lucide-react";
 import { TopBar } from "../../../components/TopBar/TopBar";
-import { getReportAProblemEmailUrl } from "../../../constants";
 import { GameSharingDialog } from "../../../components/GameSharing/GameSharingDialog";
 import { GameCommentsDialog } from "../../comments/GameCommentsDialog";
 import { useGameComments } from "../../comments/useGameComments";
 import { findWinner } from "../../../utils/ranking";
 import { useAppContext } from "../context/AppContext";
 import { useI18n } from "../../../i18n/I18nContext";
+import { getReportAProblemEmailUrl } from "../../../utils/feedbackEmail";
 
 const COMMENT_PREVIEW_TTL_MS = 2 * 60 * 60 * 1000;
 

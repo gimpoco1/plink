@@ -9,13 +9,12 @@ import {
   Trash2,
   UserRound,
 } from "lucide-react";
+import { APP_STORE_URL, ROADMAP_URL } from "../../constants";
+import { isNativeApp } from "../../lib/nativePlatform";
 import {
-  APP_STORE_URL,
   FEEDBACK_EMAIL_URL,
   getReportAProblemEmailUrl,
-  ROADMAP_URL,
-} from "../../constants";
-import { isNativeApp } from "../../lib/nativePlatform";
+} from "../../utils/feedbackEmail";
 import { AuthAccountIdentity } from "./AuthAccountIdentity";
 import { AuthAccountStorage } from "./AuthAccountStorage";
 import { useAuthDialogContext } from "./AuthDialogContext";
