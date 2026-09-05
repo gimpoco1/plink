@@ -1,4 +1,4 @@
-import type { TranslationKey } from "./i18n/translate";
+import { translate, type TranslationKey } from "./i18n/translate";
 export const STORAGE_KEY = "plink:v1";
 export const PROFILES_STORAGE_KEY = "plink:profiles:v1";
 export const GAMES_STORAGE_KEY = "plink:games:v1";
@@ -14,6 +14,18 @@ export const APP_STORE_URL =
 export const ROADMAP_URL = "/roadmap.html";
 export const FEEDBACK_EMAIL_URL =
   "mailto:support@plinkscore.com?subject=Plink%20feedback";
+export function getReportAProblemEmailUrl() {
+  const body = [
+    translate("copy.whatHappened"),
+    translate("copy.whatDidYouExpectInstead"),
+    translate("copy.stepsToReproduce"),
+    translate("copy.deviceOrBrowser"),
+  ].join("\n\n");
+
+  return `mailto:support@plinkscore.com?subject=${encodeURIComponent(
+    translate("copy.plinkProblem"),
+  )}&body=${encodeURIComponent(body)}`;
+}
 export const REFRESH_PAST_LINKED_PLAYERS_EVENT =
   "plink:refreshPastLinkedPlayers";
 export const REFRESH_PAST_INVITED_PLAYERS_EVENT =

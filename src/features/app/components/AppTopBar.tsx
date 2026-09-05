@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CircleUser } from "lucide-react";
 import { TopBar } from "../../../components/TopBar/TopBar";
+import { getReportAProblemEmailUrl } from "../../../constants";
 import { GameSharingDialog } from "../../../components/GameSharing/GameSharingDialog";
 import { GameCommentsDialog } from "../../comments/GameCommentsDialog";
 import { useGameComments } from "../../comments/useGameComments";
@@ -196,9 +197,7 @@ export function AppTopBar() {
               ? t("topbar.newGame")
               : undefined
           }
-          showLanguageSelector={
-            view === "home" && !authLoading && !session
-          }
+          showLanguageSelector={view === "home" && !authLoading && !session}
           authLabel={
             view === "home"
               ? authLoading
@@ -273,6 +272,13 @@ export function AppTopBar() {
               ? () => {
                   setCommentPreview(null);
                   setCommentsOpen(true);
+                }
+              : undefined
+          }
+          onReportProblem={
+            view === "game" && currentGame
+              ? () => {
+                  window.location.href = getReportAProblemEmailUrl();
                 }
               : undefined
           }

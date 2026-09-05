@@ -1,6 +1,7 @@
 import { translate } from "../../i18n/translate";
 import {
   AlertTriangle,
+  Bug,
   Heart,
   Mail,
   Map,
@@ -11,6 +12,7 @@ import {
 import {
   APP_STORE_URL,
   FEEDBACK_EMAIL_URL,
+  getReportAProblemEmailUrl,
   ROADMAP_URL,
 } from "../../constants";
 import { isNativeApp } from "../../lib/nativePlatform";
@@ -113,13 +115,19 @@ export function AuthAccountPanel() {
         <a href="/privacy.html">{translate("copy.privacy")}</a>
         <span aria-hidden="true">·</span>
         <a href="/support.html">{translate("copy.support")}</a>
+        {!nativeApp ? (
+          <>
+            <span aria-hidden="true">·</span>
+            <a href={ROADMAP_URL}>{translate("copy.roadmap")}</a>
+          </>
+        ) : null}
       </div>
       <section
         className="authDialog__community"
         aria-label={translate("copy.communityLinks")}
       >
-        <div className="authDialog__communityActions">
-          {nativeApp ? (
+        {nativeApp ? (
+          <div className="authDialog__communityActions">
             <>
               <a href={APP_STORE_URL} target="_blank" rel="noreferrer">
                 <Heart size={17} strokeWidth={2.3} aria-hidden="true" />
@@ -127,17 +135,26 @@ export function AuthAccountPanel() {
               </a>
               <span aria-hidden="true">·</span>
             </>
-          ) : null}
-          <a href={ROADMAP_URL}>
-            <Map size={18} strokeWidth={2.1} aria-hidden="true" />
-            <span>{translate("copy.roadmap")}</span>
+            <a href={ROADMAP_URL}>
+              <Map size={18} strokeWidth={2.1} aria-hidden="true" />
+              <span>{translate("copy.roadmap")}</span>
+            </a>
+          </div>
+        ) : null}
+        <p>{translate("copy.haveAnIdeaOrSuggestion")}</p>
+        <div className="authDialog__feedbackActions">
+          <a className="authDialog__feedbackLink" href={FEEDBACK_EMAIL_URL}>
+            <Mail size={19} strokeWidth={2.2} aria-hidden="true" />
+            <span>{translate("copy.sendFeedback")}</span>
+          </a>
+          <a
+            className="authDialog__feedbackLink authDialog__feedbackLink--report"
+            href={getReportAProblemEmailUrl()}
+          >
+            <Bug size={19} strokeWidth={2.2} aria-hidden="true" />
+            <span>{translate("copy.reportAProblem")}</span>
           </a>
         </div>
-        <p>{translate("copy.haveAnIdeaOrSuggestion")}</p>
-        <a className="authDialog__feedbackLink" href={FEEDBACK_EMAIL_URL}>
-          <Mail size={19} strokeWidth={2.2} aria-hidden="true" />
-          <span>{translate("copy.sendFeedback")}</span>
-        </a>
       </section>
     </div>
   );

@@ -2328,6 +2328,34 @@
   font-size: 15px;
 }
 
+.authDialog__feedbackActions {
+  width: min(100%, 300px);
+  display: grid;
+  justify-items: center;
+}
+
+.authDialog__feedbackLink--report {
+  width: 100%;
+  justify-content: center;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: #d69f45;
+  font-size: 13px;
+}
+
+.authDialog__feedbackLink--report:hover {
+  color: #f0b861;
+}
+
+:root[data-theme="light"] .authDialog__feedbackLink--report {
+  color: #a85f00;
+}
+
+:root[data-theme="light"] .authDialog__feedbackLink--report:hover {
+  color: #7f4600;
+}
+
 .authDialog__fileInput {
   display: none;
 }

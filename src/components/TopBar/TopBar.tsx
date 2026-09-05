@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  Bug,
   Ellipsis,
   Flag,
   History,
@@ -57,6 +58,7 @@ type Props = {
   onEndGame?: () => void;
   onResetGame?: () => void;
   onRename?: () => void;
+  onReportProblem?: () => void;
 };
 
 export function TopBar({
@@ -89,6 +91,7 @@ export function TopBar({
   onEndGame,
   onResetGame,
   onRename,
+  onReportProblem,
 }: Props) {
   const { t } = useI18n();
   const { theme } = useTheme();
@@ -302,6 +305,20 @@ export function TopBar({
                   >
                     <Users size={16} strokeWidth={2.3} aria-hidden="true" />
                     <span>{onAddPlayerLabel}</span>
+                  </button>
+                ) : null}
+                {onReportProblem ? (
+                  <button
+                    className="topbarMenu__item topbarMenu__item--withIcon topbarMenu__item--report"
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onReportProblem();
+                    }}
+                  >
+                    <Bug size={16} strokeWidth={2.3} aria-hidden="true" />
+                    <span>{t("copy.reportAProblem")}</span>
                   </button>
                 ) : null}
                 {onResetGame ? (
