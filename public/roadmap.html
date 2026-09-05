@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plink Roadmap</title>
+    <meta
+      name="description"
+      content="See what Plink is improving next and share the ideas that would make game night better."
+    />
+    <link rel="canonical" href="https://plinkscore.com/roadmap.html" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1015;
+        --text: #f4f6ef;
+        --muted: #a3aca6;
+        --accent: #d8ff4f;
+        --sky: #78d8ff;
+        --border: rgba(244, 246, 239, 0.13);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        background:
+          radial-gradient(
+            circle at 10% 0%,
+            rgba(216, 255, 79, 0.13),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at 100% 16%,
+            rgba(120, 216, 255, 0.11),
+            transparent 28%
+          ),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          "Nunito",
+          ui-rounded,
+          "SF Pro Rounded",
+          -apple-system,
+          system-ui,
+          sans-serif;
+      }
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 42px 0 54px;
+      }
+      .pageHead {
+        position: relative;
+        padding: 12px 70px 30px 2px;
+      }
+      .pageClose {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(244, 246, 239, 0.06);
+        color: var(--text);
+        text-decoration: none;
+        transition:
+          background 0.18s ease,
+          transform 0.18s ease;
+      }
+      .pageClose:hover {
+        background: rgba(244, 246, 239, 0.12);
+        transform: rotate(90deg);
+      }
+      .pageClose::before,
+      .pageClose::after {
+        grid-area: 1 / 1;
+        width: 18px;
+        height: 3px;
+        border-radius: 999px;
+        background: currentColor;
+        content: "";
+      }
+      .pageClose::before {
+        transform: rotate(45deg);
+      }
+      .pageClose::after {
+        transform: rotate(-45deg);
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 12px;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .eyebrow::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px rgba(216, 255, 79, 0.12);
+        content: "";
+      }
+      h1 {
+        margin: 0;
+        max-width: 700px;
+        font-size: clamp(38px, 7vw, 68px);
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        line-height: 0.96;
+      }
+      .intro {
+        max-width: 600px;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 17px;
+        font-weight: 650;
+        line-height: 1.55;
+      }
+      .board {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background: rgba(17, 23, 29, 0.72);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.04),
+          0 30px 80px rgba(0, 0, 0, 0.2);
+      }
+      .lane {
+        min-width: 0;
+        padding: 16px;
+        border: 1px solid rgba(244, 246, 239, 0.07);
+        border-radius: 20px;
+        background: rgba(4, 8, 12, 0.3);
+      }
+      .lane--upNext {
+        --lane-color: var(--accent);
+      }
+      .lane--exploring {
+        --lane-color: var(--sky);
+      }
+      .laneHead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 15px;
+        padding: 2px 2px 13px;
+        border-bottom: 1px solid rgba(244, 246, 239, 0.09);
+      }
+      .laneTitle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 900;
+      }
+      .laneDot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--lane-color);
+        box-shadow: 0 0 0 5px
+          color-mix(in srgb, var(--lane-color) 13%, transparent);
+      }
+
+      .laneHint {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+      .cards {
+        display: grid;
+        gap: 12px;
+      }
+      .roadmapCard {
+        position: relative;
+        display: block;
+        min-height: 130px;
+        padding: 18px;
+        border: 1px solid rgba(244, 246, 239, 0.12);
+        border-radius: 17px;
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.065),
+          rgba(255, 255, 255, 0.025)
+        );
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.14);
+        overflow: hidden;
+        transition:
+          border-color 0.18s ease,
+          box-shadow 0.18s ease,
+          transform 0.18s ease;
+      }
+      .roadmapCard:hover {
+        border-color: color-mix(in srgb, var(--lane-color) 54%, transparent);
+        box-shadow: 0 18px 32px rgba(0, 0, 0, 0.23);
+        transform: translateY(-4px) rotate(-0.35deg);
+      }
+      .roadmapCard::after {
+        position: absolute;
+        right: -34px;
+        bottom: -36px;
+        width: 108px;
+        height: 108px;
+        border: 18px solid
+          color-mix(in srgb, var(--lane-color) 16%, transparent);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .roadmapCard h2 {
+        position: relative;
+        z-index: 1;
+        margin: 14px 0 6px;
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: -0.025em;
+        line-height: 1.15;
+      }
+      .roadmapCard p {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        max-width: 88%;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+      .feedbackCard {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 22px 24px;
+        border: 1px solid rgba(216, 255, 79, 0.27);
+        border-radius: 20px;
+        background: linear-gradient(
+          120deg,
+          rgba(216, 255, 79, 0.14),
+          rgba(216, 255, 79, 0.04)
+        );
+      }
+      .feedbackCard h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: -0.025em;
+      }
+      .feedbackCard p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+      .feedbackCard a {
+        flex: 0 0 auto;
+        padding: 11px 16px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #111505;
+        font-size: 14px;
+        font-weight: 900;
+        text-decoration: none;
+        transition:
+          transform 0.18s ease,
+          filter 0.18s ease;
+      }
+      .feedbackCard a:hover {
+        filter: brightness(1.06);
+        transform: translateY(-2px);
+      }
+      .footerLinks {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px 18px;
+        margin-top: 26px;
+        font-size: 13px;
+      }
+      .footerLinks a {
+        color: var(--muted);
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .footerLinks a:hover {
+        color: var(--accent);
+      }
+      @media (max-width: 660px) {
+        main {
+          width: min(100% - 48px, 560px);
+          padding: 26px 0 38px;
+        }
+        .pageHead {
+          padding: 12px 56px 26px 2px;
+        }
+        .pageClose {
+          width: 42px;
+          height: 42px;
+        }
+        .intro {
+          font-size: 15px;
+        }
+        .board {
+          grid-template-columns: 1fr;
+          gap: 12px;
+          padding: 12px;
+          border-radius: 22px;
+        }
+        .lane {
+          padding: 13px;
+          border-radius: 16px;
+        }
+        .feedbackCard {
+          grid-column: auto;
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 15px;
+          padding: 20px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="pageHead">
+        <a class="pageClose" href="/" aria-label="Back to Home"></a>
+        <p class="eyebrow">Plink roadmap</p>
+        <h1>What’s next for game night.</h1>
+        <p class="intro">
+          A living board for the improvements and ideas we are thinking about.
+          Plans can move as we learn from the people playing with Plink.
+        </p>
+      </header>
+      <section class="board" aria-label="Plink product roadmap">
+        <section class="lane lane--upNext" aria-labelledby="up-next-heading">
+          <div class="laneHead">
+            <div class="laneTitle">
+              <span class="laneDot" aria-hidden="true"></span
+              ><span id="up-next-heading">Up next</span>
+            </div>
+          </div>
+          <p class="laneHint">The areas currently closest to the table.</p>
+          <div class="cards" data-roadmap-items="upNext"></div>
+        </section>
+        <section
+          class="lane lane--exploring"
+          aria-labelledby="exploring-heading"
+        >
+          <div class="laneHead">
+            <div class="laneTitle">
+              <span class="laneDot" aria-hidden="true"></span
+              ><span id="exploring-heading">Exploring</span>
+            </div>
+          </div>
+          <p class="laneHint">Ideas we are still shaping and learning about.</p>
+          <div class="cards" data-roadmap-items="exploring"></div>
+        </section>
+        <aside class="feedbackCard" aria-labelledby="feedback-heading">
+          <div>
+            <h2 id="feedback-heading">Have an idea for the board?</h2>
+            <p>
+              Tell us what would make your next game night better. Your feedback
+              helps shape what comes next.
+            </p>
+          </div>
+          <a href="mailto:support@plinkscore.com?subject=Plink%20feedback"
+            >Send feedback</a
+          >
+        </aside>
+      </section>
+      <nav class="footerLinks" aria-label="Helpful links">
+        <a href="/">Back to Home</a><a href="/guides/index.html">Guides</a
+        ><a href="/support.html">Support</a
+        ><a href="/privacy.html">Privacy Policy</a>
+      </nav>
+    </main>
+    <script>
+      const roadmapLanes = ["upNext", "exploring"];
+
+      function isRoadmapItem(value) {
+        return (
+          value &&
+          typeof value.title === "string" &&
+          typeof value.description === "string"
+        );
+      }
+
+      function renderRoadmapItems(lane, items) {
+        const container = document.querySelector(
+          `[data-roadmap-items="${lane}"]`,
+        );
+        const count = document.querySelector(`[data-roadmap-count="${lane}"]`);
+        if (!container) return;
+
+        const validItems = Array.isArray(items)
+          ? items.filter(isRoadmapItem)
+          : [];
+        if (count) {
+          count.textContent = String(validItems.length);
+          count.setAttribute(
+            "aria-label",
+            `${validItems.length} ${validItems.length === 1 ? "item" : "items"}`,
+          );
+        }
+
+        for (const item of validItems) {
+          const card = document.createElement("article");
+          card.className = "roadmapCard";
+          const title = document.createElement("h2");
+          title.textContent = item.title;
+          const description = document.createElement("p");
+          description.textContent = item.description;
+          card.append(title, description);
+          container.append(card);
+        }
+      }
+
+      fetch("/roadmap.json", { cache: "no-cache" })
+        .then((response) => {
+          if (!response.ok) throw new Error("Could not load roadmap items.");
+          return response.json();
+        })
+        .then((roadmap) => {
+          roadmapLanes.forEach((lane) =>
+            renderRoadmapItems(lane, roadmap[lane]),
+          );
+        })
+        .catch(() => {
+          roadmapLanes.forEach((lane) => renderRoadmapItems(lane, []));
+        });
+    </script>
+  </body>
+</html>

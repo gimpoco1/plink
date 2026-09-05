@@ -1,0 +1,30 @@
+{
+  "upNext": [
+    {
+      "title": "More flexible game setups",
+      "description": "More ways to tailor a new game to the rules your group actually uses."
+    },
+    {
+      "title": "More ways to make Plink yours",
+      "description": "Thoughtful personalization that keeps the scoreboard quick and simple."
+    },
+    {
+      "title": "Plink for Android",
+      "description": "Bring the full Plink experience to Android through Google Play."
+    }
+  ],
+  "exploring": [
+    {
+      "title": "Better ways to play together",
+      "description": "Ideas that help groups keep a shared game moving smoothly."
+    },
+    {
+      "title": "Clearer history and stats",
+      "description": "Make it easier to look back on games and spot the moments that matter."
+    },
+    {
+      "title": "Family Sharing on iOS",
+      "description": "Explore support for sharing Plink Pro with family members through Apple Family Sharing."
+    }
+  ]
+}
