@@ -11,6 +11,7 @@ export const PLAYERS_VIEW_STORAGE_KEY = "plink:playersView:v1";
 export const HOME_NEW_GAME_OPEN_KEY = "plink:homeNewGameOpen:v1";
 export const APP_STORE_URL =
   "https://apps.apple.com/us/app/plink-scorekeeper/id6791116577";
+export const ROADMAP_URL = "/roadmap.html";
 export const REFRESH_PAST_LINKED_PLAYERS_EVENT =
   "plink:refreshPastLinkedPlayers";
 export const REFRESH_PAST_INVITED_PLAYERS_EVENT =

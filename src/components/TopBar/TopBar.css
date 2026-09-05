@@ -565,6 +565,10 @@
   color: #a51616;
 }
 
+:root[data-theme="light"] .topbarMenu__item--report {
+  border-top-color: var(--border);
+}
+
 .topbarMenu__item {
   padding: 10px 12px;
 
@@ -593,6 +597,18 @@
 
 .topbarMenu__item--withIcon svg {
   flex: 0 0 auto;
+}
+
+.topbarMenu__item--report {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 10px 10px;
+  color: var(--muted);
+}
+
+.topbarMenu__item--report:hover:not(:disabled) {
+  color: var(--text);
 }
 
 .topbarMenu__item--finish {
