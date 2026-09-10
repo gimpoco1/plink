@@ -3,14 +3,21 @@ import type { Session } from "@supabase/supabase-js";
 import { isNativeAndroidApp } from "../../lib/nativePlatform";
 import {
   GOOGLE_PLAY_PRO_BASE_PLAN_IDS,
+  GOOGLE_PLAY_PRO_PRODUCT_ID,
+  GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID,
   addGooglePlayPurchaseListener,
+  getCurrentGooglePlayOneTimePurchases,
   getCurrentGooglePlayPurchases,
   getGooglePlayProducts,
+  getGooglePlaySessionPassProduct,
+  purchaseGooglePlaySessionPass,
   purchaseGooglePlaySubscription,
   showGooglePlayManageSubscriptions,
   type GooglePlayBillingPeriod,
+  type GooglePlayOneTimeProduct,
   type GooglePlayProduct,
 } from "./googlePlayPurchases";
+import { syncGooglePlaySessionPass } from "./googlePlaySessionPassSync";
 import { syncGooglePlaySubscription } from "./googlePlaySubscriptionSync";
 
 async function hashAccountId(userId: string) {
@@ -26,6 +33,10 @@ export function useGooglePlaySubscription(session: Session | null) {
   const [products, setProducts] = useState<GooglePlayProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(nativeAndroid);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [sessionPassProduct, setSessionPassProduct] =
+    useState<GooglePlayOneTimeProduct | null>(null);
+  const [isLoadingSessionPass, setIsLoadingSessionPass] = useState(nativeAndroid);
+  const [sessionPassError, setSessionPassError] = useState<string | null>(null);
   const userId = session?.user.id ?? null;
 
   const loadProducts = useCallback(async () => {
@@ -62,30 +73,76 @@ export function useGooglePlaySubscription(session: Session | null) {
     }
   }, [nativeAndroid]);
 
+  const loadSessionPass = useCallback(async () => {
+    if (!nativeAndroid) {
+      setSessionPassProduct(null);
+      setIsLoadingSessionPass(false);
+      setSessionPassError(null);
+      return;
+    }
+
+    setIsLoadingSessionPass(true);
+    setSessionPassError(null);
+    try {
+      const { product } = await getGooglePlaySessionPassProduct();
+      if (!product || product.id !== GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID) {
+        throw new Error("The configured Session Pass was not returned.");
+      }
+      setSessionPassProduct(product);
+    } catch {
+      setSessionPassProduct(null);
+      setSessionPassError(
+        "The Session Pass is unavailable right now. Check your connection and try again.",
+      );
+    } finally {
+      setIsLoadingSessionPass(false);
+    }
+  }, [nativeAndroid]);
+
   useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
+
+  useEffect(() => {
+    void loadSessionPass();
+  }, [loadSessionPass]);
 
   useEffect(() => {
     if (!nativeAndroid || !userId) return;
 
     let disposed = false;
     const listenerHandle = addGooglePlayPurchaseListener((purchase) => {
-      if (!disposed && purchase.productId === "plink_pro") {
+      if (!disposed && purchase.productId === GOOGLE_PLAY_PRO_PRODUCT_ID) {
         void syncGooglePlaySubscription(purchase.purchaseToken).catch(
+          () => undefined,
+        );
+      } else if (
+        !disposed &&
+        purchase.productId === GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID
+      ) {
+        void syncGooglePlaySessionPass(purchase.purchaseToken).catch(
           () => undefined,
         );
       }
     });
 
-    void getCurrentGooglePlayPurchases()
-      .then(async ({ purchases }) => {
+    void Promise.allSettled([
+      getCurrentGooglePlayPurchases().then(async ({ purchases }) => {
         const purchase = purchases.find(
-          (candidate) => candidate.productId === "plink_pro",
+          (candidate) => candidate.productId === GOOGLE_PLAY_PRO_PRODUCT_ID,
         );
         await syncGooglePlaySubscription(purchase?.purchaseToken);
-      })
-      .catch(() => undefined);
+      }),
+      getCurrentGooglePlayOneTimePurchases().then(async ({ purchases }) => {
+        const purchase = purchases.find(
+          (candidate) =>
+            candidate.productId === GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID,
+        );
+        if (purchase) {
+          await syncGooglePlaySessionPass(purchase.purchaseToken);
+        }
+      }),
+    ]);
 
     return () => {
       disposed = true;
@@ -122,16 +179,38 @@ export function useGooglePlaySubscription(session: Session | null) {
     return result;
   }
 
+  async function purchaseSessionPass() {
+    if (!userId) throw new Error("Sign in before buying a Session Pass.");
+    const obfuscatedAccountId = await hashAccountId(userId);
+    const result = await purchaseGooglePlaySessionPass(obfuscatedAccountId);
+    if (result.status !== "purchased") return result;
+    await syncGooglePlaySessionPass(result.purchase.purchaseToken);
+    return result;
+  }
+
   async function restore() {
     if (!userId) throw new Error("Sign in before restoring purchases.");
-    const { purchases } = await getCurrentGooglePlayPurchases();
-    const purchase = purchases.find(
-      (candidate) => candidate.productId === "plink_pro",
+    const [subscriptions, oneTimePurchases] = await Promise.all([
+      getCurrentGooglePlayPurchases(),
+      getCurrentGooglePlayOneTimePurchases(),
+    ]);
+    const subscriptionPurchase = subscriptions.purchases.find(
+      (candidate) => candidate.productId === GOOGLE_PLAY_PRO_PRODUCT_ID,
     );
-    const subscription = await syncGooglePlaySubscription(
-      purchase?.purchaseToken,
+    const sessionPassPurchase = oneTimePurchases.purchases.find(
+      (candidate) =>
+        candidate.productId === GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID,
     );
-    return { active: subscription?.active ?? false };
+    const [subscription, sessionPass] = await Promise.all([
+      syncGooglePlaySubscription(subscriptionPurchase?.purchaseToken),
+      sessionPassPurchase
+        ? syncGooglePlaySessionPass(sessionPassPurchase.purchaseToken)
+        : Promise.resolve(null),
+    ]);
+    return {
+      active: subscription?.active ?? false,
+      sessionPassActive: sessionPass?.active ?? false,
+    };
   }
 
   return {
@@ -140,8 +219,13 @@ export function useGooglePlaySubscription(session: Session | null) {
     productsError,
     productsByPeriod,
     purchase,
+    purchaseSessionPass,
     reloadProducts: loadProducts,
+    reloadSessionPass: loadSessionPass,
     restore,
+    sessionPassError,
+    sessionPassProduct,
+    isLoadingSessionPass,
     showManageSubscriptions: showGooglePlayManageSubscriptions,
   };
 }

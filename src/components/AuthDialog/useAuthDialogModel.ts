@@ -1400,7 +1400,46 @@ export function useAuthDialogModel(
     }
 
     if (isNativeAndroidApp()) {
-      setError(translate("copy.sessionPassCheckoutIsNotAvailableYet"));
+      let purchaseResult: ToastState = {
+        message: translate("copy.theSessionPassPurchaseCouldNotBeCompleted"),
+        tone: "error",
+      };
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await googlePlaySubscription.purchaseSessionPass();
+        if (result.status === "cancelled") {
+          purchaseResult = {
+            message: translate("copy.purchaseCancelled"),
+            tone: "default",
+          };
+        } else if (result.status === "pending") {
+          purchaseResult = {
+            message: translate("copy.googlePlaySessionPassWaitingForApproval"),
+            tone: "default",
+          };
+        } else {
+          purchaseResult = {
+            message: translate(
+              "copy.sessionPassAddedYouCanNowKeepUpTo100Sessions",
+            ),
+            tone: "success",
+          };
+        }
+      } catch (err) {
+        purchaseResult = {
+          message: getBillingErrorMessage(
+            err,
+            translate("copy.theSessionPassPurchaseCouldNotBeCompleted"),
+          ),
+          tone: "error",
+        };
+      } finally {
+        setBusy(false);
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
+      }
       return;
     }
 
@@ -1471,11 +1510,16 @@ export function useAuthDialogModel(
       setTransferToast(null);
       try {
         const result = await googlePlaySubscription.restore();
+        const restoredBoth = result.active && result.sessionPassActive;
         showTransferToast(
-          result.active
-            ? translate("copy.plinkProPurchaseWasRestored")
-            : translate("copy.noRestorableGooglePlayPurchasesWereFound"),
-          result.active ? "success" : "default",
+          restoredBoth
+            ? translate("copy.plinkProAndSessionPassWereRestored")
+            : result.active
+              ? translate("copy.plinkProPurchaseWasRestored")
+              : result.sessionPassActive
+                ? translate("copy.sessionPassWasRestored")
+                : translate("copy.noRestorableGooglePlayPurchasesWereFound"),
+          result.active || result.sessionPassActive ? "success" : "default",
         );
       } catch (err) {
         showTransferToast(
@@ -1762,6 +1806,10 @@ export function useAuthDialogModel(
     googlePlayProductsByPeriod: googlePlaySubscription.productsByPeriod,
     googlePlayProductsError: googlePlaySubscription.productsError,
     googlePlayProductsLoading: googlePlaySubscription.isLoadingProducts,
+    googlePlaySessionPassError: googlePlaySubscription.sessionPassError,
+    googlePlaySessionPassLoading:
+      googlePlaySubscription.isLoadingSessionPass,
+    googlePlaySessionPassProduct: googlePlaySubscription.sessionPassProduct,
     includeGames,
     includeProfiles,
     isAwaitingSignupConfirmation,
@@ -1784,6 +1832,7 @@ export function useAuthDialogModel(
     recoveryMode,
     reloadAppleProducts: appleSubscription.reloadProducts,
     reloadGooglePlayProducts: googlePlaySubscription.reloadProducts,
+    reloadGooglePlaySessionPass: googlePlaySubscription.reloadSessionPass,
     renewalLabel,
     manageSubscription,
     restoreSubscription,

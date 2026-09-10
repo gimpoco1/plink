@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { isNativeAndroidApp, isNativeApp } from "../../../lib/nativePlatform";
 import { useAppContext } from "../context/AppContext";
@@ -11,14 +11,6 @@ import { GameStartSplash } from "../components/GameStartSplash";
 
 const DotGrid = lazy(() => import("../../../components/DotGrid/DotGrid"));
 
-type IdleWindow = Window & {
-  cancelIdleCallback?: (handle: number) => void;
-  requestIdleCallback?: (
-    callback: IdleRequestCallback,
-    options?: IdleRequestOptions,
-  ) => number;
-};
-
 export function AppView() {
   const {
     authDialogOpen,
@@ -29,26 +21,11 @@ export function AppView() {
     isResumingActiveGameView,
   } = useAppContext();
   const isLoading = isAppBootLoading || isResumingActiveGameView;
-  const [showBackdrop, setShowBackdrop] = useState(false);
 
   useEffect(() => {
     if (!isNativeApp() || isLoading) return;
     void SplashScreen.hide({ fadeOutDuration: 0 });
   }, [isLoading]);
-
-  useEffect(() => {
-    const idleWindow = window as IdleWindow;
-    if (!idleWindow.requestIdleCallback) {
-      const timeoutId = window.setTimeout(() => setShowBackdrop(true), 0);
-      return () => window.clearTimeout(timeoutId);
-    }
-
-    const idleCallbackId = idleWindow.requestIdleCallback(
-      () => setShowBackdrop(true),
-      { timeout: 2000 },
-    );
-    return () => idleWindow.cancelIdleCallback?.(idleCallbackId);
-  }, []);
 
   if (isLoading) {
     return <AppLoadingScreen />;
@@ -64,24 +41,22 @@ export function AppView() {
         className={`appBackdrop${authDialogOpen ? " appBackdrop--hidden" : ""}`}
         aria-hidden="true"
       >
-        {showBackdrop ? (
-          <Suspense fallback={null}>
-            <DotGrid
-              dotSize={3}
-              gap={23}
-              baseColor="#202b34"
-              activeColor="#d8ff4f"
-              proximity={140}
-              shockRadius={250}
-              shockStrength={5}
-              resistance={750}
-              returnDuration={1.5}
-              idleSpeed={1.75}
-              idleStrength={4.5}
-              reducedMotionScale={isNativeAndroidApp() ? 1 : undefined}
-            />
-          </Suspense>
-        ) : null}
+        <Suspense fallback={null}>
+          <DotGrid
+            dotSize={3}
+            gap={23}
+            baseColor="#202b34"
+            activeColor="#d8ff4f"
+            proximity={140}
+            shockRadius={250}
+            shockStrength={5}
+            resistance={750}
+            returnDuration={1.5}
+            idleSpeed={1.75}
+            idleStrength={4.5}
+            reducedMotionScale={isNativeAndroidApp() ? 1 : undefined}
+          />
+        </Suspense>
       </div>
       <AppTopBar />
       <AppRoutes />

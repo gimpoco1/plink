@@ -4,6 +4,8 @@ import {
 } from "@capacitor/core";
 
 export const GOOGLE_PLAY_PRO_PRODUCT_ID = "plink_pro";
+export const GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID = "session_pass_100";
+export const GOOGLE_PLAY_SESSION_PASS_PURCHASE_OPTION_ID = "buy";
 export const GOOGLE_PLAY_PRO_BASE_PLAN_IDS = {
   monthly: "monthly-auto",
   yearly: "yearly",
@@ -28,6 +30,17 @@ export type GooglePlayProduct = {
   basePlans: GooglePlayBasePlan[];
 };
 
+export type GooglePlayOneTimeProduct = {
+  id: string;
+  displayName: string;
+  description: string;
+  purchaseOptionId: string;
+  offerToken: string;
+  displayPrice: string;
+  priceAmountMicros: number;
+  priceCurrencyCode: string;
+};
+
 export type GooglePlayPurchase = {
   productId: string;
   purchaseToken: string;
@@ -45,12 +58,20 @@ type GooglePlayBillingPlugin = {
   getProducts(options: { productIds: string[] }): Promise<{
     products: GooglePlayProduct[];
   }>;
+  getOneTimeProduct(options: {
+    productId: string;
+  }): Promise<{ product: GooglePlayOneTimeProduct }>;
   purchase(options: {
     productId: string;
     basePlanId: string;
     obfuscatedAccountId: string;
   }): Promise<GooglePlayPurchaseResult>;
+  purchaseOneTimeProduct(options: {
+    productId: string;
+    obfuscatedAccountId: string;
+  }): Promise<GooglePlayPurchaseResult>;
   getCurrentPurchases(): Promise<{ purchases: GooglePlayPurchase[] }>;
+  getCurrentOneTimePurchases(): Promise<{ purchases: GooglePlayPurchase[] }>;
   showManageSubscriptions(options: { productId: string }): Promise<void>;
   addListener(
     eventName: "purchaseUpdated",
@@ -79,8 +100,25 @@ export function purchaseGooglePlaySubscription(
   });
 }
 
+export function getGooglePlaySessionPassProduct() {
+  return GooglePlayBilling.getOneTimeProduct({
+    productId: GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID,
+  });
+}
+
+export function purchaseGooglePlaySessionPass(obfuscatedAccountId: string) {
+  return GooglePlayBilling.purchaseOneTimeProduct({
+    productId: GOOGLE_PLAY_SESSION_PASS_PRODUCT_ID,
+    obfuscatedAccountId,
+  });
+}
+
 export function getCurrentGooglePlayPurchases() {
   return GooglePlayBilling.getCurrentPurchases();
+}
+
+export function getCurrentGooglePlayOneTimePurchases() {
+  return GooglePlayBilling.getCurrentOneTimePurchases();
 }
 
 export function showGooglePlayManageSubscriptions() {

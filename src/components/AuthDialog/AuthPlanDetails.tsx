@@ -334,7 +334,7 @@ export function AuthPlanDetails() {
               <a href="/privacy.html">{translate("copy.privacy")}</a>
             </p>
           ) : null}
-          {!isNativeAndroid ? <SessionPassOffer /> : null}
+          <SessionPassOffer />
         </>
       ) : (
         <>

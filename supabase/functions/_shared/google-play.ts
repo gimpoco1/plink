@@ -1,8 +1,11 @@
 import { importPKCS8, SignJWT } from "npm:jose@6.1.3";
 import { createAdminClient } from "./supabase.ts";
+import { persistSessionPassPurchase } from "./session_pass.ts";
 
 const PACKAGE_NAME = "com.plinkscore.app";
 const PRODUCT_ID = "plink_pro";
+export const GOOGLE_SESSION_PASS_PRODUCT_ID = "session_pass_100";
+const GOOGLE_SESSION_PASS_PURCHASE_OPTION_ID = "buy";
 const BILLING_PERIOD_BY_BASE_PLAN = {
   "monthly-auto": "monthly",
   yearly: "yearly",
@@ -38,6 +41,25 @@ type GoogleSubscriptionPurchase = {
       basePlanId?: string;
     };
   }>;
+};
+
+type GoogleOneTimePurchase = {
+  productLineItem?: Array<{
+    productId?: string;
+    productOfferDetails?: {
+      purchaseOptionId?: string;
+      refundableQuantity?: number;
+      consumptionState?: string;
+    };
+  }>;
+  purchaseStateContext?: {
+    purchaseState?: string;
+  };
+  orderId?: string;
+  obfuscatedExternalAccountId?: string;
+  regionCode?: string;
+  purchaseCompletionTime?: string;
+  acknowledgementState?: string;
 };
 
 let cachedAccessToken: { value: string; expiresAt: number } | null = null;
@@ -172,6 +194,23 @@ async function acknowledgePurchase(purchaseToken: string) {
   );
 }
 
+async function loadOneTimePurchase(purchaseToken: string) {
+  const response = await googlePlayRequest(
+    `/androidpublisher/v3/applications/${encodeURIComponent(PACKAGE_NAME)}` +
+      `/purchases/productsv2/tokens/${encodeURIComponent(purchaseToken)}`,
+  );
+  return (await response.json()) as GoogleOneTimePurchase;
+}
+
+async function acknowledgeOneTimePurchase(purchaseToken: string) {
+  await googlePlayRequest(
+    `/androidpublisher/v3/applications/${encodeURIComponent(PACKAGE_NAME)}` +
+      `/purchases/products/${encodeURIComponent(GOOGLE_SESSION_PASS_PRODUCT_ID)}` +
+      `/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`,
+    { method: "POST", body: "{}" },
+  );
+}
+
 export async function syncGooglePlayPurchase(
   rawPurchaseToken: string,
   expectedUserId: string,
@@ -292,4 +331,86 @@ export async function syncGooglePlayPurchase(
   }
 
   return { active, billingPeriod, provider: "google" as const };
+}
+
+export async function syncGooglePlaySessionPass(
+  rawPurchaseToken: string,
+  expectedUserId: string,
+) {
+  const purchaseToken = validatePurchaseToken(rawPurchaseToken);
+  const admin = createAdminClient();
+  const { data: tokenOwner, error: tokenOwnerError } = await admin
+    .from("session_pass_purchases")
+    .select("user_id")
+    .eq("provider", "google")
+    .eq("transaction_id", purchaseToken)
+    .maybeSingle();
+  if (tokenOwnerError) throw tokenOwnerError;
+  if (tokenOwner && tokenOwner.user_id !== expectedUserId) {
+    throw new Error(
+      "This Google Play Session Pass belongs to a different Plink account.",
+    );
+  }
+
+  const purchase = await loadOneTimePurchase(purchaseToken);
+  const expectedAccountId = await hashUserId(expectedUserId);
+  if (purchase.obfuscatedExternalAccountId !== expectedAccountId) {
+    throw new Error(
+      "This Google Play Session Pass belongs to a different Plink account.",
+    );
+  }
+
+  const lineItem = (purchase.productLineItem ?? []).find(
+    (item) => item.productId === GOOGLE_SESSION_PASS_PRODUCT_ID,
+  );
+  const purchaseOptionId = lineItem?.productOfferDetails?.purchaseOptionId;
+  if (
+    !lineItem ||
+    (purchaseOptionId &&
+      purchaseOptionId !== GOOGLE_SESSION_PASS_PURCHASE_OPTION_ID)
+  ) {
+    throw new Error("This purchase is not a supported Plink Session Pass.");
+  }
+
+  const state = purchase.purchaseStateContext?.purchaseState ??
+    "PURCHASE_STATE_UNSPECIFIED";
+  if (state === "PENDING") {
+    return { active: false, status: "pending" as const };
+  }
+
+  const active = state === "PURCHASED" &&
+    lineItem.productOfferDetails?.refundableQuantity !== 0;
+  if (!active) {
+    if (tokenOwner) {
+      const { error } = await admin
+        .from("session_pass_purchases")
+        .update({
+          status: "refunded",
+          revoked_at: new Date().toISOString(),
+        })
+        .eq("provider", "google")
+        .eq("transaction_id", purchaseToken);
+      if (error) throw error;
+    }
+    return { active: false, status: "refunded" as const };
+  }
+
+  const result = await persistSessionPassPurchase({
+    userId: expectedUserId,
+    provider: "google",
+    productId: GOOGLE_SESSION_PASS_PRODUCT_ID,
+    transactionId: purchaseToken,
+    status: "active",
+    purchasedAt: purchase.purchaseCompletionTime ?? null,
+  });
+
+  if (purchase.acknowledgementState === "ACKNOWLEDGEMENT_STATE_PENDING") {
+    try {
+      await acknowledgeOneTimePurchase(purchaseToken);
+    } catch (error) {
+      console.error("Google Play Session Pass acknowledgment failed", error);
+    }
+  }
+
+  return { ...result, status: "active" as const };
 }

@@ -26,6 +26,8 @@ import java.util.List;
 public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedListener {
 
     private static final String PRO_PRODUCT_ID = "plink_pro";
+    private static final String SESSION_PASS_PRODUCT_ID = "session_pass_100";
+    private static final String SESSION_PASS_PURCHASE_OPTION_ID = "buy";
     private static final List<String> ALLOWED_BASE_PLAN_IDS = List.of("monthly-auto", "yearly");
 
     private BillingClient billingClient;
@@ -76,6 +78,29 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
     }
 
     @PluginMethod
+    public void getOneTimeProduct(PluginCall call) {
+        String productId = call.getString("productId");
+        if (!SESSION_PASS_PRODUCT_ID.equals(productId)) {
+            call.reject("A valid Google Play one-time product is required.");
+            return;
+        }
+
+        withReady(call, () -> queryProduct(
+            call,
+            SESSION_PASS_PRODUCT_ID,
+            BillingClient.ProductType.INAPP,
+            product -> {
+                ProductDetails.OneTimePurchaseOfferDetails offer = findSessionPassOffer(product);
+                if (offer == null) {
+                    call.reject("The Session Pass purchase option is not available from Google Play.");
+                    return;
+                }
+                call.resolve(new JSObject().put("product", oneTimeProductPayload(product, offer)));
+            }
+        ));
+    }
+
+    @PluginMethod
     public void purchase(PluginCall call) {
         String productId = call.getString("productId");
         String basePlanId = call.getString("basePlanId");
@@ -121,6 +146,56 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
     }
 
     @PluginMethod
+    public void purchaseOneTimeProduct(PluginCall call) {
+        String productId = call.getString("productId");
+        String obfuscatedAccountId = call.getString("obfuscatedAccountId");
+        if (!SESSION_PASS_PRODUCT_ID.equals(productId)) {
+            call.reject("A valid Google Play one-time product is required.");
+            return;
+        }
+        if (obfuscatedAccountId == null || !obfuscatedAccountId.matches("^[a-f0-9]{64}$")) {
+            call.reject("A valid account is required before purchasing.");
+            return;
+        }
+        if (pendingPurchaseCall != null) {
+            call.reject("Another purchase is already in progress.");
+            return;
+        }
+
+        withReady(call, () -> queryProduct(
+            call,
+            SESSION_PASS_PRODUCT_ID,
+            BillingClient.ProductType.INAPP,
+            product -> {
+                ProductDetails.OneTimePurchaseOfferDetails offer = findSessionPassOffer(product);
+                if (offer == null) {
+                    call.reject("The Session Pass is not available from Google Play.");
+                    return;
+                }
+
+                BillingFlowParams.ProductDetailsParams.Builder productParams =
+                    BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(product);
+                String offerToken = offer.getOfferToken();
+                if (offerToken != null && !offerToken.isBlank()) {
+                    productParams.setOfferToken(offerToken);
+                }
+                BillingFlowParams flowParams = BillingFlowParams
+                    .newBuilder()
+                    .setProductDetailsParamsList(Collections.singletonList(productParams.build()))
+                    .setObfuscatedAccountId(obfuscatedAccountId)
+                    .build();
+
+                pendingPurchaseCall = call;
+                BillingResult result = billingClient.launchBillingFlow(getActivity(), flowParams);
+                if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                    pendingPurchaseCall = null;
+                    call.reject(billingError("Google Play could not start the purchase", result));
+                }
+            }
+        ));
+    }
+
+    @PluginMethod
     public void getCurrentPurchases(PluginCall call) {
         withReady(call, () -> {
             QueryPurchasesParams params = QueryPurchasesParams
@@ -136,6 +211,31 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
                 JSArray items = new JSArray();
                 for (Purchase purchase : purchases) {
                     if (purchase.getProducts().contains(PRO_PRODUCT_ID)) {
+                        items.put(purchasePayload(purchase));
+                    }
+                }
+                payload.put("purchases", items);
+                call.resolve(payload);
+            });
+        });
+    }
+
+    @PluginMethod
+    public void getCurrentOneTimePurchases(PluginCall call) {
+        withReady(call, () -> {
+            QueryPurchasesParams params = QueryPurchasesParams
+                .newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build();
+            billingClient.queryPurchasesAsync(params, (result, purchases) -> {
+                if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                    call.reject(billingError("Google Play one-time purchases could not be loaded", result));
+                    return;
+                }
+                JSObject payload = new JSObject();
+                JSArray items = new JSArray();
+                for (Purchase purchase : purchases) {
+                    if (purchase.getProducts().contains(SESSION_PASS_PRODUCT_ID)) {
                         items.put(purchasePayload(purchase));
                     }
                 }
@@ -182,12 +282,15 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
 
         Purchase purchase = purchases
             .stream()
-            .filter(item -> item.getProducts().contains(PRO_PRODUCT_ID))
+            .filter(item ->
+                item.getProducts().contains(PRO_PRODUCT_ID) ||
+                item.getProducts().contains(SESSION_PASS_PRODUCT_ID)
+            )
             .findFirst()
             .orElse(null);
         if (purchase == null) {
             if (call != null) {
-                call.reject("Google Play did not return the Plink Pro purchase.");
+                call.reject("Google Play did not return a supported Plink purchase.");
             }
         } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
             if (call != null) call.resolve(new JSObject().put("status", "pending"));
@@ -256,10 +359,19 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
     }
 
     private void queryProduct(PluginCall call, ProductCallback callback) {
+        queryProduct(call, PRO_PRODUCT_ID, BillingClient.ProductType.SUBS, callback);
+    }
+
+    private void queryProduct(
+        PluginCall call,
+        String productId,
+        String productType,
+        ProductCallback callback
+    ) {
         QueryProductDetailsParams.Product product = QueryProductDetailsParams.Product
             .newBuilder()
-            .setProductId(PRO_PRODUCT_ID)
-            .setProductType(BillingClient.ProductType.SUBS)
+            .setProductId(productId)
+            .setProductType(productType)
             .build();
         QueryProductDetailsParams params = QueryProductDetailsParams
             .newBuilder()
@@ -273,15 +385,47 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
             ProductDetails details = queryResult
                 .getProductDetailsList()
                 .stream()
-                .filter(item -> PRO_PRODUCT_ID.equals(item.getProductId()))
+                .filter(item -> productId.equals(item.getProductId()))
                 .findFirst()
                 .orElse(null);
             if (details == null) {
-                call.reject("Plink Pro is not available from Google Play for this account.");
+                call.reject("The requested product is not available from Google Play for this account.");
                 return;
             }
             callback.onProduct(details);
         });
+    }
+
+    private ProductDetails.OneTimePurchaseOfferDetails findSessionPassOffer(
+        ProductDetails product
+    ) {
+        List<ProductDetails.OneTimePurchaseOfferDetails> offers =
+            product.getOneTimePurchaseOfferDetailsList();
+        if (offers != null) {
+            for (ProductDetails.OneTimePurchaseOfferDetails offer : offers) {
+                if (
+                    SESSION_PASS_PURCHASE_OPTION_ID.equals(offer.getPurchaseOptionId()) &&
+                    offer.getOfferId() == null &&
+                    offer.getRentalDetails() == null &&
+                    offer.getPreorderDetails() == null
+                ) {
+                    return offer;
+                }
+            }
+        }
+
+        ProductDetails.OneTimePurchaseOfferDetails fallback =
+            product.getOneTimePurchaseOfferDetails();
+        if (
+            fallback != null &&
+            fallback.getRentalDetails() == null &&
+            fallback.getPreorderDetails() == null &&
+            (fallback.getPurchaseOptionId() == null ||
+                SESSION_PASS_PURCHASE_OPTION_ID.equals(fallback.getPurchaseOptionId()))
+        ) {
+            return fallback;
+        }
+        return null;
     }
 
     private ProductDetails.SubscriptionOfferDetails findBasePlanOffer(
@@ -326,10 +470,30 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
         return payload;
     }
 
+    private JSObject oneTimeProductPayload(
+        ProductDetails product,
+        ProductDetails.OneTimePurchaseOfferDetails offer
+    ) {
+        return new JSObject()
+            .put("id", product.getProductId())
+            .put("displayName", product.getName())
+            .put("description", product.getDescription())
+            .put("purchaseOptionId", offer.getPurchaseOptionId())
+            .put("offerToken", offer.getOfferToken())
+            .put("displayPrice", offer.getFormattedPrice())
+            .put("priceAmountMicros", offer.getPriceAmountMicros())
+            .put("priceCurrencyCode", offer.getPriceCurrencyCode());
+    }
+
     private JSObject purchasePayload(Purchase purchase) {
+        String productId = purchase.getProducts()
+            .stream()
+            .filter(id -> PRO_PRODUCT_ID.equals(id) || SESSION_PASS_PRODUCT_ID.equals(id))
+            .findFirst()
+            .orElse("");
         String orderId = purchase.getOrderId();
         return new JSObject()
-            .put("productId", PRO_PRODUCT_ID)
+            .put("productId", productId)
             .put("purchaseToken", purchase.getPurchaseToken())
             .put("orderId", orderId == null ? JSObject.NULL : orderId)
             .put("purchasedAt", purchase.getPurchaseTime())
