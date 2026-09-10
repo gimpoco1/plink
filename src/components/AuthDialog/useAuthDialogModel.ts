@@ -18,6 +18,7 @@ import {
 import { Browser } from "@capacitor/browser";
 import { AVATAR_COLORS } from "../../constants";
 import { useAppleSubscription } from "../../features/billing/useAppleSubscription";
+import { useGooglePlaySubscription } from "../../features/billing/useGooglePlaySubscription";
 import { useEntitlementsContext } from "../../hooks/useEntitlements";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
 import {
@@ -126,6 +127,7 @@ export function useAuthDialogModel(
     subscriptionStatus,
   } = useEntitlementsContext();
   const appleSubscription = useAppleSubscription(session);
+  const googlePlaySubscription = useGooglePlaySubscription(session);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const nativeOAuthPendingRef = useRef(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
@@ -1267,11 +1269,47 @@ export function useAuthDialogModel(
       return;
     }
 
-    // Google Play requires its billing flow for these in-app digital purchases.
-    // Keep Android out of the web Stripe checkout until its Play Billing bridge
-    // and server-side verification are configured with the Play Console app.
     if (isNativeAndroidApp()) {
-      setError(translate("copy.checkoutIsNotAvailableYet"));
+      let purchaseResult: ToastState = {
+        message: translate("copy.thePurchaseCouldNotBeCompleted"),
+        tone: "error",
+      };
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await googlePlaySubscription.purchase(
+          selectedBillingPeriod,
+        );
+        if (result.status === "cancelled") {
+          purchaseResult = {
+            message: translate("copy.purchaseCancelled"),
+            tone: "default",
+          };
+        } else if (result.status === "pending") {
+          purchaseResult = {
+            message: translate("copy.googlePlayPurchaseWaitingForApproval"),
+            tone: "default",
+          };
+        } else {
+          purchaseResult = {
+            message: translate("copy.welcomeToPlinkPro"),
+            tone: "success",
+          };
+        }
+      } catch (err) {
+        purchaseResult = {
+          message: getBillingErrorMessage(
+            err,
+            translate("copy.thePurchaseCouldNotBeCompleted"),
+          ),
+          tone: "error",
+        };
+      } finally {
+        setBusy(false);
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
+      }
       return;
     }
 
@@ -1427,7 +1465,29 @@ export function useAuthDialogModel(
     }
 
     if (isNativeAndroidApp()) {
-      setError(translate("copy.billingPortalIsNotAvailableYet"));
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await googlePlaySubscription.restore();
+        showTransferToast(
+          result.active
+            ? translate("copy.plinkProPurchaseWasRestored")
+            : translate("copy.noRestorableGooglePlayPurchasesWereFound"),
+          result.active ? "success" : "default",
+        );
+      } catch (err) {
+        showTransferToast(
+          getBillingErrorMessage(
+            err,
+            translate("copy.purchasesCouldNotBeRestored"),
+          ),
+          "error",
+        );
+      } finally {
+        setBusy(false);
+      }
       return;
     }
 
@@ -1467,13 +1527,21 @@ export function useAuthDialogModel(
         return;
       }
 
-      if (isNativeIOSApp()) {
-        await openExternalUrl("https://plinkscore.com");
+      if (subscriptionProvider === "google" && isNativeAndroidApp()) {
+        await googlePlaySubscription.showManageSubscriptions();
         return;
       }
 
-      if (isNativeAndroidApp()) {
-        throw new Error(translate("copy.subscriptionSettingsCouldNotBeOpened"));
+      if (subscriptionProvider === "google") {
+        await openExternalUrl(
+          "https://play.google.com/store/account/subscriptions",
+        );
+        return;
+      }
+
+      if (isNativeIOSApp() || isNativeAndroidApp()) {
+        await openExternalUrl("https://plinkscore.com");
+        return;
       }
 
       await restoreSubscription();
@@ -1691,10 +1759,14 @@ export function useAuthDialogModel(
     appleSessionPassError: appleSubscription.sessionPassError,
     appleSessionPassLoading: appleSubscription.isLoadingSessionPass,
     appleSessionPassProduct: appleSubscription.sessionPassProduct,
+    googlePlayProductsByPeriod: googlePlaySubscription.productsByPeriod,
+    googlePlayProductsError: googlePlaySubscription.productsError,
+    googlePlayProductsLoading: googlePlaySubscription.isLoadingProducts,
     includeGames,
     includeProfiles,
     isAwaitingSignupConfirmation,
     isNativeIOS: isNativeIOSApp(),
+    isNativeAndroid: isNativeAndroidApp(),
     isPro,
     localGames,
     localProfiles,
@@ -1711,6 +1783,7 @@ export function useAuthDialogModel(
     planSectionRef,
     recoveryMode,
     reloadAppleProducts: appleSubscription.reloadProducts,
+    reloadGooglePlayProducts: googlePlaySubscription.reloadProducts,
     renewalLabel,
     manageSubscription,
     restoreSubscription,
