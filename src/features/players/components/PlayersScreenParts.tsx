@@ -6,9 +6,11 @@ import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 export function GamesDropdown({
   title,
   sessionResults,
+  onEnter,
 }: {
   title: string;
   sessionResults: SessionResultSummary[];
+  onEnter?: (gameId: string) => void;
 }) {
   return (
     <details className="profileGamesDropdown">
@@ -24,7 +26,16 @@ export function GamesDropdown({
         {sessionResults.map((result) => (
           <div key={result.id} className="profileCard__gameResult">
             <span className="profileCard__gameResultMain">
-              <span className="profileCard__gameResultName">{result.name}</span>
+              <button
+                type="button"
+                className="profileCard__gameResultNameBtn"
+                onClick={() => onEnter?.(result.gameId)}
+                disabled={!onEnter}
+              >
+                <span className="profileCard__gameResultName">
+                  {result.name}
+                </span>
+              </button>
               {result.isTeamGame ? (
                 <span className="profileCard__gameResultBadge">
                   {translate("home.teams")}

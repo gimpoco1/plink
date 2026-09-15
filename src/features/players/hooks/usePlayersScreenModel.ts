@@ -53,6 +53,7 @@ export type PlayersScreenProps = {
   ) => void;
   onDeleteTeam: (id: string) => void;
   onToggleTeamMember: (teamId: string, profileId: string) => void;
+  onEnter: (gameId: string) => void;
 };
 
 function pickNextTeamIcon(teams: GameTeam[]) {
@@ -125,6 +126,7 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
     onUpdateTeam,
     onDeleteTeam,
     onToggleTeamMember,
+    onEnter,
   } = props;
   const teamBuilderSlotRef = useRef<HTMLDivElement | null>(null);
   const handledOpenTeamBuilderTokenRef = useRef(0);
@@ -544,6 +546,7 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
     onDeleteProfile,
     onDeleteTeam,
     onDismissLocalSessionsHint,
+    onEnter,
     onOpenAuth,
     onUpdateTeam,
     openTeamBuilder,

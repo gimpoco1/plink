@@ -28,9 +28,7 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
 
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const shareCardRef = useRef<HTMLDivElement>(null);
-  const winByTwoSuffix = winByTwo
-    ? translate("common.winByTwoSuffix")
-    : "";
+  const winByTwoSuffix = winByTwo ? translate("common.winByTwoSuffix") : "";
 
   useEffect(() => {
     document.body.classList.add("winFx-scrollLock");
@@ -95,7 +93,11 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
       ? translate("dynamic.referencePoint", [targetScore, "", winByTwoSuffix])
       : translate("copy.manualEnd")
     : winCondition === "reach_zero"
-      ? translate("dynamic.startReach", [startingScore, targetScore, winByTwoSuffix])
+      ? translate("dynamic.startReach", [
+          startingScore,
+          targetScore,
+          winByTwoSuffix,
+        ])
       : winCondition === "lowest"
         ? translate("dynamic.lowestScoreWins", [winByTwoSuffix])
         : translate("dynamic.targetPoint", [targetScore, "", winByTwoSuffix]);

@@ -45,9 +45,7 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
   return (
     <ManagePlayersDialog
       ref={managePlayersDialogRef}
-      participantMode={
-        game.participantMode === "teams" ? "teams" : "players"
-      }
+      participantMode={game.participantMode === "teams" ? "teams" : "players"}
       games={games}
       profiles={profiles}
       savedTeams={teams}

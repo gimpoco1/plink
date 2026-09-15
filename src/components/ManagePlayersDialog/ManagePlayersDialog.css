@@ -937,7 +937,6 @@
   cursor: pointer;
 }
 
-
 .managePlayersDialog__mergeFooter {
   min-width: 0;
   padding: 7px 9px 8px;
@@ -1289,7 +1288,9 @@
   --roster-picker-create-ink: var(--ds-color-on-surface);
 }
 
-:root[data-theme="light"] .managePlayersDialog__savedPicker .rosterPicker__createBtn--dark {
+:root[data-theme="light"]
+  .managePlayersDialog__savedPicker
+  .rosterPicker__createBtn--dark {
   border-color: rgba(20, 36, 40, 0.22);
   background: var(--ds-color-surface-bright);
   color: var(--ds-color-on-surface);
@@ -1343,12 +1344,16 @@
   color: var(--ds-color-on-surface);
 }
 
-:root[data-theme="light"] .managePlayersDialog .newPlayerComposer__input.input::placeholder {
+:root[data-theme="light"]
+  .managePlayersDialog
+  .newPlayerComposer__input.input::placeholder {
   color: var(--ds-color-on-surface-variant);
   opacity: 0.72;
 }
 
-:root[data-theme="light"] .managePlayersDialog .newPlayerComposer__footer::before {
+:root[data-theme="light"]
+  .managePlayersDialog
+  .newPlayerComposer__footer::before {
   background: rgba(20, 36, 40, 0.14);
 }
 

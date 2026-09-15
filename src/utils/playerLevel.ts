@@ -48,7 +48,7 @@ function gameOrder(game: Game) {
 }
 
 /**
- * Replays rated games chronologically so every result uses the levels that all
+ * Replays completed games chronologically so every result uses the levels that all
  * participants had when that game ended. Players begin provisionally at 5.0.
  */
 export function computePlayerLevels(games: Game[]) {

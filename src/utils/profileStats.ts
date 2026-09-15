@@ -12,6 +12,7 @@ export type GameResultSummary = {
 
 export type SessionResultSummary = {
   id: string;
+  gameId: string;
   name: string;
   statusKind: "won" | "lost" | "completed" | "draw" | "in_progress";
   isTeamGame: boolean;
@@ -173,6 +174,7 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
                 : "completed";
       sessions.push({
         id: `${game.id}:${player.id}`,
+        gameId: game.id,
         name: getGameSessionLabel(game.name),
         statusKind,
         isTeamGame: game.participantMode === "teams",
@@ -344,6 +346,7 @@ export function computeTeamStats(
       const sessions = sessionResultsByTeam.get(savedTeamId) ?? [];
       sessions.push({
         id: `${game.id}:${savedTeamId}`,
+        gameId: game.id,
         name: getGameSessionLabel(game.name),
         statusKind: !isComplete
           ? "in_progress"

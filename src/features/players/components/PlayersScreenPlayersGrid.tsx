@@ -13,9 +13,7 @@ export function PlayersGrid() {
   return (
     <div className="profilesGrid">
       {!profiles.length && !addingPlayer ? (
-        <div className="emptyMsg">
-          {translate("copy.noSavedPlayersYet")}
-        </div>
+        <div className="emptyMsg">{translate("copy.noSavedPlayersYet")}</div>
       ) : (
         profiles.map((profile) => (
           <ProfileCard key={profile.id} profile={profile} />
@@ -102,11 +100,14 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
               />
             </div>
           ) : null}
-          {!isEditing ? <PlayerLevelBadge stats={stats} variant="summary" /> : null}
+          {!isEditing ? (
+            <PlayerLevelBadge stats={stats} variant="summary" />
+          ) : null}
           {stats?.sessionResults.length ? (
             <GamesDropdown
               title={translate("tabs.sessions")}
               sessionResults={stats.sessionResults}
+              onEnter={model.onEnter}
             />
           ) : null}
         </>

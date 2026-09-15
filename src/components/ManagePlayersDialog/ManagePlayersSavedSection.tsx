@@ -51,7 +51,11 @@ export function ManagePlayersSavedSection() {
         listTriggerLabel={translate("copy.addPlayers")}
         searchValue={search}
         onSearchChange={setSearch}
-        listTitle={isAuthenticated ? translate("tabs.players") : translate("copy.addPlayers")}
+        listTitle={
+          isAuthenticated
+            ? translate("tabs.players")
+            : translate("copy.addPlayers")
+        }
         collapseLabel={translate("copy.hidePlayers")}
         searchPlaceholder={translate("new.searchPlayers")}
         searchAriaLabel={translate("copy.searchSavedPlayers")}
@@ -79,7 +83,9 @@ export function ManagePlayersSavedSection() {
                   <Link size={15} strokeWidth={2.4} aria-hidden="true" />
                   <span>
                     <strong>{translate("copy.invitedPlayers")}</strong>
-                    {translate("copy.thisGameAppearsInTheirAccountsAndTheyCanUpdateTheScore")}
+                    {translate(
+                      "copy.thisGameAppearsInTheirAccountsAndTheyCanUpdateTheScore",
+                    )}
                   </span>
                 </div>
               ) : null}
@@ -88,7 +94,9 @@ export function ManagePlayersSavedSection() {
                   <Info size={15} strokeWidth={2.4} aria-hidden="true" />
                   <span>
                     <strong>{translate("copy.inviteCodeRequired")}</strong>
-                    {translate("copy.playersMarkedCodeOnlyTurnedOffAutomaticInvitesShareANewCode")}
+                    {translate(
+                      "copy.playersMarkedCodeOnlyTurnedOffAutomaticInvitesShareANewCode",
+                    )}
                   </span>
                 </div>
               ) : null}
@@ -155,7 +163,8 @@ export function ManagePlayersSavedSection() {
                   />
                   <span className="managePlayersDialog__invitedBadge">
                     <Link size={9} strokeWidth={2.7} aria-hidden="true" />
-                    {translate("copy.invitedBefore")}</span>
+                    {translate("copy.invitedBefore")}
+                  </span>
                 </span>
               </span>
               <span
@@ -198,7 +207,8 @@ export function ManagePlayersSavedSection() {
           }}
         >
           <Link size={16} strokeWidth={2.4} aria-hidden="true" />
-          {translate("copy.shareInviteCode")}</button>
+          {translate("copy.shareInviteCode")}
+        </button>
       ) : null}
       <ManagePlayersQueue />
     </section>

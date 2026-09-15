@@ -22,12 +22,7 @@ const StatsScreen = lazy(async () => {
   return { default: StatsScreenComponent };
 });
 
-const tabs: HomeTab[] = [
-  "home",
-  "sessions",
-  "stats",
-  "players",
-];
+const tabs: HomeTab[] = ["home", "sessions", "stats", "players"];
 
 export function DashboardScreen(props: DashboardScreenProps) {
   const [isCreating, setIsCreating] = useState(false);
@@ -237,6 +232,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             onUpdateTeam={props.onUpdateTeam}
             onDeleteTeam={props.onDeleteTeam}
             onToggleTeamMember={props.onToggleTeamMember}
+            onEnter={(gameId) => props.onEnter(gameId, "players")}
           />
         );
       case "home":

@@ -17,7 +17,9 @@ import type { GameScreenProps } from "../features/game/types/gameScreenTypes";
 import { GameManagePlayersDialog } from "../features/game/components/GameManagePlayersDialog";
 import "../features/game/styles/GameScreen.css";
 
-type StandingLevelChange = NonNullable<WinCelebrationProps["winnerLevelChange"]>;
+type StandingLevelChange = NonNullable<
+  WinCelebrationProps["winnerLevelChange"]
+>;
 
 export function GameScreen(props: GameScreenProps) {
   const model = useGameScreenModel(props);
@@ -111,7 +113,8 @@ export function GameScreen(props: GameScreenProps) {
   }, [game, gameComplete, isTeamsMode, props.games, winner?.profileId]);
 
   const playerLevelChanges = useMemo(() => {
-    if (isTeamsMode || !gameComplete) return new Map<string, StandingLevelChange>();
+    if (isTeamsMode || !gameComplete)
+      return new Map<string, StandingLevelChange>();
 
     const gamesIncludingCurrent = props.games.some(
       (candidate) => candidate.id === game.id,
@@ -135,8 +138,9 @@ export function GameScreen(props: GameScreenProps) {
         computeProfileStats(
           gamesThroughCurrent.filter((candidate) => candidate.id !== game.id),
         ).get(entry.profileId)?.level ?? INITIAL_PLAYER_LEVEL;
-      const newLevel = computeProfileStats(gamesThroughCurrent).get(entry.profileId)
-        ?.level;
+      const newLevel = computeProfileStats(gamesThroughCurrent).get(
+        entry.profileId,
+      )?.level;
 
       if (newLevel === null || newLevel === undefined) return;
 
@@ -185,7 +189,7 @@ export function GameScreen(props: GameScreenProps) {
             isWinner,
             levelChange:
               "profileId" in entry && entry.profileId
-                ? playerLevelChanges.get(entry.profileId) ?? null
+                ? (playerLevelChanges.get(entry.profileId) ?? null)
                 : null,
           }))}
           onDismiss={() => {
@@ -281,10 +285,7 @@ export function GameScreen(props: GameScreenProps) {
             </div>
           </section>
         ) : (
-          <section
-            className="teamBoard"
-            aria-label={translate("tabs.players")}
-          >
+          <section className="teamBoard" aria-label={translate("tabs.players")}>
             {teamSections.map((section) => (
               <div
                 key={section.id}

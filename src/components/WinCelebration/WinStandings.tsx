@@ -48,7 +48,11 @@ export function WinStandings({
               key={entry?.id ?? `empty-podium-${index + 1}`}
               aria-label={
                 entry
-                  ? translate("dynamic.rankScore", [entry.name, entry.rank, entry.score])
+                  ? translate("dynamic.rankScore", [
+                      entry.name,
+                      entry.rank,
+                      entry.score,
+                    ])
                   : translate("dynamic.noRankPlayer", [index + 1])
               }
               className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
@@ -134,9 +138,17 @@ export function WinStandings({
                     )}
                   >
                     {entry.levelChange.direction === "up" ? (
-                      <TrendingUp size={13} strokeWidth={2.6} aria-hidden="true" />
+                      <TrendingUp
+                        size={13}
+                        strokeWidth={2.6}
+                        aria-hidden="true"
+                      />
                     ) : entry.levelChange.direction === "down" ? (
-                      <TrendingDown size={13} strokeWidth={2.6} aria-hidden="true" />
+                      <TrendingDown
+                        size={13}
+                        strokeWidth={2.6}
+                        aria-hidden="true"
+                      />
                     ) : (
                       <Minus size={13} strokeWidth={2.6} aria-hidden="true" />
                     )}
