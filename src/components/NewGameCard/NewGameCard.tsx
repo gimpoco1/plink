@@ -1,4 +1,5 @@
 import type {
+  Game,
   GameTeam,
   PastLinkedPlayer,
   PlayerProfile,
@@ -40,6 +41,7 @@ export type NewGameInput = {
 
 export type NewGameCardProps = {
   open: boolean;
+  games: Game[];
   profiles: PlayerProfile[];
   pastInvitedPlayers: PastLinkedPlayer[];
   teams: GameTeam[];

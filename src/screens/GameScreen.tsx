@@ -1,7 +1,12 @@
+import { useMemo } from "react";
+import { usePlayerRatingsContext } from "../features/playerRatings/PlayerRatingsContext";
 import { translate } from "../i18n/translate";
 import { capitalizeFirst, getInitials } from "../utils/text";
-import type { Player } from "../types";
-import { WinCelebration } from "../components/WinCelebration/WinCelebration";
+import type { Player, PlayerRatingHistoryEntry } from "../types";
+import {
+  WinCelebration,
+  type WinCelebrationProps,
+} from "../components/WinCelebration/WinCelebration";
 import { PlayerCard } from "../components/PlayerCard/PlayerCard";
 import { TeamScoreCard } from "../components/TeamScoreCard/TeamScoreCard";
 import { GameTimer } from "../components/GameTimer/GameTimer";
@@ -11,8 +16,30 @@ import type { GameScreenProps } from "../features/game/types/gameScreenTypes";
 import { GameManagePlayersDialog } from "../features/game/components/GameManagePlayersDialog";
 import "../features/game/styles/GameScreen.css";
 
+type StandingLevelChange = NonNullable<
+  WinCelebrationProps["winnerLevelChange"]
+>;
+
+function toStandingLevelChange(
+  entry: PlayerRatingHistoryEntry,
+): StandingLevelChange {
+  const previousLevel = Math.round(entry.previousLevel * 10) / 10;
+  const newLevel = Math.round(entry.newLevel * 10) / 10;
+  return {
+    previousLevel,
+    newLevel,
+    direction:
+      newLevel > previousLevel
+        ? "up"
+        : newLevel < previousLevel
+          ? "down"
+          : "same",
+  };
+}
+
 export function GameScreen(props: GameScreenProps) {
   const model = useGameScreenModel(props);
+  const { historyByGameAndProfile } = usePlayerRatingsContext();
   const {
     savedTeamIconByName,
     takenProfileIds,
@@ -62,6 +89,36 @@ export function GameScreen(props: GameScreenProps) {
     onBackToHome,
     onEndGame,
   } = screenProps;
+  const winnerLevelChange = useMemo(() => {
+    if (isTeamsMode || !gameComplete || !winner?.profileId) return null;
+    const entry = historyByGameAndProfile.get(`${game.id}:${winner.profileId}`);
+    if (!entry) return null;
+    return toStandingLevelChange(entry);
+  }, [game.id, gameComplete, historyByGameAndProfile, isTeamsMode, winner?.profileId]);
+
+  const playerLevelChanges = useMemo(() => {
+    if (isTeamsMode || !gameComplete)
+      return new Map<string, StandingLevelChange>();
+
+    const changeByProfileId = new Map<string, StandingLevelChange>();
+
+    finalStandings.forEach(({ entry }) => {
+      if (!("profileId" in entry) || !entry.profileId) return;
+
+      const ratingEntry = historyByGameAndProfile.get(
+        `${game.id}:${entry.profileId}`,
+      );
+      if (!ratingEntry) return;
+
+      changeByProfileId.set(
+        entry.profileId,
+        toStandingLevelChange(ratingEntry),
+      );
+    });
+
+    return changeByProfileId;
+  }, [finalStandings, game.id, gameComplete, historyByGameAndProfile, isTeamsMode]);
+
   return (
     <div className={`gameScreen${isTeamsMode ? " gameScreen--teams" : ""}`}>
       {showWinSummary ? (
@@ -77,6 +134,7 @@ export function GameScreen(props: GameScreenProps) {
           manualEndOnly={game.manualEndOnly}
           completedAt={game.endedAt ?? game.updatedAt ?? game.createdAt}
           winnerStats={winnerStats}
+          winnerLevelChange={winnerLevelChange}
           isLatestCompletedGame={isLatestCompletedGame}
           standings={finalStandings.map(({ entry, rank, isWinner }) => ({
             id: entry.id,
@@ -89,6 +147,10 @@ export function GameScreen(props: GameScreenProps) {
             score: entry.score,
             rank,
             isWinner,
+            levelChange:
+              "profileId" in entry && entry.profileId
+                ? (playerLevelChanges.get(entry.profileId) ?? null)
+                : null,
           }))}
           onDismiss={() => {
             setDismissedOutcomeKey(outcomeKey);
@@ -183,10 +245,7 @@ export function GameScreen(props: GameScreenProps) {
             </div>
           </section>
         ) : (
-          <section
-            className="teamBoard"
-            aria-label={translate("tabs.players")}
-          >
+          <section className="teamBoard" aria-label={translate("tabs.players")}>
             {teamSections.map((section) => (
               <div
                 key={section.id}

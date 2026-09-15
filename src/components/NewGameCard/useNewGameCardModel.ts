@@ -421,6 +421,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     );
   }, [participantSearch, profiles]);
 
+
   const filteredPastInvitedPlayers = useMemo(() => {
     const savedProfileIds = new Set(profiles.map((profile) => profile.id));
     const query = participantSearch.trim().toLocaleLowerCase();

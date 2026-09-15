@@ -1,5 +1,5 @@
 import { translate } from "../../i18n/translate";
-import { Crown } from "lucide-react";
+import { Crown, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { Standing } from "./WinCelebration";
 import { FittedPodiumName } from "./WinCelebrationAtoms";
 import { StandingAvatar } from "./WinShareParts";
@@ -48,7 +48,11 @@ export function WinStandings({
               key={entry?.id ?? `empty-podium-${index + 1}`}
               aria-label={
                 entry
-                  ? translate("dynamic.rankScore", [entry.name, entry.rank, entry.score])
+                  ? translate("dynamic.rankScore", [
+                      entry.name,
+                      entry.rank,
+                      entry.score,
+                    ])
                   : translate("dynamic.noRankPlayer", [index + 1])
               }
               className={`winFx__podiumSlot winFx__podiumSlot--${index + 1}${
@@ -115,7 +119,49 @@ export function WinStandings({
                   ) : null}
                 </div>
               </div>
-              <div className="winFx__score">{entry.score}</div>
+              <div className="winFx__rowRight">
+                {entry.levelChange ? (
+                  <div
+                    className={`winFx__standingLevelChange winFx__standingLevelChange--${entry.levelChange.direction}`}
+                    aria-label={translate(
+                      entry.levelChange.direction === "up"
+                        ? "playerLevel.increasedTo"
+                        : entry.levelChange.direction === "down"
+                          ? "playerLevel.decreasedTo"
+                          : "playerLevel.unchangedAt",
+                      [
+                        entry.levelChange.newLevel.toLocaleString("en-US", {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        }),
+                      ],
+                    )}
+                  >
+                    {entry.levelChange.direction === "up" ? (
+                      <TrendingUp
+                        size={13}
+                        strokeWidth={2.6}
+                        aria-hidden="true"
+                      />
+                    ) : entry.levelChange.direction === "down" ? (
+                      <TrendingDown
+                        size={13}
+                        strokeWidth={2.6}
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Minus size={13} strokeWidth={2.6} aria-hidden="true" />
+                    )}
+                    <strong>
+                      {entry.levelChange.newLevel.toLocaleString("en-US", {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                      })}
+                    </strong>
+                  </div>
+                ) : null}
+                <div className="winFx__score">{entry.score}</div>
+              </div>
             </div>
           ))}
         </div>

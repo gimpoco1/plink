@@ -1,5 +1,6 @@
 import { translate } from "../../../i18n/translate";
 import { Plus } from "lucide-react";
+import { PlayerLevelInfoButton } from "../../../components/PlayerLevelBadge/PlayerLevelBadge";
 import { usePlayersScreenContext } from "../context/PlayersScreenContext";
 
 export function PlayersScreenHeader() {
@@ -31,6 +32,9 @@ export function PlayersScreenHeader() {
             </h2>
             {isAuthenticated ? (
               <span className="playersScreenCount">{activeCountLabel}</span>
+            ) : null}
+            {isAuthenticated && activeView === "players" ? (
+              <PlayerLevelInfoButton />
             ) : null}
           </div>
           {isAuthenticated ? (

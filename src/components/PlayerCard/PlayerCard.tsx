@@ -1,6 +1,7 @@
+import { PlayerLevelBadge } from "../PlayerLevelBadge/PlayerLevelBadge";
 import { translate } from "../../i18n/translate";
 import { useMemo, useState } from "react";
-import { Link } from "lucide-react";
+import { Crown, Link } from "lucide-react";
 import type { Player, QuickScoreValues, WinCondition } from "../../types";
 import { MAX_ABS_SCORE } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
@@ -54,9 +55,6 @@ export function PlayerCard({
   const displayName = isAccountPlayer
     ? formatAccountPlayerName(player.name)
     : capitalizeFirst(player.name);
-  const linkedNameParts = isLinkedPlayer
-    ? displayName.match(/^(.*\s)?(\S+)$/)
-    : null;
   const initials = getInitials(player.name);
   const scoreClass =
     currentScore > 0
@@ -128,60 +126,43 @@ export function PlayerCard({
     >
       {({ isSwiping, isOpen, closeSwipe }) => (
         <>
-          <div className="cardHeader">
+          <div className={`cardHeader playerCard__header${isWinner ? " playerCard__header--winner" : ""}`}>
             <div className="cardHeader__left">
               {showRank ? (
                 <div className="rank" aria-label={translate("dynamic.rank", [rank])}>
                   #{rank}
                 </div>
               ) : null}
-              <div
-                className="avatar"
-                style={avatarStyleFor(player.avatarColor)}
-                aria-hidden="true"
-              >
-                {initials}
+              <div className="playerCard__avatarWrap">
+                <div
+                  className="avatar"
+                  style={avatarStyleFor(player.avatarColor)}
+                  aria-hidden="true"
+                >
+                  {initials}
+                </div>
+
+                {isWinner ? (
+                  <div
+                    className="winnerMark winnerMark--avatar"
+                    aria-label={translate("copy.winner")}
+                  >
+                    <Crown size={30} strokeWidth={2.2} aria-hidden="true" />
+                  </div>
+                ) : null}
               </div>
               <div className="who">
                 <div className="who__nameRow">
-                  <div className="who__name">
-                    {linkedNameParts ? (
-                      <>
-                        {linkedNameParts[1] ?? ""}
-                        <span className="who__linkedNameTail">
-                          {linkedNameParts[2]}
-                          <span
-                            className="who__linkedPlayer"
-                            aria-label={translate("copy.joinedWithAnInvitationCode")}
-                            title={translate("copy.joinedWithAnInvitationCode")}
-                          >
-                            <Link
-                              size={17}
-                              strokeWidth={2.5}
-                              aria-hidden="true"
-                            />
-                          </span>
-                        </span>
-                      </>
-                    ) : (
-                      displayName
-                    )}
-                  </div>
-                  {isWinner ? (
-                    <div
-                      className="winnerMark"
-                      aria-label={translate("copy.winner")}
+                  <div className="who__name" title={displayName}>{displayName}</div>
+                  <PlayerLevelBadge profileId={player.profileId} />
+                  {isLinkedPlayer ? (
+                    <span
+                      className="who__linkedPlayer"
+                      aria-label={translate("copy.joinedWithAnInvitationCode")}
+                      title={translate("copy.joinedWithAnInvitationCode")}
                     >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                          d="M8 4h8v4.5a4 4 0 0 1-8 0V4Zm0 2H5v1.5A3.5 3.5 0 0 0 8.5 11M16 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 12.5V17m-3 3h6m-5-3h4"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
+                      <Link size={17} strokeWidth={2.5} aria-hidden="true" />
+                    </span>
                   ) : null}
                 </div>
                 {isGameOwner ? (

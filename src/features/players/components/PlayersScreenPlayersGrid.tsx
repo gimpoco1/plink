@@ -1,3 +1,4 @@
+import { PlayerLevelBadge } from "../../../components/PlayerLevelBadge/PlayerLevelBadge";
 import { translate } from "../../../i18n/translate";
 import { Check, Pencil, Trash2, Undo2 } from "lucide-react";
 import type { PlayerProfile } from "../../../types";
@@ -12,9 +13,7 @@ export function PlayersGrid() {
   return (
     <div className="profilesGrid">
       {!profiles.length && !addingPlayer ? (
-        <div className="emptyMsg">
-          {translate("copy.noSavedPlayersYet")}
-        </div>
+        <div className="emptyMsg">{translate("copy.noSavedPlayersYet")}</div>
       ) : (
         profiles.map((profile) => (
           <ProfileCard key={profile.id} profile={profile} />
@@ -101,10 +100,15 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
               />
             </div>
           ) : null}
+          {!isEditing && profile.isAccountPlayer ? (
+            <PlayerLevelBadge profileId={profile.id} variant="summary" />
+          ) : null}
           {stats?.sessionResults.length ? (
             <GamesDropdown
               title={translate("tabs.sessions")}
               sessionResults={stats.sessionResults}
+              profileId={profile.id}
+              onEnter={model.onEnter}
             />
           ) : null}
         </>

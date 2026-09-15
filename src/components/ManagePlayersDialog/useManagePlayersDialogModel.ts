@@ -12,6 +12,7 @@ import {
   REFRESH_PAST_LINKED_PLAYERS_EVENT,
 } from "../../constants";
 import type {
+  Game,
   GameTeam,
   PastLinkedPlayer,
   Player,
@@ -34,6 +35,7 @@ export type StagedCustomPlayer = {
 
 export type ManagePlayersDialogProps = {
   participantMode: "players" | "teams";
+  games?: Game[];
   profiles: PlayerProfile[];
   savedTeams: GameTeam[];
   savedTeamMembers: TeamMember[];

@@ -9,6 +9,7 @@ import {
   formatAccountPlayerName,
   getInitials,
 } from "../../utils/text";
+import { PlayerLevelBadge } from "../PlayerLevelBadge/PlayerLevelBadge";
 import { useManagePlayersDialogContext } from "./ManagePlayersDialogContext";
 
 type Props =
@@ -253,6 +254,7 @@ function PlayerIdentity({
         <div className="managePlayersDialog__identityCopy">
           <span className="managePlayersDialog__nameRow">
             <span className="managePlayersDialog__name">{displayName}</span>
+            <PlayerLevelBadge profileId={profile?.id ?? player?.profileId} />
             {isLinkedAccountPlayer ? (
               <span
                 className="managePlayersDialog__linkedIcon"

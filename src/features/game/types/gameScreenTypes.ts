@@ -12,6 +12,7 @@ import type { ProfileStats, TeamStats } from "../../../utils/profileStats";
 
 export type GameScreenProps = {
   game: Game;
+  games: Game[];
   profiles: PlayerProfile[];
   teams: GameTeam[];
   teamMembers: TeamMember[];

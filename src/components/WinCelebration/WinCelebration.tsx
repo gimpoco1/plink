@@ -20,6 +20,11 @@ export type Standing = {
   score: number;
   rank: number;
   isWinner: boolean;
+  levelChange?: {
+    previousLevel: number;
+    newLevel: number;
+    direction: "up" | "down" | "same";
+  } | null;
 };
 
 export type ShareStatus = "idle" | "preparing" | "copied" | "error";
@@ -36,12 +41,28 @@ export type WinCelebrationProps = {
   manualEndOnly: boolean;
   completedAt: number;
   winnerStats: ProfileStats | TeamStats | null;
+  winnerLevelChange?: {
+    previousLevel: number;
+    newLevel: number;
+    direction: "up" | "down" | "same";
+  } | null;
   isLatestCompletedGame: boolean;
   standings: Standing[];
   onDismiss: () => void;
   onReplay: () => void;
   onBackToHome: () => void;
 };
+
+function hasWinnerLevelChange(
+  levelChange: WinCelebrationProps["winnerLevelChange"],
+): levelChange is NonNullable<WinCelebrationProps["winnerLevelChange"]> {
+  return (
+    levelChange !== null &&
+    levelChange !== undefined &&
+    Number.isFinite(levelChange.previousLevel) &&
+    Number.isFinite(levelChange.newLevel)
+  );
+}
 
 export function WinCelebration(props: WinCelebrationProps) {
   const {
@@ -72,11 +93,15 @@ export function WinCelebration(props: WinCelebrationProps) {
     gameName,
     completedAt,
     winnerStats,
+    winnerLevelChange,
     standings,
     onDismiss,
     onReplay,
     onBackToHome,
   } = viewProps;
+
+  const hasLevelChange = hasWinnerLevelChange(winnerLevelChange);
+
   return (
     <div
       className={`winFx${isTeamGame ? " winFx--teams" : ""}`}
@@ -99,12 +124,16 @@ export function WinCelebration(props: WinCelebrationProps) {
                 ? translate("copy.finished")
                 : translate("copy.winner")}
           </div>
-          <div className="winFx__name">
-            {isDraw
-              ? translate("copy.drawGame")
-              : isCompletedWithoutWinner
-                ? translate("copy.noWinner")
-                : winnerName}
+          <div className="winFx__nameRow">
+            <div className="winFx__nameGroup">
+              <div className="winFx__name">
+                {isDraw
+                  ? translate("copy.drawGame")
+                  : isCompletedWithoutWinner
+                    ? translate("copy.noWinner")
+                    : winnerName}
+              </div>
+            </div>
           </div>
           <div className="winFx__titleBlock">
             <div className="winFx__sessionMeta">
@@ -210,7 +239,8 @@ export function WinCelebration(props: WinCelebrationProps) {
             className="winFx__btn winFx__btn--ghost"
             onClick={onDismiss}
           >
-            {translate("copy.continue")}</button>
+            {translate("copy.continue")}
+          </button>
           <button
             type="button"
             className="winFx__btn winFx__btn--ghost"
@@ -223,7 +253,8 @@ export function WinCelebration(props: WinCelebrationProps) {
             className="winFx__btn winFx__btn--primary"
             onClick={onReplay}
           >
-            {translate("copy.playAgain")}</button>
+            {translate("copy.playAgain")}
+          </button>
         </div>
       </div>
 

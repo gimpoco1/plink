@@ -5,7 +5,7 @@ import { MAX_ABS_SCORE } from "../../constants";
 import { avatarStyleFor } from "../../utils/color";
 import { getInitials } from "../../utils/text";
 import { TeamIcon } from "../TeamIcon/TeamIcon";
-import { Trophy } from "lucide-react";
+import { Crown } from "lucide-react";
 import "./TeamScoreCard.css";
 
 type Props = {
@@ -132,7 +132,7 @@ export function TeamScoreCard({
                 className="winnerMark"
                 aria-label={translate("copy.winner")}
               >
-                <Trophy size={24} strokeWidth={2.2} aria-hidden="true" />
+                <Crown size={24} strokeWidth={2.2} aria-hidden="true" />
               </div>
             ) : null}
           </div>

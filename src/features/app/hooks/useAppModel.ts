@@ -19,6 +19,7 @@ import { useTeams } from "../../../hooks/useTeams";
 import { useGames } from "../../../hooks/useGames";
 import { useScorePulse } from "../../../hooks/useScorePulse";
 import { useAuthSession } from "../../../hooks/useAuthSession";
+import { usePlayerRatings } from "../../../hooks/usePlayerRatings";
 import { useEntitlements } from "../../../hooks/useEntitlements";
 import { useGameStartSplash } from "./useGameStartSplash";
 import { useToastStack } from "./useToastStack";
@@ -162,6 +163,12 @@ export function useAppModel() {
     pastLinkedPlayers,
     pastInvitedPlayers,
   } = useGames(session, authLoading, showToast);
+  const playerRatings = usePlayerRatings(
+    session,
+    profiles,
+    games,
+    pastLinkedPlayers,
+  );
   const { pulseById, triggerPulse } = useScorePulse();
   const { cancelGameStartSplash, gameStartSplashCue, triggerGameStartSplash } =
     useGameStartSplash();
@@ -1672,6 +1679,7 @@ export function useAppModel() {
     pendingLocalSessionsCount,
     pastLinkedPlayers,
     pastInvitedPlayers,
+    playerRatings,
     presetDraft,
     presetDraftIntent,
     presetDraftToken,
