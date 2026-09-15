@@ -1,7 +1,13 @@
+import { useMemo } from "react";
+import { computeProfileStats } from "../utils/profileStats";
+import { INITIAL_PLAYER_LEVEL } from "../utils/playerLevel";
 import { translate } from "../i18n/translate";
 import { capitalizeFirst, getInitials } from "../utils/text";
 import type { Player } from "../types";
-import { WinCelebration } from "../components/WinCelebration/WinCelebration";
+import {
+  WinCelebration,
+  type WinCelebrationProps,
+} from "../components/WinCelebration/WinCelebration";
 import { PlayerCard } from "../components/PlayerCard/PlayerCard";
 import { TeamScoreCard } from "../components/TeamScoreCard/TeamScoreCard";
 import { GameTimer } from "../components/GameTimer/GameTimer";
@@ -11,8 +17,14 @@ import type { GameScreenProps } from "../features/game/types/gameScreenTypes";
 import { GameManagePlayersDialog } from "../features/game/components/GameManagePlayersDialog";
 import "../features/game/styles/GameScreen.css";
 
+type StandingLevelChange = NonNullable<WinCelebrationProps["winnerLevelChange"]>;
+
 export function GameScreen(props: GameScreenProps) {
   const model = useGameScreenModel(props);
+  const profileStats = useMemo(
+    () => computeProfileStats(props.games),
+    [props.games],
+  );
   const {
     savedTeamIconByName,
     takenProfileIds,
@@ -62,6 +74,87 @@ export function GameScreen(props: GameScreenProps) {
     onBackToHome,
     onEndGame,
   } = screenProps;
+  const winnerLevelChange = useMemo(() => {
+    if (isTeamsMode || !gameComplete || !winner?.profileId) return null;
+
+    const gamesIncludingCurrent = props.games.some(
+      (candidate) => candidate.id === game.id,
+    )
+      ? props.games
+      : [...props.games, game];
+    const currentOrder = game.endedAt ?? game.updatedAt ?? game.createdAt;
+    const gamesThroughCurrent = gamesIncludingCurrent.filter(
+      (candidate) =>
+        candidate.id === game.id ||
+        (candidate.endedAt ?? candidate.updatedAt ?? candidate.createdAt) <=
+          currentOrder,
+    );
+    const newLevel = computeProfileStats(gamesThroughCurrent).get(
+      winner.profileId,
+    )?.level;
+    if (newLevel === null || newLevel === undefined) return null;
+
+    const previousLevel =
+      computeProfileStats(
+        gamesThroughCurrent.filter((candidate) => candidate.id !== game.id),
+      ).get(winner.profileId)?.level ?? INITIAL_PLAYER_LEVEL;
+    return {
+      previousLevel,
+      newLevel,
+      direction:
+        newLevel > previousLevel
+          ? ("up" as const)
+          : newLevel < previousLevel
+            ? ("down" as const)
+            : ("same" as const),
+    };
+  }, [game, gameComplete, isTeamsMode, props.games, winner?.profileId]);
+
+  const playerLevelChanges = useMemo(() => {
+    if (isTeamsMode || !gameComplete) return new Map<string, StandingLevelChange>();
+
+    const gamesIncludingCurrent = props.games.some(
+      (candidate) => candidate.id === game.id,
+    )
+      ? props.games
+      : [...props.games, game];
+    const currentOrder = game.endedAt ?? game.updatedAt ?? game.createdAt;
+    const gamesThroughCurrent = gamesIncludingCurrent.filter(
+      (candidate) =>
+        candidate.id === game.id ||
+        (candidate.endedAt ?? candidate.updatedAt ?? candidate.createdAt) <=
+          currentOrder,
+    );
+
+    const changeByProfileId = new Map<string, StandingLevelChange>();
+
+    finalStandings.forEach(({ entry }) => {
+      if (!("profileId" in entry) || !entry.profileId) return;
+
+      const previousLevel =
+        computeProfileStats(
+          gamesThroughCurrent.filter((candidate) => candidate.id !== game.id),
+        ).get(entry.profileId)?.level ?? INITIAL_PLAYER_LEVEL;
+      const newLevel = computeProfileStats(gamesThroughCurrent).get(entry.profileId)
+        ?.level;
+
+      if (newLevel === null || newLevel === undefined) return;
+
+      changeByProfileId.set(entry.profileId, {
+        previousLevel,
+        newLevel,
+        direction:
+          newLevel > previousLevel
+            ? ("up" as const)
+            : newLevel < previousLevel
+              ? ("down" as const)
+              : ("same" as const),
+      });
+    });
+
+    return changeByProfileId;
+  }, [finalStandings, game, gameComplete, isTeamsMode, props.games]);
+
   return (
     <div className={`gameScreen${isTeamsMode ? " gameScreen--teams" : ""}`}>
       {showWinSummary ? (
@@ -77,6 +170,7 @@ export function GameScreen(props: GameScreenProps) {
           manualEndOnly={game.manualEndOnly}
           completedAt={game.endedAt ?? game.updatedAt ?? game.createdAt}
           winnerStats={winnerStats}
+          winnerLevelChange={winnerLevelChange}
           isLatestCompletedGame={isLatestCompletedGame}
           standings={finalStandings.map(({ entry, rank, isWinner }) => ({
             id: entry.id,
@@ -89,6 +183,10 @@ export function GameScreen(props: GameScreenProps) {
             score: entry.score,
             rank,
             isWinner,
+            levelChange:
+              "profileId" in entry && entry.profileId
+                ? playerLevelChanges.get(entry.profileId) ?? null
+                : null,
           }))}
           onDismiss={() => {
             setDismissedOutcomeKey(outcomeKey);
@@ -204,6 +302,11 @@ export function GameScreen(props: GameScreenProps) {
                         <PlayerCard
                           key={player.id}
                           player={player}
+                          stats={
+                            player.profileId
+                              ? profileStats.get(player.profileId)
+                              : undefined
+                          }
                           rank={rank}
                           showRank={!allZero}
                           pulse={pulse}

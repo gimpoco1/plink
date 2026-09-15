@@ -50,7 +50,7 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
   const isSingleParticipantCompletion =
     resultKind === "winner" && standings.length === 1;
   const podiumStandings = [standings[0], standings[1], standings[2]];
-  const listedStandings = standings.slice(3);
+  const listedStandings = standings;
   const rankCounts = getRankCounts(standings);
   const statsLabels =
     isSingleParticipantCompletion && !isTeamGame

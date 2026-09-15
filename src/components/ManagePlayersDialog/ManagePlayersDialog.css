@@ -306,6 +306,20 @@
   white-space: nowrap;
 }
 
+.managePlayersDialog__nameRow .playerLevel,
+.managePlayersDialog__invitedNameRow .playerLevel {
+  color: var(--accent);
+  font-size: 10.5px;
+}
+
+.managePlayersDialog__nameRow .playerLevel__badge,
+.managePlayersDialog__invitedNameRow .playerLevel__badge {
+  min-width: 26px;
+  padding: 2px 6px;
+  border: 1px solid rgb(var(--accent-rgb) / 0.3);
+  background: rgb(var(--accent-rgb) / 0.14);
+}
+
 .managePlayersDialog__invitedBadge {
   flex: 0 0 auto;
   padding: 3px 6px;

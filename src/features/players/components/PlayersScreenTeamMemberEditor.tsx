@@ -1,5 +1,6 @@
 import { translate } from "../../../i18n/translate";
 import { Check, Plus, Search } from "lucide-react";
+import { PlayerLevelBadge } from "../../../components/PlayerLevelBadge/PlayerLevelBadge";
 import type { GameTeam } from "../../../types";
 import { NewPlayerComposer } from "../../../components/NewPlayerComposer/NewPlayerComposer";
 import { avatarStyleFor } from "../../../utils/color";
@@ -48,10 +49,13 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
                 >
                   {getInitials(profile.name)}
                 </span>
-                <span>
-                  {profile.isAccountPlayer
-                    ? formatAccountPlayerName(profile.name)
-                    : profile.name}
+                <span className="teamMemberChip__copy">
+                  <span>
+                    {profile.isAccountPlayer
+                      ? formatAccountPlayerName(profile.name)
+                      : profile.name}
+                  </span>
+                  <PlayerLevelBadge stats={model.profileStats.get(profile.id)} />
                 </span>
               </button>
             );

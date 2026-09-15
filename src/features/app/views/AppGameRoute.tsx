@@ -50,6 +50,7 @@ export function AppGameRoute() {
     upsertProfile,
     visibleTeamMembers,
     visibleTeams,
+    visibleGames,
   } = useAppContext();
   if (!currentGame) return null;
   return (
@@ -66,6 +67,7 @@ export function AppGameRoute() {
     >
       <GameScreen
         game={currentGame}
+        games={visibleGames}
         profiles={gameScreenProfiles}
         teams={visibleTeams}
         teamMembers={visibleTeamMembers}

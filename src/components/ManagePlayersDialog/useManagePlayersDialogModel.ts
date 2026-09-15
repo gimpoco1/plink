@@ -12,12 +12,14 @@ import {
   REFRESH_PAST_LINKED_PLAYERS_EVENT,
 } from "../../constants";
 import type {
+  Game,
   GameTeam,
   PastLinkedPlayer,
   Player,
   PlayerProfile,
   TeamMember,
 } from "../../types";
+import { computeProfileStats } from "../../utils/profileStats";
 import { clampName } from "../../utils/text";
 
 export type ManagePlayersDialogHandle = {
@@ -34,6 +36,7 @@ export type StagedCustomPlayer = {
 
 export type ManagePlayersDialogProps = {
   participantMode: "players" | "teams";
+  games?: Game[];
   profiles: PlayerProfile[];
   savedTeams: GameTeam[];
   savedTeamMembers: TeamMember[];
@@ -86,6 +89,7 @@ export function useManagePlayersDialogModel(
 ) {
   const {
     participantMode,
+    games = [],
     profiles,
     savedTeams,
     savedTeamMembers,
@@ -143,6 +147,7 @@ export function useManagePlayersDialogModel(
   const currentGamePlayers = useMemo(() => {
     return currentPlayers.filter((player) => player.name.trim().length > 0);
   }, [currentPlayers]);
+  const profileStatsById = useMemo(() => computeProfileStats(games), [games]);
   const isTeamsGame = participantMode === "teams";
   const isPlayersGame = participantMode !== "teams";
 
@@ -511,6 +516,7 @@ export function useManagePlayersDialogModel(
     onUpdateProfile,
     pendingName,
     pastLinkedPlayers,
+    profileStatsById,
     profiles,
     resetState,
     saveForLater,

@@ -1,6 +1,7 @@
 import { translate } from "../../../i18n/translate";
 import { Pencil } from "lucide-react";
 import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
+import { PlayerLevelBadge } from "../../../components/PlayerLevelBadge/PlayerLevelBadge";
 import { avatarStyleFor } from "../../../utils/color";
 import { formatAccountPlayerName, getInitials } from "../../../utils/text";
 import { GamesDropdown } from "./PlayersScreenParts";
@@ -69,10 +70,13 @@ export function TeamCardDisplay({ data }: { data: TeamCardData }) {
               >
                 {getInitials(member.name)}
               </span>
-              <span>
-                {member.isAccountPlayer
-                  ? formatAccountPlayerName(member.name)
-                  : member.name}
+              <span className="teamMemberChip__copy">
+                <span>
+                  {member.isAccountPlayer
+                    ? formatAccountPlayerName(member.name)
+                    : member.name}
+                </span>
+                <PlayerLevelBadge stats={model.profileStats.get(member.id)} />
               </span>
             </button>
           ))

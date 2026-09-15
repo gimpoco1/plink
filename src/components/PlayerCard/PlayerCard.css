@@ -132,12 +132,14 @@
 }
 
 .who__nameRow {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .who__name {
+  overflow-wrap: anywhere;
   font-weight: 850;
   font-size: 22px;
   letter-spacing: -0.5px;
@@ -384,3 +386,38 @@
     opacity: 1;
   }
 }
+
+/* Keep identity badges together while giving long names the remaining space. */
+.playerCard__header {
+  position: relative;
+}
+
+.playerCard__header .cardHeader__left { flex: 1; }
+.playerCard__header .avatar,
+.playerCard__header .rank,
+.playerCard__header .cardHeader__right { flex-shrink: 0; }
+.playerCard__header .who { min-width: 0; }
+.playerCard__header .who__nameRow { flex-wrap: nowrap; gap: 7px; }
+.playerCard__header .who__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.playerCard__header .who__linkedPlayer { flex-shrink: 0; margin-left: 0; }
+.playerCard__avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.playerCard__header .winnerMark--avatar {
+  position: absolute;
+  top: -19px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-6deg);
+  fill: rgb(var(--accent-rgb) / 0.2);
+  width: 30px;
+  height: 30px;
+}
+
+.playerCard__header--winner { padding-top: 24px; }

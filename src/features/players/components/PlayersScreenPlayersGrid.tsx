@@ -1,3 +1,4 @@
+import { PlayerLevelBadge } from "../../../components/PlayerLevelBadge/PlayerLevelBadge";
 import { translate } from "../../../i18n/translate";
 import { Check, Pencil, Trash2, Undo2 } from "lucide-react";
 import type { PlayerProfile } from "../../../types";
@@ -101,6 +102,7 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
               />
             </div>
           ) : null}
+          {!isEditing ? <PlayerLevelBadge stats={stats} variant="summary" /> : null}
           {stats?.sessionResults.length ? (
             <GamesDropdown
               title={translate("tabs.sessions")}

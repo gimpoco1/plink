@@ -7,6 +7,7 @@ import {
 } from "../../utils/text";
 import { Info, Link, LockKeyhole, Trash2 } from "lucide-react";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
+import { PlayerLevelBadge } from "../PlayerLevelBadge/PlayerLevelBadge";
 import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRosterPicker";
 import { SwipeableCard } from "../SwipeableCard/SwipeableCard";
 import { useNewGameCardContext } from "./NewGameCardContext";
@@ -25,6 +26,7 @@ export function NewGamePlayers() {
     profiles,
     setIsAddingPlayer,
     filteredProfiles,
+    profileStatsById,
     filteredPastInvitedPlayers,
     selectedProfileIds,
     selectedPastInvitedUserIds,
@@ -60,10 +62,13 @@ export function NewGamePlayers() {
           {getInitials(profile.name)}
         </span>
         <span className="participantOption__copy">
-          <span className="participantOption__name">
-            {profile.isAccountPlayer
-              ? formatAccountPlayerName(profile.name)
-              : profile.name}
+          <span className="participantOption__nameRow">
+            <span className="participantOption__name">
+              {profile.isAccountPlayer
+                ? formatAccountPlayerName(profile.name)
+                : profile.name}
+            </span>
+            <PlayerLevelBadge stats={profileStatsById.get(profile.id)} />
           </span>
         </span>
         <SelectionStateIcon selected={selectedProfileIds.has(profile.id)} />
@@ -110,7 +115,9 @@ export function NewGamePlayers() {
                         <strong>
                           {translate("copy.invitedBeforePlayers")}
                         </strong>{" "}
-                        {translate("copy.theyLlSeeThisGameInTheirAccountsAndCanUpdateThe")}
+                        {translate(
+                          "copy.theyLlSeeThisGameInTheirAccountsAndCanUpdateThe",
+                        )}
                       </span>
                     </div>
                   ) : null}
@@ -119,7 +126,9 @@ export function NewGamePlayers() {
                       <Info size={15} strokeWidth={2.4} aria-hidden="true" />
                       <span>
                         <strong>{translate("copy.localPlayers")}</strong>{" "}
-                        {translate("copy.resultsStayInThisGameOnlyAndWonTBeAddedTo")}
+                        {translate(
+                          "copy.resultsStayInThisGameOnlyAndWonTBeAddedTo",
+                        )}
                       </span>
                     </div>
                   ) : null}
@@ -157,9 +166,13 @@ export function NewGamePlayers() {
                       <span className="participantOption__name">
                         {player.name}
                       </span>
+                      <PlayerLevelBadge
+                        stats={profileStatsById.get(player.profileId)}
+                      />
                       <span className="participantOption__badge">
                         <Link size={9} strokeWidth={2.7} aria-hidden="true" />
-                        {translate("copy.invitedBefore")}</span>
+                        {translate("copy.invitedBefore")}
+                      </span>
                     </span>
                   </span>
                   {blocked ? (
@@ -189,7 +202,9 @@ export function NewGamePlayers() {
                     />
                     <span>
                       <strong>{translate("copy.inviteCodeRequired")}</strong>
-                      {translate("copy.playerHasAutomaticInvitesOffToAddThemShareTheGameCode")}
+                      {translate(
+                        "copy.playerHasAutomaticInvitesOffToAddThemShareTheGameCode",
+                      )}
                     </span>
                   </div>
                 </div>
@@ -215,7 +230,9 @@ export function NewGamePlayers() {
                         closeSwipe();
                         deleteStagedPlayer(player.id);
                       }}
-                      aria-label={translate("dynamic.deleteLocalPlayer", [player.name])}
+                      aria-label={translate("dynamic.deleteLocalPlayer", [
+                        player.name,
+                      ])}
                     >
                       <Trash2 size={18} strokeWidth={2.2} aria-hidden="true" />
                     </button>
@@ -238,6 +255,9 @@ export function NewGamePlayers() {
                           <span className="participantOption__name">
                             {formatPlayerName(player.name)}
                           </span>
+                          <PlayerLevelBadge
+                            stats={profileStatsById.get(player.id)}
+                          />
                           <span className="participantOption__badge">
                             {translate("copy.local")}
                           </span>

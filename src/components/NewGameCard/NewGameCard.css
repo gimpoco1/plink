@@ -117,7 +117,9 @@
 }
 
 :root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled),
-:root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled):hover {
+:root[data-theme="light"]
+  .newGamePanel--open
+  .newSessionStart:not(:disabled):hover {
   border-color: var(--accent);
   background: #ffffff;
   color: var(--accent);
@@ -125,11 +127,15 @@
 }
 
 :root[data-theme="light"] .newGamePanel--open .modeCard--active .modeCard__icon,
-:root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled):hover {
+:root[data-theme="light"]
+  .newGamePanel--open
+  .newSessionStart:not(:disabled):hover {
   color: var(--accent);
 }
 
-:root[data-theme="light"] .newGamePanel--open .participantModeSwitch__option--active {
+:root[data-theme="light"]
+  .newGamePanel--open
+  .participantModeSwitch__option--active {
   color: var(--new-game-panel-accent);
 }
 
@@ -1434,8 +1440,7 @@
   cursor: not-allowed;
 }
 
-.participantOption.participantOption--blocked
-  .participantOption__copy {
+.participantOption.participantOption--blocked .participantOption__copy {
   opacity: 0.7;
 }
 
@@ -1450,8 +1455,7 @@
   background: rgba(17, 24, 10, 0.06);
 }
 
-.participantOptionGroup--blocked
-  .participantOption.participantOption--blocked {
+.participantOptionGroup--blocked .participantOption.participantOption--blocked {
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -1620,6 +1624,30 @@
 .participantOption__nameRow .participantOption__name {
   min-width: 0;
   flex: 0 1 auto;
+}
+
+.participantOption .playerLevel {
+  color: rgba(17, 24, 10, 0.78);
+  font-size: 11px;
+}
+
+.participantOption .playerLevel__badge {
+  min-width: 28px;
+  padding: 2px 6px;
+  border: 1px solid rgba(17, 24, 10, 0.14);
+  background: rgba(17, 24, 10, 0.12);
+}
+
+.participantOption--active .playerLevel {
+  color: var(--accent);
+}
+
+.participantOption--active .playerLevel__badge {
+  background: rgba(210, 255, 52, 0.12);
+}
+
+.participantOption--active .playerLevel__badge--unknown {
+  border-color: rgba(210, 255, 52, 0.42);
 }
 
 .participantOption__badge {

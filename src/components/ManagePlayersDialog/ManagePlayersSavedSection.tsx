@@ -3,6 +3,7 @@ import { Check, Info, Link, LockKeyhole, Plus } from "lucide-react";
 import { avatarStyleFor } from "../../utils/color";
 import { capitalizeFirst, getInitials } from "../../utils/text";
 import { NewPlayerComposer } from "../NewPlayerComposer/NewPlayerComposer";
+import { PlayerLevelBadge } from "../PlayerLevelBadge/PlayerLevelBadge";
 import { SearchableRosterPicker } from "../SearchableRosterPicker/SearchableRosterPicker";
 import { useManagePlayersDialogContext } from "./ManagePlayersDialogContext";
 import { ManagePlayerCard } from "./ManagePlayerCard";
@@ -20,6 +21,7 @@ export function ManagePlayersSavedSection() {
     onInviteOthers,
     pendingName,
     pastLinkedPlayers,
+    profileStatsById,
     profiles,
     saveForLater,
     search,
@@ -148,6 +150,9 @@ export function ManagePlayersSavedSection() {
                   <span className="managePlayersDialog__name">
                     {capitalizeFirst(player.name)}
                   </span>
+                  <PlayerLevelBadge
+                    stats={profileStatsById.get(player.profileId)}
+                  />
                   <span className="managePlayersDialog__invitedBadge">
                     <Link size={9} strokeWidth={2.7} aria-hidden="true" />
                     {translate("copy.invitedBefore")}</span>

@@ -6,6 +6,7 @@ type Model = ReturnType<typeof useGameScreenModel>;
 export function GameManagePlayersDialog({ model }: { model: Model }) {
   const {
     game,
+    games,
     profiles,
     teams,
     teamMembers,
@@ -47,6 +48,7 @@ export function GameManagePlayersDialog({ model }: { model: Model }) {
       participantMode={
         game.participantMode === "teams" ? "teams" : "players"
       }
+      games={games}
       profiles={profiles}
       savedTeams={teams}
       savedTeamMembers={teamMembers}

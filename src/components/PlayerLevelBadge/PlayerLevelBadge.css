@@ -1,0 +1,172 @@
+.playerLevel {
+  display: inline-flex;
+  flex: 0 0 auto;
+  max-width: 100%;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.3;
+  letter-spacing: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.playerLevel__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 4px 7px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: rgb(var(--accent-rgb) / 0.2);
+  white-space: nowrap;
+}
+
+.playerLevelCard {
+  position: relative;
+  isolation: isolate;
+  min-height: 76px;
+  padding: 13px 15px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid rgb(var(--accent-rgb) / 0.24);
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      circle at 85% 20%,
+      rgb(var(--accent-rgb) / 0.15),
+      transparent 28%
+    ),
+    linear-gradient(
+      120deg,
+      rgb(var(--accent-rgb) / 0.13),
+      rgb(var(--accent-rgb) / 0.035)
+    );
+}
+
+.playerLevelCard::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -22px;
+  bottom: -42px;
+  width: 120px;
+  height: 120px;
+  border: 18px solid rgb(var(--accent-rgb) / 0.05);
+  border-radius: 50%;
+}
+
+.playerLevelCard__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.playerLevelCard__heading strong {
+  color: var(--accent-strong);
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.playerLevelCard__heading span,
+.playerLevelCard__meta,
+.playerLevelCard > p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.playerLevelCard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+  line-height: 1.35;
+}
+
+.playerLevelCard > p {
+  margin: 9px 0 0;
+}
+
+.playerLevelSummary--unrated {
+  min-height: 62px;
+  border-color: var(--border);
+  background: transparent;
+}
+
+.playerLevelSummary--unrated .playerLevelCard__heading strong {
+  color: var(--muted);
+  font-size: 19px;
+}
+
+.playerLevelInfo {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.playerLevelInfo__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.playerLevelInfo__button::-webkit-details-marker {
+  display: none;
+}
+.playerLevelInfo__button:hover {
+  color: var(--accent);
+  border-color: rgb(var(--accent-rgb) / 0.35);
+}
+.playerLevelInfo__button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.playerLevelInfo__popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 9px);
+  left: 0;
+  width: min(340px, calc(100vw - 32px));
+  padding: 14px;
+  box-sizing: border-box;
+  border: 1px solid rgb(var(--accent-rgb) / 0.25);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.playerLevelInfo__popover strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.playerLevelInfo__popover p {
+  margin: 9px 0 0;
+}
+.playerLevelInfo__formula {
+  color: var(--accent-strong);
+  font-weight: 750;
+}
+
+@media (max-width: 420px) {
+  .playerLevelCard__heading strong {
+    font-size: 21px;
+  }
+  .playerLevelInfo__popover {
+    left: -76px;
+  }
+}

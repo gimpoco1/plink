@@ -109,6 +109,7 @@ export function HomeScreen(props: HomeScreenProps) {
         <div ref={newGameCardWrapRef} className="homeHero__newGameWrap">
           <NewGameCard
             open={showForm}
+            games={props.games}
             profiles={profiles}
             pastInvitedPlayers={props.pastInvitedPlayers}
             teams={teams}
