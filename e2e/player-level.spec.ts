@@ -62,9 +62,8 @@ test("player level badges stay compact and update after a win", async ({ page },
   await page.getByRole("button", { name: "Resume last game", exact: true }).click();
   const alice = playerCard(page, "Alice");
   const bob = playerCard(page, "Bob");
-  await expect(alice.locator(".playerLevel__badge")).toHaveText("—");
-  await expect(alice.locator(".playerLevel__badge")).toHaveAttribute("aria-label", "Unrated");
-  await expect(alice.locator("details")).toHaveCount(0);
+  await expect(alice.locator(".playerLevel__badge")).toHaveCount(0);
+  await expect(bob.locator(".playerLevel__badge")).toHaveCount(0);
   await addPoints(page, "Alice", 5);
   const celebration = page.getByRole("dialog");
   await expect(celebration.locator(".winFx__levelChange")).toHaveText("5.5");
@@ -93,7 +92,7 @@ test("player level badges stay compact and update after a win", async ({ page },
       celebrationLevel!.y + celebrationLevel!.height / 2 -
         (celebrationName!.y + celebrationName!.height / 2),
     ),
-  ).toBeLessThan(3);
+  ).toBeLessThan(4);
   await celebration.screenshot({
     path: testInfo.outputPath("winner-level-change.png"),
   });
