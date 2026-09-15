@@ -19,7 +19,6 @@ import type {
   PlayerProfile,
   TeamMember,
 } from "../../types";
-import { computeProfileStats } from "../../utils/profileStats";
 import { clampName } from "../../utils/text";
 
 export type ManagePlayersDialogHandle = {
@@ -89,7 +88,6 @@ export function useManagePlayersDialogModel(
 ) {
   const {
     participantMode,
-    games = [],
     profiles,
     savedTeams,
     savedTeamMembers,
@@ -147,7 +145,6 @@ export function useManagePlayersDialogModel(
   const currentGamePlayers = useMemo(() => {
     return currentPlayers.filter((player) => player.name.trim().length > 0);
   }, [currentPlayers]);
-  const profileStatsById = useMemo(() => computeProfileStats(games), [games]);
   const isTeamsGame = participantMode === "teams";
   const isPlayersGame = participantMode !== "teams";
 
@@ -516,7 +513,6 @@ export function useManagePlayersDialogModel(
     onUpdateProfile,
     pendingName,
     pastLinkedPlayers,
-    profileStatsById,
     profiles,
     resetState,
     saveForLater,

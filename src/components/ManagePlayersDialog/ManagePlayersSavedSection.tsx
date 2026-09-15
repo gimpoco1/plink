@@ -21,7 +21,6 @@ export function ManagePlayersSavedSection() {
     onInviteOthers,
     pendingName,
     pastLinkedPlayers,
-    profileStatsById,
     profiles,
     saveForLater,
     search,
@@ -159,7 +158,7 @@ export function ManagePlayersSavedSection() {
                     {capitalizeFirst(player.name)}
                   </span>
                   <PlayerLevelBadge
-                    stats={profileStatsById.get(player.profileId)}
+                    profileId={player.profileId}
                   />
                   <span className="managePlayersDialog__invitedBadge">
                     <Link size={9} strokeWidth={2.7} aria-hidden="true" />

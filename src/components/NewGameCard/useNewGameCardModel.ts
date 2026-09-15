@@ -15,7 +15,6 @@ import { GAME_PRESETS, type GamePreset } from "./gamePresets";
 import { useScrollableListFade } from "../../hooks/useScrollableListFade";
 
 import type { NewGameCardProps, NewGameInput } from "./NewGameCard";
-import { computeProfileStats } from "../../utils/profileStats";
 import {
   areLocalPlayersEqual,
   loadLocalPlayers,
@@ -32,7 +31,6 @@ function normalizePlayerName(value: string) {
 
 export function useNewGameCardModel(props: NewGameCardProps) {
   const {
-    games,
     profiles,
     pastInvitedPlayers,
     teams,
@@ -423,7 +421,6 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     );
   }, [participantSearch, profiles]);
 
-  const profileStatsById = useMemo(() => computeProfileStats(games), [games]);
 
   const filteredPastInvitedPlayers = useMemo(() => {
     const savedProfileIds = new Set(profiles.map((profile) => profile.id));
@@ -1013,7 +1010,6 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     canCreate,
     newPlayerValidationMessage,
     filteredProfiles,
-    profileStatsById,
     filteredPastInvitedPlayers,
     filteredTeams,
     teamListFade,

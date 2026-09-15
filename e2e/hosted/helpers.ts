@@ -14,7 +14,12 @@ export async function savedPlayer(page: Page, name: string) {
     page.locator(".profileCard").filter({ hasText: name }),
   ).toBeVisible();
 }
-export async function createGame(page: Page, name: string, target = 10) {
+export async function createGame(
+  page: Page,
+  name: string,
+  target = 10,
+  accountPlayerName = "E2e Owner",
+) {
   await navigate(page, "Home");
   const start = page.getByRole("button", { name: "Start game", exact: true });
   if (!(await start.isVisible()))
@@ -25,7 +30,11 @@ export async function createGame(page: Page, name: string, target = 10) {
   await page
     .getByRole("textbox", { name: "Target score", exact: true })
     .fill(String(target));
-  await page.getByRole("button", { name: /E2e Owner \(You\)/ }).click();
+  await page
+    .getByRole("button", {
+      name: new RegExp(`${accountPlayerName} \\(You\\)`),
+    })
+    .click();
   // Select the saved account player and add an opponent through the UI.
   await page
     .getByRole("button", { name: "Add new player", exact: true })

@@ -248,18 +248,13 @@ function PlayerIdentity({
   const model = useManagePlayersDialogContext();
   const isTaken = !!profile && model.takenProfileIds.has(profile.id);
   const isStaged = !!profile && model.stagedProfileIds.has(profile.id);
-  const stats = profile
-    ? model.profileStatsById.get(profile.id)
-    : player?.profileId
-      ? model.profileStatsById.get(player.profileId)
-      : undefined;
   return (
     <div className="managePlayersDialog__identity">
       <div className="managePlayersDialog__identityTop">
         <div className="managePlayersDialog__identityCopy">
           <span className="managePlayersDialog__nameRow">
             <span className="managePlayersDialog__name">{displayName}</span>
-            <PlayerLevelBadge stats={stats} />
+            <PlayerLevelBadge profileId={profile?.id ?? player?.profileId} />
             {isLinkedAccountPlayer ? (
               <span
                 className="managePlayersDialog__linkedIcon"

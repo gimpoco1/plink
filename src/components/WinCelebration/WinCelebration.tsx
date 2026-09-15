@@ -1,14 +1,7 @@
-import { getCurrentLanguage, translate } from "../../i18n/translate";
+import { translate } from "../../i18n/translate";
 import type { ProfileStats, TeamStats } from "../../utils/profileStats";
 import type { WinCondition } from "../../types";
-import {
-  Medal,
-  Minus,
-  Share2,
-  Target,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+import { Medal, Share2, Target } from "lucide-react";
 import { useWinCelebrationModel } from "./useWinCelebrationModel";
 import { WinShareCard } from "./WinShareCard";
 import { WinStandings } from "./WinStandings";
@@ -140,46 +133,6 @@ export function WinCelebration(props: WinCelebrationProps) {
                     ? translate("copy.noWinner")
                     : winnerName}
               </div>
-              {hasLevelChange ? (
-                <div
-                  className={`winFx__levelChange winFx__levelChange--${winnerLevelChange.direction}`}
-                  aria-label={translate(
-                    winnerLevelChange.direction === "up"
-                      ? "playerLevel.increasedTo"
-                      : winnerLevelChange.direction === "down"
-                        ? "playerLevel.decreasedTo"
-                        : "playerLevel.unchangedAt",
-                    [
-                      winnerLevelChange.newLevel.toLocaleString(
-                        getCurrentLanguage(),
-                        { minimumFractionDigits: 1, maximumFractionDigits: 1 },
-                      ),
-                    ],
-                  )}
-                >
-                  {winnerLevelChange.direction === "up" ? (
-                    <TrendingUp
-                      size={17}
-                      strokeWidth={2.7}
-                      aria-hidden="true"
-                    />
-                  ) : winnerLevelChange.direction === "down" ? (
-                    <TrendingDown
-                      size={17}
-                      strokeWidth={2.7}
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Minus size={17} strokeWidth={2.7} aria-hidden="true" />
-                  )}
-                  <strong>
-                    {winnerLevelChange.newLevel.toLocaleString(
-                      getCurrentLanguage(),
-                      { minimumFractionDigits: 1, maximumFractionDigits: 1 },
-                    )}
-                  </strong>
-                </div>
-              ) : null}
             </div>
           </div>
           <div className="winFx__titleBlock">

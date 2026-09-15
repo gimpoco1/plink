@@ -1,5 +1,4 @@
 import { PlayerLevelBadge } from "../PlayerLevelBadge/PlayerLevelBadge";
-import type { ProfileStats } from "../../utils/profileStats";
 import { translate } from "../../i18n/translate";
 import { useMemo, useState } from "react";
 import { Crown, Link } from "lucide-react";
@@ -16,7 +15,6 @@ import "./PlayerCard.css";
 
 type Props = {
   player: Player;
-  stats?: ProfileStats;
   rank: number;
   showRank: boolean;
   pulse?: "pos" | "neg";
@@ -35,7 +33,6 @@ type Props = {
 
 export function PlayerCard({
   player,
-  stats,
   rank,
   showRank,
   pulse,
@@ -157,7 +154,7 @@ export function PlayerCard({
               <div className="who">
                 <div className="who__nameRow">
                   <div className="who__name" title={displayName}>{displayName}</div>
-                  <PlayerLevelBadge stats={stats} />
+                  <PlayerLevelBadge profileId={player.profileId} />
                   {isLinkedPlayer ? (
                     <span
                       className="who__linkedPlayer"

@@ -35,6 +35,27 @@ export type PlayerProfile = {
   updatedAt: number;
 };
 
+export type PlayerRating = {
+  profileId: string;
+  level: number;
+  ratedGames: number;
+  wins: number;
+  winRate: number;
+  updatedAt: number;
+};
+
+export type PlayerRatingHistoryEntry = {
+  profileId: string;
+  gameId: string;
+  gameName: string;
+  previousLevel: number;
+  newLevel: number;
+  change: number;
+  outcome: "win" | "loss" | "draw";
+  opponentLevel: number;
+  ratedAt: number;
+};
+
 export type PastLinkedPlayer = {
   userId: string;
   profileId: string;

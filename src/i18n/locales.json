@@ -999,14 +999,13 @@
     "playerLevel.historyHint": "Based on your win rate in the session history available here.",
     "playerLevel.startHint": "Complete your first game to get a level.",
     "playerLevel.howItWorks": "How levels work",
-    "playerLevel.calculation": "Every player starts provisionally at 5.0. Your level then moves gradually after completed games.",
+    "playerLevel.calculation": "Levels are only for signed-in players. Guests and temporary players created in a game do not have a level.",
     "playerLevel.formula": "Beating a stronger opponent adds more; beating a weaker opponent adds less. Losing works the same way in reverse.",
     "playerLevel.nextResult": "After your next game",
-    "playerLevel.updates": "Plink compares the result with the expected result from everyone’s level at that time. As you play more completed games, each result changes your level less.",
+    "playerLevel.updates": "Plink compares the result with what everyone’s server level predicted at that time. As you play more rated games, each result changes your level less.",
     "playerLevel.example": "Example: a first win against another new player moves you from the provisional 5.0 to about 5.5. Another expected win produces a smaller increase.",
     "playerLevel.countedResults": "Which results count?",
-    "playerLevel.results": "Wins, losses, and draws are rated. Team results use each side’s average level. Games still in progress or completed without a winner are not rated.",
-    "playerLevel.context": "Opponent and teammate levels affect the change; the score margin does not. Editing or deleting past results can recalculate later levels."
+    "playerLevel.results": "Results count only when every participant has a signed-in profile. Team results use each side’s average level. Guest games and games without a winner are not rated."
   },
   "es": {
     "language.label": "Idioma",
@@ -2008,14 +2007,13 @@
     "playerLevel.historyHint": "Basado en tu porcentaje de victorias en el historial de sesiones disponible aquí.",
     "playerLevel.startHint": "Completa tu primera partida para obtener un nivel.",
     "playerLevel.howItWorks": "Cómo funcionan los niveles",
-    "playerLevel.calculation": "Cada jugador empieza provisionalmente en 5,0. Después, el nivel cambia gradualmente tras las partidas puntuables.",
+    "playerLevel.calculation": "Los jugadores con sesión iniciada empiezan provisionalmente en 5,0. Plink guarda el nivel en su cuenta y lo actualiza después de las partidas puntuables.",
     "playerLevel.formula": "Vencer a un rival de mayor nivel suma más; vencer a uno de menor nivel suma menos. Al perder ocurre lo mismo a la inversa.",
     "playerLevel.nextResult": "Después de tu próxima partida",
-    "playerLevel.updates": "Plink compara el resultado con el resultado esperado según el nivel que tenía cada jugador en ese momento. Cuantas más partidas puntuables juegues, menos cambiará tu nivel cada resultado.",
+    "playerLevel.updates": "Plink compara el resultado con lo que predecía el nivel del servidor de cada jugador en ese momento. Cuantas más partidas puntuables juegues, menos cambiará tu nivel cada resultado.",
     "playerLevel.example": "Ejemplo: una primera victoria contra otro jugador nuevo te lleva del 5,0 provisional a aproximadamente 5,5. Otra victoria esperada produce un aumento menor.",
     "playerLevel.countedResults": "¿Qué resultados cuentan?",
-    "playerLevel.results": "Las victorias, derrotas y empates son puntuables. En equipos se usa el nivel medio de cada lado. Las partidas en curso o finalizadas sin ganador no son puntuables.",
-    "playerLevel.context": "El nivel de rivales y compañeros influye en el cambio; la diferencia de puntos no. Editar o eliminar resultados anteriores puede recalcular los niveles posteriores."
+    "playerLevel.results": "Las victorias, derrotas y empates cuentan cuando todos tienen un perfil con sesión iniciada. En equipos se usa el nivel medio de cada lado. Las partidas de invitados o sin ganador no son puntuables."
   },
   "it": {
     "language.label": "Lingua",
@@ -3017,13 +3015,12 @@
     "playerLevel.historyHint": "Basato sulla tua percentuale di vittorie nella cronologia delle sessioni disponibile qui.",
     "playerLevel.startHint": "Completa la tua prima partita per ottenere un livello.",
     "playerLevel.howItWorks": "Come funzionano i livelli",
-    "playerLevel.calculation": "Ogni giocatore parte provvisoriamente da 5,0. Il livello cambia poi gradualmente dopo le partite valide.",
+    "playerLevel.calculation": "I giocatori che hanno effettuato l’accesso partono provvisoriamente da 5,0. Plink salva il livello sul loro account e lo aggiorna dopo le partite valide.",
     "playerLevel.formula": "Battere un avversario di livello più alto fa salire di più; batterne uno di livello più basso fa salire di meno. Con una sconfitta avviene il contrario.",
     "playerLevel.nextResult": "Dopo la prossima partita",
-    "playerLevel.updates": "Plink confronta il risultato con quello previsto dai livelli che tutti avevano in quel momento. Più partite valide giochi, meno ogni risultato cambia il tuo livello.",
+    "playerLevel.updates": "Plink confronta il risultato con quello previsto dai livelli sul server in quel momento. Più partite valide giochi, meno ogni risultato cambia il tuo livello.",
     "playerLevel.example": "Esempio: una prima vittoria contro un altro nuovo giocatore porta dal 5,0 provvisorio a circa 5,5. Un'altra vittoria prevista produce un aumento minore.",
     "playerLevel.countedResults": "Quali risultati contano?",
-    "playerLevel.results": "Vittorie, sconfitte e pareggi sono validi. Nelle squadre si usa il livello medio di ciascun lato. Le partite in corso o concluse senza vincitore non sono valide.",
-    "playerLevel.context": "I livelli di avversari e compagni influiscono sulla variazione; il margine di punteggio no. Modificare o eliminare risultati precedenti può ricalcolare i livelli successivi."
+    "playerLevel.results": "Vittorie, sconfitte e pareggi contano quando tutti hanno un profilo con accesso effettuato. Nelle squadre si usa il livello medio di ciascun lato. Le partite ospite o senza vincitore non sono valide."
   }
 }

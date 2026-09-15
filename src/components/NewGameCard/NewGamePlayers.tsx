@@ -26,7 +26,6 @@ export function NewGamePlayers() {
     profiles,
     setIsAddingPlayer,
     filteredProfiles,
-    profileStatsById,
     filteredPastInvitedPlayers,
     selectedProfileIds,
     selectedPastInvitedUserIds,
@@ -68,7 +67,7 @@ export function NewGamePlayers() {
                 ? formatAccountPlayerName(profile.name)
                 : profile.name}
             </span>
-            <PlayerLevelBadge stats={profileStatsById.get(profile.id)} />
+            <PlayerLevelBadge profileId={profile.id} />
           </span>
         </span>
         <SelectionStateIcon selected={selectedProfileIds.has(profile.id)} />
@@ -167,7 +166,7 @@ export function NewGamePlayers() {
                         {player.name}
                       </span>
                       <PlayerLevelBadge
-                        stats={profileStatsById.get(player.profileId)}
+                        profileId={player.profileId}
                       />
                       <span className="participantOption__badge">
                         <Link size={9} strokeWidth={2.7} aria-hidden="true" />
@@ -256,7 +255,7 @@ export function NewGamePlayers() {
                             {formatPlayerName(player.name)}
                           </span>
                           <PlayerLevelBadge
-                            stats={profileStatsById.get(player.id)}
+                            profileId={player.id}
                           />
                           <span className="participantOption__badge">
                             {translate("copy.local")}

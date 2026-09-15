@@ -2,7 +2,6 @@ import type { Game, GameTeam, TeamMember } from "../types";
 import { findWinner, isGameComplete, isGameDraw } from "./ranking";
 import { getGameDisplayName, getGameSessionLabel } from "./text";
 import { areSetsEqual } from "./sets";
-import { computePlayerLevels } from "./playerLevel";
 
 export type GameResultSummary = {
   name: string;
@@ -27,8 +26,6 @@ export type ProfileStats = {
   inProgressGames: number;
   wins: number;
   winRate: number;
-  level: number | null;
-  ratedGames: number;
   currentWinStreak: number;
   topWonGame: GameResultSummary | null;
   gameResults: GameResultSummary[];
@@ -54,8 +51,6 @@ export function createEmptyProfileStats(): ProfileStats {
     inProgressGames: 0,
     wins: 0,
     winRate: 0,
-    level: null,
-    ratedGames: 0,
     currentWinStreak: 0,
     topWonGame: null,
     gameResults: [],
@@ -254,13 +249,6 @@ export function computeProfileStats(games: Game[]): Map<string, ProfileStats> {
       }
     }
     current.currentWinStreak = currentStreak;
-  });
-
-  const levels = computePlayerLevels(games);
-  stats.forEach((current, profileId) => {
-    const computedLevel = levels.get(profileId);
-    current.level = computedLevel?.level ?? null;
-    current.ratedGames = computedLevel?.ratedGames ?? 0;
   });
 
   return stats;

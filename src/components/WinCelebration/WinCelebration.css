@@ -229,47 +229,6 @@ body.winFx-scrollLock .content {
   text-shadow: 0 0 24px var(--accent-glow);
 }
 
-.winFx__levelChange {
-  position: absolute;
-  left: calc(50% + 44px);
-  top: 12px;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  gap: 3px;
-  padding: 5px 8px;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  font-size: 13px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.winFx__levelChange--up {
-  color: #5ee58a;
-  border-color: rgba(94, 229, 138, 0.62);
-  background: rgba(94, 229, 138, 0.13);
-}
-
-.winFx__levelChange--down {
-  color: #ff7171;
-  border-color: rgba(255, 113, 113, 0.62);
-  background: rgba(255, 113, 113, 0.13);
-}
-
-.winFx__levelChange--same {
-  color: var(--accent);
-  border-color: rgba(var(--win-accent-rgb), 0.62);
-  background: rgba(var(--win-accent-rgb), 0.13);
-}
-
-.winFx__levelChange strong {
-  color: currentColor;
-  font-weight: 900;
-}
-
 .winFx__titleBlock {
   width: min(100%, 430px);
   margin: 10px auto 0;

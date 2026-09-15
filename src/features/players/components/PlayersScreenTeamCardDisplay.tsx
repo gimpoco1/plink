@@ -76,7 +76,7 @@ export function TeamCardDisplay({ data }: { data: TeamCardData }) {
                     ? formatAccountPlayerName(member.name)
                     : member.name}
                 </span>
-                <PlayerLevelBadge stats={model.profileStats.get(member.id)} />
+                <PlayerLevelBadge profileId={member.id} />
               </span>
             </button>
           ))

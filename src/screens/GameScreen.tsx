@@ -1,9 +1,8 @@
 import { useMemo } from "react";
-import { computeProfileStats } from "../utils/profileStats";
-import { INITIAL_PLAYER_LEVEL } from "../utils/playerLevel";
+import { usePlayerRatingsContext } from "../features/playerRatings/PlayerRatingsContext";
 import { translate } from "../i18n/translate";
 import { capitalizeFirst, getInitials } from "../utils/text";
-import type { Player } from "../types";
+import type { Player, PlayerRatingHistoryEntry } from "../types";
 import {
   WinCelebration,
   type WinCelebrationProps,
@@ -21,12 +20,26 @@ type StandingLevelChange = NonNullable<
   WinCelebrationProps["winnerLevelChange"]
 >;
 
+function toStandingLevelChange(
+  entry: PlayerRatingHistoryEntry,
+): StandingLevelChange {
+  const previousLevel = Math.round(entry.previousLevel * 10) / 10;
+  const newLevel = Math.round(entry.newLevel * 10) / 10;
+  return {
+    previousLevel,
+    newLevel,
+    direction:
+      newLevel > previousLevel
+        ? "up"
+        : newLevel < previousLevel
+          ? "down"
+          : "same",
+  };
+}
+
 export function GameScreen(props: GameScreenProps) {
   const model = useGameScreenModel(props);
-  const profileStats = useMemo(
-    () => computeProfileStats(props.games),
-    [props.games],
-  );
+  const { historyByGameAndProfile } = usePlayerRatingsContext();
   const {
     savedTeamIconByName,
     takenProfileIds,
@@ -78,86 +91,33 @@ export function GameScreen(props: GameScreenProps) {
   } = screenProps;
   const winnerLevelChange = useMemo(() => {
     if (isTeamsMode || !gameComplete || !winner?.profileId) return null;
-
-    const gamesIncludingCurrent = props.games.some(
-      (candidate) => candidate.id === game.id,
-    )
-      ? props.games
-      : [...props.games, game];
-    const currentOrder = game.endedAt ?? game.updatedAt ?? game.createdAt;
-    const gamesThroughCurrent = gamesIncludingCurrent.filter(
-      (candidate) =>
-        candidate.id === game.id ||
-        (candidate.endedAt ?? candidate.updatedAt ?? candidate.createdAt) <=
-          currentOrder,
-    );
-    const newLevel = computeProfileStats(gamesThroughCurrent).get(
-      winner.profileId,
-    )?.level;
-    if (newLevel === null || newLevel === undefined) return null;
-
-    const previousLevel =
-      computeProfileStats(
-        gamesThroughCurrent.filter((candidate) => candidate.id !== game.id),
-      ).get(winner.profileId)?.level ?? INITIAL_PLAYER_LEVEL;
-    return {
-      previousLevel,
-      newLevel,
-      direction:
-        newLevel > previousLevel
-          ? ("up" as const)
-          : newLevel < previousLevel
-            ? ("down" as const)
-            : ("same" as const),
-    };
-  }, [game, gameComplete, isTeamsMode, props.games, winner?.profileId]);
+    const entry = historyByGameAndProfile.get(`${game.id}:${winner.profileId}`);
+    if (!entry) return null;
+    return toStandingLevelChange(entry);
+  }, [game.id, gameComplete, historyByGameAndProfile, isTeamsMode, winner?.profileId]);
 
   const playerLevelChanges = useMemo(() => {
     if (isTeamsMode || !gameComplete)
       return new Map<string, StandingLevelChange>();
-
-    const gamesIncludingCurrent = props.games.some(
-      (candidate) => candidate.id === game.id,
-    )
-      ? props.games
-      : [...props.games, game];
-    const currentOrder = game.endedAt ?? game.updatedAt ?? game.createdAt;
-    const gamesThroughCurrent = gamesIncludingCurrent.filter(
-      (candidate) =>
-        candidate.id === game.id ||
-        (candidate.endedAt ?? candidate.updatedAt ?? candidate.createdAt) <=
-          currentOrder,
-    );
 
     const changeByProfileId = new Map<string, StandingLevelChange>();
 
     finalStandings.forEach(({ entry }) => {
       if (!("profileId" in entry) || !entry.profileId) return;
 
-      const previousLevel =
-        computeProfileStats(
-          gamesThroughCurrent.filter((candidate) => candidate.id !== game.id),
-        ).get(entry.profileId)?.level ?? INITIAL_PLAYER_LEVEL;
-      const newLevel = computeProfileStats(gamesThroughCurrent).get(
+      const ratingEntry = historyByGameAndProfile.get(
+        `${game.id}:${entry.profileId}`,
+      );
+      if (!ratingEntry) return;
+
+      changeByProfileId.set(
         entry.profileId,
-      )?.level;
-
-      if (newLevel === null || newLevel === undefined) return;
-
-      changeByProfileId.set(entry.profileId, {
-        previousLevel,
-        newLevel,
-        direction:
-          newLevel > previousLevel
-            ? ("up" as const)
-            : newLevel < previousLevel
-              ? ("down" as const)
-              : ("same" as const),
-      });
+        toStandingLevelChange(ratingEntry),
+      );
     });
 
     return changeByProfileId;
-  }, [finalStandings, game, gameComplete, isTeamsMode, props.games]);
+  }, [finalStandings, game.id, gameComplete, historyByGameAndProfile, isTeamsMode]);
 
   return (
     <div className={`gameScreen${isTeamsMode ? " gameScreen--teams" : ""}`}>
@@ -303,11 +263,6 @@ export function GameScreen(props: GameScreenProps) {
                         <PlayerCard
                           key={player.id}
                           player={player}
-                          stats={
-                            player.profileId
-                              ? profileStats.get(player.profileId)
-                              : undefined
-                          }
                           rank={rank}
                           showRank={!allZero}
                           pulse={pulse}

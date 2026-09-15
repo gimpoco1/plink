@@ -56,7 +56,7 @@ export function TeamMemberEditor({ team }: { team: GameTeam }) {
                       : profile.name}
                   </span>
                   <PlayerLevelBadge
-                    stats={model.profileStats.get(profile.id)}
+                    profileId={profile.id}
                   />
                 </span>
               </button>
