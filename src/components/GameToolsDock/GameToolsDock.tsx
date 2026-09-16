@@ -33,7 +33,10 @@ type Props = {
   isTurnTrackingEnabled: boolean;
   onTurnTrackingChange: (isEnabled: boolean) => void;
   canReorderTurnOrder: boolean;
-  onReorderTurnOrder: (movingParticipantId: string, targetParticipantId: string) => void;
+  onReorderTurnOrder: (
+    movingParticipantId: string,
+    targetParticipantId: string,
+  ) => void;
   onResetTurnTracker: () => void;
 };
 

@@ -24,7 +24,10 @@ type Props = {
     y: number;
     placement: "above-left" | "above-right" | "below-left" | "below-right";
   };
-  onReorderTurn: (movingParticipantId: string, targetParticipantId: string) => void;
+  onReorderTurn: (
+    movingParticipantId: string,
+    targetParticipantId: string,
+  ) => void;
   onReset: () => void;
   onBack: () => void;
   onClose: () => void;
@@ -43,8 +46,12 @@ export function GameTurnTrackerTray({
   onBack,
   onClose,
 }: Props) {
-  const [draggedParticipantId, setDraggedParticipantId] = useState<string | null>(null);
-  const [dropTargetParticipantId, setDropTargetParticipantId] = useState<string | null>(null);
+  const [draggedParticipantId, setDraggedParticipantId] = useState<
+    string | null
+  >(null);
+  const [dropTargetParticipantId, setDropTargetParticipantId] = useState<
+    string | null
+  >(null);
   const [dragPreview, setDragPreview] = useState<{
     clientX: number;
     clientY: number;
@@ -95,10 +102,7 @@ export function GameTurnTrackerTray({
     for (const row of rows) {
       const bounds = row.getBoundingClientRect();
       if (clientX < bounds.left || clientX > bounds.right) continue;
-      if (
-        clientY >= bounds.top &&
-        clientY <= bounds.bottom
-      ) {
+      if (clientY >= bounds.top && clientY <= bounds.bottom) {
         return row.dataset.turnParticipantId ?? null;
       }
       const distance = Math.abs(clientY - (bounds.top + bounds.bottom) / 2);
@@ -127,7 +131,8 @@ export function GameTurnTrackerTray({
       clientY >= bounds.bottom - edgeSize &&
       (maxScrollTop <= 0 || list.scrollTop > 1);
     if (atTop) return rows[0]?.dataset.turnParticipantId ?? null;
-    if (atBottom) return rows[rows.length - 1]?.dataset.turnParticipantId ?? null;
+    if (atBottom)
+      return rows[rows.length - 1]?.dataset.turnParticipantId ?? null;
     return participantIdAtPoint(clientX, clientY);
   }
 
@@ -299,8 +304,14 @@ export function GameTurnTrackerTray({
           </button>
         </header>
         <div className="gameHelperTray__content gameHelperTray__content--compact">
-          <span className="gameHelperTray__hint">{translate("copy.turnTrackerPickStarter")}</span>
-          <div className="gameHelperTray__starterList" role="list" ref={starterListRef}>
+          <span className="gameHelperTray__hint">
+            {translate("copy.turnTrackerPickStarter")}
+          </span>
+          <div
+            className="gameHelperTray__starterList"
+            role="list"
+            ref={starterListRef}
+          >
             {participants.map((participant, index) => {
               const isDragged = draggedParticipantId === participant.id;
               const isDropTarget = dropTargetParticipantId === participant.id;
@@ -312,7 +323,9 @@ export function GameTurnTrackerTray({
                   type="button"
                   disabled={!canReorder}
                   aria-disabled={!canReorder}
-                  onPointerDown={(event) => beginPointerDrag(event, participant.id)}
+                  onPointerDown={(event) =>
+                    beginPointerDrag(event, participant.id)
+                  }
                   onPointerMove={movePointerDrag}
                   onPointerUp={endPointerDrag}
                   onPointerCancel={() => dragCleanupRef.current?.()}
@@ -331,35 +344,43 @@ export function GameTurnTrackerTray({
                   ) : (
                     <span
                       className="gameHelperTray__avatar"
-                      style={avatarStyleFor(participant.avatarColor ?? "#64748b")}
+                      style={avatarStyleFor(
+                        participant.avatarColor ?? "#64748b",
+                      )}
                       aria-hidden="true"
                     >
                       {getInitials(participant.name)}
                     </span>
                   )}
                   <span>{participant.name}</span>
-                  <span className="gameHelperTray__orderBadge" aria-hidden="true">
+                  <span
+                    className="gameHelperTray__orderBadge"
+                    aria-hidden="true"
+                  >
                     #{index + 1}
                   </span>
                 </button>
               );
             })}
 
-            {draggedParticipantId && dragPreview ? (
-              (() => {
-                const draggedParticipant = participants.find(
-                  (participant) => participant.id === draggedParticipantId,
-                );
-                if (!draggedParticipant) return null;
-                const draggedIndex = participants.findIndex(
-                  (participant) => participant.id === draggedParticipantId,
-                );
-                return (
-                  (() => {
-                    const maxLeft = Math.max(0, dragPreview.listWidth - dragPreview.width);
-                    const rows = starterListRef.current?.querySelectorAll<HTMLElement>(
-                      "[data-turn-participant-id]",
+            {draggedParticipantId && dragPreview
+              ? (() => {
+                  const draggedParticipant = participants.find(
+                    (participant) => participant.id === draggedParticipantId,
+                  );
+                  if (!draggedParticipant) return null;
+                  const draggedIndex = participants.findIndex(
+                    (participant) => participant.id === draggedParticipantId,
+                  );
+                  return (() => {
+                    const maxLeft = Math.max(
+                      0,
+                      dragPreview.listWidth - dragPreview.width,
                     );
+                    const rows =
+                      starterListRef.current?.querySelectorAll<HTMLElement>(
+                        "[data-turn-participant-id]",
+                      );
                     const finalRow = rows?.[rows.length - 1];
                     const maxTop = Math.max(
                       0,
@@ -368,52 +389,61 @@ export function GameTurnTrackerTray({
                         dragPreview.rowHeight,
                     );
                     const left = Math.min(
-                      Math.max(0, dragPreview.clientX - dragPreview.listLeft - dragPreview.offsetX),
+                      Math.max(
+                        0,
+                        dragPreview.clientX -
+                          dragPreview.listLeft -
+                          dragPreview.offsetX,
+                      ),
                       maxLeft,
                     );
                     const top = Math.min(
                       Math.max(
                         0,
-                        dragPreview.clientY - dragPreview.listTop + dragPreview.scrollTop - dragPreview.offsetY,
+                        dragPreview.clientY -
+                          dragPreview.listTop +
+                          dragPreview.scrollTop -
+                          dragPreview.offsetY,
                       ),
                       maxTop,
                     );
                     return (
-                  <div
-                    className="gameHelperTray__starterOption gameHelperTray__starterOption--draggedGhost"
-                    style={{
-                      left,
-                      top,
-                      width: dragPreview.width,
-                    }}
-                    aria-hidden="true"
-                  >
-                    {draggedParticipant.icon ? (
-                      <span
-                        className="gameHelperTray__avatar gameHelperTray__avatar--team"
+                      <div
+                        className="gameHelperTray__starterOption gameHelperTray__starterOption--draggedGhost"
+                        style={{
+                          left,
+                          top,
+                          width: dragPreview.width,
+                        }}
+                        aria-hidden="true"
                       >
-                        <TeamIcon
-                          icon={draggedParticipant.icon}
-                          size={16}
-                          strokeWidth={2.4}
-                        />
-                      </span>
-                    ) : (
-                      <span
-                        className="gameHelperTray__avatar"
-                        style={avatarStyleFor(draggedParticipant.avatarColor ?? "#64748b")}
-                      >
-                        {getInitials(draggedParticipant.name)}
-                      </span>
-                    )}
-                    <span>{draggedParticipant.name}</span>
-                    <span className="gameHelperTray__orderBadge">#{draggedIndex + 1}</span>
-                  </div>
+                        {draggedParticipant.icon ? (
+                          <span className="gameHelperTray__avatar gameHelperTray__avatar--team">
+                            <TeamIcon
+                              icon={draggedParticipant.icon}
+                              size={16}
+                              strokeWidth={2.4}
+                            />
+                          </span>
+                        ) : (
+                          <span
+                            className="gameHelperTray__avatar"
+                            style={avatarStyleFor(
+                              draggedParticipant.avatarColor ?? "#64748b",
+                            )}
+                          >
+                            {getInitials(draggedParticipant.name)}
+                          </span>
+                        )}
+                        <span>{draggedParticipant.name}</span>
+                        <span className="gameHelperTray__orderBadge">
+                          #{draggedIndex + 1}
+                        </span>
+                      </div>
                     );
-                  })()
-                );
-              })()
-            ) : null}
+                  })();
+                })()
+              : null}
           </div>
         </div>
         <div className="gameHelperTray__footer">
@@ -425,7 +455,11 @@ export function GameTurnTrackerTray({
             <RotateCcw size={15} strokeWidth={2.5} aria-hidden="true" />
             {translate("copy.resetTurns")}
           </button>
-          <button className="gameHelperTray__back" type="button" onClick={onBack}>
+          <button
+            className="gameHelperTray__back"
+            type="button"
+            onClick={onBack}
+          >
             <ChevronLeft size={17} strokeWidth={2.8} aria-hidden="true" />
             {translate("copy.backToTools")}
           </button>

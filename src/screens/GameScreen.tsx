@@ -175,7 +175,9 @@ export function GameScreen(props: GameScreenProps) {
   }, []);
 
   useEffect(() => {
-    const participantIds = toolParticipants.map((participant) => participant.id);
+    const participantIds = toolParticipants.map(
+      (participant) => participant.id,
+    );
     if (!participantIds.length) {
       setActiveTurnParticipantId(null);
       setTurnRound(1);
@@ -192,10 +194,14 @@ export function GameScreen(props: GameScreenProps) {
   }, [toolParticipants]);
 
   const turnOrderedParticipants = useMemo(() => {
-    const byId = new Map(toolParticipants.map((participant) => [participant.id, participant]));
+    const byId = new Map(
+      toolParticipants.map((participant) => [participant.id, participant]),
+    );
     return turnOrderParticipantIds
       .map((id) => byId.get(id))
-      .filter((participant): participant is NonNullable<typeof participant> => Boolean(participant));
+      .filter((participant): participant is NonNullable<typeof participant> =>
+        Boolean(participant),
+      );
   }, [toolParticipants, turnOrderParticipantIds]);
 
   const turnOrderedBoardParticipants = useMemo(() => {
@@ -204,9 +210,8 @@ export function GameScreen(props: GameScreenProps) {
     );
     return turnOrderParticipantIds
       .map((id) => byId.get(id))
-      .filter(
-        (participant): participant is NonNullable<typeof participant> =>
-          Boolean(participant),
+      .filter((participant): participant is NonNullable<typeof participant> =>
+        Boolean(participant),
       );
   }, [orderedParticipants, turnOrderParticipantIds]);
 
@@ -214,7 +219,9 @@ export function GameScreen(props: GameScreenProps) {
     const byId = new Map(orderedPlayers.map((player) => [player.id, player]));
     return turnOrderParticipantIds
       .map((id) => byId.get(id))
-      .filter((player): player is NonNullable<typeof player> => Boolean(player));
+      .filter((player): player is NonNullable<typeof player> =>
+        Boolean(player),
+      );
   }, [orderedPlayers, turnOrderParticipantIds]);
 
   const displayedParticipants =
@@ -255,7 +262,8 @@ export function GameScreen(props: GameScreenProps) {
     if (unassignedPlayers.length > 0 || groupedTeams.length === 0) {
       groupedTeams.push({
         id: "unassigned",
-        name: groupedTeams.length > 0 ? "Unassigned" : translate("tabs.players"),
+        name:
+          groupedTeams.length > 0 ? "Unassigned" : translate("tabs.players"),
         players: unassignedPlayers,
         isUnassigned: true,
       });
@@ -294,13 +302,12 @@ export function GameScreen(props: GameScreenProps) {
     if (stillExists) return;
     setActiveTurnParticipantId(turnOrderedParticipants[0]?.id ?? null);
     clearPendingTurnAdvance();
-  }, [
-    activeTurnParticipantId,
-    isTurnTrackingEnabled,
-    turnOrderedParticipants,
-  ]);
+  }, [activeTurnParticipantId, isTurnTrackingEnabled, turnOrderedParticipants]);
 
-  function reorderTurnOrder(movingParticipantId: string, targetParticipantId: string) {
+  function reorderTurnOrder(
+    movingParticipantId: string,
+    targetParticipantId: string,
+  ) {
     if (!canReorderTurnOrder) return;
     if (movingParticipantId === targetParticipantId) return;
     setTurnOrderParticipantIds((current) => {
@@ -323,7 +330,7 @@ export function GameScreen(props: GameScreenProps) {
     clearPendingTurnAdvance();
     setTurnRound(1);
     setActiveTurnParticipantId(
-      isTurnTrackingEnabled ? toolParticipants[0]?.id ?? null : null,
+      isTurnTrackingEnabled ? (toolParticipants[0]?.id ?? null) : null,
     );
     setTurnOrderParticipantIds(
       toolParticipants.map((participant) => participant.id),

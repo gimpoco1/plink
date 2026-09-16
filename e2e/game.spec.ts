@@ -269,8 +269,12 @@ test("turn tracker and random picker are available from the shared tools menu", 
   await openAdvancedSettings(page);
   await page.getByRole("button", { name: /^Tools/ }).click();
   await startGame(page);
-  await page.getByRole("button", { name: "Open game tools", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Turn tracker", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Open game tools", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Turn tracker", exact: true })
+    .click();
   await expect(
     page.getByText("Drag to reorder turns", { exact: true }),
   ).toBeVisible();
@@ -288,15 +292,25 @@ test("turn tracker and random picker are available from the shared tools menu", 
     page.getByRole("button", { name: "Reset turns", exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByRole("button", { name: "Open game tools", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Turn tracker", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Open game tools", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Turn tracker", exact: true })
+    .click();
   await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "true");
   await turnTrackerSwitch.click();
   await expect(page.locator(".playerCard--activeTurn")).toHaveCount(0);
-  await page.getByRole("button", { name: "Back to tools", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Back to tools", exact: true })
+    .click();
   await expect(page.getByRole("menu")).toBeVisible();
-  await page.getByRole("menuitem", { name: "Random picker", exact: true }).click();
-  await page.getByRole("button", { name: "Pick a player", exact: true }).click();
+  await page
+    .getByRole("menuitem", { name: "Random picker", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Pick a player", exact: true })
+    .click();
   await expect(page.locator(".gameHelperTray__value")).toHaveText(/Alice|Bob/);
 });
 

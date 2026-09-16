@@ -380,13 +380,31 @@
 }
 
 @media (max-width: 420px) {
-  .cardHeader { padding: 14px 24px 14px 14px; }
-  .cardHeader__left { gap: 10px; }
-  .rank { min-width: 30px; height: 30px; border-radius: 10px; }
-  .avatar { width: 48px; height: 48px; font-size: 26px; }
-  .who__name { font-size: 18px; }
-  .score { font-size: 42px; }
-  .cardBody { padding: 11px 10px; }
+  .cardHeader {
+    padding: 14px 24px 14px 14px;
+  }
+  .cardHeader__left {
+    gap: 10px;
+  }
+  .rank {
+    min-width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+  .avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 26px;
+  }
+  .who__name {
+    font-size: 18px;
+  }
+  .score {
+    font-size: 42px;
+  }
+  .cardBody {
+    padding: 11px 10px;
+  }
 }
 
 @keyframes winnerEntry {

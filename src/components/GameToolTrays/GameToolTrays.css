@@ -102,7 +102,9 @@
   background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
-  transition: background 180ms ease, border-color 180ms ease;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
 }
 .gameHelperTray__switch span {
   width: 17px;
@@ -110,7 +112,9 @@
   border-radius: 50%;
   background: var(--muted);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
-  transition: transform 180ms ease, background 180ms ease;
+  transition:
+    transform 180ms ease,
+    background 180ms ease;
 }
 .gameHelperTray__switch--on {
   border-color: var(--accent);

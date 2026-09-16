@@ -133,7 +133,10 @@ export function PlayerCard({
           <div className="cardHeader">
             <div className="cardHeader__left">
               {showRank ? (
-                <div className="rank" aria-label={translate("dynamic.rank", [rank])}>
+                <div
+                  className="rank"
+                  aria-label={translate("dynamic.rank", [rank])}
+                >
                   #{rank}
                 </div>
               ) : null}
@@ -154,7 +157,9 @@ export function PlayerCard({
                           {linkedNameParts[2]}
                           <span
                             className="who__linkedPlayer"
-                            aria-label={translate("copy.joinedWithAnInvitationCode")}
+                            aria-label={translate(
+                              "copy.joinedWithAnInvitationCode",
+                            )}
                             title={translate("copy.joinedWithAnInvitationCode")}
                           >
                             <Link
@@ -231,10 +236,10 @@ export function PlayerCard({
                     key={delta}
                     type="button"
                     className="dot dot--neg"
-                  aria-label={translate("dynamic.subtractPoints", [
-                    Math.abs(delta),
-                    displayName,
-                  ])}
+                    aria-label={translate("dynamic.subtractPoints", [
+                      Math.abs(delta),
+                      displayName,
+                    ])}
                     onClick={(e) => {
                       if (isSwiping) return;
                       if (isOpen) {
@@ -257,7 +262,9 @@ export function PlayerCard({
                   inputMode="numeric"
                   placeholder="0"
                   value={customRaw}
-                  aria-label={translate("dynamic.customPointAmountFor", [displayName])}
+                  aria-label={translate("dynamic.customPointAmountFor", [
+                    displayName,
+                  ])}
                   onChange={(e) => {
                     const digits = e.target.value.replace(/[^\d]/g, "");
                     if (!digits) {
@@ -281,9 +288,9 @@ export function PlayerCard({
                 <div className="podButtons">
                   <button
                     className="podBtn podBtn--neg"
-                  aria-label={translate("dynamic.subtractCustomPoints", [
-                    displayName,
-                  ])}
+                    aria-label={translate("dynamic.subtractCustomPoints", [
+                      displayName,
+                    ])}
                     type="button"
                     disabled={!canApplyCustom}
                     onClick={(e) => {
@@ -301,7 +308,9 @@ export function PlayerCard({
                   </button>
                   <button
                     className="podBtn podBtn--pos"
-                    aria-label={translate("dynamic.addCustomPointsTo", [displayName])}
+                    aria-label={translate("dynamic.addCustomPointsTo", [
+                      displayName,
+                    ])}
                     type="button"
                     disabled={!canApplyCustom}
                     onClick={(e) => {
@@ -326,7 +335,10 @@ export function PlayerCard({
                     key={delta}
                     type="button"
                     className="dot dot--pos"
-                    aria-label={translate("dynamic.addPointsTo", [delta, displayName])}
+                    aria-label={translate("dynamic.addPointsTo", [
+                      delta,
+                      displayName,
+                    ])}
                     onClick={(e) => {
                       if (isSwiping) return;
                       if (isOpen) {
