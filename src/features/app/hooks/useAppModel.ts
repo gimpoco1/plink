@@ -63,11 +63,10 @@ import {
 import {
   ArrowDownUp,
   Boxes,
-  Calculator,
-  Dices,
   Flag,
   GitCompareArrows,
   Link,
+  PocketKnife,
   RotateCcw,
   Scale,
   Slash,
@@ -1216,17 +1215,11 @@ export function useAppModel() {
           size: "compact",
         },
         {
-          label: translate("copy.dice"),
-          value: input.diceEnabled ? "Dice on" : translate("copy.noDice"),
-          icon: createElement(Dices, { size: 16, strokeWidth: 2.2 }),
-          size: "compact",
-        },
-        {
-          label: translate("copy.calculator"),
-          value: input.calculatorEnabled
-            ? translate("copy.calculatorOn")
-            : translate("copy.noCalculator"),
-          icon: createElement(Calculator, { size: 16, strokeWidth: 2.2 }),
+          label: translate("copy.tools"),
+          value: input.toolsEnabled
+            ? translate("copy.toolsOn")
+            : translate("copy.noTools"),
+          icon: createElement(PocketKnife, { size: 16, strokeWidth: 2.2 }),
           size: "compact",
         },
       ],

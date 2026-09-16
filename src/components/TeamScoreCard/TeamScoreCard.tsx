@@ -17,6 +17,7 @@ type Props = {
   showRank: boolean;
   pulse?: "pos" | "neg";
   isWinner?: boolean;
+  isActiveTurn?: boolean;
   targetScore: number;
   startingScore: number;
   winCondition: WinCondition;
@@ -33,6 +34,7 @@ export function TeamScoreCard({
   showRank,
   pulse,
   isWinner,
+  isActiveTurn,
   targetScore,
   startingScore,
   winCondition,
@@ -83,7 +85,7 @@ export function TeamScoreCard({
           : rank === 1 && showRank
             ? " card--leader"
             : ""
-      }`}
+      }${isActiveTurn ? " playerCard--activeTurn" : ""}`}
     >
       <div className="cardHeader">
         <div className="cardHeader__left">

@@ -1,20 +1,40 @@
 import { useEffect, useRef, useState } from "react";
-import { Calculator, Dices, PocketKnife } from "lucide-react";
+import {
+  Calculator,
+  Dices,
+  ListOrdered,
+  PocketKnife,
+  Shuffle,
+} from "lucide-react";
 import { translate } from "../../i18n/translate";
 import { GameCalculatorTray } from "../GameCalculatorTray/GameCalculatorTray";
 import { GameDiceTray } from "../GameDiceTray/GameDiceTray";
+import { GameRandomPickerTray } from "../GameToolTrays/GameRandomPickerTray";
+import { GameTurnTrackerTray } from "../GameToolTrays/GameTurnTrackerTray";
 import "./GameToolsDock.css";
 
-type Tool = "dice" | "calculator" | null;
+type Tool = "dice" | "calculator" | "turn-tracker" | "random-picker" | null;
 
 type Position = { x: number; y: number };
 type PanelPlacement =
-  "above-left" | "above-right" | "below-left" | "below-right";
+  | "above-left"
+  | "above-right"
+  | "below-left"
+  | "below-right";
 
 type Props = {
-  diceEnabled: boolean;
-  calculatorEnabled: boolean;
+  participants: Array<{
+    id: string;
+    name: string;
+    avatarColor?: string;
+    icon?: string;
+  }>;
   accentTone?: "default" | "team";
+  isTurnTrackingEnabled: boolean;
+  onTurnTrackingChange: (isEnabled: boolean) => void;
+  canReorderTurnOrder: boolean;
+  onReorderTurnOrder: (movingParticipantId: string, targetParticipantId: string) => void;
+  onResetTurnTracker: () => void;
 };
 
 const STORAGE_KEY = "plink:game-tools-position:v1";
@@ -23,15 +43,20 @@ const VIEWPORT_GUTTER = 12;
 const PANEL_HEIGHT: Record<Exclude<Tool, null>, number> = {
   dice: 400,
   calculator: 470,
+  "turn-tracker": 420,
+  "random-picker": 320,
 };
 const PANEL_WIDTH: Record<Exclude<Tool, null>, number> = {
   dice: 320,
   calculator: 292,
+  "turn-tracker": 292,
+  "random-picker": 292,
 };
-const MENU_WIDTH = 142;
+const MENU_WIDTH = 174;
 const MENU_ITEM_HEIGHT = 40;
 const MENU_VERTICAL_PADDING = 12;
 const MENU_ITEM_GAP = 2;
+const TOOL_TRANSITION_MS = 220;
 
 function clampPosition(position: Position): Position {
   return {
@@ -65,9 +90,13 @@ function loadPosition(): Position {
 }
 
 export function GameToolsDock({
-  diceEnabled,
-  calculatorEnabled,
+  participants,
   accentTone = "default",
+  isTurnTrackingEnabled,
+  onTurnTrackingChange,
+  canReorderTurnOrder,
+  onReorderTurnOrder,
+  onResetTurnTracker,
 }: Props) {
   const [activeTool, setActiveTool] = useState<Tool>(null);
   const [isToolOpen, setIsToolOpen] = useState(false);
@@ -217,7 +246,16 @@ export function GameToolsDock({
     closeToolTimeoutRef.current = window.setTimeout(() => {
       closeToolTimeoutRef.current = null;
       setActiveTool(null);
-    }, 280);
+    }, TOOL_TRANSITION_MS);
+  }
+
+  function backToToolsMenu() {
+    setIsToolOpen(false);
+    closeToolTimeoutRef.current = window.setTimeout(() => {
+      closeToolTimeoutRef.current = null;
+      setActiveTool(null);
+      setIsMenuOpen(true);
+    }, TOOL_TRANSITION_MS);
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLButtonElement>) {
@@ -278,7 +316,9 @@ export function GameToolsDock({
 
   const diceAnchor = getPanelAnchor("dice");
   const calculatorAnchor = getPanelAnchor("calculator");
-  const enabledToolCount = Number(diceEnabled) + Number(calculatorEnabled);
+  const turnTrackerAnchor = getPanelAnchor("turn-tracker");
+  const randomPickerAnchor = getPanelAnchor("random-picker");
+  const enabledToolCount = 4;
   const menuHeight =
     MENU_VERTICAL_PADDING +
     enabledToolCount * MENU_ITEM_HEIGHT +
@@ -297,26 +337,38 @@ export function GameToolsDock({
             className={`gameToolsDock__menu gameToolsDock__menu--${menuPlacement}`}
             role="menu"
           >
-            {diceEnabled ? (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => selectTool("dice")}
-              >
-                <Dices size={19} strokeWidth={2.3} aria-hidden="true" />
-                {translate("copy.dice")}
-              </button>
-            ) : null}
-            {calculatorEnabled ? (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => selectTool("calculator")}
-              >
-                <Calculator size={19} strokeWidth={2.3} aria-hidden="true" />
-                {translate("copy.calculator")}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => selectTool("dice")}
+            >
+              <Dices size={19} strokeWidth={2.3} aria-hidden="true" />
+              {translate("copy.dice")}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => selectTool("calculator")}
+            >
+              <Calculator size={19} strokeWidth={2.3} aria-hidden="true" />
+              {translate("copy.calculator")}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => selectTool("turn-tracker")}
+            >
+              <ListOrdered size={19} strokeWidth={2.3} aria-hidden="true" />
+              {translate("copy.turnTracker")}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => selectTool("random-picker")}
+            >
+              <Shuffle size={19} strokeWidth={2.3} aria-hidden="true" />
+              {translate("copy.randomPicker")}
+            </button>
           </div>
         ) : null}
         {activeTool === null ? (
@@ -337,32 +389,51 @@ export function GameToolsDock({
           </button>
         ) : null}
       </div>
-      {diceEnabled ? (
-        <GameDiceTray
-          accentTone={accentTone}
-          isOpen={activeTool === "dice" && isToolOpen}
-          onOpenChange={(isOpen) => {
-            if (isOpen) selectTool("dice");
-            else closeTool();
-          }}
-          showTab={false}
-          anchor={diceAnchor}
-          onBack={closeTool}
-        />
-      ) : null}
-      {calculatorEnabled ? (
-        <GameCalculatorTray
-          accentTone={accentTone}
-          isOpen={activeTool === "calculator" && isToolOpen}
-          onOpenChange={(isOpen) => {
-            if (isOpen) selectTool("calculator");
-            else closeTool();
-          }}
-          showTab={false}
-          anchor={calculatorAnchor}
-          onBack={closeTool}
-        />
-      ) : null}
+      <GameDiceTray
+        accentTone={accentTone}
+        isOpen={activeTool === "dice" && isToolOpen}
+        onOpenChange={(isOpen) => {
+          if (isOpen) selectTool("dice");
+          else closeTool();
+        }}
+        showTab={false}
+        anchor={diceAnchor}
+        onBack={backToToolsMenu}
+        onClose={closeTool}
+      />
+      <GameCalculatorTray
+        accentTone={accentTone}
+        isOpen={activeTool === "calculator" && isToolOpen}
+        onOpenChange={(isOpen) => {
+          if (isOpen) selectTool("calculator");
+          else closeTool();
+        }}
+        showTab={false}
+        anchor={calculatorAnchor}
+        onBack={backToToolsMenu}
+        onClose={closeTool}
+      />
+      <GameTurnTrackerTray
+        participants={participants}
+        accentTone={accentTone}
+        isOpen={activeTool === "turn-tracker" && isToolOpen}
+        anchor={turnTrackerAnchor}
+        isEnabled={isTurnTrackingEnabled}
+        onEnabledChange={onTurnTrackingChange}
+        canReorder={canReorderTurnOrder}
+        onReorderTurn={onReorderTurnOrder}
+        onReset={onResetTurnTracker}
+        onBack={backToToolsMenu}
+        onClose={closeTool}
+      />
+      <GameRandomPickerTray
+        participants={participants}
+        accentTone={accentTone}
+        isOpen={activeTool === "random-picker" && isToolOpen}
+        anchor={randomPickerAnchor}
+        onBack={backToToolsMenu}
+        onClose={closeTool}
+      />
     </>
   );
 }

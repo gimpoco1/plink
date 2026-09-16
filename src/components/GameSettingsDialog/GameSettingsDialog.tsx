@@ -47,10 +47,7 @@ export const GameSettingsDialog = forwardRef<
     game.collaboratorsCanManage,
   );
   const [timerEnabled, setTimerEnabled] = useState(game.timerEnabled);
-  const [diceEnabled, setDiceEnabled] = useState(game.diceEnabled);
-  const [calculatorEnabled, setCalculatorEnabled] = useState(
-    game.calculatorEnabled,
-  );
+  const [toolsEnabled, setToolsEnabled] = useState(game.toolsEnabled);
   const [quickScoreSmallRaw, setQuickScoreSmallRaw] = useState(
     String(game.quickScoreValues[0]),
   );
@@ -82,8 +79,7 @@ export const GameSettingsDialog = forwardRef<
     setManualEndOnly(game.manualEndOnly);
     setCollaboratorsCanManage(game.collaboratorsCanManage);
     setTimerEnabled(game.timerEnabled);
-    setDiceEnabled(game.diceEnabled);
-    setCalculatorEnabled(game.calculatorEnabled);
+    setToolsEnabled(game.toolsEnabled);
     setQuickScoreSmallRaw(String(game.quickScoreValues[0]));
     setQuickScoreLargeRaw(String(game.quickScoreValues[1]));
     setTimerMode(game.timerMode);
@@ -123,7 +119,6 @@ export const GameSettingsDialog = forwardRef<
   const winByTwoNeedsMorePlayers = winByTwo && game.players.length < 2;
   const ruleNeedsMorePlayers =
     lowestNeedsMorePlayers || winByTwoNeedsMorePlayers;
-  const toolsEnabled = diceEnabled || calculatorEnabled;
   const canSave =
     name.trim().length > 0 &&
     Number.isFinite(parsedScore) &&
@@ -149,8 +144,7 @@ export const GameSettingsDialog = forwardRef<
             winByTwo,
             manualEndOnly,
             timerEnabled,
-            diceEnabled,
-            calculatorEnabled,
+            toolsEnabled,
             quickScoreValues: [parsedQuickScoreSmall, parsedQuickScoreLarge],
             timerMode,
             timerSeconds:
@@ -287,9 +281,7 @@ export const GameSettingsDialog = forwardRef<
               description={translate("copy.diceAndCalculatorDuringTheGame")}
               active={toolsEnabled}
               onClick={() => {
-                const next = !toolsEnabled;
-                setDiceEnabled(next);
-                setCalculatorEnabled(next);
+                setToolsEnabled((value) => !value);
               }}
             />
           </div>

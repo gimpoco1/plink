@@ -157,8 +157,10 @@ export function sanitizeGames(input: unknown): Game[] {
         winByTwo: obj.winByTwo === true,
         manualEndOnly: obj.manualEndOnly === true,
         timerEnabled,
-        diceEnabled: obj.diceEnabled === true,
-        calculatorEnabled: obj.calculatorEnabled === true,
+        toolsEnabled:
+          obj.toolsEnabled === true ||
+          obj.diceEnabled === true ||
+          obj.calculatorEnabled === true,
         quickScoreValues: sanitizeQuickScoreValues(obj.quickScoreValues),
         timerMode,
         timerSeconds,
@@ -251,8 +253,7 @@ export function migrateSingleGameToGamesIfNeeded(): {
     winByTwo: false,
     manualEndOnly: false,
     timerEnabled: false,
-    diceEnabled: false,
-    calculatorEnabled: false,
+    toolsEnabled: false,
     quickScoreValues: [1, 2],
     timerMode: "countdown",
     timerSeconds: 300,

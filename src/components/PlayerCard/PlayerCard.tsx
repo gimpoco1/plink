@@ -18,6 +18,7 @@ type Props = {
   showRank: boolean;
   pulse?: "pos" | "neg";
   isWinner?: boolean;
+  isActiveTurn?: boolean;
   isAccountPlayer?: boolean;
   isLinkedPlayer?: boolean;
   isGameOwner?: boolean;
@@ -36,6 +37,7 @@ export function PlayerCard({
   showRank,
   pulse,
   isWinner,
+  isActiveTurn,
   isAccountPlayer,
   isLinkedPlayer,
   isGameOwner,
@@ -100,7 +102,7 @@ export function PlayerCard({
           : rank === 1 && showRank
             ? " card--leader"
             : ""
-      }`}
+      }${isActiveTurn ? " playerCard--activeTurn" : ""}`}
       renderActions={({ closeSwipe }) =>
         canDelete ? (
           <button

@@ -239,9 +239,7 @@ test("calculator evaluates complex in-game arithmetic without changing scores", 
   await page
     .getByRole("button", { name: "Back to tools", exact: true })
     .click();
-  await expect(
-    page.getByRole("button", { name: "Open game tools", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("menu")).toBeVisible();
 });
 
 test("dice expands from the game tools control and returns to the tool menu", async ({
@@ -261,9 +259,45 @@ test("dice expands from the game tools control and returns to the tool menu", as
   await page
     .getByRole("button", { name: "Back to tools", exact: true })
     .click();
+  await expect(page.getByRole("menu")).toBeVisible();
+});
+
+test("turn tracker and random picker are available from the shared tools menu", async ({
+  page,
+}) => {
+  await setupGame(page);
+  await openAdvancedSettings(page);
+  await page.getByRole("button", { name: /^Tools/ }).click();
+  await startGame(page);
+  await page.getByRole("button", { name: "Open game tools", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Turn tracker", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Open game tools", exact: true }),
+    page.getByText("Drag to reorder turns", { exact: true }),
   ).toBeVisible();
+  await expect(page.getByText("#1", { exact: true })).toBeVisible();
+  const turnOptions = page.locator("[data-turn-participant-id]");
+  await expect(turnOptions.nth(0)).toBeEnabled();
+  const turnTrackerSwitch = page.getByRole("switch", {
+    name: "Enable turn tracker",
+  });
+  await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "false");
+  await turnTrackerSwitch.click();
+  await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator(".playerCard--activeTurn")).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: "Reset turns", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Open game tools", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Turn tracker", exact: true }).click();
+  await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "true");
+  await turnTrackerSwitch.click();
+  await expect(page.locator(".playerCard--activeTurn")).toHaveCount(0);
+  await page.getByRole("button", { name: "Back to tools", exact: true }).click();
+  await expect(page.getByRole("menu")).toBeVisible();
+  await page.getByRole("menuitem", { name: "Random picker", exact: true }).click();
+  await page.getByRole("button", { name: "Pick a player", exact: true }).click();
+  await expect(page.locator(".gameHelperTray__value")).toHaveText(/Alice|Bob/);
 });
 
 test("completed sessions appear in the completed filter and reopen with their scores", async ({

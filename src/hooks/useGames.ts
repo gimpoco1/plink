@@ -98,8 +98,7 @@ type CreateGameInput = {
   winByTwo?: boolean;
   manualEndOnly?: boolean;
   timerEnabled?: boolean;
-  diceEnabled?: boolean;
-  calculatorEnabled?: boolean;
+  toolsEnabled?: boolean;
   quickScoreValues?: QuickScoreValues;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
@@ -131,8 +130,7 @@ type UpdateGameSettingsInput = {
   winByTwo: boolean;
   manualEndOnly: boolean;
   timerEnabled: boolean;
-  diceEnabled: boolean;
-  calculatorEnabled: boolean;
+  toolsEnabled: boolean;
   quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
@@ -993,8 +991,7 @@ export function useGames(
         ? input.winCondition
         : "reach_target";
     const timerEnabled = input.timerEnabled === true;
-    const diceEnabled = input.diceEnabled === true;
-    const calculatorEnabled = input.calculatorEnabled === true;
+    const toolsEnabled = input.toolsEnabled === true;
     const quickScoreValues = sanitizeQuickScoreValues(input.quickScoreValues);
     const timerMode =
       input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
@@ -1072,8 +1069,7 @@ export function useGames(
       winByTwo: input.winByTwo === true,
       manualEndOnly,
       timerEnabled,
-      diceEnabled,
-      calculatorEnabled,
+      toolsEnabled,
       quickScoreValues,
       timerMode,
       timerSeconds,
@@ -2049,8 +2045,7 @@ export function useGames(
             winByTwo: input.winByTwo,
             manualEndOnly: input.manualEndOnly,
             timerEnabled: input.timerEnabled,
-            diceEnabled: input.diceEnabled,
-            calculatorEnabled: input.calculatorEnabled,
+            toolsEnabled: input.toolsEnabled,
             quickScoreValues,
             timerMode: input.timerMode,
             timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
@@ -2106,8 +2101,7 @@ export function useGames(
         winByTwo: input.winByTwo,
         manualEndOnly: input.manualEndOnly,
         timerEnabled: input.timerEnabled,
-        diceEnabled: input.diceEnabled,
-        calculatorEnabled: input.calculatorEnabled,
+        toolsEnabled: input.toolsEnabled,
         quickScoreValues,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,

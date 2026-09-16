@@ -5,6 +5,7 @@ import {
   Delete,
   Equal,
   FunctionSquare,
+  X,
 } from "lucide-react";
 import { translate } from "../../i18n/translate";
 import "./GameCalculatorTray.css";
@@ -20,6 +21,7 @@ type Props = {
     placement: "above-left" | "above-right" | "below-left" | "below-right";
   };
   onBack?: () => void;
+  onClose?: () => void;
 };
 
 const MAX_EXPRESSION_LENGTH = 72;
@@ -95,6 +97,7 @@ export function GameCalculatorTray({
   showTab = true,
   anchor,
   onBack,
+  onClose,
 }: Props) {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
@@ -262,11 +265,13 @@ export function GameCalculatorTray({
 
       <div className="gameCalculatorTray__panel">
         <div className="gameCalculatorTray__header">
-          <div className="gameCalculatorTray__eyebrow">
-            {translate("copy.quickMaths")}
-          </div>
-          <div className="gameCalculatorTray__title">
-            {translate("copy.calculator")}
+          <div>
+            <div className="gameCalculatorTray__eyebrow">
+              {translate("copy.quickMaths")}
+            </div>
+            <div className="gameCalculatorTray__title">
+              {translate("copy.calculator")}
+            </div>
           </div>
         </div>
         <div
@@ -314,14 +319,24 @@ export function GameCalculatorTray({
           </button>
         </div>
         {!showTab ? (
-          <button
-            className="gameCalculatorTray__back"
-            type="button"
-            onClick={onBack}
-          >
-            <ChevronLeft size={16} strokeWidth={2.7} aria-hidden="true" />
-            {translate("copy.backToTools")}
-          </button>
+          <div className="gameCalculatorTray__footer">
+            <button
+              className="gameCalculatorTray__back"
+              type="button"
+              onClick={onBack}
+            >
+              <ChevronLeft size={16} strokeWidth={2.7} aria-hidden="true" />
+              {translate("copy.backToTools")}
+            </button>
+            <button
+              className="gameCalculatorTray__close"
+              type="button"
+              aria-label={translate("copy.close")}
+              onClick={onClose}
+            >
+              <X size={17} strokeWidth={2.6} aria-hidden="true" />
+            </button>
+          </div>
         ) : null}
       </div>
     </div>

@@ -31,10 +31,8 @@ export function NewGameRules() {
     timerMinutes,
     timerSeconds,
     setTimerEnabled,
-    diceEnabled,
-    setDiceEnabled,
-    calculatorEnabled,
-    setCalculatorEnabled,
+    toolsEnabled,
+    setToolsEnabled,
     timerTotalSeconds,
     applyCountdownPreset,
     setTimerMode,
@@ -45,14 +43,6 @@ export function NewGameRules() {
   useEffect(() => {
     if (!open) setIsExpanded(false);
   }, [open]);
-
-  const toolsEnabled = diceEnabled || calculatorEnabled;
-
-  function toggleTools() {
-    const next = !toolsEnabled;
-    setDiceEnabled(next);
-    setCalculatorEnabled(next);
-  }
 
   return (
     <motion.div
@@ -132,7 +122,7 @@ export function NewGameRules() {
             title={translate("copy.tools")}
             description={translate("copy.diceAndCalculatorDuringTheGame")}
             active={toolsEnabled}
-            onClick={toggleTools}
+            onClick={() => setToolsEnabled((value) => !value)}
           />
         </div>
         {timerEnabled ? (

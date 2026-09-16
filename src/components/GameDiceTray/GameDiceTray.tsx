@@ -1,6 +1,6 @@
 import { translate } from "../../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Dices } from "lucide-react";
+import { ChevronLeft, Dices, X } from "lucide-react";
 import "./GameDiceTray.css";
 import { DiceCanvas } from "./DiceCanvas";
 import {
@@ -24,6 +24,7 @@ type Props = {
     placement: "above-left" | "above-right" | "below-left" | "below-right";
   };
   onBack?: () => void;
+  onClose?: () => void;
 };
 
 export function GameDiceTray({
@@ -33,6 +34,7 @@ export function GameDiceTray({
   showTab = true,
   anchor,
   onBack,
+  onClose,
 }: Props) {
   const initialDicePreview: [DieValue, DieValue] = [1, 4];
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
@@ -339,10 +341,20 @@ export function GameDiceTray({
           </button>
         </div>
         {!showTab ? (
-          <button className="gameDiceTray__back" type="button" onClick={onBack}>
-            <ChevronLeft size={16} strokeWidth={2.7} aria-hidden="true" />
-            {translate("copy.backToTools")}
-          </button>
+          <div className="gameDiceTray__footer">
+            <button className="gameDiceTray__back" type="button" onClick={onBack}>
+              <ChevronLeft size={16} strokeWidth={2.7} aria-hidden="true" />
+              {translate("copy.backToTools")}
+            </button>
+            <button
+              className="gameDiceTray__close"
+              type="button"
+              aria-label={translate("copy.close")}
+              onClick={onClose}
+            >
+              <X size={17} strokeWidth={2.6} aria-hidden="true" />
+            </button>
+          </div>
         ) : null}
       </div>
     </div>
