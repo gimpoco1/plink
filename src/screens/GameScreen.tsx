@@ -310,20 +310,18 @@ export function GameScreen(props: GameScreenProps) {
   ) {
     if (!canReorderTurnOrder) return;
     if (movingParticipantId === targetParticipantId) return;
-    setTurnOrderParticipantIds((current) => {
-      const fromIndex = current.indexOf(movingParticipantId);
-      const toIndex = current.indexOf(targetParticipantId);
-      if (fromIndex < 0 || toIndex < 0) return current;
-      const next = [...current];
-      const [moved] = next.splice(fromIndex, 1);
-      if (!moved) return current;
-      next.splice(toIndex, 0, moved);
-      const nextActiveParticipantId = next[0] ?? null;
-      setActiveTurnParticipantId(nextActiveParticipantId);
-      setTurnRound(1);
-      clearPendingTurnAdvance();
-      return next;
-    });
+    const fromIndex = turnOrderParticipantIds.indexOf(movingParticipantId);
+    const toIndex = turnOrderParticipantIds.indexOf(targetParticipantId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const next = [...turnOrderParticipantIds];
+    const [moved] = next.splice(fromIndex, 1);
+    if (!moved) return;
+    next.splice(toIndex, 0, moved);
+
+    clearPendingTurnAdvance();
+    setActiveTurnParticipantId(next[0] ?? null);
+    setTurnRound(1);
+    setTurnOrderParticipantIds(next);
   }
 
   function resetTurnTracker() {
