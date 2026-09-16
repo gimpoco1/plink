@@ -111,6 +111,21 @@
   background: rgb(var(--accent-rgb) / 0.025);
 }
 
+.card.playerCard.playerCard--activeTurn {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.5),
+    0 0 0 3px rgb(var(--accent-rgb) / 0.2),
+    var(--glow);
+}
+
+:root[data-theme="light"] .card.playerCard.playerCard--activeTurn {
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.7),
+    0 0 0 3px rgb(var(--accent-rgb) / 0.16),
+    var(--glow);
+}
+
 .avatar {
   width: 56px;
   height: 56px;
@@ -365,13 +380,31 @@
 }
 
 @media (max-width: 420px) {
-  .cardHeader { padding: 14px 24px 14px 14px; }
-  .cardHeader__left { gap: 10px; }
-  .rank { min-width: 30px; height: 30px; border-radius: 10px; }
-  .avatar { width: 48px; height: 48px; font-size: 26px; }
-  .who__name { font-size: 18px; }
-  .score { font-size: 42px; }
-  .cardBody { padding: 11px 10px; }
+  .cardHeader {
+    padding: 14px 24px 14px 14px;
+  }
+  .cardHeader__left {
+    gap: 10px;
+  }
+  .rank {
+    min-width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+  .avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 26px;
+  }
+  .who__name {
+    font-size: 18px;
+  }
+  .score {
+    font-size: 42px;
+  }
+  .cardBody {
+    padding: 11px 10px;
+  }
 }
 
 @keyframes winnerEntry {

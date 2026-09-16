@@ -1,7 +1,6 @@
 import { translate } from "../../../i18n/translate";
 import {
   ArrowDownUp,
-  Dices,
   Flag,
   GitCompareArrows,
   RotateCcw,
@@ -72,14 +71,6 @@ export function getSuggestionFacts(setup: QuickSetup) {
           ? translate("copy.stopwatch")
           : formatTimerText(setup.timerSeconds, "long"),
       icon: <Timer size={11} strokeWidth={2.35} aria-hidden="true" />,
-    });
-  }
-
-  if (setup.diceEnabled) {
-    parts.push({
-      key: "dice",
-      label: translate("copy.dice"),
-      icon: <Dices size={11} strokeWidth={2.35} aria-hidden="true" />,
     });
   }
 

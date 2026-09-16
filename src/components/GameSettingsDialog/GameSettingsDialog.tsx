@@ -2,7 +2,7 @@ import { translate } from "../../i18n/translate";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { ScoreDirection, WinCondition } from "../../types";
 import { MAX_ABS_SCORE } from "../../constants";
-import { ArrowDownUp, Dices, Flag, Timer, Trophy } from "lucide-react";
+import { ArrowDownUp, Flag, Timer, Trophy, PocketKnife } from "lucide-react";
 import { CollaboratorManagementControl } from "../CollaboratorManagementControl/CollaboratorManagementControl";
 import {
   SettingsAuthCard,
@@ -47,7 +47,7 @@ export const GameSettingsDialog = forwardRef<
     game.collaboratorsCanManage,
   );
   const [timerEnabled, setTimerEnabled] = useState(game.timerEnabled);
-  const [diceEnabled, setDiceEnabled] = useState(game.diceEnabled);
+  const [toolsEnabled, setToolsEnabled] = useState(game.toolsEnabled);
   const [quickScoreSmallRaw, setQuickScoreSmallRaw] = useState(
     String(game.quickScoreValues[0]),
   );
@@ -79,7 +79,7 @@ export const GameSettingsDialog = forwardRef<
     setManualEndOnly(game.manualEndOnly);
     setCollaboratorsCanManage(game.collaboratorsCanManage);
     setTimerEnabled(game.timerEnabled);
-    setDiceEnabled(game.diceEnabled);
+    setToolsEnabled(game.toolsEnabled);
     setQuickScoreSmallRaw(String(game.quickScoreValues[0]));
     setQuickScoreLargeRaw(String(game.quickScoreValues[1]));
     setTimerMode(game.timerMode);
@@ -144,7 +144,7 @@ export const GameSettingsDialog = forwardRef<
             winByTwo,
             manualEndOnly,
             timerEnabled,
-            diceEnabled,
+            toolsEnabled,
             quickScoreValues: [parsedQuickScoreSmall, parsedQuickScoreLarge],
             timerMode,
             timerSeconds:
@@ -276,11 +276,13 @@ export const GameSettingsDialog = forwardRef<
               onClick={() => setTimerEnabled((value) => !value)}
             />
             <SettingsModeButton
-              icon={<Dices size={22} strokeWidth={2.3} />}
-              title={translate("copy.dice")}
-              description={translate("copy.diceRollerAvailableDuringTheGame")}
-              active={diceEnabled}
-              onClick={() => setDiceEnabled((value) => !value)}
+              icon={<PocketKnife size={22} strokeWidth={2.3} />}
+              title={translate("copy.tools")}
+              description={translate("copy.diceAndCalculatorDuringTheGame")}
+              active={toolsEnabled}
+              onClick={() => {
+                setToolsEnabled((value) => !value);
+              }}
             />
           </div>
 

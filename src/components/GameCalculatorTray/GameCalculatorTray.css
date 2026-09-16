@@ -1,0 +1,397 @@
+.gameCalculatorTray {
+  position: fixed;
+  left: 0;
+  bottom: max(74px, calc(env(safe-area-inset-bottom) + 62px));
+  z-index: 145;
+  width: min(292px, calc(100vw - 12px));
+  transform: translateX(calc(-100% + 44px));
+  transition: transform 240ms ease;
+  will-change: transform;
+}
+
+.gameCalculatorTray--open {
+  transform: translateX(0);
+}
+
+.gameCalculatorTray--noTab {
+  width: min(292px, calc(100vw - 24px));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 220ms cubic-bezier(0.22, 0.9, 0.26, 1),
+    opacity 180ms ease;
+  will-change: transform;
+}
+
+.gameCalculatorTray--noTab.gameCalculatorTray--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gameCalculatorTray--noTab .gameCalculatorTray__panel {
+  margin-right: 0;
+  border-left-width: 1px;
+  border-radius: 22px;
+  transition: border-radius 260ms ease;
+}
+
+.gameCalculatorTray--noTab:not(.gameCalculatorTray--open)
+  .gameCalculatorTray__panel {
+  border-radius: 999px;
+}
+
+.gameCalculatorTray--noTab[data-placement="above-left"] {
+  transform: translate(0, calc(-100% + 52px)) scale(0.178, 0.12);
+  transform-origin: bottom left;
+}
+.gameCalculatorTray--noTab[data-placement="above-right"] {
+  transform: translate(calc(-100% + 52px), calc(-100% + 52px))
+    scale(0.178, 0.12);
+  transform-origin: bottom right;
+}
+.gameCalculatorTray--noTab[data-placement="below-left"] {
+  transform: scale(0.178, 0.12);
+  transform-origin: top left;
+}
+.gameCalculatorTray--noTab[data-placement="below-right"] {
+  transform: translate(calc(-100% + 52px), 0) scale(0.178, 0.12);
+  transform-origin: top right;
+}
+.gameCalculatorTray--noTab.gameCalculatorTray--open[data-placement="above-left"] {
+  transform: translate(0, calc(-100% + 52px)) scale(1);
+}
+.gameCalculatorTray--noTab.gameCalculatorTray--open[data-placement="above-right"] {
+  transform: translate(calc(-100% + 52px), calc(-100% + 52px)) scale(1);
+}
+.gameCalculatorTray--noTab.gameCalculatorTray--open[data-placement="below-left"] {
+  transform: scale(1);
+}
+.gameCalculatorTray--noTab.gameCalculatorTray--open[data-placement="below-right"] {
+  transform: translate(calc(-100% + 52px), 0) scale(1);
+}
+
+.gameCalculatorTray__tab {
+  position: absolute;
+  right: 0;
+  top: 24px;
+  width: 44px;
+  min-height: 126px;
+  padding: 12px 8px;
+  border: 1px solid rgb(var(--accent-rgb) / 0.1);
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.08),
+      rgb(var(--accent-rgb) / 0.015)
+    ),
+    rgba(18, 24, 30, 0.72);
+  box-shadow: 10px 14px 26px rgba(0, 0, 0, 0.16);
+  color: rgba(236, 241, 247, 0.82);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0.82;
+}
+
+.gameCalculatorTray__tabLabel {
+  writing-mode: vertical-rl;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.gameCalculatorTray__tabChevron {
+  transition: transform 220ms ease;
+}
+.gameCalculatorTray__tabChevron--open {
+  transform: rotate(180deg);
+}
+
+.gameCalculatorTray__panel {
+  min-height: 356px;
+  margin-right: 44px;
+  padding: 16px 14px 16px 16px;
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
+  border-left: 0;
+  border-radius: 0 22px 22px 0;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgb(var(--accent-rgb) / 0.16),
+      transparent 38%
+    ),
+    linear-gradient(180deg, rgba(18, 24, 30, 0.98), rgba(10, 16, 22, 0.96));
+  box-shadow: 20px 22px 44px rgba(0, 0, 0, 0.34);
+  display: grid;
+  gap: 14px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.gameCalculatorTray--team .gameCalculatorTray__tab,
+.gameCalculatorTray--team .gameCalculatorTray__panel {
+  border-color: rgba(122, 208, 255, 0.26);
+}
+.gameCalculatorTray--team .gameCalculatorTray__tab {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(122, 208, 255, 0.08),
+      rgba(122, 208, 255, 0.015)
+    ),
+    rgba(18, 24, 30, 0.72);
+}
+.gameCalculatorTray--team .gameCalculatorTray__panel {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(122, 208, 255, 0.15),
+      transparent 38%
+    ),
+    linear-gradient(180deg, rgba(18, 24, 30, 0.98), rgba(10, 16, 22, 0.96));
+}
+.gameCalculatorTray--open .gameCalculatorTray__tab,
+.gameCalculatorTray__tab:hover,
+.gameCalculatorTray__tab:focus-visible {
+  opacity: 1;
+}
+.gameCalculatorTray__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gameCalculatorTray__close,
+.gameDiceTray__close,
+.gameHelperTray__close {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+.gameCalculatorTray__close:hover,
+.gameCalculatorTray__close:focus-visible,
+.gameDiceTray__close:hover,
+.gameDiceTray__close:focus-visible,
+.gameHelperTray__close:hover,
+.gameHelperTray__close:focus-visible {
+  border-color: var(--accent-border);
+  background: rgb(var(--accent-rgb) / 0.12);
+  color: var(--text);
+}
+
+.gameCalculatorTray__back {
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 850;
+  justify-self: end;
+}
+.gameCalculatorTray__footer,
+.gameDiceTray__footer,
+.gameHelperTray__footer {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 7px;
+}
+.gameCalculatorTray__back:hover,
+.gameCalculatorTray__back:focus-visible {
+  border-color: var(--accent-border);
+  background: rgb(var(--accent-rgb) / 0.12);
+  color: var(--text);
+}
+.gameCalculatorTray__eyebrow {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.gameCalculatorTray__title {
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.gameCalculatorTray__display {
+  min-height: 76px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(255, 255, 255, 0.08),
+      transparent 62%
+    ),
+    rgba(7, 11, 20, 0.9);
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  overflow: hidden;
+}
+.gameCalculatorTray__display--error {
+  border-color: rgba(255, 126, 126, 0.5);
+}
+.gameCalculatorTray__expression {
+  color: var(--text);
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gameCalculatorTray__result {
+  min-height: 15px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: right;
+}
+.gameCalculatorTray__display--error .gameCalculatorTray__result {
+  color: #ff9f9f;
+}
+
+.gameCalculatorTray__keypad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.gameCalculatorTray__key {
+  min-height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 900;
+}
+.gameCalculatorTray__key:hover,
+.gameCalculatorTray__key:focus-visible {
+  border-color: rgb(var(--accent-rgb) / 0.45);
+  background: rgb(var(--accent-rgb) / 0.14);
+}
+.gameCalculatorTray__key--utility,
+.gameCalculatorTray__key--operator,
+.gameCalculatorTray__key--delete {
+  color: var(--accent);
+}
+.gameCalculatorTray__key--equals {
+  border-color: var(--accent-border);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 9px 18px rgb(var(--accent-rgb) / 0.18);
+}
+.gameCalculatorTray--team .gameCalculatorTray__key--equals {
+  box-shadow: 0 9px 18px rgba(122, 208, 255, 0.18);
+}
+
+:root[data-theme="light"] .gameCalculatorTray__tab {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: var(--ds-color-surface-container-high);
+  color: var(--ds-color-on-surface);
+  box-shadow: 10px 14px 26px rgba(28, 49, 56, 0.14);
+}
+:root[data-theme="light"] .gameCalculatorTray__panel {
+  border-color: rgba(20, 36, 40, 0.22);
+  background:
+    radial-gradient(
+      circle at top right,
+      rgb(var(--accent-rgb) / 0.14),
+      transparent 42%
+    ),
+    var(--ds-color-surface-bright);
+  box-shadow: 20px 22px 44px rgba(28, 49, 56, 0.2);
+}
+:root[data-theme="light"] .gameCalculatorTray--team .gameCalculatorTray__tab {
+  border-color: rgba(0, 105, 135, 0.3);
+  background: var(--ds-color-secondary-container);
+  color: var(--ds-color-on-secondary-container);
+}
+:root[data-theme="light"] .gameCalculatorTray--team .gameCalculatorTray__panel {
+  border-color: rgba(0, 105, 135, 0.28);
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(0, 105, 135, 0.14),
+      transparent 42%
+    ),
+    var(--ds-color-surface-bright);
+}
+:root[data-theme="light"] .gameCalculatorTray__title,
+:root[data-theme="light"] .gameCalculatorTray__expression {
+  color: var(--ds-color-on-surface);
+}
+:root[data-theme="light"] .gameCalculatorTray__display {
+  border-color: rgba(20, 36, 40, 0.14);
+  background: var(--ds-color-surface-container-low);
+}
+:root[data-theme="light"] .gameCalculatorTray__key {
+  border-color: rgba(20, 36, 40, 0.14);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+}
+:root[data-theme="light"] .gameCalculatorTray__key--utility,
+:root[data-theme="light"] .gameCalculatorTray__key--operator,
+:root[data-theme="light"] .gameCalculatorTray__key--delete {
+  color: var(--accent);
+}
+:root[data-theme="light"] .gameCalculatorTray__key--equals {
+  background: var(--ds-color-primary);
+  color: var(--ds-color-on-primary);
+}
+:root[data-theme="light"] .gameCalculatorTray__close,
+:root[data-theme="light"] .gameDiceTray__close,
+:root[data-theme="light"] .gameHelperTray__close {
+  border-color: rgba(20, 36, 40, 0.14);
+  background: var(--ds-color-surface-container-low);
+  color: var(--ds-color-on-surface);
+}
+:root[data-theme="light"]
+  .gameCalculatorTray--team
+  .gameCalculatorTray__key--equals {
+  background: var(--ds-color-secondary);
+  color: var(--ds-color-on-secondary);
+}
+
+@media (max-width: 640px) {
+  .gameCalculatorTray {
+    width: min(280px, calc(100vw - 6px));
+  }
+  .gameCalculatorTray__panel {
+    min-height: 344px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gameCalculatorTray,
+  .gameCalculatorTray--noTab,
+  .gameCalculatorTray__tabChevron {
+    transition: none;
+  }
+}

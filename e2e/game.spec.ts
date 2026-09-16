@@ -4,6 +4,7 @@ import {
   addPoints,
   expectScore,
   gameAction,
+  openAdvancedSettings,
   openSetup,
   setupGame,
   startGame,
@@ -67,6 +68,7 @@ test("declares the player reaching the target the winner", async ({ page }) => {
 
 test("win by two waits for a two point lead", async ({ page }) => {
   await setupGame(page, 5);
+  await openAdvancedSettings(page);
   await page.getByRole("button", { name: /Win by 2/ }).click();
   await startGame(page);
   await addPoints(page, "Bob", 4);
@@ -83,6 +85,7 @@ test("lowest score wins when another player reaches the target", async ({
   page,
 }) => {
   await setupGame(page, 5);
+  await openAdvancedSettings(page);
   await page.getByRole("button", { name: /Lowest wins/ }).click();
   await startGame(page);
   await addPoints(page, "Alice", 5);
@@ -142,6 +145,7 @@ test("manual finish waits for confirmation even after reaching the target", asyn
   page,
 }) => {
   await setupGame(page, 5);
+  await openAdvancedSettings(page);
   await page.getByRole("button", { name: /Manual finish/ }).click();
   await startGame(page);
   await addPoints(page, "Alice", 5);
@@ -175,6 +179,7 @@ test("a completed game can be replayed with the same players and zero scores", a
 
 test("countdown starts, pauses, resumes and resets", async ({ page }) => {
   await setupGame(page);
+  await openAdvancedSettings(page);
   await page.getByRole("button", { name: /^Timer\b/ }).click();
   await page.getByRole("button", { name: "1m", exact: true }).click();
   await startGame(page);
@@ -205,6 +210,108 @@ test("countdown starts, pauses, resumes and resets", async ({ page }) => {
   await expect(
     controls.getByRole("button", { name: "Start", exact: true }),
   ).toBeVisible();
+});
+
+test("calculator evaluates complex in-game arithmetic without changing scores", async ({
+  page,
+}) => {
+  await setupGame(page);
+  await openAdvancedSettings(page);
+  await page.getByRole("button", { name: /^Tools/ }).click();
+  await startGame(page);
+  await page
+    .getByRole("button", { name: "Open game tools", exact: true })
+    .click();
+  const toolsMenu = page.getByRole("menu");
+  await expect(toolsMenu).toBeVisible();
+  const menuBounds = await toolsMenu.boundingBox();
+  const viewport = page.viewportSize();
+  if (!menuBounds || !viewport) throw new Error("Tools menu is not measurable");
+  expect(menuBounds.x).toBeGreaterThanOrEqual(0);
+  expect(menuBounds.y).toBeGreaterThanOrEqual(0);
+  expect(menuBounds.x + menuBounds.width).toBeLessThanOrEqual(viewport.width);
+  expect(menuBounds.y + menuBounds.height).toBeLessThanOrEqual(viewport.height);
+  await page.getByRole("menuitem", { name: "Calculator", exact: true }).click();
+  await page.keyboard.type("20*3+50");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".gameCalculatorTray__result")).toHaveText("= 110");
+  await expectScore(page, "Alice", 0);
+  await page
+    .getByRole("button", { name: "Back to tools", exact: true })
+    .click();
+  await expect(page.getByRole("menu")).toBeVisible();
+});
+
+test("dice expands from the game tools control and returns to the tool menu", async ({
+  page,
+}) => {
+  await setupGame(page);
+  await openAdvancedSettings(page);
+  await page.getByRole("button", { name: /^Tools/ }).click();
+  await startGame(page);
+  await page
+    .getByRole("button", { name: "Open game tools", exact: true })
+    .click();
+  await page.getByRole("menuitem", { name: "Dice", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Roll now", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Back to tools", exact: true })
+    .click();
+  await expect(page.getByRole("menu")).toBeVisible();
+});
+
+test("turn tracker and random picker are available from the shared tools menu", async ({
+  page,
+}) => {
+  await setupGame(page);
+  await openAdvancedSettings(page);
+  await page.getByRole("button", { name: /^Tools/ }).click();
+  await startGame(page);
+  await page
+    .getByRole("button", { name: "Open game tools", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Turn tracker", exact: true })
+    .click();
+  await expect(
+    page.getByText("Drag to reorder turns", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("#1", { exact: true })).toBeVisible();
+  const turnOptions = page.locator("[data-turn-participant-id]");
+  await expect(turnOptions.nth(0)).toBeEnabled();
+  const turnTrackerSwitch = page.getByRole("switch", {
+    name: "Enable turn tracker",
+  });
+  await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "false");
+  await turnTrackerSwitch.click();
+  await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator(".playerCard--activeTurn")).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: "Reset turns", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Open game tools", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Turn tracker", exact: true })
+    .click();
+  await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "true");
+  await turnTrackerSwitch.click();
+  await expect(page.locator(".playerCard--activeTurn")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Back to tools", exact: true })
+    .click();
+  await expect(page.getByRole("menu")).toBeVisible();
+  await page
+    .getByRole("menuitem", { name: "Random picker", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Pick a player", exact: true })
+    .click();
+  await expect(page.locator(".gameHelperTray__value")).toHaveText(/Alice|Bob/);
 });
 
 test("completed sessions appear in the completed filter and reopen with their scores", async ({

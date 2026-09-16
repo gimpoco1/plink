@@ -17,6 +17,7 @@ type Props = {
   showRank: boolean;
   pulse?: "pos" | "neg";
   isWinner?: boolean;
+  isActiveTurn?: boolean;
   targetScore: number;
   startingScore: number;
   winCondition: WinCondition;
@@ -33,6 +34,7 @@ export function TeamScoreCard({
   showRank,
   pulse,
   isWinner,
+  isActiveTurn,
   targetScore,
   startingScore,
   winCondition,
@@ -83,12 +85,15 @@ export function TeamScoreCard({
           : rank === 1 && showRank
             ? " card--leader"
             : ""
-      }`}
+      }${isActiveTurn ? " playerCard--activeTurn" : ""}`}
     >
       <div className="cardHeader">
         <div className="cardHeader__left">
           {showRank ? (
-            <div className="rank" aria-label={translate("dynamic.rank", [rank])}>
+            <div
+              className="rank"
+              aria-label={translate("dynamic.rank", [rank])}
+            >
               #{rank}
             </div>
           ) : null}
@@ -128,10 +133,7 @@ export function TeamScoreCard({
               </div>
             </div>
             {isWinner ? (
-              <div
-                className="winnerMark"
-                aria-label={translate("copy.winner")}
-              >
+              <div className="winnerMark" aria-label={translate("copy.winner")}>
                 <Trophy size={24} strokeWidth={2.2} aria-hidden="true" />
               </div>
             ) : null}
@@ -174,10 +176,10 @@ export function TeamScoreCard({
                 key={delta}
                 type="button"
                 className="dot dot--neg"
-                  aria-label={translate("dynamic.subtractPoints", [
-                    Math.abs(delta),
-                    name,
-                  ])}
+                aria-label={translate("dynamic.subtractPoints", [
+                  Math.abs(delta),
+                  name,
+                ])}
                 onClick={() => onDelta(id, delta)}
               >
                 {delta}
@@ -213,7 +215,7 @@ export function TeamScoreCard({
             <div className="podButtons">
               <button
                 className="podBtn podBtn--neg"
-                  aria-label={translate("dynamic.subtractCustomPoints", [name])}
+                aria-label={translate("dynamic.subtractCustomPoints", [name])}
                 type="button"
                 disabled={!canApplyCustom}
                 onClick={() => {

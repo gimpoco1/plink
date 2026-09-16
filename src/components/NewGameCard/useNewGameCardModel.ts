@@ -58,7 +58,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
   const [winByTwo, setWinByTwo] = useState(false);
   const [manualEndOnly, setManualEndOnly] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
-  const [diceEnabled, setDiceEnabled] = useState(false);
+  const [toolsEnabled, setToolsEnabled] = useState(false);
   const [quickScoreValues, setQuickScoreValues] = useState<QuickScoreValues>([
     1, 2,
   ]);
@@ -190,7 +190,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setWinByTwo(false);
     setManualEndOnly(false);
     setTimerEnabled(false);
-    setDiceEnabled(false);
+    setToolsEnabled(false);
     setQuickScoreValues([1, 2]);
     setTimerMode("countdown");
     setTimerMinutes("5");
@@ -468,7 +468,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       winByTwo: draft.winByTwo,
       manualEndOnly: draft.manualEndOnly,
       timerEnabled: draft.timerEnabled,
-      diceEnabled: draft.diceEnabled ?? false,
+      toolsEnabled: draft.toolsEnabled ?? false,
       quickScoreValues: draft.quickScoreValues ?? [1, 2],
       timerMode: draft.timerMode,
       timerSeconds: draft.timerSeconds,
@@ -496,7 +496,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setWinByTwo(draft.winByTwo);
     setManualEndOnly(draft.manualEndOnly);
     setTimerEnabled(draft.timerEnabled);
-    setDiceEnabled(draft.diceEnabled ?? false);
+    setToolsEnabled(draft.toolsEnabled ?? false);
     setQuickScoreValues(draft.quickScoreValues ?? [1, 2]);
     setTimerMode(draft.timerMode);
     setTimerMinutes(String(Math.floor(draft.timerSeconds / 60)));
@@ -725,7 +725,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setWinByTwo(preset.winByTwo);
     setManualEndOnly(preset.manualEndOnly);
     setTimerEnabled(preset.timerEnabled);
-    setDiceEnabled(false);
+    setToolsEnabled(false);
     setQuickScoreValues(preset.quickScoreValues);
     setTimerMode(preset.timerMode);
     setTimerMinutes(String(Math.floor(preset.timerSeconds / 60)));
@@ -831,7 +831,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       winByTwo,
       manualEndOnly,
       timerEnabled,
-      diceEnabled,
+      toolsEnabled,
       quickScoreValues,
       timerMode,
       timerSeconds:
@@ -878,7 +878,7 @@ export function useNewGameCardModel(props: NewGameCardProps) {
       winByTwo,
       manualEndOnly,
       timerEnabled,
-      diceEnabled,
+      toolsEnabled,
       quickScoreValues,
       timerMode,
       timerSeconds:
@@ -965,8 +965,8 @@ export function useNewGameCardModel(props: NewGameCardProps) {
     setManualEndOnly,
     timerEnabled,
     setTimerEnabled,
-    diceEnabled,
-    setDiceEnabled,
+    toolsEnabled,
+    setToolsEnabled,
     timerMode,
     setTimerMode,
     timerMinutes,

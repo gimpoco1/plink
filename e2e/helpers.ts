@@ -8,6 +8,10 @@ export async function openSetup(page: Page) {
   ).toBeVisible();
 }
 
+export async function openAdvancedSettings(page: Page) {
+  await page.getByRole("button", { name: /^Advanced settings/ }).click();
+}
+
 export async function addPlayer(page: Page, name: string) {
   await page
     .getByRole("button", { name: "Add new player", exact: true })
@@ -37,14 +41,12 @@ export async function startGame(page: Page) {
 }
 
 export function playerCard(page: Page, name: string) {
-  return page
-    .locator(".playerCard")
-    .filter({
-      has: page.getByRole("button", {
-        name: `Add 1 points to ${name}`,
-        exact: true,
-      }),
-    });
+  return page.locator(".playerCard").filter({
+    has: page.getByRole("button", {
+      name: `Add 1 points to ${name}`,
+      exact: true,
+    }),
+  });
 }
 
 export async function expectScore(page: Page, name: string, score: number) {

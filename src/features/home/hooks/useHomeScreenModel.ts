@@ -173,7 +173,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         game.manualEndOnly,
         game.timerEnabled ? game.timerMode : "off",
         game.timerEnabled ? game.timerSeconds : 0,
-        game.diceEnabled ? "dice" : "no-dice",
+        game.toolsEnabled ? "tools" : "no-tools",
         game.quickScoreValues.join(","),
       ].join("|");
 
@@ -194,7 +194,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         winByTwo: game.winByTwo,
         manualEndOnly: game.manualEndOnly,
         timerEnabled: game.timerEnabled,
-        diceEnabled: game.diceEnabled,
+        toolsEnabled: game.toolsEnabled,
         quickScoreValues: game.quickScoreValues,
         timerMode: game.timerMode,
         timerSeconds: game.timerSeconds,
@@ -242,7 +242,7 @@ export function useHomeScreenModel(props: HomeScreenProps) {
         winByTwo: setup.winByTwo,
         manualEndOnly: setup.manualEndOnly,
         timerEnabled: setup.timerEnabled,
-        diceEnabled: setup.diceEnabled,
+        toolsEnabled: setup.toolsEnabled,
         quickScoreValues: setup.quickScoreValues,
         timerMode: setup.timerMode,
         timerSeconds: setup.timerSeconds,

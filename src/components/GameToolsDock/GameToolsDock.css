@@ -1,0 +1,158 @@
+.gameToolsDock {
+  position: fixed;
+  z-index: 146;
+  width: 52px;
+  height: 52px;
+  touch-action: none;
+  overscroll-behavior: contain;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.gameToolsDock__button {
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.12),
+      rgb(var(--accent-rgb) / 0.03)
+    ),
+    rgba(10, 16, 22, 0.9);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition:
+    opacity 120ms ease,
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.gameToolsDock--toolOpen {
+  z-index: 144;
+}
+
+.gameToolsDock--toolOpen .gameToolsDock__button {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.86);
+}
+
+.gameToolsDock__button:hover,
+.gameToolsDock__button:focus-visible,
+.gameToolsDock--open .gameToolsDock__button {
+  border-color: var(--accent-border);
+  background: rgb(var(--accent-rgb) / 0.18);
+}
+
+.gameToolsDock__menu {
+  position: absolute;
+  min-width: 142px;
+  padding: 6px;
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
+  border-radius: 16px;
+  background: rgba(10, 16, 22, 0.96);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.32);
+  display: grid;
+  gap: 2px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: gameToolsDockMenuIn 180ms cubic-bezier(0.22, 0.9, 0.26, 1) both;
+}
+
+.gameToolsDock__menu--above-left {
+  bottom: calc(100% + 8px);
+  left: 0;
+  transform-origin: bottom left;
+}
+
+.gameToolsDock__menu--above-right {
+  right: 0;
+  bottom: calc(100% + 8px);
+  transform-origin: bottom right;
+}
+
+.gameToolsDock__menu--below-left {
+  top: calc(100% + 8px);
+  left: 0;
+  transform-origin: top left;
+}
+
+.gameToolsDock__menu--below-right {
+  top: calc(100% + 8px);
+  right: 0;
+  transform-origin: top right;
+}
+
+@keyframes gameToolsDockMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.gameToolsDock__menu button {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.gameToolsDock__menu button:hover,
+.gameToolsDock__menu button:focus-visible {
+  background: rgb(var(--accent-rgb) / 0.15);
+}
+.gameToolsDock--team .gameToolsDock__button {
+  border-color: rgba(122, 208, 255, 0.28);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(122, 208, 255, 0.12),
+      rgba(122, 208, 255, 0.03)
+    ),
+    rgba(10, 16, 22, 0.9);
+}
+.gameToolsDock--team .gameToolsDock__menu {
+  border-color: rgba(122, 208, 255, 0.28);
+}
+
+:root[data-theme="light"] .gameToolsDock__button {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: var(--ds-color-surface-bright);
+  color: var(--ds-color-on-surface);
+  box-shadow: 0 12px 24px rgba(28, 49, 56, 0.18);
+}
+:root[data-theme="light"] .gameToolsDock__menu {
+  border-color: rgba(20, 36, 40, 0.2);
+  background: var(--ds-color-surface-bright);
+  box-shadow: 0 16px 32px rgba(28, 49, 56, 0.2);
+}
+:root[data-theme="light"] .gameToolsDock__menu button {
+  color: var(--ds-color-on-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gameToolsDock__button,
+  .gameToolsDock__menu {
+    transition: none;
+    animation: none;
+  }
+}

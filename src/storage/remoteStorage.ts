@@ -20,7 +20,7 @@ export const GAME_JOIN_NOTIFICATIONS_TABLE = "game_join_notifications";
 export const SHARING_PREFERENCE_NOTIFICATIONS_TABLE =
   "sharing_preference_notifications";
 const GAME_SELECT_COLUMNS =
-  "id,user_id,is_shared,collaborators_can_manage,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
+  "id,user_id,is_shared,collaborators_can_manage,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,tools_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
   "id,user_id,name,score_direction,starting_score,target_score,win_condition,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
 const PROFILE_SELECT_COLUMNS =
@@ -41,7 +41,7 @@ type GameRow = {
   win_condition: Game["winCondition"];
   win_by_two?: boolean | null;
   manual_end_only?: boolean | null;
-  dice_enabled?: boolean | null;
+  tools_enabled?: boolean | null;
   quick_score_value_1?: number | null;
   quick_score_value_2?: number | null;
   completion_mode?: Game["completionMode"] | null;
@@ -185,7 +185,7 @@ function gameToRow(userId: string, game: Game): GameRow {
     win_condition: game.winCondition,
     win_by_two: game.winByTwo,
     manual_end_only: game.manualEndOnly,
-    dice_enabled: game.diceEnabled,
+    tools_enabled: game.toolsEnabled,
     quick_score_value_1: game.quickScoreValues[0],
     quick_score_value_2: game.quickScoreValues[1],
     completion_mode: game.completionMode ?? null,
@@ -301,7 +301,7 @@ function rowToGame(row: GameRow, currentUserId?: string): Game {
     winCondition,
     winByTwo: row.win_by_two === true,
     manualEndOnly: row.manual_end_only === true,
-    diceEnabled: row.dice_enabled === true,
+    toolsEnabled: row.tools_enabled === true,
     quickScoreValues: sanitizeQuickScoreValues([
       row.quick_score_value_1,
       row.quick_score_value_2,
@@ -354,14 +354,14 @@ function isMissingGameRuleColumn(error: unknown) {
   return (
     message.includes("win_by_two") ||
     message.includes("manual_end_only") ||
-    message.includes("dice_enabled") ||
+    message.includes("tools_enabled") ||
     message.includes("completion_mode") ||
     message.includes("collaborators_can_manage")
   );
 }
 
-function isMissingDiceEnabledColumn(error: unknown) {
-  return getErrorMessage(error).includes("dice_enabled");
+function isMissingToolsEnabledColumn(error: unknown) {
+  return getErrorMessage(error).includes("tools_enabled");
 }
 
 function isMissingQuickScoreColumn(error: unknown) {
@@ -568,8 +568,8 @@ export async function loadRemoteGames(userId: string): Promise<Game[]> {
       ownerOnly = true;
       continue;
     }
-    if (isMissingDiceEnabledColumn(modernError)) {
-      omittedColumns.add("dice_enabled");
+    if (isMissingToolsEnabledColumn(modernError)) {
+      omittedColumns.add("tools_enabled");
       continue;
     }
     break;
@@ -749,7 +749,7 @@ export async function updateRemoteSharedGameSettings(
     | "winByTwo"
     | "manualEndOnly"
     | "timerEnabled"
-    | "diceEnabled"
+    | "toolsEnabled"
     | "quickScoreValues"
     | "timerMode"
     | "timerSeconds"
@@ -758,7 +758,7 @@ export async function updateRemoteSharedGameSettings(
 ) {
   if (!supabase) throw new Error("Cloud games are not configured.");
   const result = await supabase
-    .rpc("update_shared_game_settings_v3", {
+    .rpc("update_shared_game_settings_v5", {
       p_game_id: gameId,
       p_name: settings.name,
       p_score_direction: settings.scoreDirection,
@@ -768,7 +768,7 @@ export async function updateRemoteSharedGameSettings(
       p_win_by_two: settings.winByTwo,
       p_manual_end_only: settings.manualEndOnly,
       p_timer_enabled: settings.timerEnabled,
-      p_dice_enabled: settings.diceEnabled,
+      p_tools_enabled: settings.toolsEnabled,
       p_quick_score_value_1: settings.quickScoreValues[0],
       p_quick_score_value_2: settings.quickScoreValues[1],
       p_timer_mode: settings.timerMode,
@@ -1109,19 +1109,15 @@ export async function saveRemoteGames(
       error = retryResult.error;
     }
     if (error) {
-      if (isMissingDiceEnabledColumn(error)) {
-        const noDiceRows = rows.map(
-          ({
-            dice_enabled,
-            quick_score_value_1,
-            quick_score_value_2,
-            ...row
-          }) => row,
+      if (isMissingToolsEnabledColumn(error)) {
+        const noToolsRows = rows.map(
+          ({ tools_enabled, quick_score_value_1, quick_score_value_2, ...row }) =>
+            row,
         );
-        const { error: noDiceError } = await supabase
+        const { error: noToolsError } = await supabase
           .from(GAMES_TABLE)
-          .upsert(noDiceRows, { onConflict: "id" });
-        if (noDiceError) throw noDiceError;
+          .upsert(noToolsRows, { onConflict: "id" });
+        if (noToolsError) throw noToolsError;
       } else if (isMissingTeamsColumn(error)) {
         throw new Error(
           "Missing games.teams column in Supabase. Run the latest database migration before using team support.",
@@ -1159,7 +1155,7 @@ export async function saveRemoteGames(
               score_history,
               win_by_two,
               manual_end_only,
-              dice_enabled,
+              tools_enabled,
               quick_score_value_1,
               quick_score_value_2,
               completion_mode,
@@ -1183,7 +1179,7 @@ export async function saveRemoteGames(
             score_history,
             win_by_two,
             manual_end_only,
-            dice_enabled,
+            tools_enabled,
             quick_score_value_1,
             quick_score_value_2,
             completion_mode,

@@ -25,7 +25,7 @@ export type GameSettingsDialogProps = {
     winByTwo: boolean;
     manualEndOnly: boolean;
     timerEnabled: boolean;
-    diceEnabled: boolean;
+    toolsEnabled: boolean;
     quickScoreValues: QuickScoreValues;
     timerMode: "countdown" | "stopwatch";
     timerSeconds: number;

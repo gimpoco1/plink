@@ -1,6 +1,6 @@
 import { translate } from "../../i18n/translate";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Dices } from "lucide-react";
+import { ChevronLeft, Dices, X } from "lucide-react";
 import "./GameDiceTray.css";
 import { DiceCanvas } from "./DiceCanvas";
 import {
@@ -15,11 +15,30 @@ import {
 
 type Props = {
   accentTone?: "default" | "team";
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+  showTab?: boolean;
+  anchor?: {
+    x: number;
+    y: number;
+    placement: "above-left" | "above-right" | "below-left" | "below-right";
+  };
+  onBack?: () => void;
+  onClose?: () => void;
 };
 
-export function GameDiceTray({ accentTone = "default" }: Props) {
+export function GameDiceTray({
+  accentTone = "default",
+  isOpen: controlledIsOpen,
+  onOpenChange,
+  showTab = true,
+  anchor,
+  onBack,
+  onClose,
+}: Props) {
   const initialDicePreview: [DieValue, DieValue] = [1, 4];
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
+  const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
   const [diceCount, setDiceCount] = useState<DiceCount>(2);
   const [displayValuesByCount, setDisplayValuesByCount] = useState<
     DiceStateByCount<[DieValue, DieValue]>
@@ -49,6 +68,12 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
   const timeoutIdsRef = useRef<number[]>([]);
   const pendingValuesRef = useRef<[DieValue, DieValue] | null>(null);
   const visibleDiceCount = isRolling ? rollingDiceCount : diceCount;
+
+  function setIsOpen(next: boolean | ((value: boolean) => boolean)) {
+    const resolved = typeof next === "function" ? next(isOpen) : next;
+    if (controlledIsOpen === undefined) setUncontrolledIsOpen(resolved);
+    onOpenChange?.(resolved);
+  }
 
   const visibleValues = useMemo(() => {
     const sourceValues = isRolling ? rollingPreviewValues : displayValues;
@@ -198,30 +223,47 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
         isOpen ? " gameDiceTray--open" : ""
       }${isRolling ? " gameDiceTray--rolling" : ""}${
         accentTone === "team" ? " gameDiceTray--team" : ""
-      }`}
+      }${showTab ? "" : " gameDiceTray--noTab"}`}
+      style={
+        !showTab && anchor
+          ? {
+              left: anchor.x,
+              top: anchor.y,
+              bottom: "auto",
+            }
+          : undefined
+      }
+      data-placement={!showTab ? anchor?.placement : undefined}
+      aria-hidden={!showTab && !isOpen}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <button
-        className="gameDiceTray__tab"
-        type="button"
-        aria-label={isOpen ? translate("copy.collapseDiceRoller") : translate("copy.openDiceRoller")}
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((value) => !value)}
-      >
-        <Dices size={18} strokeWidth={2.3} aria-hidden="true" />
-        <span className="gameDiceTray__tabLabel">
-          {translate("copy.dice")}
-        </span>
-        <ChevronLeft
-          size={16}
-          strokeWidth={2.5}
-          aria-hidden="true"
-          className={`gameDiceTray__tabChevron${
-            isOpen ? " gameDiceTray__tabChevron--open" : ""
-          }`}
-        />
-      </button>
+      {showTab ? (
+        <button
+          className="gameDiceTray__tab"
+          type="button"
+          aria-label={
+            isOpen
+              ? translate("copy.collapseDiceRoller")
+              : translate("copy.openDiceRoller")
+          }
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen((value) => !value)}
+        >
+          <Dices size={18} strokeWidth={2.3} aria-hidden="true" />
+          <span className="gameDiceTray__tabLabel">
+            {translate("copy.dice")}
+          </span>
+          <ChevronLeft
+            size={16}
+            strokeWidth={2.5}
+            aria-hidden="true"
+            className={`gameDiceTray__tabChevron${
+              isOpen ? " gameDiceTray__tabChevron--open" : ""
+            }`}
+          />
+        </button>
+      ) : null}
 
       <div className="gameDiceTray__panel">
         <div className="gameDiceTray__header">
@@ -298,6 +340,22 @@ export function GameDiceTray({ accentTone = "default" }: Props) {
                 : translate("copy.rollNow")}
           </button>
         </div>
+        {!showTab ? (
+          <div className="gameDiceTray__footer">
+            <button className="gameDiceTray__back" type="button" onClick={onBack}>
+              <ChevronLeft size={16} strokeWidth={2.7} aria-hidden="true" />
+              {translate("copy.backToTools")}
+            </button>
+            <button
+              className="gameDiceTray__close"
+              type="button"
+              aria-label={translate("copy.close")}
+              onClick={onClose}
+            >
+              <X size={17} strokeWidth={2.6} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
