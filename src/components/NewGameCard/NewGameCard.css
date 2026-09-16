@@ -117,7 +117,9 @@
 }
 
 :root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled),
-:root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled):hover {
+:root[data-theme="light"]
+  .newGamePanel--open
+  .newSessionStart:not(:disabled):hover {
   border-color: var(--accent);
   background: #ffffff;
   color: var(--accent);
@@ -125,11 +127,15 @@
 }
 
 :root[data-theme="light"] .newGamePanel--open .modeCard--active .modeCard__icon,
-:root[data-theme="light"] .newGamePanel--open .newSessionStart:not(:disabled):hover {
+:root[data-theme="light"]
+  .newGamePanel--open
+  .newSessionStart:not(:disabled):hover {
   color: var(--accent);
 }
 
-:root[data-theme="light"] .newGamePanel--open .participantModeSwitch__option--active {
+:root[data-theme="light"]
+  .newGamePanel--open
+  .participantModeSwitch__option--active {
   color: var(--new-game-panel-accent);
 }
 
@@ -867,23 +873,70 @@
 
 .newSessionOptions {
   display: grid;
-  grid-template-columns: repeat(14, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 8px;
 }
 
+.newSessionAdvancedSettings {
+  display: grid;
+  gap: 10px;
+}
+
+.advancedSettingsTrigger {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid rgba(17, 24, 10, 0.14);
+  border-radius: 16px;
+  background: rgba(17, 24, 10, 0.06);
+  color: #11180f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.advancedSettingsTrigger:hover,
+.advancedSettingsTrigger:focus-visible,
+.advancedSettingsTrigger--open {
+  background: rgba(17, 24, 10, 0.1);
+}
+.advancedSettingsTrigger__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgba(17, 24, 10, 0.1);
+  display: grid;
+  place-items: center;
+}
+.advancedSettingsTrigger__copy {
+  min-width: 0;
+}
+.advancedSettingsTrigger__copy strong {
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+.advancedSettingsTrigger__chevron {
+  margin-left: auto;
+  transition: transform 200ms ease;
+}
+.advancedSettingsTrigger--open .advancedSettingsTrigger__chevron {
+  transform: rotate(180deg);
+}
+.advancedSettingsList {
+  display: none;
+  gap: 10px;
+}
+.advancedSettingsList--open {
+  display: grid;
+}
+
 .newSessionOptions .modeCard:nth-child(-n + 2) {
-  grid-column: span 7;
+  grid-column: span 6;
 }
 
-.newSessionOptions .modeCard:nth-child(3) {
-  grid-column: span 5;
-}
-
-.newSessionOptions .modeCard:nth-child(4) {
-  grid-column: span 5;
-}
-
-.newSessionOptions .modeCard:nth-child(5) {
+.newSessionOptions .modeCard:nth-child(n + 3) {
   grid-column: span 4;
 }
 
@@ -1434,8 +1487,7 @@
   cursor: not-allowed;
 }
 
-.participantOption.participantOption--blocked
-  .participantOption__copy {
+.participantOption.participantOption--blocked .participantOption__copy {
   opacity: 0.7;
 }
 
@@ -1450,8 +1502,7 @@
   background: rgba(17, 24, 10, 0.06);
 }
 
-.participantOptionGroup--blocked
-  .participantOption.participantOption--blocked {
+.participantOptionGroup--blocked .participantOption.participantOption--blocked {
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -2061,7 +2112,7 @@
     align-items: start;
   }
   .newSessionOptions {
-    grid-template-columns: repeat(14, minmax(0, 1fr));
+    grid-template-columns: repeat(12, minmax(0, 1fr));
   }
   .modeCard__copy strong {
     overflow: visible;

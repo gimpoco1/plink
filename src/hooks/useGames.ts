@@ -99,6 +99,7 @@ type CreateGameInput = {
   manualEndOnly?: boolean;
   timerEnabled?: boolean;
   diceEnabled?: boolean;
+  calculatorEnabled?: boolean;
   quickScoreValues?: QuickScoreValues;
   timerMode?: "countdown" | "stopwatch";
   timerSeconds?: number;
@@ -131,6 +132,7 @@ type UpdateGameSettingsInput = {
   manualEndOnly: boolean;
   timerEnabled: boolean;
   diceEnabled: boolean;
+  calculatorEnabled: boolean;
   quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;
@@ -255,7 +257,9 @@ function getRemovedGamesNotice(removedGames: Game[]) {
   }
   return removedGames.length === 1
     ? translate("dynamic.wasRemovedFromYourAccount", [removedGames[0].name])
-    : translate("dynamic.gamesWereRemovedFromYourAccount", [removedGames.length]);
+    : translate("dynamic.gamesWereRemovedFromYourAccount", [
+        removedGames.length,
+      ]);
 }
 
 function mergeGamesById(baseGames: Game[], incomingGames: Game[]) {
@@ -472,7 +476,9 @@ export function useGames(
         setCurrentGameId(null);
         setRemoteUserId(null);
         setSyncNotice({
-          message: translate("dynamic.couldNotLoadGames", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotLoadGames", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         setRemoteReady(true);
@@ -851,7 +857,9 @@ export function useGames(
         failedSaveNoticeSignatureRef.current = nextSignature;
         console.error("Failed to save games to Supabase", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotSaveGames", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotSaveGames", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
       })
@@ -986,6 +994,7 @@ export function useGames(
         : "reach_target";
     const timerEnabled = input.timerEnabled === true;
     const diceEnabled = input.diceEnabled === true;
+    const calculatorEnabled = input.calculatorEnabled === true;
     const quickScoreValues = sanitizeQuickScoreValues(input.quickScoreValues);
     const timerMode =
       input.timerMode === "stopwatch" ? "stopwatch" : "countdown";
@@ -1064,6 +1073,7 @@ export function useGames(
       manualEndOnly,
       timerEnabled,
       diceEnabled,
+      calculatorEnabled,
       quickScoreValues,
       timerMode,
       timerSeconds,
@@ -1094,7 +1104,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to delete the shared game", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotDeleteGame", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotDeleteGame", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -1154,7 +1166,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to replay the shared game", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotStartGame", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotStartGame", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return null;
@@ -1210,7 +1224,9 @@ export function useGames(
     } catch (error) {
       console.error("Failed to load replay invite candidates", error);
       setSyncNotice({
-        message: translate("dynamic.couldNotPrepareGame", [getSyncErrorMessage(error)]),
+        message: translate("dynamic.couldNotPrepareGame", [
+          getSyncErrorMessage(error),
+        ]),
         tone: "error",
       });
       return null;
@@ -1239,7 +1255,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to rename the shared game", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotRenameGame", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotRenameGame", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -1322,7 +1340,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to add a player to the shared game", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotAddPlayer", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotAddPlayer", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -1417,7 +1437,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to remove the shared game player", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotRemovePlayer", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotRemovePlayer", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -1459,7 +1481,9 @@ export function useGames(
     } catch (error) {
       console.error("Failed to merge the shared game players", error);
       setSyncNotice({
-        message: translate("dynamic.couldNotMergePlayers", [getSyncErrorMessage(error)]),
+        message: translate("dynamic.couldNotMergePlayers", [
+          getSyncErrorMessage(error),
+        ]),
         tone: "error",
       });
       return false;
@@ -1499,7 +1523,9 @@ export function useGames(
     } catch (error) {
       console.error("Failed to add the past linked player", error);
       setSyncNotice({
-        message: translate("dynamic.couldNotAddInvitedPlayer", [getSyncErrorMessage(error)]),
+        message: translate("dynamic.couldNotAddInvitedPlayer", [
+          getSyncErrorMessage(error),
+        ]),
         tone: "error",
       });
       return false;
@@ -1568,7 +1594,9 @@ export function useGames(
       );
       console.error("Failed to add invited players to the new game", error);
       setSyncNotice({
-        message: translate("dynamic.couldNotAddInvitedPlayers", [getSyncErrorMessage(error)]),
+        message: translate("dynamic.couldNotAddInvitedPlayers", [
+          getSyncErrorMessage(error),
+        ]),
         tone: "error",
       });
       return false;
@@ -1603,7 +1631,9 @@ export function useGames(
     } catch (error) {
       console.error("Failed to check invited player permissions", error);
       setSyncNotice({
-        message: translate("dynamic.couldNotCheckInvitePermissions", [getSyncErrorMessage(error)]),
+        message: translate("dynamic.couldNotCheckInvitePermissions", [
+          getSyncErrorMessage(error),
+        ]),
         tone: "error",
       });
       return { status: "error", blockedUserIds: [] };
@@ -1667,7 +1697,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update the shared game player", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotUpdatePlayer", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotUpdatePlayer", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -1813,7 +1845,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to reset the shared game", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotResetGame", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotResetGame", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -1857,7 +1891,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update the shared game score", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotUpdateScore", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotUpdateScore", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -2014,6 +2050,7 @@ export function useGames(
             manualEndOnly: input.manualEndOnly,
             timerEnabled: input.timerEnabled,
             diceEnabled: input.diceEnabled,
+            calculatorEnabled: input.calculatorEnabled,
             quickScoreValues,
             timerMode: input.timerMode,
             timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
@@ -2031,7 +2068,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update the shared game settings", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotUpdateSettings", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotUpdateSettings", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -2068,6 +2107,7 @@ export function useGames(
         manualEndOnly: input.manualEndOnly,
         timerEnabled: input.timerEnabled,
         diceEnabled: input.diceEnabled,
+        calculatorEnabled: input.calculatorEnabled,
         quickScoreValues,
         timerMode: input.timerMode,
         timerSeconds: timerSeconds > 0 ? timerSeconds : 300,
@@ -2100,7 +2140,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to update collaborator permissions", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotUpdatePermissions", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotUpdatePermissions", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;
@@ -2142,7 +2184,9 @@ export function useGames(
       } catch (error) {
         console.error("Failed to end the shared game", error);
         setSyncNotice({
-          message: translate("dynamic.couldNotEndGame", [getSyncErrorMessage(error)]),
+          message: translate("dynamic.couldNotEndGame", [
+            getSyncErrorMessage(error),
+          ]),
           tone: "error",
         });
         return false;

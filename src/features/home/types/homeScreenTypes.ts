@@ -23,6 +23,7 @@ export type QuickSetup = {
   manualEndOnly: boolean;
   timerEnabled: boolean;
   diceEnabled: boolean;
+  calculatorEnabled: boolean;
   quickScoreValues: QuickScoreValues;
   timerMode: "countdown" | "stopwatch";
   timerSeconds: number;

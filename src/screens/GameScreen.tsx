@@ -5,7 +5,7 @@ import { WinCelebration } from "../components/WinCelebration/WinCelebration";
 import { PlayerCard } from "../components/PlayerCard/PlayerCard";
 import { TeamScoreCard } from "../components/TeamScoreCard/TeamScoreCard";
 import { GameTimer } from "../components/GameTimer/GameTimer";
-import { GameDiceTray } from "../components/GameDiceTray/GameDiceTray";
+import { GameToolsDock } from "../components/GameToolsDock/GameToolsDock";
 import { useGameScreenModel } from "../features/game/hooks/useGameScreenModel";
 import type { GameScreenProps } from "../features/game/types/gameScreenTypes";
 import { GameManagePlayersDialog } from "../features/game/components/GameManagePlayersDialog";
@@ -183,10 +183,7 @@ export function GameScreen(props: GameScreenProps) {
             </div>
           </section>
         ) : (
-          <section
-            className="teamBoard"
-            aria-label={translate("tabs.players")}
-          >
+          <section className="teamBoard" aria-label={translate("tabs.players")}>
             {teamSections.map((section) => (
               <div
                 key={section.id}
@@ -310,8 +307,12 @@ export function GameScreen(props: GameScreenProps) {
         />
       ) : null}
 
-      {game.diceEnabled ? (
-        <GameDiceTray accentTone={isTeamGame ? "team" : "default"} />
+      {game.diceEnabled || game.calculatorEnabled ? (
+        <GameToolsDock
+          diceEnabled={game.diceEnabled}
+          calculatorEnabled={game.calculatorEnabled}
+          accentTone={isTeamGame ? "team" : "default"}
+        />
       ) : null}
 
       {canManageGame ? <GameManagePlayersDialog model={model} /> : null}

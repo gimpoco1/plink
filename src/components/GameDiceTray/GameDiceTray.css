@@ -13,6 +13,69 @@
   transform: translateX(0);
 }
 
+.gameDiceTray--noTab {
+  width: min(320px, calc(100vw - 24px));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 300ms cubic-bezier(0.22, 0.9, 0.26, 1),
+    opacity 180ms ease;
+  will-change: transform;
+}
+
+.gameDiceTray--noTab.gameDiceTray--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gameDiceTray--noTab .gameDiceTray__panel {
+  margin-left: 0;
+  border-right-width: 1px;
+  border-radius: 22px;
+  transition: border-radius 260ms ease;
+}
+
+.gameDiceTray--noTab:not(.gameDiceTray--open) .gameDiceTray__panel {
+  border-radius: 999px;
+}
+
+.gameDiceTray--noTab[data-placement="above-left"] {
+  transform: translate(0, calc(-100% + 52px)) scale(0.163, 0.17);
+  transform-origin: bottom left;
+}
+
+.gameDiceTray--noTab[data-placement="above-right"] {
+  transform: translate(calc(-100% + 52px), calc(-100% + 52px))
+    scale(0.163, 0.17);
+  transform-origin: bottom right;
+}
+
+.gameDiceTray--noTab[data-placement="below-left"] {
+  transform: scale(0.163, 0.17);
+  transform-origin: top left;
+}
+
+.gameDiceTray--noTab[data-placement="below-right"] {
+  transform: translate(calc(-100% + 52px), 0) scale(0.163, 0.17);
+  transform-origin: top right;
+}
+
+.gameDiceTray--noTab.gameDiceTray--open[data-placement="above-left"] {
+  transform: translate(0, calc(-100% + 52px)) scale(1);
+}
+
+.gameDiceTray--noTab.gameDiceTray--open[data-placement="above-right"] {
+  transform: translate(calc(-100% + 52px), calc(-100% + 52px)) scale(1);
+}
+
+.gameDiceTray--noTab.gameDiceTray--open[data-placement="below-left"] {
+  transform: scale(1);
+}
+
+.gameDiceTray--noTab.gameDiceTray--open[data-placement="below-right"] {
+  transform: translate(calc(-100% + 52px), 0) scale(1);
+}
+
 .gameDiceTray__tab {
   position: absolute;
   left: 0;
@@ -24,7 +87,11 @@
   border-right: 0;
   border-radius: 16px 0 0 16px;
   background:
-    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.08), rgb(var(--accent-rgb) / 0.015)),
+    linear-gradient(
+      180deg,
+      rgb(var(--accent-rgb) / 0.08),
+      rgb(var(--accent-rgb) / 0.015)
+    ),
     rgba(18, 24, 30, 0.72);
   box-shadow: -10px 14px 26px rgba(0, 0, 0, 0.16);
   color: rgba(236, 241, 247, 0.82);
@@ -63,7 +130,11 @@
   border-right: 0;
   border-radius: 22px 0 0 22px;
   background:
-    radial-gradient(circle at top left, rgb(var(--accent-rgb) / 0.16), transparent 38%),
+    radial-gradient(
+      circle at top left,
+      rgb(var(--accent-rgb) / 0.16),
+      transparent 38%
+    ),
     linear-gradient(180deg, rgba(18, 24, 30, 0.98), rgba(10, 16, 22, 0.96));
   box-shadow: -20px 22px 44px rgba(0, 0, 0, 0.34);
   display: grid;
@@ -79,7 +150,11 @@
 
 .gameDiceTray--team .gameDiceTray__tab {
   background:
-    linear-gradient(180deg, rgba(122, 208, 255, 0.08), rgba(122, 208, 255, 0.015)),
+    linear-gradient(
+      180deg,
+      rgba(122, 208, 255, 0.08),
+      rgba(122, 208, 255, 0.015)
+    ),
     rgba(18, 24, 30, 0.72);
 }
 
@@ -91,13 +166,40 @@
 
 .gameDiceTray--team .gameDiceTray__panel {
   background:
-    radial-gradient(circle at top left, rgba(122, 208, 255, 0.15), transparent 38%),
+    radial-gradient(
+      circle at top left,
+      rgba(122, 208, 255, 0.15),
+      transparent 38%
+    ),
     linear-gradient(180deg, rgba(18, 24, 30, 0.98), rgba(10, 16, 22, 0.96));
 }
 
 .gameDiceTray__header {
   display: grid;
   gap: 10px;
+}
+
+.gameDiceTray__back {
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 850;
+  justify-self: end;
+}
+
+.gameDiceTray__back:hover,
+.gameDiceTray__back:focus-visible {
+  border-color: var(--accent-border);
+  background: rgb(var(--accent-rgb) / 0.12);
+  color: var(--text);
 }
 
 .gameDiceTray__eyebrow {
@@ -150,7 +252,11 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 22px;
   background:
-    radial-gradient(circle at top center, rgba(255, 255, 255, 0.06), transparent 54%),
+    radial-gradient(
+      circle at top center,
+      rgba(255, 255, 255, 0.06),
+      transparent 54%
+    ),
     rgba(7, 11, 20, 0.88);
   display: grid;
   gap: 14px;
@@ -187,8 +293,16 @@
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent 42%),
-    linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.94));
+    radial-gradient(
+      circle at top left,
+      rgba(255, 255, 255, 0.2),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(248, 250, 252, 0.98),
+      rgba(226, 232, 240, 0.94)
+    );
   color: #0b1220;
   display: grid;
   place-items: center;
@@ -206,7 +320,9 @@
   font-weight: 850;
   text-align: center;
   opacity: 0.72;
-  transition: opacity 180ms ease, color 180ms ease;
+  transition:
+    opacity 180ms ease,
+    color 180ms ease;
 }
 
 .gameDiceTray__status--visible {
@@ -261,7 +377,11 @@
 :root[data-theme="light"] .gameDiceTray__panel {
   border-color: rgba(20, 36, 40, 0.22);
   background:
-    radial-gradient(circle at top left, rgb(var(--accent-rgb) / 0.14), transparent 42%),
+    radial-gradient(
+      circle at top left,
+      rgb(var(--accent-rgb) / 0.14),
+      transparent 42%
+    ),
     var(--ds-color-surface-bright);
   box-shadow: -20px 22px 44px rgba(28, 49, 56, 0.2);
 }
@@ -275,7 +395,11 @@
 :root[data-theme="light"] .gameDiceTray--team .gameDiceTray__panel {
   border-color: rgba(0, 105, 135, 0.28);
   background:
-    radial-gradient(circle at top left, rgba(0, 105, 135, 0.14), transparent 42%),
+    radial-gradient(
+      circle at top left,
+      rgba(0, 105, 135, 0.14),
+      transparent 42%
+    ),
     var(--ds-color-surface-bright);
 }
 
@@ -347,6 +471,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .gameDiceTray,
+  .gameDiceTray--noTab,
   .gameDiceTray__tabChevron,
   .gameDiceTray__status {
     transition: none;

@@ -20,7 +20,7 @@ export const GAME_JOIN_NOTIFICATIONS_TABLE = "game_join_notifications";
 export const SHARING_PREFERENCE_NOTIFICATIONS_TABLE =
   "sharing_preference_notifications";
 const GAME_SELECT_COLUMNS =
-  "id,user_id,is_shared,collaborators_can_manage,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
+  "id,user_id,is_shared,collaborators_can_manage,name,participant_mode,score_direction,starting_score,target_score,win_condition,win_by_two,manual_end_only,timer_enabled,dice_enabled,calculator_enabled,quick_score_value_1,quick_score_value_2,timer_mode,timer_seconds,completion_mode,teams,players,score_history,created_at,updated_at,ended_at";
 const LEGACY_GAME_SELECT_COLUMNS =
   "id,user_id,name,score_direction,starting_score,target_score,win_condition,timer_enabled,timer_mode,timer_seconds,players,created_at,updated_at,ended_at";
 const PROFILE_SELECT_COLUMNS =
@@ -42,6 +42,7 @@ type GameRow = {
   win_by_two?: boolean | null;
   manual_end_only?: boolean | null;
   dice_enabled?: boolean | null;
+  calculator_enabled?: boolean | null;
   quick_score_value_1?: number | null;
   quick_score_value_2?: number | null;
   completion_mode?: Game["completionMode"] | null;
@@ -186,6 +187,7 @@ function gameToRow(userId: string, game: Game): GameRow {
     win_by_two: game.winByTwo,
     manual_end_only: game.manualEndOnly,
     dice_enabled: game.diceEnabled,
+    calculator_enabled: game.calculatorEnabled,
     quick_score_value_1: game.quickScoreValues[0],
     quick_score_value_2: game.quickScoreValues[1],
     completion_mode: game.completionMode ?? null,
@@ -302,6 +304,7 @@ function rowToGame(row: GameRow, currentUserId?: string): Game {
     winByTwo: row.win_by_two === true,
     manualEndOnly: row.manual_end_only === true,
     diceEnabled: row.dice_enabled === true,
+    calculatorEnabled: row.calculator_enabled === true,
     quickScoreValues: sanitizeQuickScoreValues([
       row.quick_score_value_1,
       row.quick_score_value_2,
@@ -355,6 +358,7 @@ function isMissingGameRuleColumn(error: unknown) {
     message.includes("win_by_two") ||
     message.includes("manual_end_only") ||
     message.includes("dice_enabled") ||
+    message.includes("calculator_enabled") ||
     message.includes("completion_mode") ||
     message.includes("collaborators_can_manage")
   );
@@ -362,6 +366,10 @@ function isMissingGameRuleColumn(error: unknown) {
 
 function isMissingDiceEnabledColumn(error: unknown) {
   return getErrorMessage(error).includes("dice_enabled");
+}
+
+function isMissingCalculatorEnabledColumn(error: unknown) {
+  return getErrorMessage(error).includes("calculator_enabled");
 }
 
 function isMissingQuickScoreColumn(error: unknown) {
@@ -568,6 +576,10 @@ export async function loadRemoteGames(userId: string): Promise<Game[]> {
       ownerOnly = true;
       continue;
     }
+    if (isMissingCalculatorEnabledColumn(modernError)) {
+      omittedColumns.add("calculator_enabled");
+      continue;
+    }
     if (isMissingDiceEnabledColumn(modernError)) {
       omittedColumns.add("dice_enabled");
       continue;
@@ -750,6 +762,7 @@ export async function updateRemoteSharedGameSettings(
     | "manualEndOnly"
     | "timerEnabled"
     | "diceEnabled"
+    | "calculatorEnabled"
     | "quickScoreValues"
     | "timerMode"
     | "timerSeconds"
@@ -758,7 +771,7 @@ export async function updateRemoteSharedGameSettings(
 ) {
   if (!supabase) throw new Error("Cloud games are not configured.");
   const result = await supabase
-    .rpc("update_shared_game_settings_v3", {
+    .rpc("update_shared_game_settings_v4", {
       p_game_id: gameId,
       p_name: settings.name,
       p_score_direction: settings.scoreDirection,
@@ -769,6 +782,7 @@ export async function updateRemoteSharedGameSettings(
       p_manual_end_only: settings.manualEndOnly,
       p_timer_enabled: settings.timerEnabled,
       p_dice_enabled: settings.diceEnabled,
+      p_calculator_enabled: settings.calculatorEnabled,
       p_quick_score_value_1: settings.quickScoreValues[0],
       p_quick_score_value_2: settings.quickScoreValues[1],
       p_timer_mode: settings.timerMode,
@@ -1113,6 +1127,7 @@ export async function saveRemoteGames(
         const noDiceRows = rows.map(
           ({
             dice_enabled,
+            calculator_enabled,
             quick_score_value_1,
             quick_score_value_2,
             ...row
@@ -1160,6 +1175,7 @@ export async function saveRemoteGames(
               win_by_two,
               manual_end_only,
               dice_enabled,
+              calculator_enabled,
               quick_score_value_1,
               quick_score_value_2,
               completion_mode,
@@ -1184,6 +1200,7 @@ export async function saveRemoteGames(
             win_by_two,
             manual_end_only,
             dice_enabled,
+            calculator_enabled,
             quick_score_value_1,
             quick_score_value_2,
             completion_mode,

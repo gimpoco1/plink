@@ -63,6 +63,7 @@ import {
 import {
   ArrowDownUp,
   Boxes,
+  Calculator,
   Dices,
   Flag,
   GitCompareArrows,
@@ -1218,6 +1219,14 @@ export function useAppModel() {
           label: translate("copy.dice"),
           value: input.diceEnabled ? "Dice on" : translate("copy.noDice"),
           icon: createElement(Dices, { size: 16, strokeWidth: 2.2 }),
+          size: "compact",
+        },
+        {
+          label: translate("copy.calculator"),
+          value: input.calculatorEnabled
+            ? translate("copy.calculatorOn")
+            : translate("copy.noCalculator"),
+          icon: createElement(Calculator, { size: 16, strokeWidth: 2.2 }),
           size: "compact",
         },
       ],

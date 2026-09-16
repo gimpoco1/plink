@@ -2,7 +2,7 @@ import { translate } from "../../i18n/translate";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { ScoreDirection, WinCondition } from "../../types";
 import { MAX_ABS_SCORE } from "../../constants";
-import { ArrowDownUp, Dices, Flag, Timer, Trophy } from "lucide-react";
+import { ArrowDownUp, Flag, Timer, Trophy, PocketKnife } from "lucide-react";
 import { CollaboratorManagementControl } from "../CollaboratorManagementControl/CollaboratorManagementControl";
 import {
   SettingsAuthCard,
@@ -48,6 +48,9 @@ export const GameSettingsDialog = forwardRef<
   );
   const [timerEnabled, setTimerEnabled] = useState(game.timerEnabled);
   const [diceEnabled, setDiceEnabled] = useState(game.diceEnabled);
+  const [calculatorEnabled, setCalculatorEnabled] = useState(
+    game.calculatorEnabled,
+  );
   const [quickScoreSmallRaw, setQuickScoreSmallRaw] = useState(
     String(game.quickScoreValues[0]),
   );
@@ -80,6 +83,7 @@ export const GameSettingsDialog = forwardRef<
     setCollaboratorsCanManage(game.collaboratorsCanManage);
     setTimerEnabled(game.timerEnabled);
     setDiceEnabled(game.diceEnabled);
+    setCalculatorEnabled(game.calculatorEnabled);
     setQuickScoreSmallRaw(String(game.quickScoreValues[0]));
     setQuickScoreLargeRaw(String(game.quickScoreValues[1]));
     setTimerMode(game.timerMode);
@@ -119,6 +123,7 @@ export const GameSettingsDialog = forwardRef<
   const winByTwoNeedsMorePlayers = winByTwo && game.players.length < 2;
   const ruleNeedsMorePlayers =
     lowestNeedsMorePlayers || winByTwoNeedsMorePlayers;
+  const toolsEnabled = diceEnabled || calculatorEnabled;
   const canSave =
     name.trim().length > 0 &&
     Number.isFinite(parsedScore) &&
@@ -145,6 +150,7 @@ export const GameSettingsDialog = forwardRef<
             manualEndOnly,
             timerEnabled,
             diceEnabled,
+            calculatorEnabled,
             quickScoreValues: [parsedQuickScoreSmall, parsedQuickScoreLarge],
             timerMode,
             timerSeconds:
@@ -276,11 +282,15 @@ export const GameSettingsDialog = forwardRef<
               onClick={() => setTimerEnabled((value) => !value)}
             />
             <SettingsModeButton
-              icon={<Dices size={22} strokeWidth={2.3} />}
-              title={translate("copy.dice")}
-              description={translate("copy.diceRollerAvailableDuringTheGame")}
-              active={diceEnabled}
-              onClick={() => setDiceEnabled((value) => !value)}
+              icon={<PocketKnife size={22} strokeWidth={2.3} />}
+              title={translate("copy.tools")}
+              description={translate("copy.diceAndCalculatorDuringTheGame")}
+              active={toolsEnabled}
+              onClick={() => {
+                const next = !toolsEnabled;
+                setDiceEnabled(next);
+                setCalculatorEnabled(next);
+              }}
             />
           </div>
 
