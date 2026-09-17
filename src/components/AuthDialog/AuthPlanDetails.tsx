@@ -12,6 +12,9 @@ export function AuthPlanDetails() {
     appleProductsByPeriod,
     appleProductsError,
     appleProductsLoading,
+    googlePlayProductsByPeriod,
+    googlePlayProductsError,
+    googlePlayProductsLoading,
     appleReferralCode,
     appleReferralChecking,
     appleReferralError,
@@ -19,9 +22,11 @@ export function AuthPlanDetails() {
     handleBillingPeriodRadioKeyDown,
     hasStripeBillingProfile,
     isNativeIOS,
+    isNativeAndroid,
     isPro,
     manageSubscription,
     reloadAppleProducts,
+    reloadGooglePlayProducts,
     restoreSubscription,
     selectedBillingPeriod,
     setSelectedBillingPeriod,
@@ -33,14 +38,28 @@ export function AuthPlanDetails() {
   } = useAuthDialogContext();
   const monthlyPrice = isNativeIOS
     ? appleProductsByPeriod.monthly?.displayPrice
-    : "2.99 EUR";
+    : isNativeAndroid
+      ? googlePlayProductsByPeriod.monthly?.displayPrice
+      : "2.99 EUR";
   const yearlyPrice = isNativeIOS
     ? appleProductsByPeriod.yearly?.displayPrice
-    : "17.99 EUR";
+    : isNativeAndroid
+      ? googlePlayProductsByPeriod.yearly?.displayPrice
+      : "17.99 EUR";
   const selectedAppleProduct = appleProductsByPeriod[selectedBillingPeriod];
+  const selectedGooglePlayProduct =
+    googlePlayProductsByPeriod[selectedBillingPeriod];
   const purchaseUnavailable =
-    isNativeIOS &&
-    (appleProductsLoading || (!selectedAppleProduct && !appleProductsError));
+    (isNativeIOS &&
+      (appleProductsLoading || (!selectedAppleProduct && !appleProductsError))) ||
+    (isNativeAndroid &&
+      (googlePlayProductsLoading ||
+        (!selectedGooglePlayProduct && !googlePlayProductsError)));
+  const nativeProductsError = isNativeIOS
+    ? appleProductsError
+    : isNativeAndroid
+      ? googlePlayProductsError
+      : null;
   return (
     <div id="auth-plan-details" className="authDialog__planBody">
       {!isPro ? (
@@ -235,32 +254,40 @@ export function AuthPlanDetails() {
                 </form>
               ) : null}
             </div>
-          ) : (
+          ) : !isNativeAndroid ? (
             <p className="authDialog__webPromoNotice">
               <Tag size={14} strokeWidth={2.2} aria-hidden="true" />
               <span>{translate("copy.promoCodesCanBeEnteredAtCheckout")}</span>
             </p>
-          )}
+          ) : null}
           <div className="authDialog__planActions">
             <button
               className="btn btn--primary btn--wide"
               type="button"
               disabled={busy || appleReferralChecking || purchaseUnavailable}
               onClick={
-                appleProductsError ? reloadAppleProducts : startUpgradeFlow
+                appleProductsError
+                  ? reloadAppleProducts
+                  : googlePlayProductsError
+                    ? reloadGooglePlayProducts
+                    : startUpgradeFlow
               }
             >
               {busy
                 ? translate("copy.working")
-                : appleProductsError
-                  ? translate("copy.tryAppStoreAgain")
+                : nativeProductsError
+                  ? isNativeIOS
+                    ? translate("copy.tryAppStoreAgain")
+                    : translate("copy.tryGooglePlayAgain")
                   : purchaseUnavailable
-                    ? translate("copy.connectingToAppStore")
+                    ? isNativeIOS
+                      ? translate("copy.connectingToAppStore")
+                      : translate("copy.connectingToGooglePlay")
                     : selectedBillingPeriod === "monthly"
                       ? translate("copy.subscribeMonthly")
                       : translate("copy.subscribeYearly")}
             </button>
-            {isNativeIOS ? (
+            {isNativeIOS || isNativeAndroid ? (
               <button
                 className="btn btn--ghost btn--wide"
                 type="button"
@@ -287,11 +314,22 @@ export function AuthPlanDetails() {
               {appleProductsError}
             </p>
           ) : null}
+          {isNativeAndroid && googlePlayProductsError ? (
+            <p className="authDialog__planLegal" role="alert">
+              {googlePlayProductsError}
+            </p>
+          ) : null}
           {isNativeIOS ? (
             <p className="authDialog__planLegal">
               {translate(
                 "copy.paymentIsChargedToYourAppleAccountTheSubscriptionRenewsAutomaticallyUnless",
               )}{" "}
+              <a href="/terms.html">{translate("copy.terms")}</a> ·{" "}
+              <a href="/privacy.html">{translate("copy.privacy")}</a>
+            </p>
+          ) : isNativeAndroid ? (
+            <p className="authDialog__planLegal">
+              {translate("copy.googlePlaySubscriptionRenewalDisclosure")} {" "}
               <a href="/terms.html">{translate("copy.terms")}</a> ·{" "}
               <a href="/privacy.html">{translate("copy.privacy")}</a>
             </p>
@@ -301,7 +339,8 @@ export function AuthPlanDetails() {
       ) : (
         <>
           <div className="authDialog__planSupport">
-            {isNativeIOS && subscriptionProvider === "stripe"
+            {(isNativeIOS || isNativeAndroid) &&
+            subscriptionProvider === "stripe"
               ? translate("copy.yourPlinkProPlanIsBilledThroughTheWeb")
               : translate("copy.thanksForSupportingPlink")}
           </div>
@@ -315,7 +354,8 @@ export function AuthPlanDetails() {
               >
                 {busy
                   ? translate("copy.working")
-                  : isNativeIOS && subscriptionProvider === "stripe"
+                  : (isNativeIOS || isNativeAndroid) &&
+                      subscriptionProvider === "stripe"
                     ? translate("copy.manageOnWeb")
                     : translate("copy.manageSubscription")}
               </button>

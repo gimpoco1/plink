@@ -9,17 +9,32 @@ export function SessionPassOffer() {
     appleSessionPassProduct,
     busy,
     hasSessionPass,
+    googlePlaySessionPassError,
+    googlePlaySessionPassLoading,
+    googlePlaySessionPassProduct,
+    isNativeAndroid,
     isNativeIOS,
     reloadAppleProducts,
+    reloadGooglePlaySessionPass,
     startSessionPassPurchase,
   } = useAuthDialogContext();
   const price = isNativeIOS
     ? appleSessionPassProduct?.displayPrice
-    : "4.99 EUR";
+    : isNativeAndroid
+      ? googlePlaySessionPassProduct?.displayPrice
+      : "4.99 EUR";
   const unavailable =
-    isNativeIOS &&
-    (appleSessionPassLoading ||
-      (!appleSessionPassProduct && !appleSessionPassError));
+    (isNativeIOS &&
+      (appleSessionPassLoading ||
+        (!appleSessionPassProduct && !appleSessionPassError))) ||
+    (isNativeAndroid &&
+      (googlePlaySessionPassLoading ||
+        (!googlePlaySessionPassProduct && !googlePlaySessionPassError)));
+  const nativeError = isNativeIOS
+    ? appleSessionPassError
+    : isNativeAndroid
+      ? googlePlaySessionPassError
+      : null;
 
   return (
     <>
@@ -86,22 +101,28 @@ export function SessionPassOffer() {
             onClick={
               appleSessionPassError
                 ? reloadAppleProducts
-                : startSessionPassPurchase
+                : googlePlaySessionPassError
+                  ? reloadGooglePlaySessionPass
+                  : startSessionPassPurchase
             }
           >
             {busy
               ? translate("copy.working")
-              : appleSessionPassError
-                ? translate("copy.tryAppStoreAgain")
-                : appleSessionPassLoading
-                  ? translate("copy.connectingToAppStore")
+              : nativeError
+                ? isNativeIOS
+                  ? translate("copy.tryAppStoreAgain")
+                  : translate("copy.tryGooglePlayAgain")
+                : appleSessionPassLoading || googlePlaySessionPassLoading
+                  ? isNativeIOS
+                    ? translate("copy.connectingToAppStore")
+                    : translate("copy.connectingToGooglePlay")
                   : translate("dynamic.buySessionPass", [price ? ` · ${price}` : ""])}
           </button>
         )}
 
-        {isNativeIOS && appleSessionPassError && !hasSessionPass ? (
+        {nativeError && !hasSessionPass ? (
           <p className="authDialog__planLegal" role="alert">
-            {appleSessionPassError}
+            {nativeError}
           </p>
         ) : null}
       </section>

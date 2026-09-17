@@ -9,7 +9,7 @@ import {
 
 export type SubscriptionPlan = "free" | "pro";
 export type SubscriptionBillingPeriod = "monthly" | "yearly";
-export type SubscriptionProvider = "stripe" | "apple";
+export type SubscriptionProvider = "stripe" | "apple" | "google";
 type SubscriptionStatus =
   "active" | "trialing" | "inactive" | "past_due" | "canceled";
 type EntitlementSource = "default" | "account" | "subscription" | "override";
@@ -71,7 +71,9 @@ function normalizeBillingPeriod(
 function normalizeSubscriptionProvider(
   value: unknown,
 ): SubscriptionProvider | null {
-  return value === "stripe" || value === "apple" ? value : null;
+  return value === "stripe" || value === "apple" || value === "google"
+    ? value
+    : null;
 }
 
 function getAccountPlan(session: Session | null): SubscriptionPlan | null {

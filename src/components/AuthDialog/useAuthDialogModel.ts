@@ -18,12 +18,14 @@ import {
 import { Browser } from "@capacitor/browser";
 import { AVATAR_COLORS } from "../../constants";
 import { useAppleSubscription } from "../../features/billing/useAppleSubscription";
+import { useGooglePlaySubscription } from "../../features/billing/useGooglePlaySubscription";
 import { useEntitlementsContext } from "../../hooks/useEntitlements";
 import { hasSupabaseConfig, supabase } from "../../lib/supabase";
 import {
   NATIVE_AUTH_COMPLETED_EVENT,
   getAuthRedirectUrl,
   isNativeApp,
+  isNativeAndroidApp,
   isNativeIOSApp,
   openExternalUrl,
 } from "../../lib/nativePlatform";
@@ -125,6 +127,7 @@ export function useAuthDialogModel(
     subscriptionStatus,
   } = useEntitlementsContext();
   const appleSubscription = useAppleSubscription(session);
+  const googlePlaySubscription = useGooglePlaySubscription(session);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const nativeOAuthPendingRef = useRef(false);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
@@ -1266,6 +1269,50 @@ export function useAuthDialogModel(
       return;
     }
 
+    if (isNativeAndroidApp()) {
+      let purchaseResult: ToastState = {
+        message: translate("copy.thePurchaseCouldNotBeCompleted"),
+        tone: "error",
+      };
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await googlePlaySubscription.purchase(
+          selectedBillingPeriod,
+        );
+        if (result.status === "cancelled") {
+          purchaseResult = {
+            message: translate("copy.purchaseCancelled"),
+            tone: "default",
+          };
+        } else if (result.status === "pending") {
+          purchaseResult = {
+            message: translate("copy.googlePlayPurchaseWaitingForApproval"),
+            tone: "default",
+          };
+        } else {
+          purchaseResult = {
+            message: translate("copy.welcomeToPlinkPro"),
+            tone: "success",
+          };
+        }
+      } catch (err) {
+        purchaseResult = {
+          message: getBillingErrorMessage(
+            err,
+            translate("copy.thePurchaseCouldNotBeCompleted"),
+          ),
+          tone: "error",
+        };
+      } finally {
+        setBusy(false);
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
+      }
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -1352,6 +1399,50 @@ export function useAuthDialogModel(
       return;
     }
 
+    if (isNativeAndroidApp()) {
+      let purchaseResult: ToastState = {
+        message: translate("copy.theSessionPassPurchaseCouldNotBeCompleted"),
+        tone: "error",
+      };
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await googlePlaySubscription.purchaseSessionPass();
+        if (result.status === "cancelled") {
+          purchaseResult = {
+            message: translate("copy.purchaseCancelled"),
+            tone: "default",
+          };
+        } else if (result.status === "pending") {
+          purchaseResult = {
+            message: translate("copy.googlePlaySessionPassWaitingForApproval"),
+            tone: "default",
+          };
+        } else {
+          purchaseResult = {
+            message: translate(
+              "copy.sessionPassAddedYouCanNowKeepUpTo100Sessions",
+            ),
+            tone: "success",
+          };
+        }
+      } catch (err) {
+        purchaseResult = {
+          message: getBillingErrorMessage(
+            err,
+            translate("copy.theSessionPassPurchaseCouldNotBeCompleted"),
+          ),
+          tone: "error",
+        };
+      } finally {
+        setBusy(false);
+        showNativePurchaseResult(purchaseResult.message, purchaseResult.tone);
+      }
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -1412,6 +1503,38 @@ export function useAuthDialogModel(
       return;
     }
 
+    if (isNativeAndroidApp()) {
+      setBusy(true);
+      setError(null);
+      setNotice(null);
+      setTransferToast(null);
+      try {
+        const result = await googlePlaySubscription.restore();
+        const restoredBoth = result.active && result.sessionPassActive;
+        showTransferToast(
+          restoredBoth
+            ? translate("copy.plinkProAndSessionPassWereRestored")
+            : result.active
+              ? translate("copy.plinkProPurchaseWasRestored")
+              : result.sessionPassActive
+                ? translate("copy.sessionPassWasRestored")
+                : translate("copy.noRestorableGooglePlayPurchasesWereFound"),
+          result.active || result.sessionPassActive ? "success" : "default",
+        );
+      } catch (err) {
+        showTransferToast(
+          getBillingErrorMessage(
+            err,
+            translate("copy.purchasesCouldNotBeRestored"),
+          ),
+          "error",
+        );
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -1448,7 +1571,19 @@ export function useAuthDialogModel(
         return;
       }
 
-      if (isNativeIOSApp()) {
+      if (subscriptionProvider === "google" && isNativeAndroidApp()) {
+        await googlePlaySubscription.showManageSubscriptions();
+        return;
+      }
+
+      if (subscriptionProvider === "google") {
+        await openExternalUrl(
+          "https://play.google.com/store/account/subscriptions",
+        );
+        return;
+      }
+
+      if (isNativeIOSApp() || isNativeAndroidApp()) {
         await openExternalUrl("https://plinkscore.com");
         return;
       }
@@ -1668,10 +1803,18 @@ export function useAuthDialogModel(
     appleSessionPassError: appleSubscription.sessionPassError,
     appleSessionPassLoading: appleSubscription.isLoadingSessionPass,
     appleSessionPassProduct: appleSubscription.sessionPassProduct,
+    googlePlayProductsByPeriod: googlePlaySubscription.productsByPeriod,
+    googlePlayProductsError: googlePlaySubscription.productsError,
+    googlePlayProductsLoading: googlePlaySubscription.isLoadingProducts,
+    googlePlaySessionPassError: googlePlaySubscription.sessionPassError,
+    googlePlaySessionPassLoading:
+      googlePlaySubscription.isLoadingSessionPass,
+    googlePlaySessionPassProduct: googlePlaySubscription.sessionPassProduct,
     includeGames,
     includeProfiles,
     isAwaitingSignupConfirmation,
     isNativeIOS: isNativeIOSApp(),
+    isNativeAndroid: isNativeAndroidApp(),
     isPro,
     localGames,
     localProfiles,
@@ -1688,6 +1831,8 @@ export function useAuthDialogModel(
     planSectionRef,
     recoveryMode,
     reloadAppleProducts: appleSubscription.reloadProducts,
+    reloadGooglePlayProducts: googlePlaySubscription.reloadProducts,
+    reloadGooglePlaySessionPass: googlePlaySubscription.reloadSessionPass,
     renewalLabel,
     manageSubscription,
     restoreSubscription,
