@@ -133,8 +133,9 @@
 }
 
 .playersHeaderSwitch {
-  margin-top: 14px;
-  display: inline-flex;
+  width: fit-content;
+  margin: 14px auto 0;
+  display: flex;
   gap: 6px;
   padding: 5px;
   border-radius: 999px;
@@ -527,13 +528,27 @@
 }
 
 .profileCard__gameResult {
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
   color: var(--text-dim);
+  cursor: pointer;
   font-size: 11px;
   font-weight: 600;
+  text-align: left;
+}
+
+.profileCard__gameResult:hover,
+.profileCard__gameResult:focus-visible {
+  background: rgb(var(--accent-rgb) / 0.1);
+  color: var(--text);
+  outline: none;
 }
 
 .profileCard__gameResultMain {

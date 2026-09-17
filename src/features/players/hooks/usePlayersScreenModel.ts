@@ -31,6 +31,7 @@ export type PlayersScreenProps = {
   pendingLocalSessionsCount: number;
   pendingLocalProfilesCount: number;
   onDismissLocalSessionsHint: () => void;
+  onEnterSession: (gameId: string) => void;
   onActiveViewChange: (view: "players" | "teams") => void;
   addingPlayer: boolean;
   openTeamBuilderToken?: number;
@@ -109,6 +110,7 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
     pendingLocalSessionsCount,
     pendingLocalProfilesCount,
     onDismissLocalSessionsHint,
+    onEnterSession,
     onActiveViewChange,
     addingPlayer,
     openTeamBuilderToken,
@@ -544,6 +546,7 @@ export function usePlayersScreenModel(props: PlayersScreenProps) {
     onDeleteProfile,
     onDeleteTeam,
     onDismissLocalSessionsHint,
+    onEnterSession,
     onOpenAuth,
     onUpdateTeam,
     openTeamBuilder,

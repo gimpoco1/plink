@@ -6,9 +6,11 @@ import { TeamIcon } from "../../../components/TeamIcon/TeamIcon";
 export function GamesDropdown({
   title,
   sessionResults,
+  onEnterSession,
 }: {
   title: string;
   sessionResults: SessionResultSummary[];
+  onEnterSession: (gameId: string) => void;
 }) {
   return (
     <details className="profileGamesDropdown">
@@ -22,7 +24,12 @@ export function GamesDropdown({
       </summary>
       <div className="profileCard__gameResults">
         {sessionResults.map((result) => (
-          <div key={result.id} className="profileCard__gameResult">
+          <button
+            key={result.id}
+            className="profileCard__gameResult"
+            type="button"
+            onClick={() => onEnterSession(result.gameId)}
+          >
             <span className="profileCard__gameResultMain">
               <span className="profileCard__gameResultName">{result.name}</span>
               {result.isTeamGame ? (
@@ -57,7 +64,7 @@ export function GamesDropdown({
                 {statusLabel(result.statusKind)}
               </strong>
             </span>
-          </div>
+          </button>
         ))}
       </div>
     </details>

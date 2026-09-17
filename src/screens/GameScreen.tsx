@@ -128,12 +128,25 @@ export function GameScreen(props: GameScreenProps) {
     string | null
   >(null);
   const turnAdvanceTimeoutRef = useRef<number | null>(null);
+  const contentScrollTimeoutRef = useRef<number | null>(null);
   const canReorderTurnOrder = true;
+  const [isContentScrolling, setIsContentScrolling] = useState(false);
 
   function clearPendingTurnAdvance() {
     if (turnAdvanceTimeoutRef.current === null) return;
     window.clearTimeout(turnAdvanceTimeoutRef.current);
     turnAdvanceTimeoutRef.current = null;
+  }
+
+  function handleContentScroll() {
+    setIsContentScrolling(true);
+    if (contentScrollTimeoutRef.current !== null) {
+      window.clearTimeout(contentScrollTimeoutRef.current);
+    }
+    contentScrollTimeoutRef.current = window.setTimeout(() => {
+      contentScrollTimeoutRef.current = null;
+      setIsContentScrolling(false);
+    }, 700);
   }
 
   useEffect(() => {
@@ -171,7 +184,12 @@ export function GameScreen(props: GameScreenProps) {
   ]);
 
   useEffect(() => {
-    return () => clearPendingTurnAdvance();
+    return () => {
+      clearPendingTurnAdvance();
+      if (contentScrollTimeoutRef.current !== null) {
+        window.clearTimeout(contentScrollTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -403,7 +421,8 @@ export function GameScreen(props: GameScreenProps) {
         />
       ) : null}
       <main
-        className={`content${game.timerEnabled ? " content--hasTimer" : ""}`}
+        className={`content${game.timerEnabled ? " content--hasTimer" : ""}${isContentScrolling ? " content--scrolling" : ""}`}
+        onScroll={handleContentScroll}
       >
         {!hasPlayers ? (
           <section className="empty">

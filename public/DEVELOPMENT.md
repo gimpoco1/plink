@@ -364,6 +364,21 @@ Monitor it in **App Store Connect > Plink > Xcode Cloud > Builds** or in
 Xcode's Cloud build reports. Testers receive the new build after Apple finishes
 processing it.
 
+### Bump the TestFlight version
+
+Before pushing a release to `main`, update the App Store marketing version:
+
+```bash
+npm run ios:version -- patch
+```
+
+Use `minor`, `major`, or an explicit higher version such as
+`npm run ios:version -- 1.2.0`. The command updates the matching Debug and
+Release `MARKETING_VERSION` settings but intentionally does not change
+`CURRENT_PROJECT_VERSION`: Xcode Cloud supplies the next TestFlight build
+number. Commit and push the resulting Xcode project change to `main` to start
+the Xcode Cloud archive and TestFlight upload.
+
 ### Recommended safety rule
 
 Automatic TestFlight publishing does not publish the app publicly to the App

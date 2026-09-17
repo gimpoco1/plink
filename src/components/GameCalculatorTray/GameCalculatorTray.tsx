@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Delete,
   Equal,
   FunctionSquare,
@@ -104,8 +106,10 @@ export function GameCalculatorTray({
   const [expression, setExpression] = useState("");
   const [result, setResult] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
+  const [copied, setCopied] = useState(false);
   const trayRef = useRef<HTMLDivElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const copyTimeoutRef = useRef<number | null>(null);
 
   function setIsOpen(next: boolean | ((value: boolean) => boolean)) {
     const resolved = typeof next === "function" ? next(isOpen) : next;
@@ -152,24 +156,35 @@ export function GameCalculatorTray({
     };
   }, [isOpen, expression]);
 
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current !== null) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
   function append(value: string) {
     setExpression((current) =>
       (current + value).slice(0, MAX_EXPRESSION_LENGTH),
     );
     setResult(null);
     setHasError(false);
+    setCopied(false);
   }
 
   function removeLast() {
     setExpression((current) => current.slice(0, -1));
     setResult(null);
     setHasError(false);
+    setCopied(false);
   }
 
   function clear() {
     setExpression("");
     setResult(null);
     setHasError(false);
+    setCopied(false);
   }
 
   function resolveExpression() {
@@ -177,10 +192,29 @@ export function GameCalculatorTray({
     if (nextResult === null) {
       setResult(null);
       setHasError(true);
+      setCopied(false);
       return;
     }
     setResult(nextResult);
     setHasError(false);
+    setCopied(false);
+  }
+
+  async function copyResult() {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result);
+      setCopied(true);
+      if (copyTimeoutRef.current !== null) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = window.setTimeout(() => {
+        copyTimeoutRef.current = null;
+        setCopied(false);
+      }, 1800);
+    } catch {
+      setCopied(false);
+    }
   }
 
   function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
@@ -273,6 +307,22 @@ export function GameCalculatorTray({
               {translate("copy.calculator")}
             </div>
           </div>
+          <button
+            className="gameCalculatorTray__copy"
+            type="button"
+            aria-label={
+              copied ? translate("copy.copied") : translate("copy.copyResult")
+            }
+            title={copied ? translate("copy.copied") : translate("copy.copyResult")}
+            disabled={!result}
+            onClick={() => void copyResult()}
+          >
+            {copied ? (
+              <Check size={17} strokeWidth={2.7} aria-hidden="true" />
+            ) : (
+              <Copy size={17} strokeWidth={2.3} aria-hidden="true" />
+            )}
+          </button>
         </div>
         <div
           className={`gameCalculatorTray__display${hasError ? " gameCalculatorTray__display--error" : ""}`}

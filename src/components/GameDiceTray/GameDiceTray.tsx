@@ -71,6 +71,9 @@ export function GameDiceTray({
 
   function setIsOpen(next: boolean | ((value: boolean) => boolean)) {
     const resolved = typeof next === "function" ? next(isOpen) : next;
+    if (!resolved && trayRef.current?.contains(document.activeElement)) {
+      (document.activeElement as HTMLElement).blur();
+    }
     if (controlledIsOpen === undefined) setUncontrolledIsOpen(resolved);
     onOpenChange?.(resolved);
   }
@@ -342,7 +345,14 @@ export function GameDiceTray({
         </div>
         {!showTab ? (
           <div className="gameDiceTray__footer">
-            <button className="gameDiceTray__back" type="button" onClick={onBack}>
+            <button
+              className="gameDiceTray__back"
+              type="button"
+              onClick={(event) => {
+                event.currentTarget.blur();
+                onBack?.();
+              }}
+            >
               <ChevronLeft size={16} strokeWidth={2.7} aria-hidden="true" />
               {translate("copy.backToTools")}
             </button>
@@ -350,7 +360,10 @@ export function GameDiceTray({
               className="gameDiceTray__close"
               type="button"
               aria-label={translate("copy.close")}
-              onClick={onClose}
+              onClick={(event) => {
+                event.currentTarget.blur();
+                onClose?.();
+              }}
             >
               <X size={17} strokeWidth={2.6} aria-hidden="true" />
             </button>

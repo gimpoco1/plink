@@ -221,6 +221,7 @@ export function DashboardScreen(props: DashboardScreenProps) {
             pendingLocalSessionsCount={props.pendingLocalSessionsCount}
             pendingLocalProfilesCount={props.pendingLocalProfilesCount}
             onDismissLocalSessionsHint={props.onDismissLocalSessionsHint}
+            onEnterSession={(gameId) => props.onEnter(gameId, "players")}
             addingPlayer={isAddingPlayer}
             openTeamBuilderToken={openTeamBuilderToken}
             onOpenTeamBuilderHandled={() => setOpenTeamBuilderToken(0)}

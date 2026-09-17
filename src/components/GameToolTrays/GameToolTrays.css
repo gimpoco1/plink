@@ -93,6 +93,11 @@
   justify-content: space-between;
   gap: 12px;
 }
+.gameHelperTray__switchControl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
 .gameHelperTray__switch {
   width: 42px;
   height: 25px;
@@ -123,6 +128,16 @@
 .gameHelperTray__switch--on span {
   transform: translateX(17px);
   background: var(--accent);
+}
+.gameHelperTray__switchLabel {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gameHelperTray__switchLabel--on {
+  color: var(--accent);
 }
 .gameHelperTray__close {
   margin-left: 0;
@@ -220,6 +235,26 @@
   max-height: 236px;
   overflow: auto;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--accent-rgb) / 0.68) rgba(255, 255, 255, 0.08);
+}
+.gameHelperTray__starterList::-webkit-scrollbar {
+  width: 7px;
+}
+.gameHelperTray__starterList::-webkit-scrollbar-track {
+  margin: 3px 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+}
+.gameHelperTray__starterList::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgb(var(--accent-rgb) / 0.72);
+  background-clip: padding-box;
+}
+.gameHelperTray__starterList--disabled {
+  opacity: 0.42;
 }
 .gameHelperTray__starterOption {
   min-height: 36px;
@@ -234,6 +269,7 @@
   font-size: 12px;
   font-weight: 800;
   cursor: grab;
+  /* Pointer movement scrolls manually until the short hold enables drag. */
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -368,6 +404,13 @@
 :root[data-theme="light"] .gameHelperTray__reset {
   border-color: rgba(20, 36, 40, 0.14);
   background: var(--ds-color-surface-container-low);
+}
+:root[data-theme="light"] .gameHelperTray__starterOption--dropTarget {
+  border-color: rgb(var(--accent-rgb) / 0.9);
+  background: rgb(var(--accent-rgb) / 0.18);
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.48),
+    inset 0 -3px 0 rgb(var(--accent-rgb) / 0.9);
 }
 :root[data-theme="light"] .gameHelperTray__starterOption--draggedGhost {
   background: var(--ds-color-surface-bright);

@@ -49,9 +49,15 @@ export function useWinCelebrationModel(props: WinCelebrationProps) {
   const isCompletedWithoutWinner = resultKind === "completed";
   const isSingleParticipantCompletion =
     resultKind === "winner" && standings.length === 1;
-  const podiumStandings = [standings[0], standings[1], standings[2]];
-  const listedStandings = standings.slice(3);
   const rankCounts = getRankCounts(standings);
+  const hasUniqueWinner =
+    !isDraw &&
+    !isCompletedWithoutWinner &&
+    rankCounts.get(1) === 1;
+  const podiumStandings = hasUniqueWinner
+    ? [standings[0], standings[1], standings[2]]
+    : [];
+  const listedStandings = hasUniqueWinner ? standings.slice(3) : standings;
   const statsLabels =
     isSingleParticipantCompletion && !isTeamGame
       ? {

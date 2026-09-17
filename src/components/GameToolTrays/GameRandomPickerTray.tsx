@@ -36,12 +36,29 @@ export function GameRandomPickerTray({
   const [selection, setSelection] = useState<Participant | null>(null);
   const [isPicking, setIsPicking] = useState(false);
   const timeoutRef = useRef<number | null>(null);
+  const trayRef = useRef<HTMLDivElement | null>(null);
   useEffect(
     () => () => {
       if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
     },
     [],
   );
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function closeOnOutsidePointer(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node | null;
+      if (target && !trayRef.current?.contains(target)) onClose();
+    }
+
+    document.addEventListener("mousedown", closeOnOutsidePointer);
+    document.addEventListener("touchstart", closeOnOutsidePointer);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsidePointer);
+      document.removeEventListener("touchstart", closeOnOutsidePointer);
+    };
+  }, [isOpen, onClose]);
+
   function pickPlayer() {
     if (!participants.length || isPicking) return;
     setIsPicking(true);
@@ -55,6 +72,7 @@ export function GameRandomPickerTray({
   }
   return (
     <div
+      ref={trayRef}
       className={`gameHelperTray${isOpen ? " gameHelperTray--open" : ""}${accentTone === "team" ? " gameHelperTray--team" : ""}`}
       style={{ left: anchor.x, top: anchor.y }}
       data-placement={anchor.placement}

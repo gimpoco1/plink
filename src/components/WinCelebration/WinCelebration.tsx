@@ -1,4 +1,5 @@
 import { translate } from "../../i18n/translate";
+import { useEffect, useRef, useState } from "react";
 import type { ProfileStats, TeamStats } from "../../utils/profileStats";
 import type { WinCondition } from "../../types";
 import { Medal, Share2, Target } from "lucide-react";
@@ -44,6 +45,8 @@ export type WinCelebrationProps = {
 };
 
 export function WinCelebration(props: WinCelebrationProps) {
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<number | null>(null);
   const {
     shareStatus,
     setShareStatus,
@@ -77,6 +80,26 @@ export function WinCelebration(props: WinCelebrationProps) {
     onReplay,
     onBackToHome,
   } = viewProps;
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current !== null) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function handleScroll() {
+    setIsScrolling(true);
+    if (scrollTimeoutRef.current !== null) {
+      window.clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      scrollTimeoutRef.current = null;
+      setIsScrolling(false);
+    }, 700);
+  }
+
   return (
     <div
       className={`winFx${isTeamGame ? " winFx--teams" : ""}`}
@@ -86,7 +109,10 @@ export function WinCelebration(props: WinCelebrationProps) {
     >
       <WinCelebrationEffects />
 
-      <div className="winFx__content">
+      <div
+        className={`winFx__content${isScrolling ? " winFx__content--scrolling" : ""}`}
+        onScroll={handleScroll}
+      >
         <div className="winFx__hero">
           <div className="winFx__halo" aria-hidden="true" />
           <div className="winFx__medal" aria-hidden="true">

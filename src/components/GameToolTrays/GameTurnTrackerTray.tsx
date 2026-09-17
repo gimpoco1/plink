@@ -33,6 +33,9 @@ type Props = {
   onClose: () => void;
 };
 
+const DRAG_HOLD_DELAY_MS = 450;
+const DRAG_CANCEL_DISTANCE_PX = 10;
+
 export function GameTurnTrackerTray({
   participants,
   accentTone = "default",
@@ -70,12 +73,25 @@ export function GameTurnTrackerTray({
     pointerId: number;
     participantId: string;
   } | null>(null);
+  const pendingLongPressRef = useRef<{
+    pointerId: number;
+    participantId: string;
+    pointerType: string;
+    clientX: number;
+    clientY: number;
+    lastClientY: number;
+    row: HTMLButtonElement;
+    timeoutId: number | null;
+  } | null>(null);
+  const trayRef = useRef<HTMLDivElement | null>(null);
   const starterListRef = useRef<HTMLDivElement | null>(null);
   const pointerPositionRef = useRef<{ x: number; y: number } | null>(null);
   const autoScrollFrameRef = useRef<number | null>(null);
+  const canReorderTurns = isEnabled && canReorder;
 
   useEffect(() => {
     return () => {
+      cancelPendingLongPress();
       if (dragCleanupRef.current) {
         dragCleanupRef.current();
       }
@@ -83,14 +99,31 @@ export function GameTurnTrackerTray({
   }, []);
 
   useEffect(() => {
-    if (canReorder) return;
+    if (canReorderTurns) return;
+    cancelPendingLongPress();
     if (dragCleanupRef.current) {
       dragCleanupRef.current();
     }
     setDraggedParticipantId(null);
     setDropTargetParticipantId(null);
     setDragPreview(null);
-  }, [canReorder]);
+  }, [canReorderTurns]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function closeOnOutsidePointer(event: MouseEvent | TouchEvent) {
+      const target = event.target as Node | null;
+      if (target && !trayRef.current?.contains(target)) onClose();
+    }
+
+    document.addEventListener("mousedown", closeOnOutsidePointer);
+    document.addEventListener("touchstart", closeOnOutsidePointer);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsidePointer);
+      document.removeEventListener("touchstart", closeOnOutsidePointer);
+    };
+  }, [isOpen, onClose]);
 
   function participantIdAtPoint(clientX: number, clientY: number) {
     const rows = starterListRef.current?.querySelectorAll<HTMLElement>(
@@ -141,6 +174,15 @@ export function GameTurnTrackerTray({
       window.cancelAnimationFrame(autoScrollFrameRef.current);
       autoScrollFrameRef.current = null;
     }
+  }
+
+  function cancelPendingLongPress() {
+    const pendingLongPress = pendingLongPressRef.current;
+    if (!pendingLongPress) return;
+    if (pendingLongPress.timeoutId !== null) {
+      window.clearTimeout(pendingLongPress.timeoutId);
+    }
+    pendingLongPressRef.current = null;
   }
 
   function updateAutoScroll() {
@@ -202,31 +244,32 @@ export function GameTurnTrackerTray({
     autoScrollFrameRef.current = window.requestAnimationFrame(scroll);
   }
 
-  function beginPointerDrag(
-    event: React.PointerEvent<HTMLButtonElement>,
+  function startPointerDrag(
+    pointerId: number,
     participantId: string,
+    clientX: number,
+    clientY: number,
+    row: HTMLButtonElement,
   ) {
-    if (!canReorder) return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    event.preventDefault();
-
-    if (dragCleanupRef.current) {
-      dragCleanupRef.current();
+    if (dragCleanupRef.current) dragCleanupRef.current();
+    try {
+      row.setPointerCapture(pointerId);
+    } catch {
+      // The hold can finish after the browser has released the pointer.
+      return;
     }
 
-    const pointerId = event.pointerId;
-    event.currentTarget.setPointerCapture(pointerId);
     activePointerRef.current = { pointerId, participantId };
-    pointerPositionRef.current = { x: event.clientX, y: event.clientY };
+    pointerPositionRef.current = { x: clientX, y: clientY };
     const listRect = starterListRef.current?.getBoundingClientRect();
-    const rowRect = event.currentTarget.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
     setDraggedParticipantId(participantId);
     setDropTargetParticipantId(participantId);
     setDragPreview({
-      clientX: event.clientX,
-      clientY: event.clientY,
-      offsetX: event.clientX - rowRect.left,
-      offsetY: event.clientY - rowRect.top,
+      clientX,
+      clientY,
+      offsetX: clientX - rowRect.left,
+      offsetY: clientY - rowRect.top,
       width: rowRect.width,
       rowHeight: rowRect.height,
       listLeft: listRect?.left ?? rowRect.left,
@@ -248,7 +291,69 @@ export function GameTurnTrackerTray({
     dragCleanupRef.current = cleanup;
   }
 
+  function beginPointerDrag(
+    event: React.PointerEvent<HTMLButtonElement>,
+    participantId: string,
+  ) {
+    if (!canReorderTurns) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    cancelPendingLongPress();
+    if (dragCleanupRef.current) dragCleanupRef.current();
+
+    const { pointerId, clientX, clientY, currentTarget: row } = event;
+    if (event.pointerType !== "touch") {
+      startPointerDrag(pointerId, participantId, clientX, clientY, row);
+      return;
+    }
+    try {
+      row.setPointerCapture(pointerId);
+    } catch {
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      const pendingLongPress = pendingLongPressRef.current;
+      if (!pendingLongPress || pendingLongPress.pointerId !== pointerId) return;
+      if (pendingLongPress.timeoutId === null) return;
+      pendingLongPressRef.current = null;
+      startPointerDrag(pointerId, participantId, clientX, clientY, row);
+    }, DRAG_HOLD_DELAY_MS);
+    pendingLongPressRef.current = {
+      pointerId,
+      participantId,
+      pointerType: event.pointerType,
+      clientX,
+      clientY,
+      lastClientY: clientY,
+      row,
+      timeoutId,
+    };
+  }
+
   function movePointerDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const pendingLongPress = pendingLongPressRef.current;
+    if (pendingLongPress?.pointerId === event.pointerId) {
+      if (pendingLongPress.pointerType !== "mouse") {
+        const list = starterListRef.current;
+        if (list) {
+          list.scrollTop += pendingLongPress.lastClientY - event.clientY;
+        }
+        pendingLongPress.lastClientY = event.clientY;
+      }
+      if (
+        Math.hypot(
+          event.clientX - pendingLongPress.clientX,
+          event.clientY - pendingLongPress.clientY,
+        ) > DRAG_CANCEL_DISTANCE_PX
+      ) {
+        // This is a scroll gesture, not a deliberate long-press drag. Keep
+        // tracking it so vertical swipes can scroll the list manually.
+        if (pendingLongPress.timeoutId !== null) {
+          window.clearTimeout(pendingLongPress.timeoutId);
+          pendingLongPress.timeoutId = null;
+        }
+      }
+      return;
+    }
     const activePointer = activePointerRef.current;
     if (!activePointer || activePointer.pointerId !== event.pointerId) return;
     event.preventDefault();
@@ -265,6 +370,10 @@ export function GameTurnTrackerTray({
   }
 
   function endPointerDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    if (pendingLongPressRef.current?.pointerId === event.pointerId) {
+      cancelPendingLongPress();
+      return;
+    }
     const activePointer = activePointerRef.current;
     if (!activePointer || activePointer.pointerId !== event.pointerId) return;
     event.preventDefault();
@@ -277,6 +386,7 @@ export function GameTurnTrackerTray({
 
   return (
     <div
+      ref={trayRef}
       className={`gameHelperTray${isOpen ? " gameHelperTray--open" : ""}${accentTone === "team" ? " gameHelperTray--team" : ""}`}
       style={{ left: anchor.x, top: anchor.y }}
       data-placement={anchor.placement}
@@ -292,25 +402,33 @@ export function GameTurnTrackerTray({
               {translate("copy.turnTracker")}
             </div>
           </div>
-          <button
-            className={`gameHelperTray__switch${isEnabled ? " gameHelperTray__switch--on" : ""}`}
-            type="button"
-            role="switch"
-            aria-checked={isEnabled}
-            aria-label={translate("copy.turnTrackerEnabled")}
-            onClick={() => onEnabledChange(!isEnabled)}
-          >
-            <span aria-hidden="true" />
-          </button>
+          <div className="gameHelperTray__switchControl">
+            <button
+              className={`gameHelperTray__switch${isEnabled ? " gameHelperTray__switch--on" : ""}`}
+              type="button"
+              role="switch"
+              aria-checked={isEnabled}
+              aria-label={translate("copy.turnTrackerEnabled")}
+              onClick={() => onEnabledChange(!isEnabled)}
+            >
+              <span aria-hidden="true" />
+            </button>
+            <span
+              className={`gameHelperTray__switchLabel${isEnabled ? " gameHelperTray__switchLabel--on" : ""}`}
+            >
+              {isEnabled ? translate("copy.on") : translate("copy.off")}
+            </span>
+          </div>
         </header>
         <div className="gameHelperTray__content gameHelperTray__content--compact">
           <span className="gameHelperTray__hint">
             {translate("copy.turnTrackerPickStarter")}
           </span>
           <div
-            className="gameHelperTray__starterList"
+            className={`gameHelperTray__starterList${!isEnabled ? " gameHelperTray__starterList--disabled" : ""}`}
             role="list"
             ref={starterListRef}
+            aria-disabled={!isEnabled}
           >
             {participants.map((participant, index) => {
               const isDragged = draggedParticipantId === participant.id;
@@ -319,16 +437,19 @@ export function GameTurnTrackerTray({
                 <button
                   key={participant.id}
                   data-turn-participant-id={participant.id}
-                  className={`gameHelperTray__starterOption${!canReorder ? " gameHelperTray__starterOption--locked" : ""}${isDragged ? " gameHelperTray__starterOption--dragSource" : ""}${isDropTarget ? " gameHelperTray__starterOption--dropTarget" : ""}`}
+                  className={`gameHelperTray__starterOption${!canReorderTurns ? " gameHelperTray__starterOption--locked" : ""}${isDragged ? " gameHelperTray__starterOption--dragSource" : ""}${isDropTarget ? " gameHelperTray__starterOption--dropTarget" : ""}`}
                   type="button"
-                  disabled={!canReorder}
-                  aria-disabled={!canReorder}
+                  disabled={!canReorderTurns}
+                  aria-disabled={!canReorderTurns}
                   onPointerDown={(event) =>
                     beginPointerDrag(event, participant.id)
                   }
                   onPointerMove={movePointerDrag}
                   onPointerUp={endPointerDrag}
-                  onPointerCancel={() => dragCleanupRef.current?.()}
+                  onPointerCancel={() => {
+                    cancelPendingLongPress();
+                    dragCleanupRef.current?.();
+                  }}
                 >
                   {participant.icon ? (
                     <span
@@ -447,14 +568,16 @@ export function GameTurnTrackerTray({
           </div>
         </div>
         <div className="gameHelperTray__footer">
-          <button
-            className="gameHelperTray__reset"
-            type="button"
-            onClick={onReset}
-          >
-            <RotateCcw size={15} strokeWidth={2.5} aria-hidden="true" />
-            {translate("copy.resetTurns")}
-          </button>
+          {isEnabled ? (
+            <button
+              className="gameHelperTray__reset"
+              type="button"
+              onClick={onReset}
+            >
+              <RotateCcw size={15} strokeWidth={2.5} aria-hidden="true" />
+              {translate("copy.resetTurns")}
+            </button>
+          ) : null}
           <button
             className="gameHelperTray__back"
             type="button"

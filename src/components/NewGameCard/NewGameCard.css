@@ -460,6 +460,11 @@
   box-shadow: 0 26px 54px rgba(28, 49, 56, 0.18);
 }
 
+:root[data-theme="light"] .gamePresetCard__apply {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
 :root[data-theme="light"] .gamePresetInfo p,
 :root[data-theme="light"] .gamePresetInfo ul,
 :root[data-theme="light"] .gamePresetInfo__head button {
@@ -1746,7 +1751,9 @@
 }
 
 .participantModeSwitch {
-  display: inline-flex;
+  width: 100%;
+  display: flex;
+  justify-content: center;
   gap: 6px;
   padding: 5px;
   border-radius: 999px;

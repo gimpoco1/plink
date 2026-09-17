@@ -10,6 +10,45 @@
 .gameScreen > .content {
   flex: 1;
   min-height: 0;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.gameScreen > .content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gameScreen > .content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gameScreen > .content::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  background-clip: padding-box;
+}
+
+.gameScreen > .content.content--scrolling {
+  scrollbar-color: rgb(var(--accent-rgb) / 0.5) transparent;
+}
+
+.gameScreen > .content.content--scrolling::-webkit-scrollbar-thumb {
+  background: rgb(var(--accent-rgb) / 0.5);
+  background-clip: padding-box;
+}
+
+.gameScreen .swipeRow,
+.gameScreen .swipeRow .card.playerCard,
+.gameScreen .teamScoreCard.card {
+  box-shadow: none;
+}
+
+.gameScreen .card.playerCard.playerCard--activeTurn {
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.7),
+    0 0 0 3px rgb(var(--accent-rgb) / 0.16);
 }
 
 .gameScreen--teams {

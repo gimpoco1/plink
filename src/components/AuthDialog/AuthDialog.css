@@ -1,5 +1,37 @@
-.authDialog {
+.dialog.authDialog {
   width: min(440px, calc(100% - 32px));
+  position: relative;
+  /* The inner scroll area owns scrolling; prevent the base dialog from
+     becoming a second, native-scrollbar scroll container. */
+  overflow: hidden;
+}
+
+.authDialog__scrollArea {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.authDialog__scrollArea::-webkit-scrollbar {
+  width: 0;
+}
+
+.authDialog__scrollThumb {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  right: 4px;
+  width: 4px;
+  border-radius: 999px;
+  background: rgb(var(--accent-rgb) / 0.56);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.authDialog--scrolling .authDialog__scrollThumb {
+  opacity: 1;
 }
 
 .authDialog__form {

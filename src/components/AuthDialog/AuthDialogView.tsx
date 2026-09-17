@@ -1,5 +1,5 @@
 import { translate } from "../../i18n/translate";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { AuthAccountPanel } from "./AuthAccountPanel";
 import { useAuthDialogContext } from "./AuthDialogContext";
@@ -21,6 +21,12 @@ export function AuthDialogView() {
     setTransferToast,
     transferToast,
   } = useAuthDialogContext();
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [scrollThumb, setScrollThumb] = useState<{
+    height: number;
+    top: number;
+  } | null>(null);
+  const scrollTimeoutRef = useRef<number | null>(null);
   const dialogToast = error
     ? { message: error, tone: "error" as const }
     : notice
@@ -36,9 +42,44 @@ export function AuthDialogView() {
     return () => window.clearTimeout(timeout);
   }, [error, notice, setError, setNotice]);
 
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current !== null) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function handleScroll(event: React.UIEvent<HTMLDivElement>) {
+    const scrollArea = event.currentTarget;
+    const maxScrollTop = scrollArea.scrollHeight - scrollArea.clientHeight;
+    if (maxScrollTop > 0) {
+      const height = Math.max(
+        32,
+        (scrollArea.clientHeight * scrollArea.clientHeight) /
+          scrollArea.scrollHeight,
+      );
+      setScrollThumb({
+        height,
+        top:
+          4 +
+          (scrollArea.scrollTop / maxScrollTop) *
+            Math.max(0, scrollArea.clientHeight - height - 8),
+      });
+    }
+    setIsScrolling(true);
+    if (scrollTimeoutRef.current !== null) {
+      window.clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      scrollTimeoutRef.current = null;
+      setIsScrolling(false);
+    }, 700);
+  }
+
   return (
     <dialog
-      className="dialog authDialog"
+      className={`dialog authDialog${isScrolling ? " authDialog--scrolling" : ""}`}
       ref={dialogRef}
       onClose={() => {
         onOpenChange?.(false);
@@ -48,7 +89,8 @@ export function AuthDialogView() {
         setRecoveryMode(false);
       }}
     >
-      <div className="dialog__form authDialog__form">
+      <div className="authDialog__scrollArea" onScroll={handleScroll}>
+        <div className="dialog__form authDialog__form">
         <div className="dialog__head">
           <div className="authDialog__headCopy dialog__titleWrap">
             {session ? (
@@ -107,7 +149,18 @@ export function AuthDialogView() {
         ) : (
           <AuthSignedOutPanel />
         )}
+        </div>
       </div>
+      {scrollThumb ? (
+        <span
+          className="authDialog__scrollThumb"
+          aria-hidden="true"
+          style={{
+            height: scrollThumb.height,
+            transform: `translateY(${scrollThumb.top}px)`,
+          }}
+        />
+      ) : null}
     </dialog>
   );
 }

@@ -86,6 +86,7 @@ export function TeamCardDisplay({ data }: { data: TeamCardData }) {
         <GamesDropdown
           title={translate("tabs.sessions")}
           sessionResults={stats.sessionResults}
+          onEnterSession={model.onEnterSession}
         />
       ) : null}
     </>

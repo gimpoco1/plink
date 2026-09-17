@@ -105,6 +105,7 @@ function ProfileCard({ profile }: { profile: PlayerProfile }) {
             <GamesDropdown
               title={translate("tabs.sessions")}
               sessionResults={stats.sessionResults}
+              onEnterSession={model.onEnterSession}
             />
           ) : null}
         </>

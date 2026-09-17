@@ -84,7 +84,7 @@ export function DiceCanvas({
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mountElement.appendChild(renderer.domElement);
 
@@ -130,9 +130,11 @@ export function DiceCanvas({
     resizeObserver.observe(mountElement);
     resize();
 
-    const clock = new THREE.Clock();
+    const timer = new THREE.Timer();
+    timer.connect(document);
     function render(now: number) {
-      const delta = Math.min(clock.getDelta(), 0.034);
+      timer.update(now);
+      const delta = Math.min(timer.getDelta(), 0.034);
       const activeCount = diceCountRef.current;
 
       dice.forEach((die, index) => {
@@ -177,6 +179,7 @@ export function DiceCanvas({
     return () => {
       window.cancelAnimationFrame(frameRef.current);
       resizeObserver.disconnect();
+      timer.dispose();
       diceGroupsRef.current = [];
       scene.traverse((object: THREE.Object3D) => {
         if (object instanceof THREE.Mesh) {
