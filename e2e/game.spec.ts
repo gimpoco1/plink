@@ -276,17 +276,21 @@ test("turn tracker and random picker are available from the shared tools menu", 
     .getByRole("menuitem", { name: "Turn tracker", exact: true })
     .click();
   await expect(
-    page.getByText("Drag to reorder turns", { exact: true }),
+    page.getByText("Hold and drag to reorder turns", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("#1", { exact: true })).toBeVisible();
   const turnOptions = page.locator("[data-turn-participant-id]");
-  await expect(turnOptions.nth(0)).toBeEnabled();
+  await expect(turnOptions).toHaveCount(2);
+  await expect(turnOptions.nth(0)).toBeDisabled();
+  await expect(turnOptions.nth(1)).toBeDisabled();
   const turnTrackerSwitch = page.getByRole("switch", {
     name: "Enable turn tracker",
   });
   await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "false");
   await turnTrackerSwitch.click();
   await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "true");
+  await expect(turnOptions.nth(0)).toBeEnabled();
+  await expect(turnOptions.nth(1)).toBeEnabled();
   await expect(page.locator(".playerCard--activeTurn")).toHaveCount(1);
   await expect(
     page.getByRole("button", { name: "Reset turns", exact: true }),
@@ -299,7 +303,12 @@ test("turn tracker and random picker are available from the shared tools menu", 
     .getByRole("menuitem", { name: "Turn tracker", exact: true })
     .click();
   await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "true");
+  await expect(turnOptions.nth(0)).toBeEnabled();
+  await expect(turnOptions.nth(1)).toBeEnabled();
   await turnTrackerSwitch.click();
+  await expect(turnTrackerSwitch).toHaveAttribute("aria-checked", "false");
+  await expect(turnOptions.nth(0)).toBeDisabled();
+  await expect(turnOptions.nth(1)).toBeDisabled();
   await expect(page.locator(".playerCard--activeTurn")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Back to tools", exact: true })
