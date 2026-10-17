@@ -1,4 +1,6 @@
 import { translate } from "../i18n/translate";
+import { applyLocalLiveScoreActions } from "../features/live-score/applyLocalLiveScoreActions";
+import type { LiveScoreLocalAction } from "../types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
@@ -1951,6 +1953,18 @@ export function useGames(
     return true;
   }
 
+  async function restoreLiveScoreActions(actions: LiveScoreLocalAction[]) {
+    const updatedGames = applyLocalLiveScoreActions(games, actions);
+    if (sessionUserId) {
+      const changedIds = new Set(actions.map((action) => action.gameId));
+      await saveRemoteGames(sessionUserId, updatedGames, changedIds);
+      remoteSignatureRef.current = markGameSaveSynced(remoteSignatureRef.current, updatedGames, changedIds);
+    } else {
+      saveGuestGames(updatedGames);
+    }
+    setGames((previousGames) => mergeGamesById(previousGames, updatedGames));
+  }
+
   async function createGameInvite(gameId: string) {
     if (!sessionUserId) throw new Error("Sign in to invite players.");
     const game = games.find((item) => item.id === gameId);
@@ -2334,6 +2348,7 @@ export function useGames(
     updatePlayer,
     resetScores,
     updateScore,
+    restoreLiveScoreActions,
     createGameInvite,
     rotateGameInvite,
     joinGameByCode,

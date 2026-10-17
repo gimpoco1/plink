@@ -6,6 +6,7 @@ import {
   supabase,
 } from "../lib/supabase";
 import { PASSWORD_RECOVERY_EVENT } from "../lib/nativePlatform";
+import { getNativeLiveScoreSession } from "../features/live-score/liveScoreActivity";
 import { subscribeToForegroundRefresh } from "../utils/foregroundRefresh";
 
 function areSessionsEquivalent(current: Session | null, next: Session | null) {
@@ -51,6 +52,19 @@ export function useAuthSession() {
       const requestId = ++refreshRequestId;
 
       try {
+        const nativeSession = await getNativeLiveScoreSession();
+        if (
+          nativeSession &&
+          nativeSession.expiresAt > (session?.expires_at ?? 0)
+        ) {
+          const { data, error } = await authClient.auth.setSession({
+            access_token: nativeSession.accessToken,
+            refresh_token: nativeSession.refreshToken,
+          });
+          if (error) throw error;
+          if (!alive || requestId !== refreshRequestId) return;
+          updateSession(data.session);
+        }
         const { data, error } = await authClient.auth.getSession();
         if (!alive || requestId !== refreshRequestId) return;
         if (!error) updateSession(data.session);
@@ -109,7 +123,7 @@ export function useAuthSession() {
         handlePasswordRecovery,
       );
     };
-  }, []);
+  }, [session]);
 
   return {
     session,

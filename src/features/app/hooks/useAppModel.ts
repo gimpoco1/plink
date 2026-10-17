@@ -19,6 +19,7 @@ import { useTeams } from "../../../hooks/useTeams";
 import { useGames } from "../../../hooks/useGames";
 import { useScorePulse } from "../../../hooks/useScorePulse";
 import { useAuthSession } from "../../../hooks/useAuthSession";
+import { useLiveScoreActivity } from "../../live-score/useLiveScoreActivity";
 import { useEntitlements } from "../../../hooks/useEntitlements";
 import { useGameStartSplash } from "./useGameStartSplash";
 import { useToastStack } from "./useToastStack";
@@ -149,6 +150,7 @@ export function useAppModel() {
     updatePlayer,
     resetScores,
     updateScore,
+    restoreLiveScoreActions,
     createGameInvite,
     rotateGameInvite,
     joinGameByCode,
@@ -162,6 +164,7 @@ export function useAppModel() {
     pastLinkedPlayers,
     pastInvitedPlayers,
   } = useGames(session, authLoading, showToast);
+  useLiveScoreActivity({ games, session, ready: gamesReady, restoreActions: restoreLiveScoreActions });
   const { pulseById, triggerPulse } = useScorePulse();
   const { cancelGameStartSplash, gameStartSplashCue, triggerGameStartSplash } =
     useGameStartSplash();
