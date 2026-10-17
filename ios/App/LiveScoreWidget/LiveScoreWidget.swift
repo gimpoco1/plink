@@ -92,11 +92,13 @@ private struct LiveScoreActivityView: View {
                 }
             }
 
-            if state.winnerName != nil || !footerRules.isEmpty {
+            if state.isFinished || !footerRules.isEmpty {
               HStack(spacing: 5) {
                 if let winnerName = state.winnerName {
                     Image(systemName: "trophy.fill")
                     Text("\(winnerName) wins")
+                } else if state.isFinished {
+                    Text("Game finished")
                 } else {
                     Text(footerRules.joined(separator: " · "))
                 }
@@ -156,7 +158,7 @@ private struct LiveScorePlayerPanel: View {
             .frame(height: 15)
 
             HStack(spacing: 3) {
-                if state.winnerName == nil {
+                if !state.isFinished {
                     LiveScoreButton(activityId: activityId, playerId: playerId, delta: -1, isDark: isDark, isCompact: state.players.count == 3)
                 }
                 Text(score.description)
@@ -165,7 +167,7 @@ private struct LiveScorePlayerPanel: View {
                     .minimumScaleFactor(0.4)
                     .frame(maxWidth: .infinity)
                     .contentTransition(.numericText())
-                if state.winnerName == nil {
+                if !state.isFinished {
                     LiveScoreButton(activityId: activityId, playerId: playerId, delta: 1, isDark: isDark, isCompact: state.players.count == 3)
                 }
             }

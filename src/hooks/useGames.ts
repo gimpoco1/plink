@@ -342,6 +342,10 @@ export function useGames(
   const saveInFlightUserIdRef = useRef<string | null>(null);
   const queuedSaveSignatureRef = useRef<string | null>(null);
   const latestSessionUserIdRef = useRef<string | null>(sessionUserId);
+  const latestGamesRef = useRef(games);
+  latestGamesRef.current = games;
+  const saveRequestRef = useRef<Promise<void> | null>(null);
+  const liveScoreRestoreRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     onToastRef.current = onToast;
@@ -695,6 +699,7 @@ export function useGames(
     const unsubscribeForegroundRefresh = subscribeToForegroundRefresh(
       refreshForegroundData,
     );
+    window.addEventListener("plink:app-resumed", refreshForegroundData);
 
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null =
       null;
@@ -783,6 +788,7 @@ export function useGames(
       alive = false;
       window.clearInterval(intervalId);
       unsubscribeForegroundRefresh();
+      window.removeEventListener("plink:app-resumed", refreshForegroundData);
       if (channel) {
         void channel.unsubscribe();
         if (supabase) {
@@ -809,6 +815,10 @@ export function useGames(
     if (!remoteReady || remoteUserId !== sessionUserId) return;
     const nextSignature = getGameSyncSignature(games);
     if (nextSignature === remoteSignatureRef.current) return;
+    if (liveScoreRestoreRef.current) {
+      queuedSaveSignatureRef.current = nextSignature;
+      return;
+    }
 
     if (saveRetryTimeoutRef.current !== null) {
       window.clearTimeout(saveRetryTimeoutRef.current);
@@ -832,7 +842,7 @@ export function useGames(
       remoteSignatureRef.current,
       sessionUserId,
     );
-    void saveRemoteGames(sessionUserId, games, changedGameIds)
+    const saveRequest = saveRemoteGames(sessionUserId, games, changedGameIds)
       .then(() => {
         if (latestSessionUserIdRef.current !== sessionUserId) return;
         remoteSignatureRef.current = markGameSaveSynced(
@@ -877,6 +887,7 @@ export function useGames(
           setSaveRetryTick((value) => value + 1);
         }
       });
+    saveRequestRef.current = saveRequest;
   }, [games, remoteReady, remoteUserId, saveRetryTick, sessionUserId]);
 
   useEffect(() => {
@@ -1954,14 +1965,33 @@ export function useGames(
   }
 
   async function restoreLiveScoreActions(actions: LiveScoreLocalAction[]) {
-    const updatedGames = applyLocalLiveScoreActions(games, actions);
-    setGames((previousGames) => mergeGamesById(previousGames, updatedGames));
-    if (sessionUserId) {
-      const changedIds = new Set(actions.map((action) => action.gameId));
-      await saveRemoteGames(sessionUserId, updatedGames, changedIds);
-      remoteSignatureRef.current = markGameSaveSynced(remoteSignatureRef.current, updatedGames, changedIds);
-    } else {
-      saveGuestGames(updatedGames);
+    if (actions.some((action) => action.ownerKey !== (sessionUserId ?? "guest"))) {
+      throw new Error("Lock Screen scores belong to a different account. Sign in with that account to restore them.");
+    }
+    const restore = (async () => {
+      await saveRequestRef.current;
+      if (latestSessionUserIdRef.current !== sessionUserId) {
+        throw new Error("The signed-in account changed before Lock Screen scores could be restored.");
+      }
+      const updatedGames = applyLocalLiveScoreActions(latestGamesRef.current, actions);
+      setGames((previousGames) => applyLocalLiveScoreActions(previousGames, actions));
+      if (sessionUserId) {
+        const changedIds = new Set(actions.map((action) => action.gameId));
+        await saveRemoteGames(sessionUserId, updatedGames, changedIds);
+        if (latestSessionUserIdRef.current !== sessionUserId) {
+          throw new Error("The signed-in account changed while Lock Screen scores were being saved.");
+        }
+        remoteSignatureRef.current = markGameSaveSynced(remoteSignatureRef.current, updatedGames, changedIds);
+      } else {
+        saveGuestGames(updatedGames);
+      }
+    })();
+    liveScoreRestoreRef.current = restore;
+    try {
+      await restore;
+    } finally {
+      if (liveScoreRestoreRef.current === restore) liveScoreRestoreRef.current = null;
+      setSaveRetryTick((value) => value + 1);
     }
   }
 
@@ -2359,7 +2389,7 @@ export function useGames(
     sortedPlayers,
     ranks,
     allZero,
-    remoteReady,
+    remoteReady: remoteReady && !authLoading && (sessionUserId ? remoteUserId === sessionUserId : remoteUserId === null),
     pastLinkedPlayers,
     pastInvitedPlayers,
     syncNotice,

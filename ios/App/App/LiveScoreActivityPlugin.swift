@@ -8,13 +8,24 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
     let identifier = "LiveScorePlugin"
     let jsName = "LiveScore"
     let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "getAvailability", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "configure", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getLocalActions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "acknowledgeLocalActions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getSession", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "clearSession", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "endAll", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startOrUpdate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "end", returnType: CAPPluginReturnPromise)
     ]
+
+    @objc func getAvailability(_ call: CAPPluginCall) {
+        if #available(iOS 17.0, *) {
+            call.resolve(["supported": true, "enabled": ActivityAuthorizationInfo().areActivitiesEnabled])
+        } else {
+            call.resolve(["supported": false, "enabled": false])
+        }
+    }
 
     @objc func getLocalActions(_ call: CAPPluginCall) {
         guard #available(iOS 17.0, *) else {
@@ -59,6 +70,7 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
         guard
+            let userId = call.getString("userId"),
             let accessToken = call.getString("accessToken"),
             let refreshToken = call.getString("refreshToken"),
             let expiresAt = call.getInt("expiresAt"),
@@ -71,6 +83,7 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
 
         do {
             try LiveScoreService.save(credentials: LiveScoreCredentials(
+                userId: userId,
                 accessToken: accessToken,
                 refreshToken: refreshToken,
                 expiresAt: expiresAt,
@@ -88,8 +101,16 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
             call.resolve(["session": NSNull()])
             return
         }
+        guard let userId = call.getString("userId") else {
+            call.reject("A signed-in user ID is required to restore the Live Score session.")
+            return
+        }
         do {
             let credentials = try LiveScoreService.loadStoredCredentials()
+            guard credentials.userId == userId else {
+                call.resolve(["session": NSNull()])
+                return
+            }
             call.resolve([
                 "session": [
                     "accessToken": credentials.accessToken,
@@ -104,6 +125,34 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    @objc func clearSession(_ call: CAPPluginCall) {
+        guard #available(iOS 17.0, *) else { call.resolve(); return }
+        do {
+            try LiveScoreService.clearCredentials()
+        } catch {
+            call.reject("The native Live Score session could not be cleared.", nil, error)
+            return
+        }
+        Task {
+            for activity in Activity<PlinkScoreActivityAttributes>.activities {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
+            call.resolve()
+        }
+    }
+
+    @objc func endAll(_ call: CAPPluginCall) {
+        guard #available(iOS 17.0, *) else { call.resolve(); return }
+        Task { @MainActor in
+            if UIApplication.shared.applicationState == .active {
+                for activity in Activity<PlinkScoreActivityAttributes>.activities {
+                    await activity.end(nil, dismissalPolicy: .immediate)
+                }
+            }
+            call.resolve()
+        }
+    }
+
     @objc func startOrUpdate(_ call: CAPPluginCall) {
         guard #available(iOS 17.0, *) else {
             call.reject("Interactive Live Score requires iOS 17 or later.")
@@ -112,12 +161,15 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
         guard
             let gameId = call.getString("gameId"),
             let gameName = call.getString("gameName"),
+            let updatedAt = call.getInt("updatedAt"),
             let isShared = call.getBool("isShared"),
             let ownerKey = call.getString("ownerKey"),
             let theme = call.getString("theme"),
             let targetScore = call.getInt("targetScore"),
             let startingScore = call.getInt("startingScore"),
             let winCondition = call.getString("winCondition"),
+            let scoreDirection = call.getString("scoreDirection"),
+            ["up", "down"].contains(scoreDirection),
             ["reach_target", "reach_zero", "lowest"].contains(winCondition),
             let manualEndOnly = call.getBool("manualEndOnly"),
             let winByTwo = call.getBool("winByTwo"),
@@ -149,6 +201,9 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
             manualEndOnly: manualEndOnly,
             winByTwo: winByTwo,
             winnerName: nil,
+            finished: false,
+            scoreDirection: scoreDirection,
+            updatedAt: updatedAt,
             firstPlayerId: first.id,
             firstPlayerName: first.name,
             firstPlayerScore: first.score,
@@ -165,6 +220,10 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve()
                 return
             }
+            if LiveScoreCompletionStore.contains(ownerKey: ownerKey, gameId: gameId, updatedAt: updatedAt) {
+                call.resolve()
+                return
+            }
             if !isShared {
                 do {
                     try await LiveScoreLocalJournal.shared.seed(gameId: gameId, ownerKey: ownerKey, state: state)
@@ -173,10 +232,12 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
                     return
                 }
             }
-            for activity in activities where activity.attributes.gameId != gameId || activity.attributes.isShared != isShared || activity.attributes.ownerKey != ownerKey {
+            for activity in activities where activity.attributes.gameId != gameId || activity.attributes.gameName != gameName || activity.attributes.isShared != isShared || activity.attributes.ownerKey != ownerKey {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
-            let existing = Activity<PlinkScoreActivityAttributes>.activities.first { $0.attributes.gameId == gameId }
+            let existing = Activity<PlinkScoreActivityAttributes>.activities.first {
+                $0.attributes.gameId == gameId && $0.activityState == .active
+            }
             if let existing {
                 await existing.update(ActivityContent(state: state, staleDate: nil))
                 call.resolve()
@@ -206,7 +267,7 @@ class LiveScorePlugin: CAPPlugin, CAPBridgedPlugin {
         }
         Task { @MainActor in
             for activity in Activity<PlinkScoreActivityAttributes>.activities where activity.attributes.gameId == gameId {
-                if activity.content.state.winnerName != nil && UIApplication.shared.applicationState != .active {
+                if activity.content.state.isFinished && UIApplication.shared.applicationState != .active {
                     continue
                 }
                 await activity.end(nil, dismissalPolicy: .immediate)

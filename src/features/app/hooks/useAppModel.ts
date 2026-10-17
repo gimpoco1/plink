@@ -164,7 +164,7 @@ export function useAppModel() {
     pastLinkedPlayers,
     pastInvitedPlayers,
   } = useGames(session, authLoading, showToast);
-  useLiveScoreActivity({ games, session, ready: gamesReady, restoreActions: restoreLiveScoreActions });
+  useLiveScoreActivity({ games, session, ready: gamesReady, restoreActions: restoreLiveScoreActions, reportError: (message) => showToast(message, "error") });
   const { pulseById, triggerPulse } = useScorePulse();
   const { cancelGameStartSplash, gameStartSplashCue, triggerGameStartSplash } =
     useGameStartSplash();

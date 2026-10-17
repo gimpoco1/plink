@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
   hasSupabaseConfig,
@@ -6,7 +6,7 @@ import {
   supabase,
 } from "../lib/supabase";
 import { PASSWORD_RECOVERY_EVENT } from "../lib/nativePlatform";
-import { getNativeLiveScoreSession } from "../features/live-score/liveScoreActivity";
+import { getNativeLiveScoreSession, clearNativeLiveScoreSession } from "../features/live-score/liveScoreActivity";
 import { subscribeToForegroundRefresh } from "../utils/foregroundRefresh";
 
 function areSessionsEquivalent(current: Session | null, next: Session | null) {
@@ -29,6 +29,8 @@ export function useAuthSession() {
   const [passwordRecoveryRequestedAt, setPasswordRecoveryRequestedAt] =
     useState(0);
   const [loading, setLoading] = useState(hasSupabaseConfig);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
 
   useEffect(() => {
     if (!supabase) {
@@ -41,6 +43,7 @@ export function useAuthSession() {
     let refreshRequestId = 0;
 
     function updateSession(nextSession: Session | null) {
+      sessionRef.current = nextSession;
       setSession((currentSession) =>
         areSessionsEquivalent(currentSession, nextSession)
           ? currentSession
@@ -52,10 +55,12 @@ export function useAuthSession() {
       const requestId = ++refreshRequestId;
 
       try {
-        const nativeSession = await getNativeLiveScoreSession();
+        const currentSession = sessionRef.current;
+        const nativeSession = currentSession ? await getNativeLiveScoreSession(currentSession.user.id) : null;
+        if (!alive || requestId !== refreshRequestId || sessionRef.current !== currentSession) return;
         if (
           nativeSession &&
-          nativeSession.expiresAt > (session?.expires_at ?? 0)
+          nativeSession.expiresAt > (currentSession?.expires_at ?? 0)
         ) {
           const { data, error } = await authClient.auth.setSession({
             access_token: nativeSession.accessToken,
@@ -68,7 +73,8 @@ export function useAuthSession() {
         const { data, error } = await authClient.auth.getSession();
         if (!alive || requestId !== refreshRequestId) return;
         if (!error) updateSession(data.session);
-      } catch {
+      } catch (error) {
+        console.error("Failed to restore the authenticated session", error);
         if (!alive || requestId !== refreshRequestId) return;
       } finally {
         if (!alive || requestId !== refreshRequestId) return;
@@ -81,6 +87,12 @@ export function useAuthSession() {
     const {
       data: { subscription },
     } = authClient.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "SIGNED_OUT") {
+        refreshRequestId += 1;
+        void clearNativeLiveScoreSession().catch((error: unknown) => {
+          console.error("Failed to clear the native Live Score session", error);
+        });
+      }
       updateSession(nextSession);
       setLoading(false);
       if (event === "PASSWORD_RECOVERY") {
@@ -123,7 +135,7 @@ export function useAuthSession() {
         handlePasswordRecovery,
       );
     };
-  }, [session]);
+  }, []);
 
   return {
     session,

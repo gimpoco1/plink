@@ -21,6 +21,11 @@ struct PlinkScoreActivityAttributes: ActivityAttributes {
         let manualEndOnly: Bool
         let winByTwo: Bool
         let winnerName: String?
+        let finished: Bool?
+        let scoreDirection: String?
+        let updatedAt: Int?
+
+        var isFinished: Bool { finished == true || winnerName != nil }
         let firstPlayerId: String
         let firstPlayerName: String
         let firstPlayerScore: Int
@@ -63,13 +68,34 @@ struct AdjustLiveScoreIntent: LiveActivityIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        try await LiveScoreIntentQueue.shared.perform(activityId: activityId, playerId: playerId, delta: delta)
+        return .result()
+    }
+}
+
+@available(iOS 17.0, *)
+actor LiveScoreIntentQueue {
+    static let shared = LiveScoreIntentQueue()
+    private var pending: Task<Void, Never>?
+
+    func perform(activityId: String, playerId: String, delta: Int) async throws {
+        let predecessor = pending
+        let operation = Task {
+            await predecessor?.value
+            try await Self.apply(activityId: activityId, playerId: playerId, delta: delta)
+        }
+        pending = Task { _ = await operation.result }
+        try await operation.value
+    }
+
+    private static func apply(activityId: String, playerId: String, delta: Int) async throws {
         guard delta == -1 || delta == 1 else {
             throw LiveScoreError.invalidScoreChange
         }
         guard let activity = Activity<PlinkScoreActivityAttributes>.activities.first(where: { $0.id == activityId }) else {
             throw LiveScoreError.activityNotFound
         }
-        guard activity.content.state.winnerName == nil else {
+        guard !activity.content.state.isFinished else {
             throw LiveScoreError.gameFinished
         }
 
@@ -79,12 +105,17 @@ struct AdjustLiveScoreIntent: LiveActivityIntent {
                 playerId: playerId,
                 delta: delta
             )
+            if state.isFinished {
+                guard let updatedAt = state.updatedAt else { throw LiveScoreError.invalidResponse }
+                LiveScoreCompletionStore.record(ownerKey: activity.attributes.ownerKey, gameId: activity.attributes.gameId, updatedAt: updatedAt)
+            }
             await activity.update(ActivityContent(state: state, staleDate: nil))
-            return .result()
+            return
         }
 
         let updatedGame = try await LiveScoreService.updateScore(
             gameId: activity.attributes.gameId,
+            userId: activity.attributes.ownerKey,
             playerId: playerId,
             delta: delta
         )
@@ -92,9 +123,25 @@ struct AdjustLiveScoreIntent: LiveActivityIntent {
             previous: activity.content.state,
             game: updatedGame
         )
+        if nextState.isFinished {
+            LiveScoreCompletionStore.record(ownerKey: activity.attributes.ownerKey, gameId: activity.attributes.gameId, updatedAt: updatedGame.updatedAt)
+        }
         await activity.update(ActivityContent(state: nextState, staleDate: nil))
 
-        return .result()
+    }
+}
+
+@available(iOS 17.0, *)
+enum LiveScoreCompletionStore {
+    static func record(ownerKey: String, gameId: String, updatedAt: Int) {
+        UserDefaults.standard.set(updatedAt, forKey: "plink.live-score.completed." + ownerKey + ":" + gameId)
+    }
+
+    static func contains(ownerKey: String, gameId: String, updatedAt: Int) -> Bool {
+        guard let completedAt = UserDefaults.standard.object(forKey: "plink.live-score.completed." + ownerKey + ":" + gameId) as? NSNumber else {
+            return false
+        }
+        return updatedAt <= completedAt.intValue
     }
 }
 
@@ -152,7 +199,7 @@ actor LiveScoreLocalJournal {
     func adjust(attributes: PlinkScoreActivityAttributes, playerId: String, delta: Int) throws -> PlinkScoreActivityAttributes.ContentState {
         let journal = try load()
         let key = attributes.ownerKey + ":" + attributes.gameId
-        guard let previous = journal.snapshots[key], previous.winnerName == nil else {
+        guard let previous = journal.snapshots[key], !previous.isFinished else {
             throw LiveScoreError.gameFinished
         }
         guard let player = previous.players.first(where: { $0.id == playerId }) else {
@@ -179,7 +226,10 @@ actor LiveScoreLocalJournal {
         let game = LiveScoreRpcResponse(
             players: players,
             endedAt: hasEnded ? now : nil,
-            winCondition: previous.winCondition
+            winCondition: previous.winCondition,
+            scoreDirection: previous.scoreDirection ?? (previous.winCondition == "reach_zero" ? "down" : "up"),
+            completionMode: nil,
+            updatedAt: now
         )
         let next = try LiveScoreActivityState.make(previous: previous, game: game)
         let action = LiveScoreLocalAction(id: UUID().uuidString, gameId: attributes.gameId, ownerKey: attributes.ownerKey, playerId: playerId, delta: delta, createdAt: now)
@@ -222,6 +272,7 @@ enum LiveScoreError: LocalizedError {
 
 @available(iOS 17.0, *)
 struct LiveScoreCredentials: Codable {
+    let userId: String?
     let accessToken: String
     let refreshToken: String
     let expiresAt: Int
@@ -234,11 +285,17 @@ struct LiveScoreRpcResponse: Decodable {
     let players: [LiveScoreRpcPlayer]
     let endedAt: Int?
     let winCondition: String
+    let scoreDirection: String
+    let completionMode: String?
+    let updatedAt: Int
 
     enum CodingKeys: String, CodingKey {
         case players
         case endedAt = "ended_at"
         case winCondition = "win_condition"
+        case scoreDirection = "score_direction"
+        case completionMode = "completion_mode"
+        case updatedAt = "updated_at"
     }
 }
 
@@ -255,6 +312,9 @@ private enum LiveScoreActivityState {
         previous: PlinkScoreActivityAttributes.ContentState,
         game: LiveScoreRpcResponse
     ) throws -> PlinkScoreActivityAttributes.ContentState {
+        guard Set(game.players.map(\.id)).count == game.players.count else {
+            throw LiveScoreError.invalidResponse
+        }
         let scores = Dictionary(uniqueKeysWithValues: game.players.map { ($0.id, $0.score) })
         guard
             let firstPlayerScore = scores[previous.firstPlayerId],
@@ -262,6 +322,10 @@ private enum LiveScoreActivityState {
         else {
             throw LiveScoreError.invalidResponse
         }
+        let sorted = game.players.sorted {
+            game.scoreDirection == "down" || game.winCondition == "lowest" ? $0.score < $1.score : $0.score > $1.score
+        }
+        let winnerName = game.endedAt != nil && game.completionMode != "draw" && game.completionMode != "no_winner" && sorted.count >= 2 && sorted[0].score != sorted[1].score ? sorted[0].name : nil
         return PlinkScoreActivityAttributes.ContentState(
             theme: previous.theme,
             targetScore: previous.targetScore,
@@ -269,9 +333,10 @@ private enum LiveScoreActivityState {
             winCondition: previous.winCondition,
             manualEndOnly: previous.manualEndOnly,
             winByTwo: previous.winByTwo,
-            winnerName: game.endedAt == nil ? nil : game.players.sorted {
-                game.winCondition == "reach_target" ? $0.score > $1.score : $0.score < $1.score
-            }.first?.name,
+            winnerName: winnerName,
+            finished: game.endedAt != nil,
+            scoreDirection: game.scoreDirection,
+            updatedAt: game.updatedAt,
             firstPlayerId: previous.firstPlayerId,
             firstPlayerName: previous.firstPlayerName,
             firstPlayerScore: firstPlayerScore,
@@ -294,22 +359,48 @@ enum LiveScoreService {
     private static let credentialsAccount = "supabase-session"
 
     static func save(credentials: LiveScoreCredentials) throws {
+        do {
+            let existing = try loadStoredCredentials()
+            if existing.userId == credentials.userId && existing.expiresAt > credentials.expiresAt { return }
+        } catch LiveScoreError.missingCredentials {
+            // A new signed-in session creates its first native Keychain item.
+        }
         let encoded = try JSONEncoder().encode(credentials)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: credentialsService,
-            kSecAttrAccount as String: credentialsAccount,
-            kSecValueData as String: encoded
+            kSecAttrAccount as String: credentialsAccount
         ]
-        SecItemDelete(query as CFDictionary)
-        let status = SecItemAdd(query as CFDictionary, nil)
+        let attributes: [String: Any] = [
+            kSecValueData as String: encoded,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        guard updateStatus == errSecSuccess || updateStatus == errSecItemNotFound else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(updateStatus))
+        }
+        if updateStatus == errSecSuccess { return }
+        let status = SecItemAdd(query.merging(attributes) { _, new in new } as CFDictionary, nil)
         guard status == errSecSuccess else {
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Plink could not securely save the Live Score session."])
         }
     }
 
-    static func updateScore(gameId: String, playerId: String, delta: Int) async throws -> LiveScoreRpcResponse {
+    static func clearCredentials() throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: credentialsService,
+            kSecAttrAccount as String: credentialsAccount
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+        }
+    }
+
+    static func updateScore(gameId: String, userId: String, playerId: String, delta: Int) async throws -> LiveScoreRpcResponse {
         let credentials = try loadStoredCredentials()
+        guard credentials.userId == userId else { throw LiveScoreError.missingCredentials }
         let response = try await performScoreRequest(
             credentials: credentials,
             gameId: gameId,
@@ -341,8 +432,11 @@ enum LiveScoreService {
         ]
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
-        guard status == errSecSuccess, let data = item as? Data else {
+        if status == errSecItemNotFound {
             throw LiveScoreError.missingCredentials
+        }
+        guard status == errSecSuccess, let data = item as? Data else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
         }
         return try JSONDecoder().decode(LiveScoreCredentials.self, from: data)
     }
@@ -360,6 +454,7 @@ enum LiveScoreService {
         request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("return=representation", forHTTPHeaderField: "Prefer")
+        request.setValue("application/vnd.pgrst.object+json", forHTTPHeaderField: "Accept")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "p_game_id": gameId,
             "p_player_id": playerId,
@@ -399,6 +494,7 @@ enum LiveScoreService {
         }
         let refreshed = try JSONDecoder().decode(RefreshResponse.self, from: data)
         return LiveScoreCredentials(
+            userId: credentials.userId,
             accessToken: refreshed.accessToken,
             refreshToken: refreshed.refreshToken,
             expiresAt: Int(Date().timeIntervalSince1970) + refreshed.expiresIn,
