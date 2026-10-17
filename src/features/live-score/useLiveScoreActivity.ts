@@ -32,11 +32,15 @@ export function useLiveScoreActivity({
   const [resumeVersion, setResumeVersion] = useState(0);
 
   useEffect(() => {
-    function handleResume() {
+    function queueSynchronization() {
       setResumeVersion((version) => version + 1);
     }
-    window.addEventListener("plink:app-resumed", handleResume);
-    return () => window.removeEventListener("plink:app-resumed", handleResume);
+    window.addEventListener("plink:app-resumed", queueSynchronization);
+    window.addEventListener("online", queueSynchronization);
+    return () => {
+      window.removeEventListener("plink:app-resumed", queueSynchronization);
+      window.removeEventListener("online", queueSynchronization);
+    };
   }, []);
 
   useEffect(() => {

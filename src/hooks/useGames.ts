@@ -1955,6 +1955,7 @@ export function useGames(
 
   async function restoreLiveScoreActions(actions: LiveScoreLocalAction[]) {
     const updatedGames = applyLocalLiveScoreActions(games, actions);
+    setGames((previousGames) => mergeGamesById(previousGames, updatedGames));
     if (sessionUserId) {
       const changedIds = new Set(actions.map((action) => action.gameId));
       await saveRemoteGames(sessionUserId, updatedGames, changedIds);
@@ -1962,7 +1963,6 @@ export function useGames(
     } else {
       saveGuestGames(updatedGames);
     }
-    setGames((previousGames) => mergeGamesById(previousGames, updatedGames));
   }
 
   async function createGameInvite(gameId: string) {
