@@ -11,6 +11,15 @@ export type Player = {
   isGameOwner?: boolean;
 };
 
+export type LiveScoreLocalAction = {
+  id: string;
+  gameId: string;
+  ownerKey: string;
+  playerId: string;
+  delta: number;
+  createdAt: number;
+};
+
 export type GameTeam = {
   id: string;
   name: string;
