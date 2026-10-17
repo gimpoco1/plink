@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.apple-subscription-webhook]
 verify_jwt = false
+
+[functions.google-play-subscription-webhook]
+verify_jwt = false

@@ -21,6 +21,7 @@ export function useDotGrid({
   idleMotion = true,
   idleSpeed = 1,
   idleStrength = 1.8,
+  reducedMotionScale = 0.32,
 }: DotGridProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -56,6 +57,10 @@ export function useDotGrid({
     if (!wrap || !canvas) return;
 
     const { width, height } = wrap.getBoundingClientRect();
+    if (width <= 0 || height <= 0) {
+      dotsRef.current = [];
+      return;
+    }
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = width * dpr;
@@ -106,9 +111,12 @@ export function useDotGrid({
 
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
+      if (dotsRef.current.length === 0 && width > 0 && height > 0) {
+        buildGrid();
+      }
       const pointer = pointerRef.current;
       const idleEnabled = idleMotion;
-      const motionScale = prefersReducedMotion ? 0.32 : 1;
+      const motionScale = prefersReducedMotion ? reducedMotionScale : 1;
       const userIsActive = timestamp - pointer.lastInteraction < 1800;
       const idleTime = timestamp * 0.00032 * idleSpeed * motionScale;
       const idleX = width * (0.5 + Math.sin(idleTime) * 0.38);
@@ -193,20 +201,40 @@ export function useDotGrid({
     idleMotion,
     idleSpeed,
     idleStrength,
+    reducedMotionScale,
+    buildGrid,
   ]);
 
   useEffect(() => {
-    buildGrid();
+    let rebuildRaf = requestAnimationFrame(buildGrid);
+    const scheduleRebuild = () => {
+      cancelAnimationFrame(rebuildRaf);
+      rebuildRaf = requestAnimationFrame(buildGrid);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") scheduleRebuild();
+    };
+    const handleContextLost = (event: Event) => event.preventDefault();
+    const canvas = canvasRef.current;
     let ro: ResizeObserver | null = null;
     if ("ResizeObserver" in window) {
-      ro = new ResizeObserver(buildGrid);
+      ro = new ResizeObserver(scheduleRebuild);
       wrapperRef.current && ro.observe(wrapperRef.current);
     } else {
-      (window as Window).addEventListener("resize", buildGrid);
+      (window as Window).addEventListener("resize", scheduleRebuild);
     }
+    window.addEventListener("pageshow", scheduleRebuild);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    canvas?.addEventListener("contextlost", handleContextLost);
+    canvas?.addEventListener("contextrestored", scheduleRebuild);
     return () => {
+      cancelAnimationFrame(rebuildRaf);
       if (ro) ro.disconnect();
-      else window.removeEventListener("resize", buildGrid);
+      else (window as Window).removeEventListener("resize", scheduleRebuild);
+      window.removeEventListener("pageshow", scheduleRebuild);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      canvas?.removeEventListener("contextlost", handleContextLost);
+      canvas?.removeEventListener("contextrestored", scheduleRebuild);
     };
   }, [buildGrid]);
 

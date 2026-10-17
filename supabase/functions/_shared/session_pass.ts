@@ -5,7 +5,7 @@ export const APPLE_SESSION_PASS_PRODUCT_ID =
   "com.plinkscore.app.sessionpass.100";
 export const STRIPE_SESSION_PASS_PRODUCT_KEY = "session_pass_100";
 
-export type SessionPassProvider = "apple" | "stripe";
+export type SessionPassProvider = "apple" | "google" | "stripe";
 export type SessionPassStatus = "active" | "refunded" | "revoked";
 
 export async function persistSessionPassPurchase(input: {
@@ -68,5 +68,21 @@ export async function revokeStripeSessionPass(
     })
     .eq("provider", "stripe")
     .eq("transaction_id", transactionId);
+  if (error) throw error;
+}
+
+export async function revokeGoogleSessionPass(
+  purchaseToken: string,
+  revokedAt?: string | null,
+) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("session_pass_purchases")
+    .update({
+      status: "refunded",
+      revoked_at: revokedAt ?? new Date().toISOString(),
+    })
+    .eq("provider", "google")
+    .eq("transaction_id", purchaseToken);
   if (error) throw error;
 }
